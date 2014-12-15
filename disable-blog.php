@@ -239,7 +239,9 @@ class Disable_WordPress_Blog {
 	}
 	
 	/**
-	 * Get all the post types that support comments
+	 * Admin styles
+	 * 
+	 * Hides post and comment count on activity dashboard widget.
 	 * 
 	 * @since 0.1.0
 	 */
