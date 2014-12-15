@@ -31,7 +31,7 @@ if( !defined( 'DWPB_DIR' ) )
 if( !defined( 'DWPB_URL' ) )
 	define( 'DWPB_URL', plugins_url( '/' , __FILE__ ) );
 
-define( 'DWPB_VERSION', '0.6.0' );
+define( 'DWPB_VERSION', '0.1.0' );
 
 /**
  * Main Plugin Class
@@ -49,14 +49,8 @@ class Disable_WordPress_Blog {
 	 */
 	public function __construct() {
 		
-		// Activation Hook
-		register_activation_hook( __FILE__, array( $this, 'activation_hook' ) );
-		
 		// Plugin Base
 		add_action( 'plugins_loaded', array( $this, 'init' ) );
-		
-		// Filter Comments
-		add_action( 'pre_get_comments', array( $this, 'comment_filter' ), 10, 1 );
 	}
 	
 	/**
@@ -68,8 +62,6 @@ class Disable_WordPress_Blog {
 		
 		// Hide Posts Page from Admin Menu
 		add_action( 'admin_menu', array( $this, 'remove_menu_pages' ) );
-		
-		load_plugin_textdomain('private-only', false, basename( dirname( __FILE__ ) ) . '/languages' );
 		
 		// Disable Feed
 		add_action('do_feed', array( $this, 'disable_feed' ), 1);
@@ -83,15 +75,15 @@ class Disable_WordPress_Blog {
 		
 		// Remove Admin Bar Links
 		add_action( 'wp_before_admin_bar_render', array( $this, 'remove_admin_bar_links' ) );
-	}
-	
-	/**
-	 * Activation Hook
-	 *
-	 * @since 0.1.0
-	 */
-	public function activation_hook() {
 		
+		// Filter Comments off Admin Page
+		add_action( 'pre_get_comments', array( $this, 'comment_filter' ), 10, 1 );
+		
+		// Remove Dashboard Widgets
+		add_action( 'admin_init', array( $this, 'remove_dashboard_widgets' ) );
+		
+		// Hide items with CSS
+		add_action( 'admin_head', array( $this, 'admin_styles' ) );
 	}
 	
 	/**
@@ -102,8 +94,6 @@ class Disable_WordPress_Blog {
 	 */
 	public function remove_menu_pages() {
 		remove_menu_page( 'edit.php' );
-	    
-		// remove_menu_page( 'edit-comments.php' );
 	}
 	
 	/**
@@ -142,6 +132,28 @@ class Disable_WordPress_Blog {
 			exit;
 		}
 		
+		// Redirect at edit tags screen
+		if( $pagenow == 'edit-tags.php' && isset( $_GET['taxonomy'] ) && ( $_GET['taxonomy'] == 'taxonomy' || $_GET['taxonomy'] == 'category' ) ) {
+			
+			// Make sure this taxonomy is only used on 'post' post type
+			$post_only_tax = false;
+			$taxonomy = $_GET['taxonomy'];
+			$post_types = get_post_types( array(), 'objects' );
+			foreach( $post_types as $post_type ) {
+				if( $post_type->name == 'post' )
+					continue;
+				if( in_array( $taxonomy, $post_type->taxonomies ) )
+					$post_only_tax = true;
+			}
+			
+			// If this is a post type other than 'post' that supports categories or tags,
+			// then bail. Otherwise it is a taxonomy only used by 'post'
+			if( ! $post_only_tax ) {
+				wp_redirect( admin_url('/index.php' ), 301 );
+				exit;
+			}
+		}
+		
 		// Redirect posts-only comment queries to comments
 		if( $pagenow == 'edit-comments.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ){
 			wp_redirect( admin_url('/edit-comments.php' ), 301 );
@@ -178,8 +190,10 @@ class Disable_WordPress_Blog {
 		
 		// Filter out comments from post
 	    if( is_admin() && $pagenow == 'edit-comments.php' ) {
-			if( $post_types = $this->post_types_with_comments() ){
+			if( $post_types = $this->post_types_with_comments() ) {
 		        $comments->query_vars['post_type'] = $post_types;
+			} else {
+				// redirect to dashboard?
 			}
 	    }
 		return $comments;
@@ -209,4 +223,33 @@ class Disable_WordPress_Blog {
 		}
 	}
 	
+	/**
+	 * Remove post-related dashboard widgets
+	 *
+	 * @since 0.1.0
+	 * @link http://www.deluxeblogtips.com/2011/01/remove-dashboard-widgets-in-wordpress.html
+	 */
+	function remove_dashboard_widgets() {
+		remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' ); // recent comments
+		remove_meta_box( 'dashboard_incoming_links', 'dashboard', 'normal' );  // incoming links
+		remove_meta_box( 'dashboard_quick_press', 'dashboard', 'normal' );  // quick press
+		remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'normal' );  // recent drafts
+		remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );  // recent drafts
+		
+	}
+	
+	/**
+	 * Get all the post types that support comments
+	 * 
+	 * @since 0.1.0
+	 */
+	public function admin_styles() { ?>
+		<style>
+			#dashboard_right_now .post-count,
+			#dashboard_right_now .comment-count {
+				display: none;
+			}
+		</script>
+		<?php
+	}
 }
