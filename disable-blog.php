@@ -30,6 +30,9 @@ if( !defined( 'DWPB_DIR' ) )
 
 if( !defined( 'DWPB_URL' ) )
 	define( 'DWPB_URL', plugins_url( '/' , __FILE__ ) );
+	
+if( !defined( 'DWPB_DOMAIN' ) )
+	define( 'DWPB_DOMAIN', 'disable-wordpress-blog' );
 
 define( 'DWPB_VERSION', '0.1.0' );
 
@@ -59,6 +62,9 @@ class Disable_WordPress_Blog {
 	 * @since 0.1.0
 	 */
 	public function init() {
+		
+		// Hooks are useful, here's one
+		do_action( 'dwpb_init' );
 		
 		// Hide Posts Page from Admin Menu
 		add_action( 'admin_menu', array( $this, 'remove_menu_pages' ) );
@@ -93,7 +99,12 @@ class Disable_WordPress_Blog {
 	 * @link http://wordpress.stackexchange.com/questions/57464/remove-posts-from-admin-but-show-a-custom-post
 	 */
 	public function remove_menu_pages() {
-		remove_menu_page( 'edit.php' );
+		if( apply_filters( 'dwpb_remove_menu_pages', true ) ) {
+			$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
+			foreach( $pages as $page ) {
+				remove_menu_page( $page );
+			}
+		}
 	}
 	
 	/**
@@ -104,8 +115,11 @@ class Disable_WordPress_Blog {
 	 */
 	public function disable_feed() {
 		global $post;
-		if( $post->post_type == 'post' )
-			wp_die( __('No feed available,please visit our <a href="'. get_bloginfo( 'url' ) .'">homepage</a>!') );
+		if( $post->post_type == 'post' ) {
+			$url = home_url();
+			$message = apply_filters( 'dwpb_feed_die_message', __('No feed available, please visit our <a href="'. $url .'">homepage</a>!') );
+			wp_die( $message );
+		}
 	}
 	
 	/**
@@ -115,20 +129,22 @@ class Disable_WordPress_Blog {
 	 * @link http://wordpress.stackexchange.com/questions/52114/admin-page-redirect
 	 */
 	public function redirect_admin_pages(){
-	    global $pagenow;
+		global $pagenow;
 		
 		if( !isset( $pagenow ) )
 			return;
 		
-	    // Redirect Edit Post to Edit Page
-	    if( $pagenow == 'edit.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ){
-			wp_redirect( admin_url('/edit.php?post_type=page' ), 301 );
+		// Redirect Edit Post to Edit Page
+		if( $pagenow == 'edit.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ){
+			$redirect_url = apply_filters( 'dwpb_redirect_edit', admin_url('/edit.php?post_type=page' ) );
+			wp_redirect( $redirect_url, 301 );
 			exit;
-	    }
+		}
 		
 		// Redirect New Post to New Page
 		if( $pagenow == 'post-new.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ){
-			wp_redirect( admin_url('/post-new.php?post_type=page' ), 301 );
+			$redirect_url = apply_filters( 'dwpb_redirect_post_new', admin_url('/post-new.php?post_type=page' ) );
+			wp_redirect( $redirect_url, 301 );
 			exit;
 		}
 		
@@ -149,14 +165,16 @@ class Disable_WordPress_Blog {
 			// If this is a post type other than 'post' that supports categories or tags,
 			// then bail. Otherwise it is a taxonomy only used by 'post'
 			if( ! $post_only_tax ) {
-				wp_redirect( admin_url('/index.php' ), 301 );
+				$redirect_url = apply_filters( 'dwpb_redirect_tax_edit', admin_url( '/index.php' ) );
+				wp_redirect( $redirect_url, 301 );
 				exit;
 			}
 		}
 		
 		// Redirect posts-only comment queries to comments
 		if( $pagenow == 'edit-comments.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ){
-			wp_redirect( admin_url('/edit-comments.php' ), 301 );
+			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', admin_url( '/edit-comments.php' ) );
+			wp_redirect( $redirect_url, 301 );
 			exit;
 		}
 	}
@@ -181,21 +199,21 @@ class Disable_WordPress_Blog {
 	 * Hide all comments on posts
 	 * 
 	 * @since 0.1.0
-	 * @param  (wp_query object) $query
+	 * @param  (wp_query object) $comments
 	 */
 	public function comment_filter( $comments ){
-	    global $pagenow;
+		global $pagenow;
 		if( !isset( $pagenow ) )
 			return $comments;
 		
 		// Filter out comments from post
-	    if( is_admin() && $pagenow == 'edit-comments.php' ) {
+		if( is_admin() && $pagenow == 'edit-comments.php' ) {
 			if( $post_types = $this->post_types_with_comments() ) {
-		        $comments->query_vars['post_type'] = $post_types;
+				$comments->query_vars['post_type'] = $post_types;
 			} else {
 				// redirect to dashboard?
 			}
-	    }
+		}
 		return $comments;
 	}
 	
@@ -235,7 +253,6 @@ class Disable_WordPress_Blog {
 		remove_meta_box( 'dashboard_quick_press', 'dashboard', 'normal' );  // quick press
 		remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'normal' );  // recent drafts
 		remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );  // recent drafts
-		
 	}
 	
 	/**
