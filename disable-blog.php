@@ -25,15 +25,19 @@ if( !defined( 'ABSPATH' ) ) {
  *
  * @since 0.1.0
  */
+// For includes and whatnot
 if( !defined( 'DWPB_DIR' ) )
 	define( 'DWPB_DIR', dirname( __FILE__ ) );
 
+// For calling scripts and so forth
 if( !defined( 'DWPB_URL' ) )
 	define( 'DWPB_URL', plugins_url( '/' , __FILE__ ) );
-	
+
+// For internationalization
 if( !defined( 'DWPB_DOMAIN' ) )
 	define( 'DWPB_DOMAIN', 'disable-wordpress-blog' );
-
+	
+// To keep track of versions, useful if you need to make updates specific to versions
 define( 'DWPB_VERSION', '0.1.0' );
 
 /**
@@ -115,10 +119,12 @@ class Disable_WordPress_Blog {
 	 */
 	public function disable_feed() {
 		global $post;
-		if( $post->post_type == 'post' ) {
-			$url = home_url();
-			$message = apply_filters( 'dwpb_feed_die_message', __('No feed available, please visit our <a href="'. $url .'">homepage</a>!') );
-			wp_die( $message );
+		if( apply_filters( 'dwpb_disable_feed', true, $post ) ) {
+			if( $post->post_type == 'post' ) {
+				$url = home_url();
+				$message = apply_filters( 'dwpb_feed_die_message', __('No feed available, please visit our <a href="'. $url .'">homepage</a>!') );
+				wp_die( $message );
+			}
 		}
 	}
 	
@@ -131,8 +137,11 @@ class Disable_WordPress_Blog {
 	public function redirect_admin_pages(){
 		global $pagenow;
 		
-		if( !isset( $pagenow ) )
+		if( !isset( $pagenow ) ){
 			return;
+		} elseif( apply_filters( 'dwpb_redirect_admin_pages', true, $pagenow ) ) {
+			return;
+		}
 		
 		// Redirect Edit Post to Edit Page
 		if( $pagenow == 'edit.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ){
@@ -186,13 +195,14 @@ class Disable_WordPress_Blog {
 	 * @link http://www.paulund.co.uk/how-to-remove-links-from-wordpress-admin-bar
 	 */
 	public function remove_admin_bar_links() {
-	    global $wp_admin_bar;
+		global $wp_admin_bar;
+		
 		// If only posts support comments, then remove comment from admin bar
 		if( !$this->post_types_with_comments() )
 		    $wp_admin_bar->remove_menu('comments');
 		
 		// Remove New Post from Content
-	    $wp_admin_bar->remove_node( 'new-post' );
+		$wp_admin_bar->remove_node( 'new-post' );
 	}
 
 	/**
@@ -203,6 +213,7 @@ class Disable_WordPress_Blog {
 	 */
 	public function comment_filter( $comments ){
 		global $pagenow;
+		
 		if( !isset( $pagenow ) )
 			return $comments;
 		
@@ -214,6 +225,7 @@ class Disable_WordPress_Blog {
 				// redirect to dashboard?
 			}
 		}
+		
 		return $comments;
 	}
 	
