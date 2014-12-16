@@ -3,7 +3,7 @@
  * Plugin Name: Disable WordPress Blog
  * Plugin URI: http://joshuadnelson.com
  * Description: A plugin that disables or hides all blog-related elements of your WordPress site.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Joshua Nelson
  * Author URI: http://joshuadnelson.com
  * GitHub Plugin URI: https://github.com/joshuadavidnelson/disable-wordpress-blog
@@ -38,7 +38,7 @@ if( !defined( 'DWPB_DOMAIN' ) )
 	define( 'DWPB_DOMAIN', 'disable-wordpress-blog' );
 	
 // To keep track of versions, useful if you need to make updates specific to versions
-define( 'DWPB_VERSION', '0.1.0' );
+define( 'DWPB_VERSION', '0.2.0' );
 
 /**
  * Main Plugin Class
@@ -94,6 +94,18 @@ class Disable_WordPress_Blog {
 		
 		// Hide items with CSS
 		add_action( 'admin_head', array( $this, 'admin_styles' ) );
+		
+		// Force Reading Settings
+		add_action( 'admin_init', array( $this, 'reading_settings' ) );
+		
+		// Remove Post via Email Settings
+		add_filter( 'enable_post_by_email_configuration', '__return_false' );
+		
+		// Disable Press This Function
+		add_action( 'load-press-this.php', array( $this, 'disable_press_this' ) );
+		
+		// Remove Post Related Widgets
+		add_action( 'widgets_init', array( $this, 'remove_widgets' ) );
 	}
 	
 	/**
@@ -107,6 +119,10 @@ class Disable_WordPress_Blog {
 			$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
 			foreach( $pages as $page ) {
 				remove_menu_page( $page );
+			}
+			$subpages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'options-general.php' => 'options-writing.php' ) );
+			foreach( $subpages as $page => $subpage ) {
+				remove_submenu_page( $page, $subpage );
 			}
 		}
 	}
@@ -134,31 +150,33 @@ class Disable_WordPress_Blog {
 	 * @since 0.1.0
 	 * @link http://wordpress.stackexchange.com/questions/52114/admin-page-redirect
 	 */
-	public function redirect_admin_pages(){
+	public function redirect_admin_pages() {
 		global $pagenow;
 		
-		if( !isset( $pagenow ) ){
+		if( !isset( $pagenow ) ) {
 			return;
-		} elseif( apply_filters( 'dwpb_redirect_admin_pages', true, $pagenow ) ) {
+		} elseif( apply_filters( 'dwpb_redirect_admin_pages', false, $pagenow ) ) {
 			return;
 		}
 		
 		// Redirect Edit Post to Edit Page
-		if( $pagenow == 'edit.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ){
-			$redirect_url = apply_filters( 'dwpb_redirect_edit', admin_url('/edit.php?post_type=page' ) );
+		if( $pagenow == 'edit.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
+			$url = admin_url( '/edit.php?post_type=page' );
+			$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
 			wp_redirect( $redirect_url, 301 );
 			exit;
 		}
 		
 		// Redirect New Post to New Page
-		if( $pagenow == 'post-new.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ){
-			$redirect_url = apply_filters( 'dwpb_redirect_post_new', admin_url('/post-new.php?post_type=page' ) );
+		if( $pagenow == 'post-new.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
+			$url = admin_url('/post-new.php?post_type=page' );
+			$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
 			wp_redirect( $redirect_url, 301 );
 			exit;
 		}
 		
 		// Redirect at edit tags screen
-		if( $pagenow == 'edit-tags.php' && isset( $_GET['taxonomy'] ) && ( $_GET['taxonomy'] == 'taxonomy' || $_GET['taxonomy'] == 'category' ) ) {
+		if( $pagenow == 'edit-tags.php' && isset( $_GET['taxonomy'] ) && ( $_GET['taxonomy'] == 'tags' || $_GET['taxonomy'] == 'category' ) ) {
 			
 			// Make sure this taxonomy is only used on 'post' post type
 			$post_only_tax = false;
@@ -174,15 +192,25 @@ class Disable_WordPress_Blog {
 			// If this is a post type other than 'post' that supports categories or tags,
 			// then bail. Otherwise it is a taxonomy only used by 'post'
 			if( ! $post_only_tax ) {
-				$redirect_url = apply_filters( 'dwpb_redirect_tax_edit', admin_url( '/index.php' ) );
+				$url = admin_url( '/index.php' );
+				$redirect_url = apply_filters( 'dwpb_redirect_tax_edit', $url );
 				wp_redirect( $redirect_url, 301 );
 				exit;
 			}
 		}
 		
 		// Redirect posts-only comment queries to comments
-		if( $pagenow == 'edit-comments.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ){
-			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', admin_url( '/edit-comments.php' ) );
+		if( $pagenow == 'edit-comments.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) {
+			$url = admin_url( '/edit-comments.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
+			wp_redirect( $redirect_url, 301 );
+			exit;
+		}
+		
+		// Redirect writing options to general options
+		if( $pagenow == 'options-writing.php' ) {
+			$url = admin_url( '/options-general.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 			wp_redirect( $redirect_url, 301 );
 			exit;
 		}
@@ -198,8 +226,8 @@ class Disable_WordPress_Blog {
 		global $wp_admin_bar;
 		
 		// If only posts support comments, then remove comment from admin bar
-		if( !$this->post_types_with_comments() )
-		    $wp_admin_bar->remove_menu('comments');
+		if( ! $this->post_types_with_feature( 'comments' ) )
+		    $wp_admin_bar->remove_menu( 'comments' );
 		
 		// Remove New Post from Content
 		$wp_admin_bar->remove_node( 'new-post' );
@@ -219,38 +247,12 @@ class Disable_WordPress_Blog {
 		
 		// Filter out comments from post
 		if( is_admin() && $pagenow == 'edit-comments.php' ) {
-			if( $post_types = $this->post_types_with_comments() ) {
+			if( $post_types = $this->post_types_with_feature( 'comments' ) ) {
 				$comments->query_vars['post_type'] = $post_types;
-			} else {
-				// redirect to dashboard?
 			}
 		}
 		
 		return $comments;
-	}
-	
-	/**
-	 * Get all the post types that support comments
-	 * 
-	 * @since 0.1.0
-	 * @return array ( $post_types | bolean )
-	 */
-	public function post_types_with_comments() {
-		$post_types = get_post_types( array(), 'names' );
-		
-		$post_types_with_comments = array();
-		foreach( $post_types as $post_type ) {
-			if( post_type_supports( $post_type, 'comments' ) && $post_type != 'post' ) {
-				$post_types_with_comments[] = $post_type;
-			}
-		}
-		
-		// Return the array if there are any, otherwise false
-		if( empty( $post_types_with_comments ) ) {
-			return apply_filters( 'dwpb_post_types_supporting_comments', false );
-		} else {
-			return apply_filters( 'dwpb_post_types_supporting_comments', $post_types_with_comments );
-		}
 	}
 	
 	/**
@@ -280,7 +282,93 @@ class Disable_WordPress_Blog {
 			#dashboard_right_now .comment-count {
 				display: none;
 			}
-		</script>
+			.options-reading-php table.form-table tr {
+				display: none;
+			}
+			.options-reading-php table.form-table tr:first-child,
+			.options-reading-php table.form-table tr.option-site-visibility {
+				display: block;
+			}
+			.nav-menus-php label[for="add-post-hide"] {
+			    display: none;
+			}
+			.control-section.add-post {
+			    display: none;
+			}
+		</style>
 		<?php
+	}
+	
+	/**
+	 * Get all the post types that support comments
+	 * 
+	 * @since 0.2.0
+	 * @return array ( $post_types | bolean )
+	 */
+	public function disable_press_this() {
+		wp_die( '"Press This" functionality has been disabled.' );
+	}
+	
+	/**
+	 * Set Page for Posts option
+	 * 
+	 * If the 'show_on_front' option is set to 'posts', then set it to 'page'
+	 * and also set the page
+	 * 
+	 * @since 0.2.0
+	 */
+	public function reading_settings() {
+		if( get_option( 'show_on_front' ) == 'post' ) {
+			update_option( 'show_on_front', 'page' );
+			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 0 ) );
+			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 0 ) );
+		}
+	}
+	
+	/**
+	 * Remove post related widgets
+	 * 
+	 * @since 0.2.0
+	 */
+	public function remove_widgets() {
+		// Remove Recent Posts
+		unregister_widget( 'WP_Widget_Recent_Posts' );
+		
+		// Remove Categories Widget
+		unregister_widget( 'WP_Widget_Categories' );
+		
+		// Remove Recent Comments Widget if posts are the only type with comments
+		if( !$this->post_types_with_feature( 'comments' ) )
+			unregister_widget( 'WP_Widget_Recent_Comments' );
+		
+		// Remove Tag Cloud
+		unregister_widget( 'WP_Widget_Tag_Cloud' );
+		
+		// Remove RSS Widget
+		unregister_widget( 'WP_Widget_RSS' );
+	}
+	
+	/**
+	 * Get all the post types that support comments
+	 * 
+	 * @since 0.1.0
+	 * @return array ( $post_types | bolean )
+	 */
+	public function post_types_with_feature( $feature ) {
+		$post_types = get_post_types( array(), 'names' );
+		
+		$post_types_with_feature = array();
+		foreach( $post_types as $post_type ) {
+			if( post_type_supports( $post_type, $feature ) && $post_type != 'post' ) {
+				$post_types_with_feature[] = $post_type;
+			}
+		}
+		
+		// Return the array if there are any, otherwise false
+		if( empty( $post_types_with_feature ) ) {
+			return apply_filters( "dwpb_post_types_supporting_{$feature}", false );
+		} else {
+			return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature );
+		}
 	}
 }
