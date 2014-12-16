@@ -175,12 +175,12 @@ class Disable_WordPress_Blog {
 		
 		// Redirect at edit tags screen
 		// If this is a post type other than 'post' that supports categories or tags,
-		// then bail. Otherwise it is a taxonomy only used by 'post'
+		// then bail. Otherwise if it is a taxonomy only used by 'post'
 		// Alternatively, if this is either the edit-tags page and a taxonomy is not set
 		// and the built-in default 'post_tags' is not supported by other post types
 		if( $pagenow == 'edit-tags.php' && ( ( isset( $_GET['taxonomy'] ) && ! $this->is_taxonomy_supported( $_GET['taxonomy'] ) ) || ( !isset( $_GET['taxonomy'] ) && ! $this->is_taxonomy_supported( 'post_tag' ) ) ) ) {
 			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_tax_edit', $url );
+			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 			wp_redirect( $redirect_url, 301 );
 			exit;
 		} 
