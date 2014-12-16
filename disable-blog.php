@@ -267,21 +267,15 @@ class Disable_WordPress_Blog {
 	public function admin_styles() { ?>
 		<style>
 			#dashboard_right_now .post-count,
-			#dashboard_right_now .comment-count {
-				display: none;
-			}
+			#dashboard_right_now .comment-count,
+			.nav-menus-php label[for="add-post-hide"],
+			.control-section.add-post,
 			.options-reading-php table.form-table tr {
-				display: none;
+			    display: none;
 			}
 			.options-reading-php table.form-table tr:first-child,
 			.options-reading-php table.form-table tr.option-site-visibility {
 				display: block;
-			}
-			.nav-menus-php label[for="add-post-hide"] {
-			    display: none;
-			}
-			.control-section.add-post {
-			    display: none;
 			}
 		</style>
 		<?php
