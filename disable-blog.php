@@ -176,28 +176,16 @@ class Disable_WordPress_Blog {
 		}
 		
 		// Redirect at edit tags screen
-		if( $pagenow == 'edit-tags.php' && isset( $_GET['taxonomy'] ) && ( $_GET['taxonomy'] == 'tags' || $_GET['taxonomy'] == 'category' ) ) {
-			
-			// Make sure this taxonomy is only used on 'post' post type
-			$post_only_tax = false;
-			$taxonomy = $_GET['taxonomy'];
-			$post_types = get_post_types( array(), 'objects' );
-			foreach( $post_types as $post_type ) {
-				if( $post_type->name == 'post' )
-					continue;
-				if( in_array( $taxonomy, $post_type->taxonomies ) )
-					$post_only_tax = true;
-			}
-			
-			// If this is a post type other than 'post' that supports categories or tags,
-			// then bail. Otherwise it is a taxonomy only used by 'post'
-			if( ! $post_only_tax ) {
-				$url = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_tax_edit', $url );
-				wp_redirect( $redirect_url, 301 );
-				exit;
-			}
-		}
+		// If this is a post type other than 'post' that supports categories or tags,
+		// then bail. Otherwise it is a taxonomy only used by 'post'
+		// Alternatively, if this is either the edit-tags page and a taxonomy is not set
+		// and the built-in default 'post_tags' is not supported by other post types
+		if( $pagenow == 'edit-tags.php' && ( ( isset( $_GET['taxonomy'] ) && ! $this->is_taxonomy_supported( $_GET['taxonomy'] ) ) || ( !isset( $_GET['taxonomy'] ) && ! $this->is_taxonomy_supported( 'post_tag' ) ) ) ) {
+			$url = admin_url( '/index.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_tax_edit', $url );
+			wp_redirect( $redirect_url, 301 );
+			exit;
+		} 
 		
 		// Redirect posts-only comment queries to comments
 		if( $pagenow == 'edit-comments.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) {
@@ -234,7 +222,7 @@ class Disable_WordPress_Blog {
 	}
 
 	/**
-	 * Hide all comments on posts
+	 * Hide all comments from 'post' post type
 	 * 
 	 * @since 0.1.0
 	 * @param  (wp_query object) $comments
@@ -335,14 +323,16 @@ class Disable_WordPress_Blog {
 		unregister_widget( 'WP_Widget_Recent_Posts' );
 		
 		// Remove Categories Widget
-		unregister_widget( 'WP_Widget_Categories' );
+		if( ! $this->is_taxonomy_supported( 'category' ) )
+			unregister_widget( 'WP_Widget_Categories' );
 		
 		// Remove Recent Comments Widget if posts are the only type with comments
-		if( !$this->post_types_with_feature( 'comments' ) )
+		if( ! $this->post_types_with_feature( 'comments' ) )
 			unregister_widget( 'WP_Widget_Recent_Comments' );
 		
 		// Remove Tag Cloud
-		unregister_widget( 'WP_Widget_Tag_Cloud' );
+		if( ! $this->is_taxonomy_supported( 'post_tag' ) )
+			unregister_widget( 'WP_Widget_Tag_Cloud' );
 		
 		// Remove RSS Widget
 		unregister_widget( 'WP_Widget_RSS' );
@@ -369,6 +359,69 @@ class Disable_WordPress_Blog {
 			return apply_filters( "dwpb_post_types_supporting_{$feature}", false );
 		} else {
 			return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature );
+		}
+	}
+	
+	/**
+	 * Get post types that have a specific taxonomy
+	 *  (a combination of get_post_types and get_object_taxonomies)
+	 * 
+	 * @since 0.2.0
+	 * 
+	 * @see register_post_types(), get_post_types(), get_object_taxonomies()
+	 * 
+	 * @param string			$taxonomy	Required. The name of the feature to check against
+	 * 										post type support.
+	 * @param array | string	$args		Optional. An array of key => value arguments to match 
+	 *										against the post type objects. Default empty array.
+	 * @param string			$output		Optional. The type of output to return.
+	 * 										Accepts post type 'names' or 'objects'.
+	 *										Default 'names'.
+	 * 
+	 * @return array | boolean	A list of post type names or objects that have the taxonomy 
+	 *							or false if nothing found.
+	 */
+	public function is_taxonomy_supported( $taxonomy, $args = array(), $output = 'names' ) {
+		$post_types = get_post_types( $args, $output );
+	
+		// We just need the taxonomy name
+		if( is_object( $taxonomy ) ){
+			$taxonomy = $taxonomy->name;
+		
+		// If it's not an object or a string, it won't work, so send it back
+		} elseif( !is_string( $taxonomy ) ) {
+			return false;
+		}
+	
+		// setup the finished product
+		$post_types_with_tax = array();
+		foreach( $post_types as $post_type ) {
+			// If post types are objects
+			if( is_object( $post_type ) && $post_type->name != 'post' ) {
+				$taxonomies = get_object_taxonomies( $post_type->name, 'names' );
+				if( in_array( $taxonomy, $taxonomies ) ) {
+					$post_types_with_tax[] = $post_type;
+				}
+			// If post types are strings
+			} elseif( is_string( $post_type ) && $post_type != 'post' ) {
+				$taxonomies = get_object_taxonomies( $post_type, 'names' );
+				if( in_array( $taxonomy, $taxonomies ) ) {
+					$post_types_with_tax[] = $post_type;
+				}
+			}
+		}
+		
+		// Ability to override the results
+		$override = apply_filters( 'dwpb_taxonomy_support', null, $taxonomy, $post_types, $args, $output );
+		if( ! is_null( $override ) ) {
+			return $override;
+		}
+	
+		// If there aren't any results, return false
+		if( empty( $post_types_with_tax ) ) {
+			return false;
+		} else {
+			return $post_types_with_tax;
 		}
 	}
 }

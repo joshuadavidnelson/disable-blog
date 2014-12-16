@@ -3,7 +3,7 @@ Disable WordPress Blog
 
 A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
 
-*Note that this is a beta version, some aspects may still be in need of debugging*
+*Note that this is a beta version, some aspects may still be in need of debugging and refining*
 
 Does the following:
 - Removes 'Posts' Admin Menu
@@ -18,6 +18,8 @@ Does the following:
 - Removes 'Writing' Options from Settings Menu
 - Hides Posts on Nav Menu Admin Page
 - Removes Post Related Widgets
+
+**Note that this plugin will not delete anything and it does not make any changes to your database. Only one settings is forced: `pages_for_posts`**
 
 #### FAQ
 
