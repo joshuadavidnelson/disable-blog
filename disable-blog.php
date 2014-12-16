@@ -131,7 +131,6 @@ class Disable_WordPress_Blog {
 	 * Disable Blog feed
 	 *
 	 * @since 0.1.0
-	 * @link http://wpengineer.com/287/disable-wordpress-feed/
 	 */
 	public function disable_feed() {
 		global $post;
@@ -148,7 +147,6 @@ class Disable_WordPress_Blog {
 	 * Redirect blog-related admin pages
 	 *
 	 * @since 0.1.0
-	 * @link http://wordpress.stackexchange.com/questions/52114/admin-page-redirect
 	 */
 	public function redirect_admin_pages() {
 		global $pagenow;
@@ -247,7 +245,6 @@ class Disable_WordPress_Blog {
 	 * Remove post-related dashboard widgets
 	 *
 	 * @since 0.1.0
-	 * @link http://www.deluxeblogtips.com/2011/01/remove-dashboard-widgets-in-wordpress.html
 	 */
 	function remove_dashboard_widgets() {
 		remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' ); // recent comments
@@ -282,17 +279,16 @@ class Disable_WordPress_Blog {
 	}
 	
 	/**
-	 * Get all the post types that support comments
+	 * Kill the Press This functionality
 	 * 
 	 * @since 0.2.0
-	 * @return array ( $post_types | bolean )
 	 */
 	public function disable_press_this() {
 		wp_die( '"Press This" functionality has been disabled.' );
 	}
 	
 	/**
-	 * Set Page for Posts option
+	 * Set Page for Posts options: 'show_on_front', 'page_for_posts', 'page_on_front'
 	 * 
 	 * If the 'show_on_front' option is set to 'posts', then set it to 'page'
 	 * and also set the page
@@ -333,10 +329,11 @@ class Disable_WordPress_Blog {
 	}
 	
 	/**
-	 * Get all the post types that support comments
+	 * Get all the post types that support a featured (like 'comments')
 	 * 
 	 * @since 0.1.0
 	 * @return array ( $post_types | bolean )
+	 * @link http://codex.wordpress.org/Function_Reference/register_post_type#Arguments
 	 */
 	public function post_types_with_feature( $feature ) {
 		$post_types = get_post_types( array(), 'names' );
@@ -363,6 +360,7 @@ class Disable_WordPress_Blog {
 	 * @since 0.2.0
 	 * 
 	 * @see register_post_types(), get_post_types(), get_object_taxonomies()
+	 * @uses get_post_types(), get_object_taxonomies(), apply_filters()
 	 * 
 	 * @param string			$taxonomy	Required. The name of the feature to check against
 	 * 										post type support.
