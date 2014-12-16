@@ -5,7 +5,6 @@ Disable WordPress Blog
 **Tested up to:** 4.0.1
 **Stable branch:** master
 **License:** GPLv2 or later
-**License URI:** http://www.gnu.org/licenses/gpl-2.0.html
 
 ## Description
 A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
