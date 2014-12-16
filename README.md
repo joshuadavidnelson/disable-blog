@@ -7,21 +7,21 @@ A plugin to disable the blog functionality of WordPress (by hiding, removing, an
 
 Does the following:
 - Removes 'Posts' Admin Menu
-- Disables the Feed
-- Redirects New Post and Edit Post admin pages to New Page and Edit Page admin pages
-- Redirects Comments admin page with query variable for 'post' post_type to main comments page
+- Disables the Feed for Posts
+- Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages
+- Redirects 'Comments' admin page with query variable `post_type=post` to main comments page
+- Filters out the 'post' post type fromm 'Comments' admin page
 - Removes Post from '+New' admin bar menu
-- Filters out the 'post' post type form comments admin page
-- Removes post related dashboard widgets
-- Hides number of posts on Activity dashboard widget
-- Redirects 'Writing' Options to General Options
+- Removes post-related dashboard widgets
+- Hides number of posts and comment count on Activity dashboard widget
 - Removes 'Writing' Options from Settings Menu
-- Hides Posts on Nav Menu Admin Page
+- Redirects 'Writing' Options to General Options
+- Hides 'Posts' options on 'Menus' admin page
 - Removes Post Related Widgets
 - Disables "Press This" functionality
-- Removes "Post By Email" configuation
+- Disables "Post By Email" functionality
 - Forces Reading Settings: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
-- Hides other reading options, except Search Engine Visibilty
+- Hides other post-related reading options, except Search Engine Visibilty
 
 **Note that this plugin will not delete anything and it does not make any changes to your database.** 
 
