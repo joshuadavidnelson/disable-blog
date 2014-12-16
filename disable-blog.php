@@ -80,8 +80,11 @@ class Disable_WordPress_Blog {
 		add_action('do_feed_rss2', array( $this, 'disable_feed' ), 1);
 		add_action('do_feed_atom', array( $this, 'disable_feed' ), 1);
 		
-		// Redirection Admin Page
+		// Redirect Admin Page
 		add_action( 'admin_init', array( $this, 'redirect_admin_pages' ) );
+		
+		// Redirect Single Posts
+		add_action( 'template_redirect', array( $this, 'redirect_posts' ) );
 		
 		// Remove Admin Bar Links
 		add_action( 'wp_before_admin_bar_render', array( $this, 'remove_admin_bar_links' ) );
@@ -178,7 +181,7 @@ class Disable_WordPress_Blog {
 		// then bail. Otherwise if it is a taxonomy only used by 'post'
 		// Alternatively, if this is either the edit-tags page and a taxonomy is not set
 		// and the built-in default 'post_tags' is not supported by other post types
-		if( $pagenow == 'edit-tags.php' && ( ( isset( $_GET['taxonomy'] ) && ! $this->is_taxonomy_supported( $_GET['taxonomy'] ) ) || ( !isset( $_GET['taxonomy'] ) && ! $this->is_taxonomy_supported( 'post_tag' ) ) ) ) {
+		if( $pagenow == 'edit-tags.php' && ( ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) || ( !isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( 'post_tag' ) ) ) ) {
 			$url = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 			wp_redirect( $redirect_url, 301 );
@@ -199,6 +202,51 @@ class Disable_WordPress_Blog {
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 			wp_redirect( $redirect_url, 301 );
 			exit;
+		}
+	}
+	
+	/**
+	 * Redirect single post pages
+	 * 
+	 * @since 0.2.0
+	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
+	 */
+	public function redirect_posts() {
+		if( is_admin() )
+			return;
+		
+		if( is_singular( 'post' ) && ! is_front_page() ) {
+			
+			global $post;
+			$url = home_url();
+			// filter all posts
+			$redirect_url = apply_filters( "dwpb_redirect_posts", $url, $post );
+			// filter specific post
+			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
+			wp_redirect( $redirect_url, 301 );
+			exit();
+			
+		} elseif( is_tag() && ! $this->post_types_with_tax( 'post_tag' ) ) {
+			
+			$url = home_url();
+			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
+			wp_redirect( $redirect_url, 301 );
+			exit();
+			
+		} elseif( is_category() && ! $this->post_types_with_tax( 'category' ) ) {
+			
+			$url = home_url();
+			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
+			wp_redirect( $redirect_url, 301 );
+			exit();
+			
+		} elseif( is_post_type_archive( 'post' ) ) {
+			
+			$url = home_url();
+			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
+			wp_redirect( $redirect_url, 301 );
+			exit();
+			
 		}
 	}
 	
@@ -313,7 +361,7 @@ class Disable_WordPress_Blog {
 		unregister_widget( 'WP_Widget_Recent_Posts' );
 		
 		// Remove Categories Widget
-		if( ! $this->is_taxonomy_supported( 'category' ) )
+		if( ! $this->post_types_with_tax( 'category' ) )
 			unregister_widget( 'WP_Widget_Categories' );
 		
 		// Remove Recent Comments Widget if posts are the only type with comments
@@ -321,7 +369,7 @@ class Disable_WordPress_Blog {
 			unregister_widget( 'WP_Widget_Recent_Comments' );
 		
 		// Remove Tag Cloud
-		if( ! $this->is_taxonomy_supported( 'post_tag' ) )
+		if( ! $this->post_types_with_tax( 'post_tag' ) )
 			unregister_widget( 'WP_Widget_Tag_Cloud' );
 		
 		// Remove RSS Widget
@@ -373,7 +421,7 @@ class Disable_WordPress_Blog {
 	 * @return array | boolean	A list of post type names or objects that have the taxonomy 
 	 *							or false if nothing found.
 	 */
-	public function is_taxonomy_supported( $taxonomy, $args = array(), $output = 'names' ) {
+	public function post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 		$post_types = get_post_types( $args, $output );
 	
 		// We just need the taxonomy name

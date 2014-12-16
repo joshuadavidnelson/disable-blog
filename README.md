@@ -13,6 +13,7 @@ A plugin to disable the blog functionality of WordPress (by hiding, removing, an
 
 Does the following:
 - Removes 'Posts' Admin Menu
+- Removes 'post' post type from most queries
 - Disables the Feed for Posts
 - Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages
 - Redirects 'Comments' admin page with query variable `post_type=post` to main comments page
@@ -39,3 +40,6 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then t
  - This could be done, but other post types (like Pages) may have comment support. If you would like to disable comments, try the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin
 2. I want to delete my posts and comments
  - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
+
+##### Todo
+- Redirect all post pages and archives to homepage
