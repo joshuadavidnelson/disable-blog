@@ -23,7 +23,7 @@ Does the following:
 - Forces Reading Settings: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
 - Hides other post-related reading options, except Search Engine Visibilty
 
-**Note that this plugin will not delete anything and it does not make any changes to your database.** 
+**Note that this plugin will not delete anything, any existing posts, comments, categories and tags will remain in your database.** 
 
 Only three settings are forced: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
 
