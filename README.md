@@ -18,10 +18,18 @@ Does the following:
 - Removes 'Writing' Options from Settings Menu
 - Hides Posts on Nav Menu Admin Page
 - Removes Post Related Widgets
+- Disables "Press This" functionality
+- Removes "Post By Email" configuation
+- Forces Reading Settings: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
+- Hides other reading options, except Search Engine Visibilty
 
-**Note that this plugin will not delete anything and it does not make any changes to your database. Only one settings is forced: `pages_for_posts`**
+**Note that this plugin will not delete anything and it does not make any changes to your database.** 
+
+Only three settings are forced: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
 
 #### FAQ
 
 1. Why Not Disable Comments Entirely?
  - This could be done, but other post types (like Pages) may have comment support. If you would like to disable comments, try the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin
+2. I want to delete my posts and comments
+ - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
