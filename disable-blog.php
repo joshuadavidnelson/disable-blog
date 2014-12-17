@@ -538,9 +538,9 @@ class Disable_WordPress_Blog {
 	function log_me( $message ) {
 	    if ( WP_DEBUG === true ) {
 	        if ( is_array( $message ) || is_object( $message ) ) {
-	            error_log( 'Simple Genesis Layout Error: ' . print_r( $message, true ) );
+	            error_log( 'Disable Blog Plugin Error: ' . print_r( $message, true ) );
 	        } else {
-	            error_log( 'Simple Genesis Layout Error: ' . $message );
+	            error_log( 'Disable Blog Plugin Error: ' . $message );
 	        }
 	    }
 	}
