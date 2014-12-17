@@ -236,11 +236,11 @@ class Disable_WordPress_Blog {
 			
 		} elseif( is_home() ) {
 			
-			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
+			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
 			
 		} elseif( is_date() ) {
 			
-			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
+			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
 			
 		}
 		
