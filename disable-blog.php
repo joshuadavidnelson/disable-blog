@@ -70,6 +70,9 @@ class Disable_WordPress_Blog {
 		// Hooks are useful, here's one
 		do_action( 'dwpb_init' );
 		
+		// Plugin Links
+		add_filter( 'plugin_row_meta', array( $this, 'plugin_links' ), 10, 2 );
+		
 		// Hide Posts Page from Admin Menu
 		add_action( 'admin_menu', array( $this, 'remove_menu_pages' ) );
 		
@@ -502,5 +505,51 @@ class Disable_WordPress_Blog {
 		} else {
 			return $post_types_with_tax;
 		}
+	}
+}
+	
+	/**
+	 * Add various links to plugin page
+	 *
+	 * @since  0.2.0
+	 *
+	 * @param  $links
+	 * @param  $file
+	 *
+	 * @return strings plugin links
+	 */
+	function plugin_links( $links, $file ) {
+	    static $this_plugin;
+	
+		/** Capability Check */
+		if( ! current_user_can( 'install_plugins' ) ) 
+			return $links;
+	
+		if( !$this_plugin ) {
+			$this_plugin = plugin_basename(__FILE__);
+		}
+	
+		if( $file == $this_plugin ) {
+			$links[] = '<a href="http://wordpress.org/support/plugin/disable-blog" title="' . __( 'Support', DWPB_DOMAIN ) . '">' . __( 'Support', DWPB_DOMAIN ) . '</a>';
+	
+			$links[] = '<a href="http://jdn.im/donate" title="' . __( 'Donate', DWPB_DOMAIN ) . '">' . __( 'Donate', DWPB_DOMAIN ) . '</a>';
+		}
+		
+		return $links;
+	}
+	
+	/**
+	 * Log any errors.
+	 *
+	 * @since 0.2.0
+	 */	
+	function log_me( $message ) {
+	    if ( WP_DEBUG === true ) {
+	        if ( is_array( $message ) || is_object( $message ) ) {
+	            error_log( 'Simple Genesis Layout Error: ' . print_r( $message, true ) );
+	        } else {
+	            error_log( 'Simple Genesis Layout Error: ' . $message );
+	        }
+	    }
 	}
 }
