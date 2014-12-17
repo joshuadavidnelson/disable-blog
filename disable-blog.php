@@ -86,6 +86,9 @@ class Disable_WordPress_Blog {
 		// Redirect Single Posts
 		add_action( 'template_redirect', array( $this, 'redirect_posts' ) );
 		
+		// Modify Query
+		add_action( 'pre_get_posts', array( $this, 'modify_query' ) );
+		
 		// Remove Admin Bar Links
 		add_action( 'wp_before_admin_bar_render', array( $this, 'remove_admin_bar_links' ) );
 		
@@ -248,6 +251,42 @@ class Disable_WordPress_Blog {
 			wp_redirect( esc_url( $redirect_url ), 301 );
 			exit();
 		}
+	}
+	
+	/**
+	 * Modify query
+	 * 
+	 * @since 0.2.0
+	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
+	 * @link http://stackoverflow.com/questions/7225070/php-array-delete-by-value-not-key#7225113
+	 */
+	public function modify_query( $query ) {
+		if( is_admin() || ! $query->is_main_query() )
+			return;
+		
+		if( $query->is_search() ) {
+			$post_types = $query->get( 'post_type' );
+			if( is_array( $post_types ) && in_array( 'post', $post_types ) ) {
+				if( ( $key = array_search( 'post', $post_types ) ) !== false) {
+					unset( $post_types[$key] );
+				
+					if( empty( $post_types ) ) {
+						echo 'doesn\'t work';
+					} else {
+						$query->set( 'post_type', $post_types );
+					}
+				} 
+			} elseif( is_string( $post_types ) ) {
+				$query->set( 'post_type', 'page' );
+			} 
+		}
+
+		/*
+		 TODO:
+		  - Modify query to either a) remove posts in all cases
+		  -  or b) selectively remove 'post' post type
+		  -  or c) cache all existing post ids, add to 'post__not_in' query variable
+		*/
 	}
 	
 	/**
