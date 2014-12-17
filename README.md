@@ -17,6 +17,7 @@ Does the following:
 - Disables the Feed for Posts
 - Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages
 - Redirects 'Comments' admin page with query variable `post_type=post` to main comments page
+- Redirects Single Posts, Post Archives, Tag & Category archives to home page (the latter two are only redirected if 'post' post type is the only post type associated with it)
 - Filters out the 'post' post type fromm 'Comments' admin page
 - Removes Post from '+New' admin bar menu
 - Removes post-related dashboard widgets

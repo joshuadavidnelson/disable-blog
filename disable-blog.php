@@ -215,38 +215,38 @@ class Disable_WordPress_Blog {
 		if( is_admin() )
 			return;
 		
-		if( is_singular( 'post' ) && ! is_front_page() ) {
+		$url = home_url();
+		if( is_singular( 'post' ) ) {
 			
 			global $post;
-			$url = home_url();
-			// filter all posts
 			$redirect_url = apply_filters( "dwpb_redirect_posts", $url, $post );
-			// filter specific post
 			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
-			wp_redirect( $redirect_url, 301 );
-			exit();
 			
 		} elseif( is_tag() && ! $this->post_types_with_tax( 'post_tag' ) ) {
 			
-			$url = home_url();
 			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit();
 			
 		} elseif( is_category() && ! $this->post_types_with_tax( 'category' ) ) {
 			
-			$url = home_url();
 			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit();
 			
 		} elseif( is_post_type_archive( 'post' ) ) {
 			
-			$url = home_url();
 			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit();
 			
+		} elseif( is_home() ) {
+			
+			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
+			
+		} elseif( is_date() ) {
+			
+			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
+			
+		}
+		
+		if( isset( $redirect_url ) ) {
+			wp_redirect( esc_url( $redirect_url ), 301 );
+			exit();
 		}
 	}
 	
