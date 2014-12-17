@@ -58,6 +58,7 @@ class Disable_WordPress_Blog {
 		
 		// Plugin Base
 		add_action( 'plugins_loaded', array( $this, 'init' ) );
+		
 	}
 	
 	/**
@@ -146,8 +147,10 @@ class Disable_WordPress_Blog {
 		if( apply_filters( 'dwpb_disable_feed', true, $post ) ) {
 			if( $post->post_type == 'post' ) {
 				$url = home_url();
-				$message = apply_filters( 'dwpb_feed_die_message', __('No feed available, please visit our <a href="'. $url .'">homepage</a>!') );
-				wp_die( $message );
+				//$message = apply_filters( 'dwpb_feed_die_message', __('No feed available, please visit our <a href="'. $url .'">homepage</a>!') );
+				//wp_die( $message );
+				$redirect_url = apply_filters( 'dwpb_redirect_feeds', $url );
+				wp_redirect( $redirect_url, 301 );
 			}
 		}
 	}
@@ -267,29 +270,19 @@ class Disable_WordPress_Blog {
 		if( is_admin() || ! $query->is_main_query() )
 			return;
 		
+		// Remove 'post' post_type from search results, replace with page
 		if( $query->is_search() ) {
-			$post_types = $query->get( 'post_type' );
-			if( is_array( $post_types ) && in_array( 'post', $post_types ) ) {
-				if( ( $key = array_search( 'post', $post_types ) ) !== false) {
-					unset( $post_types[$key] );
-				
-					if( empty( $post_types ) ) {
-						echo 'doesn\'t work';
-					} else {
-						$query->set( 'post_type', $post_types );
-					}
-				} 
-			} elseif( is_string( $post_types ) ) {
-				$query->set( 'post_type', 'page' );
-			} 
+			$in_search_post_types = get_post_types( array( 'exclude_from_search' => false ) );
+			if( is_array( $in_search_post_types ) && in_array( 'post', $in_search_post_types ) ) {
+				unset( $in_search_post_types[ 'post' ] );
+				$set_to = apply_filters( 'dwpb_set_search_post_types', $in_search_post_types, $query );
+				if( ! empty( $set_to ) ) {
+					$query->set( 'post_type', $set_to );
+				}
+			}
 		}
-
-		/*
-		 TODO:
-		  - Modify query to either a) remove posts in all cases
-		  -  or b) selectively remove 'post' post type
-		  -  or c) cache all existing post ids, add to 'post__not_in' query variable
-		*/
+		
+		// TODO: If query var for post type is set to post, unset or redirect?
 	}
 	
 	/**
@@ -506,7 +499,6 @@ class Disable_WordPress_Blog {
 			return $post_types_with_tax;
 		}
 	}
-}
 	
 	/**
 	 * Add various links to plugin page
