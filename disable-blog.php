@@ -409,6 +409,12 @@ class Disable_WordPress_Blog {
 		
 		// Remove RSS Widget
 		unregister_widget( 'WP_Widget_RSS' );
+		
+		// Remove Archive Widget
+		unregister_widget( 'WP_Widget_Archives' );
+		
+		// Remove Calendar Widget
+		unregister_widget( 'WP_Widget_Calendar' );
 	}
 	
 	/**
