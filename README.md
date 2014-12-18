@@ -43,4 +43,4 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then t
  - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
 ##### Todo
-- Redirect all post pages and archives to homepage
+- Enhanced support for tags and categories with custom post types (replace the count, tag cloud, etc to exclude posts)
