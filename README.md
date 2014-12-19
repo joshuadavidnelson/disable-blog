@@ -44,3 +44,8 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then t
 
 ##### Todo
 - Redirect all post pages and archives to homepage
+- Remove posts from Media Library "uploaded to" column
+- Remove posts from Author Archive Template
+- Change count in category and tag screen, if taxonomies are supported by another post type
+- Change tag cloud in similar condition as above
+- 
