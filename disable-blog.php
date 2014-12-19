@@ -125,15 +125,15 @@ class Disable_WordPress_Blog {
 	 * @link http://wordpress.stackexchange.com/questions/57464/remove-posts-from-admin-but-show-a-custom-post
 	 */
 	public function remove_menu_pages() {
-		if( apply_filters( 'dwpb_remove_menu_pages', true ) ) {
-			$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
-			foreach( $pages as $page ) {
-				remove_menu_page( $page );
-			}
-			$subpages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'options-general.php' => 'options-writing.php' ) );
-			foreach( $subpages as $page => $subpage ) {
-				remove_submenu_page( $page, $subpage );
-			}
+		// Menu Pages
+		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
+		foreach( $pages as $page ) {
+			remove_menu_page( $page );
+		}
+		// Submenu Pages
+		$subpages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'options-general.php' => 'options-writing.php' ) );
+		foreach( $subpages as $page => $subpage ) {
+			remove_submenu_page( $page, $subpage );
 		}
 	}
 	
