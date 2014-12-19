@@ -351,7 +351,8 @@ class Disable_WordPress_Blog {
 			.nav-menus-php label[for="add-post-hide"],
 			.control-section.add-post,
 			.options-reading-php table.form-table tr,
-			.welcome-icon.welcome-write-blog {
+			.welcome-icon.welcome-write-blog,
+			.users-php .column-posts {
 			    display: none;
 			}
 			<?php if( ! $this->post_types_with_feature( 'comments' ) ) { echo 'a.welcome-icon.welcome-comments {display: none;}'; } ?>
