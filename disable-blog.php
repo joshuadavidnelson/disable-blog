@@ -330,11 +330,27 @@ class Disable_WordPress_Blog {
 	 * @since 0.1.0
 	 */
 	function remove_dashboard_widgets() {
-		remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' ); // recent comments
-		remove_meta_box( 'dashboard_incoming_links', 'dashboard', 'normal' );  // incoming links
-		remove_meta_box( 'dashboard_quick_press', 'dashboard', 'normal' );  // quick press
-		remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'normal' );  // recent drafts
-		remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );  // recent drafts
+		if( apply_filters( 'dwpb_disable_dashboard_wigets', true ) ) {
+			// recent comments
+			if( apply_filters( 'dwpb_disable_dashboard_recent_comments', true ) && ! $this->post_types_with_feature( 'comments' ) )
+				remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' );
+			
+			// incoming links
+			if( apply_filters( 'dwpb_disable_dashboard_incoming_links', true ) )
+				remove_meta_box( 'dashboard_incoming_links', 'dashboard', 'normal' );
+			
+			// quick press
+			if( apply_filters( 'dwpb_disable_dashboard_quick_press', true ) )
+				remove_meta_box( 'dashboard_quick_press', 'dashboard', 'normal' );
+			
+			// recent drafts
+			if( apply_filters( 'dwpb_disable_dashboard_recent_drafts', true ) )
+				remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'normal' );
+			
+			// activity
+			if( apply_filters( 'dwpb_disable_dashboard_activity', true ) )
+				remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
+		}
 	}
 	
 	/**
