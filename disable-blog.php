@@ -350,9 +350,11 @@ class Disable_WordPress_Blog {
 			#dashboard_right_now .comment-count,
 			.nav-menus-php label[for="add-post-hide"],
 			.control-section.add-post,
-			.options-reading-php table.form-table tr {
+			.options-reading-php table.form-table tr,
+			.welcome-icon.welcome-write-blog {
 			    display: none;
 			}
+			<?php if( ! $this->post_types_with_feature( 'comments' ) ) { echo 'a.welcome-icon.welcome-comments {display: none;}'; } ?>
 			.options-reading-php table.form-table tr:first-child,
 			.options-reading-php table.form-table tr.option-site-visibility {
 				display: block;
