@@ -9,7 +9,7 @@ Disable WordPress Blog
 ## Description
 A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
 
-*Note that this is a beta version, some aspects may still be in need of debugging and refining*
+*This is a beta version, some aspects may still be in need of refining*
 
 Does the following:
 - Removes 'Posts' Admin Menu
@@ -48,4 +48,6 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then t
 - Remove posts from Author Archive Template
 - Change count in category and tag screen, if taxonomies are supported by another post type
 - Change tag cloud in similar condition as above
-- 
+- Remove Feeds from Meta Widget
+- Disable front-end post query
+- Options Page
