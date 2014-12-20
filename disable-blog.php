@@ -280,7 +280,17 @@ class Disable_WordPress_Blog {
 			}
 		}
 		
-		// TODO: Remove posts from Author Page
+		// Remove Posts from Author Page
+		if( $query->is_author() ) {
+			$author_post_types = get_post_types( array( 'publicly_queryable' => true, 'exclude_from_search' => false ) );
+			if( is_array( $author_post_types ) && in_array( 'post', $author_post_types ) ) {
+				unset( $author_post_types[ 'post' ] );
+				$set_to = apply_filters( 'dwpb_author_post_types', $author_post_types, $query );
+				if( ! empty( $set_to ) ) {
+					$query->set( 'post_type', $set_to );
+				}
+			}
+		}
 	}
 	
 	/**

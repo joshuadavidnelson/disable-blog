@@ -30,6 +30,7 @@ Does the following:
 - Disables "Post By Email" functionality
 - Forces Reading Settings: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
 - Hides other post-related reading options, except Search Engine Visibilty
+- Removes post from author archive query
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
@@ -45,9 +46,9 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then t
 ##### Todo
 - Redirect all post pages and archives to homepage
 - Remove posts from Media Library "uploaded to" column
-- Remove posts from Author Archive Template
 - Change count in category and tag screen, if taxonomies are supported by another post type
 - Change tag cloud in similar condition as above
 - Remove Feeds from Meta Widget
 - Disable front-end post query
+- Customizer?
 - Options Page
