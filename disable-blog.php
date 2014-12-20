@@ -273,7 +273,7 @@ class Disable_WordPress_Blog {
 			$in_search_post_types = get_post_types( array( 'exclude_from_search' => false ) );
 			if( is_array( $in_search_post_types ) && in_array( 'post', $in_search_post_types ) ) {
 				unset( $in_search_post_types[ 'post' ] );
-				$set_to = apply_filters( 'dwpb_set_search_post_types', $in_search_post_types, $query );
+				$set_to = apply_filters( 'dwpb_search_post_types', $in_search_post_types, $query );
 				if( ! empty( $set_to ) ) {
 					$query->set( 'post_type', $set_to );
 				}
