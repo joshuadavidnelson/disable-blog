@@ -62,8 +62,6 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 				self::$instance->setup_constants();
 				self::$instance->init();
 				
-				// add_action( 'plugins_loaded', array( self::$instance, 'load_textdomain' ) );
-				
 			}
 			return self::$instance;
 		}
@@ -617,21 +615,6 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		
 			return $links;
 		}
-	
-		/**
-		 * Log any errors.
-		 *
-		 * @since 0.2.0
-		 */	
-		function log_me( $message ) {
-		    if ( WP_DEBUG === true ) {
-		        if ( is_array( $message ) || is_object( $message ) ) {
-		            error_log( 'Disable Blog Plugin Error: ' . print_r( $message, true ) );
-		        } else {
-		            error_log( 'Disable Blog Plugin Error: ' . $message );
-		        }
-		    }
-		}
 	}
 }
 
@@ -642,7 +625,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
  * Use this function like you would a global variable, except without needing
  * to declare the global.
  *
- * Example: <?php $eec = DWPB(); ?>
+ * Example: <?php $dwpb = DWPB(); ?>
  *
  * @since 0.1.0
  * @return object The one true Disable_WordPress_Blog Instance
