@@ -2,7 +2,7 @@ Disable WordPress Blog
 ======================
 
 **Requires at least:** 3.1.0
-**Tested up to:** 4.0.1
+**Tested up to:** 4.1.0
 **Stable branch:** master
 **License:** GPLv2 or later
 
@@ -44,11 +44,9 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then t
  - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
 ##### Todo
-- Redirect all post pages and archives to homepage
+- Enhanced support for tags and categories with custom post types (replace the count, tag cloud, etc to exclude posts)
 - Remove posts from Media Library "uploaded to" column
 - Change count in category and tag screen, if taxonomies are supported by another post type
 - Change tag cloud in similar condition as above
 - Remove Feeds from Meta Widget
 - Disable front-end post query
-- Customizer?
-- Options Page

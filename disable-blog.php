@@ -37,7 +37,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 
 		/**
 		 * @var Disable_WordPress_Blog The one true Disable_WordPress_Blog
-		 * @since 0.1.0
+		 * @since 0.3.0
 		 */
 		private static $instance;
 
@@ -133,11 +133,11 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 			add_action( 'admin_menu', array( $this, 'remove_menu_pages' ) );
 		
 			// Disable Feed
-			add_action('do_feed', array( $this, 'disable_feed' ), 1);
-			add_action('do_feed_rdf', array( $this, 'disable_feed' ), 1);
-			add_action('do_feed_rss', array( $this, 'disable_feed' ), 1);
-			add_action('do_feed_rss2', array( $this, 'disable_feed' ), 1);
-			add_action('do_feed_atom', array( $this, 'disable_feed' ), 1);
+			add_action( 'do_feed', array( $this, 'disable_feed' ), 1 );
+			add_action( 'do_feed_rdf', array( $this, 'disable_feed' ), 1 );
+			add_action( 'do_feed_rss', array( $this, 'disable_feed' ), 1 );
+			add_action( 'do_feed_rss2', array( $this, 'disable_feed' ), 1 );
+			add_action( 'do_feed_atom', array( $this, 'disable_feed' ), 1 );
 		
 			// Redirect Admin Page
 			add_action( 'admin_init', array( $this, 'redirect_admin_pages' ) );
@@ -202,10 +202,13 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 			if( apply_filters( 'dwpb_disable_feed', true, $post ) ) {
 				if( $post->post_type == 'post' ) {
 					$url = home_url();
-					//$message = apply_filters( 'dwpb_feed_die_message', __('No feed available, please visit our <a href="'. $url .'">homepage</a>!') );
-					//wp_die( $message );
-					$redirect_url = apply_filters( 'dwpb_redirect_feeds', $url );
-					wp_redirect( $redirect_url, 301 );
+					if( apply_filters( 'dwpb_feed_message', false, $post ) ) {
+						$message = apply_filters( 'dwpb_feed_die_message', __( 'No feed available, please visit our <a href="'. $url .'">homepage</a>!', DWPB_DOMAIN ) );
+						wp_die( $message );
+					} else {
+						$redirect_url = apply_filters( 'dwpb_redirect_feeds', $url );
+						wp_redirect( $redirect_url, 301 );
+					}
 				}
 			}
 		}
@@ -533,8 +536,9 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		 * 
 		 * @param string			$taxonomy	Required. The name of the feature to check against
 		 * 										post type support.
-		 * @param array | string	$args		Optional. An array of key => value arguments to match 
-		 *										against the post type objects. Default empty array.
+		 * @param array | string	$args		Optional. An array of key => value arguments to 
+		 * 										match against the post type objects.
+		 * 										Default empty array.
 		 * @param string			$output		Optional. The type of output to return.
 		 * 										Accepts post type 'names' or 'objects'.
 		 *										Default 'names'.
@@ -627,7 +631,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
  *
  * Example: <?php $dwpb = DWPB(); ?>
  *
- * @since 0.1.0
+ * @since 0.3.0
  * @return object The one true Disable_WordPress_Blog Instance
  */
 function DWPB() {
