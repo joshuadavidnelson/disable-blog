@@ -58,6 +58,9 @@ e.g.
 
 == Changelog ==
 
+= 0.3.1 =
+* Add WordPress readme.txt
+
 = 0.3.0 =
 * Singleton Class
 * Clean up documentation
