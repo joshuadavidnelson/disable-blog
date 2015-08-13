@@ -3,7 +3,7 @@ Disable WordPress Blog
 
 **Requires at least:** 3.1.0
 **Tested up to:** 4.1.0
-**Stable branch:** master
+**Stable version:** 0.3.1
 **License:** GPLv2 or later
 
 ## Description

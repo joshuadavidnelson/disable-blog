@@ -3,7 +3,7 @@
  * Plugin Name: Disable WordPress Blog
  * Plugin URI: http://joshuadnelson.com
  * Description: A plugin that disables or hides all blog-related elements of your WordPress site.
- * Version: 0.3.0
+ * Version: 0.3.1
  * Author: Joshua Nelson
  * Author URI: http://joshuadnelson.com
  * GitHub Plugin URI: https://github.com/joshuadavidnelson/disable-wordpress-blog
@@ -13,7 +13,7 @@
  * @package 	Disable_WordPress_Blog
  * @category 	Core
  * @author 		Joshua David Nelson
- * @version 	0.3.0
+ * @version 	0.3.1
  * @license 	http://www.gnu.org/licenses/gpl-2.0.html GPLv2.0+
  */
 
@@ -112,7 +112,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 				define( 'DWPB_DOMAIN', 'disable-wordpress-blog' );
 	
 			// To keep track of versions, useful if you need to make updates specific to versions
-			define( 'DWPB_VERSION', '0.3.0' );
+			define( 'DWPB_VERSION', '0.3.1' );
 		}
 		
 		
