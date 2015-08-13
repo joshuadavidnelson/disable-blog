@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Disable WordPress Blog
+ * Plugin Name: Disable Blog
  * Plugin URI: http://joshuadnelson.com
  * Description: A plugin that disables or hides all blog-related elements of your WordPress site.
  * Version: 0.3.1
@@ -10,7 +10,7 @@
  * GitHub Branch: master
  * License: GPL v2.0
  *
- * @package 	Disable_WordPress_Blog
+ * @package 	Disable_Blog
  * @category 	Core
  * @author 		Joshua David Nelson
  * @version 	0.3.1
@@ -31,34 +31,34 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @since 0.1.0
  */
-if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
-	class Disable_WordPress_Blog {
+if ( ! class_exists( 'Disable_Blog' ) ) {
+	class Disable_Blog {
 		/** Singleton */
 
 		/**
-		 * @var Disable_WordPress_Blog The one true Disable_WordPress_Blog
+		 * @var Disable_Blog The one true Disable_Blog
 		 * @since 0.3.0
 		 */
 		private static $instance;
 
 		/**
-		 * Main Disable_WordPress_Blog Instance
+		 * Main Disable_Blog Instance
 		 *
-		 * Insures that only one instance of Disable_WordPress_Blog exists in memory at any one
+		 * Insures that only one instance of Disable_Blog exists in memory at any one
 		 * time. Also prevents needing to define globals all over the place.
 		 *
 		 * @since 0.3.0
 		 * @static
 		 * @staticvar array $instance
-		 * @uses Disable_WordPress_Blog::setup_constants() Setup the constants needed
-		 * @uses Disable_WordPress_Blog::includes() Include the required files
-		 * @uses Disable_WordPress_Blog::load_textdomain() load the language files
+		 * @uses Disable_Blog::setup_constants() Setup the constants needed
+		 * @uses Disable_Blog::includes() Include the required files
+		 * @uses Disable_Blog::load_textdomain() load the language files
 		 * @see EEC()
-		 * @return The one true Disable_WordPress_Blog
+		 * @return The one true Disable_Blog
 		 */
 		public static function instance() {
-			if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Disable_WordPress_Blog ) ) {
-				self::$instance = new Disable_WordPress_Blog;
+			if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Disable_Blog ) ) {
+				self::$instance = new Disable_Blog;
 				self::$instance->setup_constants();
 				self::$instance->init();
 				
@@ -623,7 +623,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 }
 
 /**
- * The main function responsible for returning the one true Disable_WordPress_Blog
+ * The main function responsible for returning the one true Disable_Blog
  * Instance to functions everywhere.
  *
  * Use this function like you would a global variable, except without needing
@@ -632,10 +632,10 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
  * Example: <?php $dwpb = DWPB(); ?>
  *
  * @since 0.3.0
- * @return object The one true Disable_WordPress_Blog Instance
+ * @return object The one true Disable_Blog Instance
  */
 function DWPB() {
-	return Disable_WordPress_Blog::instance();
+	return Disable_Blog::instance();
 }
 
 // Get DWPB Running
