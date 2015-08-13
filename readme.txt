@@ -1,4 +1,4 @@
-=== Plugin Name ===
+=== Disable Blog ===
 Contributors: joshuadnelson
 Donate link: http://jdn.im/donate
 Tags: blog, disable settings
