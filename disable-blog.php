@@ -277,10 +277,11 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 		 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 		 */
 		public function redirect_posts() {
-			if( is_admin() )
+			if( is_admin() || !get_option( 'page_on_front' ) )
 				return;
-		
-			$url = home_url();
+			
+			$page_id = get_option( 'page_on_front' );
+			$url = get_permalink( $page_id );
 			if( is_singular( 'post' ) ) {
 			
 				global $post;
@@ -300,7 +301,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 				$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
 			
 			} elseif( is_home() ) {
-			
+				
 				$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
 			
 			} elseif( is_date() ) {
@@ -308,7 +309,9 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 				$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
 			
 			}
-		
+			
+			// TODO: create a check to verify the redirect url does not match the current page, if it does, then bounce
+			
 			if( isset( $redirect_url ) && apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
 				wp_redirect( esc_url( $redirect_url ), 301 );
 				exit();
