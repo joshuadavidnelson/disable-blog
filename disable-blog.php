@@ -277,7 +277,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 		 */
 		public function redirect_posts() {
-			if( is_admin() )
+			if( is_admin() || is_home() )
 				return;
 		
 			$url = home_url();
