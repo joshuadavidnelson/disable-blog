@@ -1,4 +1,4 @@
-Disable WordPress Blog
+Disable Blog
 ======================
 
 **Requires at least:** 3.1.0
