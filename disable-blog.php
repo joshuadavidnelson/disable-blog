@@ -246,7 +246,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			// then bail. Otherwise if it is a taxonomy only used by 'post'
 			// Alternatively, if this is either the edit-tags page and a taxonomy is not set
 			// and the built-in default 'post_tags' is not supported by other post types
-			if( $pagenow == 'edit-tags.php' && ( ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) || ( !isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( 'post_tag' ) ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true )) {
+			if( $pagenow == 'edit-tags.php' && ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
 				$url = admin_url( '/index.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 				wp_redirect( $redirect_url, 301 );
@@ -531,23 +531,20 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 		/**
 		 * Get post types that have a specific taxonomy
 		 *  (a combination of get_post_types and get_object_taxonomies)
+		 *
+		 * Basically, we need to know if there are post types, other than 'post'
+		 * that support the taxonomy.
 		 * 
 		 * @since 0.2.0
 		 * 
 		 * @see register_post_types(), get_post_types(), get_object_taxonomies()
 		 * @uses get_post_types(), get_object_taxonomies(), apply_filters()
 		 * 
-		 * @param string			$taxonomy	Required. The name of the feature to check against
-		 * 										post type support.
-		 * @param array | string	$args		Optional. An array of key => value arguments to 
-		 * 										match against the post type objects.
-		 * 										Default empty array.
-		 * @param string			$output		Optional. The type of output to return.
-		 * 										Accepts post type 'names' or 'objects'.
-		 *										Default 'names'.
+		 * @param string $taxonomy Required. The name of the feature to check against post type support.
+		 * @param array | string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
+		 * @param string $output Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
 		 * 
-		 * @return array | boolean	A list of post type names or objects that have the taxonomy 
-		 *							or false if nothing found.
+		 * @return array | boolean	A list of post type names or objects that have the taxonomy or false if nothing found.
 		 */
 		public function post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 			$post_types = get_post_types( $args, $output );
@@ -565,14 +562,18 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			$post_types_with_tax = array();
 			foreach( $post_types as $post_type ) {
 				// If post types are objects
-				if( is_object( $post_type ) && $post_type->name != 'post' ) {
-					$taxonomies = get_object_taxonomies( $post_type->name, 'names' );
-					if( in_array( $taxonomy, $taxonomies ) ) {
-						$post_types_with_tax[] = $post_type;
-					}
+				if( is_object( $post_type ) ) {
+					$type = $post_type->name;
 				// If post types are strings
-				} elseif( is_string( $post_type ) && $post_type != 'post' ) {
-					$taxonomies = get_object_taxonomies( $post_type, 'names' );
+				} elseif( is_string( $post_type ) ) {
+					$type = $post_type;
+				} else {
+					$type = '';
+				}
+				
+				// is the post included in this post type, but not 'post' type.
+				if( !empty( $type ) && $type != 'post' ) {
+					$taxonomies = get_object_taxonomies( $type, 'names' );
 					if( in_array( $taxonomy, $taxonomies ) ) {
 						$post_types_with_tax[] = $post_type;
 					}
