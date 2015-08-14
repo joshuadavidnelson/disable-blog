@@ -1,19 +1,19 @@
 <?php
 /**
- * Plugin Name: Disable WordPress Blog
+ * Plugin Name: Disable Blog
  * Plugin URI: http://joshuadnelson.com
  * Description: A plugin that disables or hides all blog-related elements of your WordPress site.
- * Version: 0.3.1
+ * Version: 0.3.3
  * Author: Joshua Nelson
  * Author URI: http://joshuadnelson.com
  * GitHub Plugin URI: https://github.com/joshuadavidnelson/disable-wordpress-blog
  * GitHub Branch: master
  * License: GPL v2.0
  *
- * @package 	Disable_WordPress_Blog
+ * @package 	Disable_Blog
  * @category 	Core
  * @author 		Joshua David Nelson
- * @version 	0.3.1
+ * @version 	0.3.3
  * @license 	http://www.gnu.org/licenses/gpl-2.0.html GPLv2.0+
  */
 
@@ -31,34 +31,34 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @since 0.1.0
  */
-if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
-	class Disable_WordPress_Blog {
+if ( ! class_exists( 'Disable_Blog' ) ) {
+	class Disable_Blog {
 		/** Singleton */
 
 		/**
-		 * @var Disable_WordPress_Blog The one true Disable_WordPress_Blog
+		 * @var Disable_Blog The one true Disable_Blog
 		 * @since 0.3.0
 		 */
 		private static $instance;
 
 		/**
-		 * Main Disable_WordPress_Blog Instance
+		 * Main Disable_Blog Instance
 		 *
-		 * Insures that only one instance of Disable_WordPress_Blog exists in memory at any one
+		 * Insures that only one instance of Disable_Blog exists in memory at any one
 		 * time. Also prevents needing to define globals all over the place.
 		 *
 		 * @since 0.3.0
 		 * @static
 		 * @staticvar array $instance
-		 * @uses Disable_WordPress_Blog::setup_constants() Setup the constants needed
-		 * @uses Disable_WordPress_Blog::includes() Include the required files
-		 * @uses Disable_WordPress_Blog::load_textdomain() load the language files
+		 * @uses Disable_Blog::setup_constants() Setup the constants needed
+		 * @uses Disable_Blog::includes() Include the required files
+		 * @uses Disable_Blog::load_textdomain() load the language files
 		 * @see EEC()
-		 * @return The one true Disable_WordPress_Blog
+		 * @return The one true Disable_Blog
 		 */
 		public static function instance() {
-			if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Disable_WordPress_Blog ) ) {
-				self::$instance = new Disable_WordPress_Blog;
+			if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Disable_Blog ) ) {
+				self::$instance = new Disable_Blog;
 				self::$instance->setup_constants();
 				self::$instance->init();
 				
@@ -78,7 +78,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		 */
 		public function __clone() {
 			// Cloning instances of the class is forbidden
-			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.0' );
+			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.3' );
 		}
 
 		/**
@@ -90,7 +90,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		 */
 		public function __wakeup() {
 			// Unserializing instances of the class is forbidden
-			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.0' );
+			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.3' );
 		}
 	
 		/**
@@ -112,9 +112,9 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 				define( 'DWPB_DOMAIN', 'disable-wordpress-blog' );
 	
 			// To keep track of versions, useful if you need to make updates specific to versions
-			define( 'DWPB_VERSION', '0.3.1' );
+			define( 'DWPB_VERSION', '0.3.3' );
+			
 		}
-		
 		
 		/**
 		 * Make it so!
@@ -246,7 +246,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 			// then bail. Otherwise if it is a taxonomy only used by 'post'
 			// Alternatively, if this is either the edit-tags page and a taxonomy is not set
 			// and the built-in default 'post_tags' is not supported by other post types
-			if( $pagenow == 'edit-tags.php' && ( ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) || ( !isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( 'post_tag' ) ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true )) {
+			if( $pagenow == 'edit-tags.php' && ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
 				$url = admin_url( '/index.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 				wp_redirect( $redirect_url, 301 );
@@ -277,10 +277,11 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 		 */
 		public function redirect_posts() {
-			if( is_admin() )
+			if( is_admin() || !get_option( 'page_on_front' ) )
 				return;
-		
-			$url = home_url();
+			
+			$page_id = get_option( 'page_on_front' );
+			$url = get_permalink( $page_id );
 			if( is_singular( 'post' ) ) {
 			
 				global $post;
@@ -300,7 +301,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 				$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
 			
 			} elseif( is_home() ) {
-			
+				
 				$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
 			
 			} elseif( is_date() ) {
@@ -308,7 +309,9 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 				$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
 			
 			}
-		
+			
+			// TODO: create a check to verify the redirect url does not match the current page, if it does, then bounce
+			
 			if( isset( $redirect_url ) && apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
 				wp_redirect( esc_url( $redirect_url ), 301 );
 				exit();
@@ -528,23 +531,20 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 		/**
 		 * Get post types that have a specific taxonomy
 		 *  (a combination of get_post_types and get_object_taxonomies)
+		 *
+		 * Basically, we need to know if there are post types, other than 'post'
+		 * that support the taxonomy.
 		 * 
 		 * @since 0.2.0
 		 * 
 		 * @see register_post_types(), get_post_types(), get_object_taxonomies()
 		 * @uses get_post_types(), get_object_taxonomies(), apply_filters()
 		 * 
-		 * @param string			$taxonomy	Required. The name of the feature to check against
-		 * 										post type support.
-		 * @param array | string	$args		Optional. An array of key => value arguments to 
-		 * 										match against the post type objects.
-		 * 										Default empty array.
-		 * @param string			$output		Optional. The type of output to return.
-		 * 										Accepts post type 'names' or 'objects'.
-		 *										Default 'names'.
+		 * @param string $taxonomy Required. The name of the feature to check against post type support.
+		 * @param array | string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
+		 * @param string $output Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
 		 * 
-		 * @return array | boolean	A list of post type names or objects that have the taxonomy 
-		 *							or false if nothing found.
+		 * @return array | boolean	A list of post type names or objects that have the taxonomy or false if nothing found.
 		 */
 		public function post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 			$post_types = get_post_types( $args, $output );
@@ -562,14 +562,18 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 			$post_types_with_tax = array();
 			foreach( $post_types as $post_type ) {
 				// If post types are objects
-				if( is_object( $post_type ) && $post_type->name != 'post' ) {
-					$taxonomies = get_object_taxonomies( $post_type->name, 'names' );
-					if( in_array( $taxonomy, $taxonomies ) ) {
-						$post_types_with_tax[] = $post_type;
-					}
+				if( is_object( $post_type ) ) {
+					$type = $post_type->name;
 				// If post types are strings
-				} elseif( is_string( $post_type ) && $post_type != 'post' ) {
-					$taxonomies = get_object_taxonomies( $post_type, 'names' );
+				} elseif( is_string( $post_type ) ) {
+					$type = $post_type;
+				} else {
+					$type = '';
+				}
+				
+				// is the post included in this post type, but not 'post' type.
+				if( !empty( $type ) && $type != 'post' ) {
+					$taxonomies = get_object_taxonomies( $type, 'names' );
 					if( in_array( $taxonomy, $taxonomies ) ) {
 						$post_types_with_tax[] = $post_type;
 					}
@@ -623,7 +627,7 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
 }
 
 /**
- * The main function responsible for returning the one true Disable_WordPress_Blog
+ * The main function responsible for returning the one true Disable_Blog
  * Instance to functions everywhere.
  *
  * Use this function like you would a global variable, except without needing
@@ -632,10 +636,10 @@ if ( ! class_exists( 'Disable_WordPress_Blog' ) ) {
  * Example: <?php $dwpb = DWPB(); ?>
  *
  * @since 0.3.0
- * @return object The one true Disable_WordPress_Blog Instance
+ * @return object The one true Disable_Blog Instance
  */
 function DWPB() {
-	return Disable_WordPress_Blog::instance();
+	return Disable_Blog::instance();
 }
 
 // Get DWPB Running
