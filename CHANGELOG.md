@@ -1,5 +1,8 @@
 ### Changelog
 
+##### 0.3.3
+- Weird issue with svn, same as version 0.3.2
+
 ##### 0.3.2
 - Fix potential loop issue with `home_url` in redirection function
 - Fix custom taxonomy save redirect (used to redirect to dashboard, now it saves correctly)

@@ -3,7 +3,7 @@
  * Plugin Name: Disable Blog
  * Plugin URI: http://joshuadnelson.com
  * Description: A plugin that disables or hides all blog-related elements of your WordPress site.
- * Version: 0.3.1
+ * Version: 0.3.3
  * Author: Joshua Nelson
  * Author URI: http://joshuadnelson.com
  * GitHub Plugin URI: https://github.com/joshuadavidnelson/disable-wordpress-blog
@@ -13,7 +13,7 @@
  * @package 	Disable_Blog
  * @category 	Core
  * @author 		Joshua David Nelson
- * @version 	0.3.1
+ * @version 	0.3.3
  * @license 	http://www.gnu.org/licenses/gpl-2.0.html GPLv2.0+
  */
 
@@ -78,7 +78,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 		 */
 		public function __clone() {
 			// Cloning instances of the class is forbidden
-			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.0' );
+			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.3' );
 		}
 
 		/**
@@ -90,7 +90,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 		 */
 		public function __wakeup() {
 			// Unserializing instances of the class is forbidden
-			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.0' );
+			_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'eec' ), '0.3.3' );
 		}
 	
 		/**
@@ -112,9 +112,9 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 				define( 'DWPB_DOMAIN', 'disable-wordpress-blog' );
 	
 			// To keep track of versions, useful if you need to make updates specific to versions
-			define( 'DWPB_VERSION', '0.3.1' );
+			define( 'DWPB_VERSION', '0.3.3' );
+			
 		}
-		
 		
 		/**
 		 * Make it so!
