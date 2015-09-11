@@ -40,7 +40,7 @@ Does the following:
 
 Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.
 
-If Settings > Reading > Front Page Displays is not set to show on a page, then that setting will be forced by this plugin (includes three interrlated seetings: show_on_front, pages_for_posts, and posts_on_front).
+If Settings > Reading > Front Page Displays is not set to show on a page, then some aspects of the plugin won't work, be sure to set your front page to a static page.
 
 = View on GitHub =
 [View this plugin on GitHub](https://github.com/joshuadavidnelson/disable-wordpress-blog)
