@@ -50,3 +50,5 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then s
 - Change tag cloud in similar condition as above
 - Remove Feeds from Meta Widget
 - Disable front-end post query
+- Disable XML-RPC for posts
+- Disable REST API for posts
