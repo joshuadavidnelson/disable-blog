@@ -277,7 +277,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 		 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 		 */
 		public function redirect_posts() {
-			if( is_admin() || !get_option( 'page_on_front' ) )
+			if( is_admin() || !get_option( 'page_on_front' ) || is_home() )
 				return;
 			
 			$page_id = get_option( 'page_on_front' );
