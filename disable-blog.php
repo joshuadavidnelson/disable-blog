@@ -226,7 +226,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			}
 		
 			// Redirect Edit Post to Edit Page
-			if( $pagenow == 'edit.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
+			if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
 				$url = admin_url( '/edit.php?post_type=page' );
 				$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
 				wp_redirect( $redirect_url, 301 );
@@ -234,7 +234,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			}
 		
 			// Redirect New Post to New Page
-			if( $pagenow == 'post-new.php' && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
+			if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
 				$url = admin_url('/post-new.php?post_type=page' );
 				$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
 				wp_redirect( $redirect_url, 301 );
@@ -246,7 +246,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			// then bail. Otherwise if it is a taxonomy only used by 'post'
 			// Alternatively, if this is either the edit-tags page and a taxonomy is not set
 			// and the built-in default 'post_tags' is not supported by other post types
-			if( $pagenow == 'edit-tags.php' && ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
+			if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! $this->post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
 				$url = admin_url( '/index.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 				wp_redirect( $redirect_url, 301 );
@@ -254,7 +254,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			} 
 		
 			// Redirect posts-only comment queries to comments
-			if( $pagenow == 'edit-comments.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+			if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
 				$url = admin_url( '/edit-comments.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
 				wp_redirect( $redirect_url, 301 );
@@ -262,7 +262,7 @@ if ( ! class_exists( 'Disable_Blog' ) ) {
 			}
 		
 			// Redirect writing options to general options
-			if( $pagenow == 'options-writing.php' && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
+			if( 'options-writing.php' == $pagenow && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
 				$url = admin_url( '/options-general.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 				wp_redirect( $redirect_url, 301 );
