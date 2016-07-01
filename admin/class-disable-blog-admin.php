@@ -61,11 +61,13 @@ class Disable_Blog_Admin {
 	 * @link http://wordpress.stackexchange.com/questions/57464/remove-posts-from-admin-but-show-a-custom-post
 	 */
 	public function remove_menu_pages() {
+		
 		// Menu Pages
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
 		foreach( $pages as $page ) {
 			remove_menu_page( $page );
 		}
+		
 		// Submenu Pages
 		$subpages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'options-general.php' => 'options-writing.php' ) );
 		foreach( $subpages as $page => $subpage ) {
@@ -79,6 +81,7 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_tax()
 	 *
 	 * @since 0.1.0
+	 * @since 0.4.0 added single post edit screen redirect
 	 */
 	public function redirect_admin_pages() {
 		global $pagenow;
@@ -87,7 +90,7 @@ class Disable_Blog_Admin {
 			return;
 		}
 		
-		// Redirect Edit Single Post to Dashboard
+		//Redirect Edit Single Post to Dashboard.
 		if( 'post.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
 			$url = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_sinlge_post_edit', $url );
