@@ -199,6 +199,21 @@ class Disable_Blog_Admin {
 		$post_type = get_post_type( $post_id );
 		return ( 'post' == $post_type ) ? false : $open;
 	}
+	
+	/**
+	 * Clear comments from 'post' post type.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param string $comments 
+	 * @param string $post_id 
+	 * @return void
+	 */
+	public function filter_existing_comments($comments, $post_id) {
+		$post_type = get_post_type( $post_id );
+		return ( 'post' == $post_type ) ? array() : $comments;
+	}
+	
 	 * Remove Post Related Menus
 	 *
 	 * @since 0.1.0
