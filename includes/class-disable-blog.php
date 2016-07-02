@@ -230,6 +230,20 @@ class Disable_Blog {
 	
 		// Filter Comments off Admin Page
 		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
+		
+		// Filter post open status for comments and pings.
+		$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
+		$this->loader->add_action( 'pings_open', $plugin_admin, 'filter_comment_status', 20, 2 );
+		
+		// Remove Comment & Trackback support for posts.
+		$this->loader->add_action( 'wp_loaded', $plugin_admin, 'remove_post_comment_support', 20 );
+		
+		// Filter comment counts in admin table.
+		$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1);
+		
+		// Filter wp_count_comments, which addresses comments in admin bar.
+		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
+		
 	
 		// Remove Dashboard Widgets
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
