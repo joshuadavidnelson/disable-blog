@@ -1,5 +1,18 @@
 ### Changelog
 
+##### 0.4.0
+- Refactor code to match WP Plugin Boilerplate structure, including:
+- - Move hooks and filters into loader class.
+- - Separate Admin and Public hooks.
+- - Add support for internationalization.
+- Expanded inline documentation.
+- Add another failsafe for potential redirect loops.
+- Disable comments feed only if 'post' is only type shown.
+- Filter comment counts to remove comments associated with 'post' post type.
+- Add $is_comment_feed variable to disable feed filters.
+- Remove feed link from front end (for WP >= 4.4.0), remove comment feed link if 'post' is the only post type supporting comments.
+- Add uninstall.php to remove plugin version saved in options table on uninstall.
+
 ##### 0.3.3
 - Weird issue with svn, same as version 0.3.2.
 

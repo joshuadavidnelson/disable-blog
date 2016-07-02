@@ -1,10 +1,10 @@
 === Disable Blog ===
 Contributors: joshuadnelson
-Donate link: http://jdn.im/donate
-Tags: blog, disable settings
+Donate link: https://joshuadnelson.com/donate/
+Tags: blog, disable, disable settings, remove blog
 Requires at least: 3.1.0
-Tested up to: 4.3
-Stable tag: 0.3.3
+Tested up to: 4.5.3
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,8 +13,6 @@ A plugin to disable the blog functionality of WordPress (by hiding, removing, an
 == Description ==
 
 A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
-
-= This is a beta version, some aspects may still be in need of refining =
 
 Does the following:
 
@@ -37,6 +35,8 @@ Does the following:
 * Forces Reading Settings: show_on_front, pages_for_posts, and posts_on_front, if they are not already set
 * Hides other post-related reading options, except Search Engine Visibilty
 * Removes post from author archive query
+* Removes comment and trackback support for posts.
+* Alters the comment count to remove any comments associated with 'post' post type.
 
 Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.
 
@@ -57,6 +57,19 @@ e.g.
 
 
 == Changelog ==
+
+= 0.4.0 =
+* Refactor code to match WP Plugin Boilerplate structure, including:
+* * Move hooks and filters into loader class.
+* * Separate Admin and Public hooks.
+* * Add support for internationalization.
+* Expanded inline documentation.
+* Add another failsafe for potential redirect loops.
+* Disable comments feed only if 'post' is only type shown.
+* Filter comment counts to remove comments associated with 'post' post type.
+* Add $is_comment_feed variable to disable feed filters.
+* Remove feed link from front end (for WP >= 4.4.0), remove comment feed link if 'post' is the only post type supporting comments.
+* Add uninstall.php to remove plugin version saved in options table on uninstall.
 
 = 0.3.3 =
 * Weird issue with svn, same as 0.3.2

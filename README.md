@@ -2,14 +2,12 @@ Disable Blog
 ======================
 
 **Requires at least:** 3.1.0
-**Tested up to:** 4.3.0
-**Stable version:** 0.3.3
+**Tested up to:** 4.5.3
+**Stable version:** 0.4.0
 **License:** GPLv2 or later
 
 ## Description
 A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
-
-*This is a beta version, some aspects may still be in need of refining*
 
 Does the following:
 - Removes 'Posts' Admin Menu
@@ -31,6 +29,8 @@ Does the following:
 - Forces Reading Settings: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set
 - Hides other post-related reading options, except Search Engine Visibilty
 - Removes post from author archive query
+- Removes comment and trackback support for posts.
+- Alters the comment count to remove any comments associated with 'post' post type.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
