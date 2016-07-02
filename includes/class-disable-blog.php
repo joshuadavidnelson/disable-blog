@@ -212,9 +212,6 @@ class Disable_Blog {
 	private function define_admin_hooks() {
 
 		$plugin_admin = new Disable_Blog_Admin( $this->get_plugin_name(), $this->get_version() );
-
-		// Plugin Links
-		$this->loader->add_filter( 'plugin_row_meta', $plugin_admin, 'plugin_links', 10, 2 );
 	
 		// Hide items with CSS
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );

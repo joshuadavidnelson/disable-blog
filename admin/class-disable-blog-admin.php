@@ -206,7 +206,8 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 *
 	 * @param string $comments 
-	 * @param string $post_id 
+	 * @param string $post_id
+	 *
 	 * @return void
 	 */
 	public function filter_existing_comments($comments, $post_id) {
@@ -473,35 +474,4 @@ class Disable_Blog_Admin {
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/disable-blog-admin.css', array(), $this->version, 'all' );
 
 	}
-
-	/**
-	 * Add various links to plugin page
-	 *
-	 * @since  0.2.0
-	 *
-	 * @param  $links
-	 * @param  $file
-	 *
-	 * @return strings plugin links
-	 */
-	function plugin_links( $links, $file ) {
-	    static $this_plugin;
-
-		/** Capability Check */
-		if( ! current_user_can( 'install_plugins' ) ) 
-			return $links;
-
-		if( !$this_plugin ) {
-			$this_plugin = plugin_basename(__FILE__);
-		}
-
-		if( $file == $this_plugin ) {
-			$links[] = '<a href="http://wordpress.org/support/plugin/disable-blog" title="' . __( 'Support', DWPB_DOMAIN ) . '">' . __( 'Support', DWPB_DOMAIN ) . '</a>';
-
-			$links[] = '<a href="http://jdn.im/donate" title="' . __( 'Donate', DWPB_DOMAIN ) . '">' . __( 'Donate', DWPB_DOMAIN ) . '</a>';
-		}
-	
-		return $links;
-	}
-
 }
