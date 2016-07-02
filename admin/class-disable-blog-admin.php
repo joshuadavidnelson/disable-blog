@@ -214,6 +214,23 @@ class Disable_Blog_Admin {
 		return ( 'post' == $post_type ) ? array() : $comments;
 	}
 	
+	/**
+	 * Remove the X-Pingback HTTP header.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param array $headers 
+	 *
+	 * @return array $headers 
+	 */
+	public function filter_wp_headers( $headers ) {
+		if( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) )
+			unset( $headers['X-Pingback'] );
+		
+		return $headers;
+	}
+	
+	/**
 	 * Remove Post Related Menus
 	 *
 	 * @since 0.1.0

@@ -246,6 +246,9 @@ class Disable_Blog {
 		
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
+		
+		// Clear comments from 'post' post type.
+		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
 	
 		// Remove Dashboard Widgets
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
