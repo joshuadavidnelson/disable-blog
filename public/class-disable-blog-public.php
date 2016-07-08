@@ -116,6 +116,20 @@ class Disable_Blog_Public {
 		}
 	}
 	
+	
+	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
+		if( is_array( $array ) && in_array( 'post', $array ) ) {
+			unset( $array[ 'post' ] );
+			$set_to = empty( $filter ) ? $array : apply_filters( $filter, $array, $query );
+			if( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
+				$query->set( 'post_type', $set_to );
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * Modify query.
 	 *
@@ -125,35 +139,24 @@ class Disable_Blog_Public {
 	 * @link http://stackoverflow.com/questions/7225070/php-array-delete-by-value-not-key#7225113
 	 * 
 	 * @since 0.2.0
+	 * @since 0.4.0 added remove_post_from_array_in_query function
 	 */
 	public function modify_query( $query ) {
 		
 		// Bail if we're in the admin or not on the main query
 		if( is_admin() || ! $query->is_main_query() )
 			return;
-	
+		
 		// Remove 'post' post_type from search results, replace with page
 		if( $query->is_search() ) {
 			$in_search_post_types = get_post_types( array( 'exclude_from_search' => false ) );
-			if( is_array( $in_search_post_types ) && in_array( 'post', $in_search_post_types ) ) {
-				unset( $in_search_post_types[ 'post' ] );
-				$set_to = apply_filters( 'dwpb_search_post_types', $in_search_post_types, $query );
-				if( ! empty( $set_to ) ) {
-					$query->set( 'post_type', $set_to );
-				}
-			}
+			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
 		}
 	
 		// Remove Posts from Author Page
 		if( $query->is_author() ) {
 			$author_post_types = get_post_types( array( 'publicly_queryable' => true, 'exclude_from_search' => false ) );
-			if( is_array( $author_post_types ) && in_array( 'post', $author_post_types ) ) {
-				unset( $author_post_types[ 'post' ] );
-				$set_to = apply_filters( 'dwpb_author_post_types', $author_post_types, $query );
-				if( ! empty( $set_to ) ) {
-					$query->set( 'post_type', $set_to );
-				}
-			}
+			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
 		}
 		
 		// Pull posts off comment feed
