@@ -158,18 +158,6 @@ class Disable_Blog_Public {
 			$author_post_types = get_post_types( array( 'publicly_queryable' => true, 'exclude_from_search' => false ) );
 			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
 		}
-		
-		// Pull posts off comment feed
-		$post_types_with_comments = dwpb_post_types_with_feature( 'comments' );
-		dwpb_log_me( $post_types_with_comments );
-		dwpb_log_me( $query->is_comment_feed );
-		if( $query->is_comment_feed && $post_types_with_comments ) {
-			$set_to = apply_filters( 'dwpb_author_post_types', $post_types_with_comments, $query );
-			dwpb_log_me( 'in' );
-			if( ! empty( $set_to ) ) {
-				$query->set( 'post_type', $set_to );
-			}
-		}
 	}
 	
 	/**
