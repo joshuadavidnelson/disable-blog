@@ -12,6 +12,7 @@
 - Add $is_comment_feed variable to disable feed filters.
 - Remove feed link from front end (for WP >= 4.4.0), remove comment feed link if 'post' is the only post type supporting comments.
 - Add uninstall.php to remove plugin version saved in options table on uninstall.
+- Remove css hiding Reading Settings page content
 
 ##### 0.3.3
 - Weird issue with svn, same as version 0.3.2.
