@@ -262,6 +262,9 @@ class Disable_Blog {
 		// Remove Post Related Widgets
 		$this->loader->add_action( 'widgets_init', $plugin_admin, 'remove_widgets' );
 		
+		// Filter removal of widgets for some checks
+		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
+		
 	}
 
 	/**

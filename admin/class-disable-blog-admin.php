@@ -313,7 +313,7 @@ class Disable_Blog_Admin {
 		} 
 	
 		// Redirect posts-only comment queries to comments
-		if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+		if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
 			$url = admin_url( '/edit-comments.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
 		}
@@ -439,8 +439,24 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_widgets() {
 		
-		// Remove Recent Posts
-		unregister_widget( 'WP_Widget_Recent_Posts' );
+		// Unregister widgets that don't require a check
+        $widgets = array(
+			'WP_Widget_Recent_Comments', // Recent Comments
+			'WP_Widget_Tag_Cloud', // Tag Cloud
+			'WP_Widget_Categories', // Categories
+            'WP_Widget_Archives', // Archives
+            'WP_Widget_Calendar', // Calendar
+            'WP_Widget_Links', // Links
+            'WP_Widget_Recent_Posts', // Recent Posts
+            'WP_Widget_RSS', // RSS
+            'WP_Widget_Tag_Cloud' // Tag Cloud
+        );
+        foreach( $widgets as $widget ) {
+			if( apply_filters( "dwpb_unregister_widgets", true, $widget ) )
+	            unregister_widget( $widget );
+        }
+	
+	}
 	
 	/**
 	 * Filter the widget removal & check for reasons to not remove specific widgets.
@@ -455,25 +471,18 @@ class Disable_Blog_Admin {
 	public function filter_widget_removal( $boolean, $widget ) {
 		
 		// Remove Categories Widget
-		if( ! dwpb_post_types_with_tax( 'category' ) )
-			unregister_widget( 'WP_Widget_Categories' );
+		if( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) )
+			$boolean = false;
 	
 		// Remove Recent Comments Widget if posts are the only type with comments
-		if( ! dwpb_post_types_with_feature( 'comments' ) )
-			unregister_widget( 'WP_Widget_Recent_Comments' );
+		if( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) )
+			$boolean = false;
 	
 		// Remove Tag Cloud
-		if( ! dwpb_post_types_with_tax( 'post_tag' ) )
-			unregister_widget( 'WP_Widget_Tag_Cloud' );
-	
-		// Remove RSS Widget
-		unregister_widget( 'WP_Widget_RSS' );
-	
-		// Remove Archive Widget
-		unregister_widget( 'WP_Widget_Archives' );
-	
-		// Remove Calendar Widget
-		unregister_widget( 'WP_Widget_Calendar' );
+		if( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) )
+			$boolean = false;
+		
+		return $boolean;
 	}
 
 	/**
