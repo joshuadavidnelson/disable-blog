@@ -75,10 +75,10 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $comments 
-	 * @param string $post_id 
+	 * @param object $comments 
+	 * @param int $post_id 
 	 *
-	 * @return void
+	 * @return object $comments
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 		
@@ -98,9 +98,9 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $views 
+	 * @param array $views 
 	 *
-	 * @return void
+	 * @return array $views
 	 */
 	public function filter_admin_table_comment_count( $views ) {
 	    global $current_screen;
@@ -205,12 +205,12 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $comments 
+	 * @param boolean $comments 
 	 * @param string $post_id
 	 *
-	 * @return void
+	 * @return boolean
 	 */
-	public function filter_existing_comments($comments, $post_id) {
+	public function filter_existing_comments( $comments, $post_id ) {
 		$post_type = get_post_type( $post_id );
 		return ( 'post' == $post_type ) ? array() : $comments;
 	}
@@ -234,8 +234,13 @@ class Disable_Blog_Admin {
 	/**
 	 * Remove Post Related Menus
 	 *
-	 * @since 0.1.0
+	 * @uses dwpb_post_types_with_tax()
+	 * @uses dwpb_post_types_with_feature()
+	 *
 	 * @link http://wordpress.stackexchange.com/questions/57464/remove-posts-from-admin-but-show-a-custom-post
+	 *
+	 * @since 0.1.0
+	 * @since 0.4.0 added tools and discussion subpages
 	 */
 	public function remove_menu_pages() {
 		
@@ -336,9 +341,9 @@ class Disable_Blog_Admin {
 	 *
 	 * @uses dwpb_post_types_with_feature()
 	 *
-	 * @since 0.1.0
-	 *
 	 * @link http://www.paulund.co.uk/how-to-remove-links-from-wordpress-admin-bar
+	 *
+	 * @since 0.1.0
 	 */
 	public function remove_admin_bar_links() {
 		global $wp_admin_bar;

@@ -34,7 +34,9 @@ class Disable_Blog {
 	 * the plugin.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   protected
+	 *
 	 * @var      Disable_Blog_Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
@@ -43,7 +45,9 @@ class Disable_Blog {
 	 * The unique identifier of this plugin.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   protected
+	 *
 	 * @var      string    $plugin_name    The string used to uniquely identify this plugin.
 	 */
 	protected $plugin_name;
@@ -52,7 +56,9 @@ class Disable_Blog {
 	 * The current version of the plugin.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   protected
+	 *
 	 * @var      string    $version    The current version of the plugin.
 	 */
 	protected $version;
@@ -65,6 +71,7 @@ class Disable_Blog {
 	 * the public-facing side of the site.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   public
 	 */
 	public function __construct() {
@@ -87,6 +94,7 @@ class Disable_Blog {
 	 * Upgrade check.
 	 *
 	 * @since 0.4.0
+	 *
 	 * @access   private
 	 */
 	private static function upgrade_check() {
@@ -111,6 +119,7 @@ class Disable_Blog {
 	 * Define Constants
 	 *
 	 * @since 0.3.0
+	 *
 	 * @access   private
 	 */
 	private function setup_constants() {
@@ -149,6 +158,7 @@ class Disable_Blog {
 	 * with WordPress.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   private
 	 */
 	private function load_dependencies() {
@@ -192,6 +202,7 @@ class Disable_Blog {
 	 * with WordPress.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   private
 	 */
 	private function set_locale() {
@@ -207,6 +218,7 @@ class Disable_Blog {
 	 * of the plugin.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   private
 	 */
 	private function define_admin_hooks() {
@@ -272,6 +284,7 @@ class Disable_Blog {
 	 * of the plugin.
 	 *
 	 * @since    0.4.0
+	 *
 	 * @access   private
 	 */
 	private function define_public_hooks() {
@@ -311,6 +324,7 @@ class Disable_Blog {
 	 * WordPress and to define internationalization functionality.
 	 *
 	 * @since     0.4.0
+	 *
 	 * @return    string    The name of the plugin.
 	 */
 	public function get_plugin_name() {
@@ -321,6 +335,7 @@ class Disable_Blog {
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     0.4.0
+	 *
 	 * @return    Disable_Blog_Loader    Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader() {
@@ -331,6 +346,7 @@ class Disable_Blog {
 	 * Retrieve the version number of the plugin.
 	 *
 	 * @since     0.4.0
+	 *
 	 * @return    string    The version number of the plugin.
 	 */
 	public function get_version() {
