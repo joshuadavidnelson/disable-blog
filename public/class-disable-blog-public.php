@@ -193,12 +193,13 @@ class Disable_Blog_Public {
 			
 			// Provide option to show a message with a link instead of redirect
 			if( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
-				$message = apply_filters( 'dwpb_feed_die_message', __( 'No feed available, please visit our <a href="'. $redirect_url .'">homepage</a>!', DWPB_DOMAIN ) );
+				$message = apply_filters( 'dwpb_feed_die_message', __( 'No feed available, please visit our <a href="'. esc_url_raw( $redirect_url ) .'">homepage</a>!', DWPB_DOMAIN ) );
 				wp_die( $message );
 				
 			// Default option: redirect to homepage
 			} else {
-				wp_redirect( $redirect_url, 301 );
+				wp_redirect( esc_url_raw( $redirect_url ), 301 );
+				exit;
 			}
 			
 		}
