@@ -45,8 +45,10 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then s
 
 ##### Todo
 - Enhanced support for tags and categories with custom post types (replace the count, tag cloud, etc to exclude posts)
-- Remove posts from Media Library "uploaded to" column
 - Change count in category and tag screen, if taxonomies are supported by another post type
 - Change tag cloud in similar condition as above
+- Remove posts from Media Library "uploaded to" column
 - Remove Feeds from Meta Widget
 - Disable front-end post query
+- Filter or remove post-related topics in help tab (specifically in the Dashboard)
+- Remove posts from comment feeds, if they are enabled
