@@ -286,7 +286,7 @@ class Disable_Blog_Admin {
 		//Redirect Edit Single Post to Dashboard.
 		if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
 			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_sinlge_post_edit', $url );
+			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
 		}
 		
 		// Redirect Edit Posts Screen to Edit Page
