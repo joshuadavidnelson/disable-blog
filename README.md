@@ -52,3 +52,5 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then s
 - Disable front-end post query
 - Filter or remove post-related topics in help tab (specifically in the Dashboard)
 - Remove posts from comment feeds, if they are enabled
+- Disable XML-RPC for posts
+- Disable REST API for posts
