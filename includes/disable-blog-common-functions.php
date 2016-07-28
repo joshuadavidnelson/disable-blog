@@ -67,7 +67,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		$taxonomy = $taxonomy->name;
 
 	// If it's not an object or a string, it won't work, so send it back
-	} elseif( !is_string( $taxonomy ) ) {
+	} elseif( ! is_string( $taxonomy ) ) {
 		return false;
 	}
 

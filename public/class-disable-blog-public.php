@@ -116,7 +116,19 @@ class Disable_Blog_Public {
 		}
 	}
 	
-	
+	/**
+	 * Remove post type from query array.
+	 *
+	 * Used in $this->modify_query to remove 'post' type from specific queries.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param object $query 
+	 * @param array $array 
+	 * @param string $filter 
+	 *
+	 * @return boolean
+	 */
 	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
 		if( is_array( $array ) && in_array( 'post', $array ) ) {
 			unset( $array[ 'post' ] );
@@ -134,6 +146,8 @@ class Disable_Blog_Public {
 	 * Modify query.
 	 *
 	 * Remove 'post' post type from any searches and quthor pages.
+	 *
+	 * @uses $this->remove_post_from_array_in_query
 	 *
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @link http://stackoverflow.com/questions/7225070/php-array-delete-by-value-not-key#7225113
@@ -176,7 +190,7 @@ class Disable_Blog_Public {
 		global $post;
 		if( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && $post->post_type == 'post' ) {
 			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $is_comment_feed );
-				
+			
 			// Provide option to show a message with a link instead of redirect
 			if( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
 				$message = apply_filters( 'dwpb_feed_die_message', __( 'No feed available, please visit our <a href="'. $redirect_url .'">homepage</a>!', DWPB_DOMAIN ) );

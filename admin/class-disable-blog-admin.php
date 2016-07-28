@@ -239,7 +239,7 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_menu_pages() {
 		
-		// Menu Pages
+		// Remove Top Level Menu Pages
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
 		foreach( $pages as $page ) {
 			remove_menu_page( $page );
@@ -267,55 +267,53 @@ class Disable_Blog_Admin {
 			return;
 		}
 		
+		// setup false redirect url value for final check
+		$redirect_url = false;
+		
 		//Redirect Edit Single Post to Dashboard.
 		if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
 			$url = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_sinlge_post_edit', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit;
 		}
 		
 		// Redirect Edit Posts Screen to Edit Page
 		if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
 			$url = admin_url( '/edit.php?post_type=page' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit;
 		}
 	
 		// Redirect New Post to New Page
 		if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
 			$url = admin_url('/post-new.php?post_type=page' );
 			$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit;
 		}
 	
 		// Redirect at edit tags screen
 		// If this is a post type other than 'post' that supports categories or tags,
 		// then bail. Otherwise if it is a taxonomy only used by 'post'
-		// Alternatively, if this is either the edit-tags page and a taxonomy is not set
+		// or if this is either the edit-tags page and a taxonomy is not set
 		// and the built-in default 'post_tags' is not supported by other post types
+		// then redirect!
 		if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
 			$url = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit;
 		} 
 	
 		// Redirect posts-only comment queries to comments
 		if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
 			$url = admin_url( '/edit-comments.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
-			wp_redirect( $redirect_url, 301 );
-			exit;
 		}
 	
 		// Redirect writing options to general options
 		if( 'options-writing.php' == $pagenow && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
 			$url = admin_url( '/options-general.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
-			wp_redirect( $redirect_url, 301 );
+		}
+		
+		// If we have a redirect url, do it
+		if( $redirect_url ) {
+			wp_redirect( esc_url_raw( $redirect_url ), 301 );
 			exit;
 		}
 	}
@@ -349,7 +347,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @param  (wp_query object) $comments
 	 */
-	public function comment_filter( $comments ){
+	public function comment_filter( $comments ) {
 		global $pagenow;
 	
 		if( !isset( $pagenow ) )
@@ -424,12 +422,25 @@ class Disable_Blog_Admin {
 	 * Remove post related widgets
 	 * 
 	 * @since 0.2.0
+	 * @since 0.4.0 simplified unregistering and added dwpb_unregister_widgets filter.
 	 */
 	public function remove_widgets() {
 		
 		// Remove Recent Posts
 		unregister_widget( 'WP_Widget_Recent_Posts' );
 	
+	/**
+	 * Filter the widget removal & check for reasons to not remove specific widgets.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param boolean $boolean 
+	 * @param string $widget
+	 *
+	 * @return boolean
+	 */
+	public function filter_widget_removal( $boolean, $widget ) {
+		
 		// Remove Categories Widget
 		if( ! dwpb_post_types_with_tax( 'category' ) )
 			unregister_widget( 'WP_Widget_Categories' );
