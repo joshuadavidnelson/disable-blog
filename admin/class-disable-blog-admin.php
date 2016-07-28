@@ -246,7 +246,20 @@ class Disable_Blog_Admin {
 		}
 		
 		// Submenu Pages
-		$subpages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'options-general.php' => 'options-writing.php' ) );
+		$remove_subpages = array( 'options-general.php' => 'options-writing.php' );
+		
+		// If there are no other post types using the post tag or category, remove the tools page
+		if( ! dwpb_post_types_with_tax( 'post_tag' ) && ! dwpb_post_types_with_tax( 'category' ) ) {
+			$remove_subpages[ 'tools.php' ] = 'tools.php'; // Tools > Available Tools
+		}
+		
+		// If there are no other post types supporting comments, remove the discussion page
+		if( ! dwpb_post_types_with_feature( 'comments' ) ) {
+			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
+		}
+		
+		// Remove Admin Menu Subpages
+		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
 		}
