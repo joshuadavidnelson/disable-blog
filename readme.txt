@@ -24,7 +24,7 @@ This plugin to disables the blog functionality of WordPress, mostly by hiding ad
 
 **Database**: This plugin will not delete anything in your database. If you don't want your posts, comments, categories, or tags, delete them prior to activation (or deactivate this plugin, delete them, and re-active). The only exception to the database modifications is related to the way your site displays it's front page, as mentioned above.
 
-**Support**: This plugin is maintain for free but **Please reach out** and I will assist you as soon as possible. You can visit the [support forums](https://pippinsplugins.com) or the [issue](https://github.com/joshuadavidnelson/disable-blog/issues) section of the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog).
+**Support**: This plugin is maintain for free but **Please reach out** and I will assist you as soon as possible. You can visit the [support forums](https://wordpress.org/support/plugin/disable-blog) or the [issue](https://github.com/joshuadavidnelson/disable-blog/issues) section of the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog).
 
 = View on GitHub & Contribute =
 [View this plugin on GitHub](https://github.com/joshuadavidnelson/disable-blog) to see a comprehensive list of this plugin's functionality and the To-Do list of items yet to be included, as well as log any issues (or visit the WP support forums linked above).
