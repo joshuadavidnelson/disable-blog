@@ -37,17 +37,6 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
- * The code that runs during plugin activation.
- * This action is documented in includes/class-disable-blog-activator.php
- */
-function activate_disable_blog() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-activator.php';
-	Disable_Blog_Activator::activate();
-}
-
-register_activation_hook( __FILE__, 'activate_disable_blog' );
-
-/**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
