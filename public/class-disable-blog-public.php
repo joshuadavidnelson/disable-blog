@@ -193,7 +193,8 @@ class Disable_Blog_Public {
 			
 			// Provide option to show a message with a link instead of redirect
 			if( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
-				$message = apply_filters( 'dwpb_feed_die_message', __( 'No feed available, please visit our <a href="'. esc_url_raw( $redirect_url ) .'">homepage</a>!', DWPB_DOMAIN ) );
+				$message = sprintf( 'No feed available, please visit our <a href="%s">homepage</a>!', esc_url_raw( $redirect_url ), 'disable-blog' );
+				$message = apply_filters( 'dwpb_feed_die_message', $message );
 				wp_die( $message );
 				
 			// Default option: redirect to homepage

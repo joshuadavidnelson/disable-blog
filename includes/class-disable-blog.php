@@ -130,10 +130,6 @@ class Disable_Blog {
 		// For calling scripts and so forth
 		if( !defined( 'DWPB_URL' ) )
 			define( 'DWPB_URL', plugins_url( '/' , __FILE__ ) );
-
-		// For internationalization
-		if( !defined( 'DWPB_DOMAIN' ) )
-			define( 'DWPB_DOMAIN', $this->plugin_name );
 		
 		// For admin settings field
 		if( !defined( 'DWPB_SETTINGS_FIELD' ) )
