@@ -19,11 +19,12 @@
 /* Hide blog options */
 .form-table tr:nth-child(2),
 .form-table tr:nth-child(3),
-.form-table tr:nth-child(4) {
+.form-table tr:nth-child(4),
+#front-static-pages ul li:last-child,
+#front-static-pages ul li:nth-child(2),
+#front-static-pages input[name="show_on_front"] {
 	display: none;
 }
-
-/* Make sure errors show up */
-#front-static-pages .error p {
-	display: block;
+#front-static-pages ul {
+ 	margin: 0
 }
