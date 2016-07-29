@@ -251,12 +251,10 @@ class Disable_Blog_Admin {
 		}
 		
 		// Submenu Pages
-		$remove_subpages = array( 'options-general.php' => 'options-writing.php' );
-		
-		// If there are no other post types using the post tag or category, remove the tools page
-		if( ! dwpb_post_types_with_tax( 'post_tag' ) && ! dwpb_post_types_with_tax( 'category' ) ) {
-			$remove_subpages[ 'tools.php' ] = 'tools.php'; // Tools > Available Tools
-		}
+		$remove_subpages = array(
+			'options-general.php' => 'options-writing.php',
+			'tools.php' => 'tools.php',
+		);
 		
 		// If there are no other post types supporting comments, remove the discussion page
 		if( ! dwpb_post_types_with_feature( 'comments' ) ) {
@@ -326,6 +324,12 @@ class Disable_Blog_Admin {
 		// Redirect writing options to general options
 		if( 'options-writing.php' == $pagenow && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
 			$url = admin_url( '/options-general.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+		}
+	
+		// Redirect avilable tools page
+		if( 'tools.php' == $pagenow && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
+			$url = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 		}
 		
