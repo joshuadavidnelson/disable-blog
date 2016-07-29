@@ -10,3 +10,20 @@
 .users-php .column-posts {
     display: none;
 }
+
+/* Hide Blog Page */
+#front-static-pages p:first-of-type {
+	display: none;
+}
+
+/* Hide blog options */
+.form-table tr:nth-child(2),
+.form-table tr:nth-child(3),
+.form-table tr:nth-child(4) {
+	display: none;
+}
+
+/* Make sure errors show up */
+#front-static-pages .error p {
+	display: block;
+}
