@@ -106,26 +106,3 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		return $post_types_with_tax;
 	}
 }
-
-/**
- * Log any errors for debugging.
- *
- * @since 0.4.0
- *
- * @uses error_log
- * @global WP_DEBUG
- *
- * @param string|array|object $message The item to be placed in the debug log.
- * @return void
- */
-if( !function_exists( 'dwpb_log_me' ) ) {
-	function dwpb_log_me( $message ) {
-	    if ( WP_DEBUG === true ) {
-	        if ( is_array( $message ) || is_object( $message ) ) {
-	            error_log( 'Disable Blog Plugin Error: ' . print_r( $message, true ) );
-	        } else {
-	            error_log( 'Disable Blog Plugin Error: ' . $message );
-	        }
-	    }
-	}
-}
