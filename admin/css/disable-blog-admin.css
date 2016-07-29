@@ -1,0 +1,26 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+#dashboard_right_now .post-count,
+#dashboard_right_now .comment-count,
+.nav-menus-php label[for="add-post-hide"],
+.control-section.add-post,
+.welcome-icon.welcome-write-blog,
+.users-php .column-posts {
+    display: none;
+}
+
+/* Hide blog options */
+.options-reading-php #front-static-pages p:first-of-type,
+.options-reading-php .form-table tr:nth-child(2),
+.options-reading-php .form-table tr:nth-child(3),
+.options-reading-php .form-table tr:nth-child(4),
+.options-reading-php #front-static-pages ul li:last-child,
+.options-reading-php #front-static-pages ul li:nth-child(2),
+.options-reading-php #front-static-pages input[name="show_on_front"] {
+	display: none;
+}
+#front-static-pages ul {
+ 	margin: 0
+}
