@@ -420,10 +420,10 @@ class Disable_Blog_Admin {
 	 * @since 0.2.0
 	 */
 	public function reading_settings() {
-		if( get_option( 'show_on_front' ) == 'post' ) {
+		if( 'posts' == get_option( 'show_on_front' ) ) {
 			update_option( 'show_on_front', 'page' );
-			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 0 ) );
-			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 0 ) );
+			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 1 ) );
+			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 1 ) );
 		}
 	}
 	
