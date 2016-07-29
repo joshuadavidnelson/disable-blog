@@ -320,7 +320,13 @@ class Disable_Blog_Admin {
 			$url = admin_url( '/edit-comments.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
 		}
-	
+		
+		// Redirect disccusion options page if only supported by 'post' type
+		if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
+			$url = admin_url( '/index.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
+		}
+		
 		// Redirect writing options to general options
 		if( 'options-writing.php' == $pagenow && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
 			$url = admin_url( '/options-general.php' );
