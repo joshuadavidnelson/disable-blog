@@ -11,18 +11,14 @@
     display: none;
 }
 
-/* Hide Blog Page */
-#front-static-pages p:first-of-type {
-	display: none;
-}
-
 /* Hide blog options */
-.form-table tr:nth-child(2),
-.form-table tr:nth-child(3),
-.form-table tr:nth-child(4),
-#front-static-pages ul li:last-child,
-#front-static-pages ul li:nth-child(2),
-#front-static-pages input[name="show_on_front"] {
+.options-reading-php #front-static-pages p:first-of-type,
+.options-reading-php .form-table tr:nth-child(2),
+.options-reading-php .form-table tr:nth-child(3),
+.options-reading-php .form-table tr:nth-child(4),
+.options-reading-php #front-static-pages ul li:last-child,
+.options-reading-php #front-static-pages ul li:nth-child(2),
+.options-reading-php #front-static-pages input[name="show_on_front"] {
 	display: none;
 }
 #front-static-pages ul {
