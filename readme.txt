@@ -16,25 +16,29 @@ A plugin to disable the blog functionality of WordPress (by hiding, removing, an
 
 Does the following:
 
-* Removes 'Posts' Admin Menu
-* Removes 'post' post type from most queries
-* Disables the Feed for Posts
-* Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages
-* Redirects 'Comments' admin page with query variable post_type=post to main comments page
-* Redirects Single Posts, Post Archives, Tag & Category archives to home page (the latter two are only redirected if 'post' post type is the only post type associated with it)
-* Filters out the 'post' post type fromm 'Comments' admin page
-* Removes Post from '+New' admin bar menu
-* Removes post-related dashboard widgets
-* Hides number of posts and comment count on Activity dashboard widget
-* Removes 'Writing' Options from Settings Menu
-* Redirects 'Writing' Options to General Options
-* Hides 'Posts' options on 'Menus' admin page
-* Removes Post Related Widgets
-* Disables "Press This" functionality
-* Disables "Post By Email" functionality
-* Forces Reading Settings: show_on_front, pages_for_posts, and posts_on_front, if they are not already set
-* Hides other post-related reading options, except Search Engine Visibilty
-* Removes post from author archive query
+* Removes 'Posts' Admin Menu.
+* Removes 'post' post type from most queries.
+* Disables the Feed for Posts.
+* Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages.
+* Redirects 'Comments' admin page with query variable `post_type=post` to main comments page.
+* Disable comments feed only if 'post' is only type shown.
+* Redirects Single Posts, Post Archives, Tag & Category archives to home page (the latter two are only redirected if 'post' post type is the only post type associated with it).
+* Filters out the 'post' post type fromm 'Comments' admin page.
+* Removes Post from '+New' admin bar menu.
+* Removes post-related dashboard widgets.
+* Hides number of posts and comment count on Activity dashboard widget.
+* Removes/Redirects 'Writing' Options from Settings Menu.
+* Hides 'Posts' options on 'Menus' admin page.
+* Removes Post Related Widgets.
+* Disables "Press This" functionality.
+* Forces Reading Settings: `show_on_front`, `pages_for_posts`, and `posts_on_front`, if they are not already set.
+* Removes Available Tools from admin menu and redirects page (houses Press This and Category/Tag converter).
+* Hide/redirect discussion options page if 'post' is the only post type supporting it (typically supported by pages).
+* Filter comment counts to remove comments associated with 'post' post type.
+* Remove feed link from front end (for WP >= 4.4.0), remove comment feed link if 'post' is the only post type supporting comments.
+* Hide options in Reading Settings page related to posts (shows front page and search engine options only now).
+* Hides other post-related reading options, except Search Engine Visibilty.
+* Removes post from author archive query.
 * Removes comment and trackback support for posts.
 * Alters the comment count to remove any comments associated with 'post' post type.
 
@@ -59,16 +63,21 @@ e.g.
 == Changelog ==
 
 = 0.4.0 =
+A bunch of stuff:
+
 * Refactor code to match WP Plugin Boilerplate structure, including:
-* * Move hooks and filters into loader class.
-* * Separate Admin and Public hooks.
-* * Add support for internationalization.
+ * Move hooks and filters into loader class.
+ * Separate Admin and Public hooks.
+ * Add support for internationalization.
 * Expanded inline documentation.
 * Add another failsafe for potential redirect loops.
 * Disable comments feed only if 'post' is only type shown.
+* Hide/redirect discussion options page if 'post' is the only post type supporting it (typically supported by pages).
 * Filter comment counts to remove comments associated with 'post' post type.
 * Add $is_comment_feed variable to disable feed filters.
 * Remove feed link from front end (for WP >= 4.4.0), remove comment feed link if 'post' is the only post type supporting comments.
+* Hide options in Reading Settings page related to posts (shows front page and search engine options only now), previously it was hiding everything on this page (bugfix!).
+* Fix show_on_front pages: now, if it's set to 'posts' it will set the blog page to value 0 (not a valid option) and set the front page to value 1.
 * Add uninstall.php to remove plugin version saved in options table on uninstall.
 
 = 0.3.3 =
@@ -104,6 +113,24 @@ e.g.
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.4.0 =
+A bunch of stuff:
+
+* Refactor code to match WP Plugin Boilerplate structure, including:
+ * Move hooks and filters into loader class.
+ * Separate Admin and Public hooks.
+ * Add support for internationalization.
+* Expanded inline documentation.
+* Add another failsafe for potential redirect loops.
+* Disable comments feed only if 'post' is only type shown.
+* Hide/redirect discussion options page if 'post' is the only post type supporting it (typically supported by pages).
+* Filter comment counts to remove comments associated with 'post' post type.
+* Add $is_comment_feed variable to disable feed filters.
+* Remove feed link from front end (for WP >= 4.4.0), remove comment feed link if 'post' is the only post type supporting comments.
+* Hide options in Reading Settings page related to posts (shows front page and search engine options only now), previously it was hiding everything on this page (bugfix!).
+* Fix show_on_front pages: now, if it's set to 'posts' it will set the blog page to value 0 (not a valid option) and set the front page to value 1.
+* Add uninstall.php to remove plugin version saved in options table on uninstall.
 
 = 0.3.3 =
 * Fix potential loop issue with `home_url` in redirection function
