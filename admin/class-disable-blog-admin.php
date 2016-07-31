@@ -390,35 +390,28 @@ class Disable_Blog_Admin {
 	
 		return $comments;
 	}
-	
+
 	/**
 	 * Remove post-related dashboard widgets
 	 *
 	 * @uses dwpb_post_types_with_feature()
 	 *
 	 * @since 0.1.0
+	 * @since 0.4.1 dry out the code with a foreach loop
 	 */
 	function remove_dashboard_widgets() {
 		
-		// recent comments
-		if( apply_filters( 'dwpb_disable_dashboard_recent_comments', true ) && ! dwpb_post_types_with_feature( 'comments' ) )
-			remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' );
-	
-		// incoming links
-		if( apply_filters( 'dwpb_disable_dashboard_incoming_links', true ) )
-			remove_meta_box( 'dashboard_incoming_links', 'dashboard', 'normal' );
-	
-		// quick press
-		if( apply_filters( 'dwpb_disable_dashboard_quick_press', true ) )
-			remove_meta_box( 'dashboard_quick_press', 'dashboard', 'normal' );
-	
-		// recent drafts
-		if( apply_filters( 'dwpb_disable_dashboard_recent_drafts', true ) )
-			remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'normal' );
-	
-		// activity
-		if( apply_filters( 'dwpb_disable_dashboard_activity', true ) )
-			remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
+		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary 
+		$metabox = array(
+			'dashboard_quick_press' => 'side', // Quick Press
+			'dashboard_recent_drafts' => 'side', // Recent Drafts
+			'dashboard_incoming_links' => 'normal', // Incoming Links
+			'dashboard_activity' => 'normal' // Activity
+		);
+		foreach ( $metabox as $id => $context ) {
+			if( apply_filters( 'dwpb_disable_' . $id, true ) )
+				remove_meta_box( $id, 'dashboard', $context );
+		}
 	}
 	
 	/**
