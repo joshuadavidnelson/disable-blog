@@ -276,8 +276,11 @@ class Disable_Blog {
 		// Remove posts column from user table
 		$this->loader->add_action( 'manage_users_columns', $plugin_admin, 'disable_user_posts_column', 10, 1 );
 		
+		// Customizer view
+		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
+		
 	}
-
+	
 	/**
 	 * Register all of the hooks related to the public-facing functionality
 	 * of the plugin.

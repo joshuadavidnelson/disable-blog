@@ -515,6 +515,24 @@ class Disable_Blog_Admin {
 		
 		return $column;
 	}
+	
+	/**
+	 * Hide things in customizer view.
+	 *
+	 * @since 0.4.0
+	 */
+	function customizer_styles() { ?>
+		<style>
+			#customize-theme-controls #customize-control-genesis_trackbacks_posts,
+			#customize-theme-controls #customize-control-genesis_comments_posts,
+			#customize-theme-controls #customize-control-show_on_front,
+			#customize-theme-controls #customize-control-page_for_posts {
+				display: none !important;
+			}
+		</style>
+		<?php
+
+	}
 
 	/**
 	 * Register the stylesheets for the admin area.
