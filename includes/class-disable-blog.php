@@ -273,6 +273,9 @@ class Disable_Blog {
 		// Filter removal of widgets for some checks
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
 		
+		// Remove posts column from user table
+		$this->loader->add_action( 'manage_users_columns', $plugin_admin, 'disable_user_posts_column', 10, 1 );
+		
 	}
 
 	/**

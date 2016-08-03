@@ -500,6 +500,21 @@ class Disable_Blog_Admin {
 		
 		return $boolean;
 	}
+	
+	/**
+	 * Remove posts column form user table.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param string $column 
+	 * @return void
+	 */
+	public function disable_user_posts_column( $column ) {
+		if( isset( $column['posts'] ) && apply_filters( 'dpwb_disable_user_post_column', true ) )
+			unset( $column['posts'] );
+		
+		return $column;
+	}
 
 	/**
 	 * Register the stylesheets for the admin area.
