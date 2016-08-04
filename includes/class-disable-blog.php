@@ -276,6 +276,10 @@ class Disable_Blog {
 		// Remove posts column from user table
 		$this->loader->add_action( 'manage_users_columns', $plugin_admin, 'disable_user_posts_column', 10, 1 );
 		
+		// Filter post counts on post-related taxonomy edit screens for custom post types
+		$this->loader->add_filter( 'post_tag_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
+		$this->loader->add_filter( 'category_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
+		
 		// Customizer view
 		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
 		
