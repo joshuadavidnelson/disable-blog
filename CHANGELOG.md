@@ -1,5 +1,8 @@
 ### Changelog
 
+##### 0.4.1
+- Fix unintended redirect for custom admin pages under tools.php. Props to @greatislander for the catch.
+
 ##### 0.4.0
 - Refactor code to match WP Plugin Boilerplate structure, including:
  - Move hooks and filters into loader class.
