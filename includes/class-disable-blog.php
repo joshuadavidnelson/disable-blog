@@ -303,7 +303,10 @@ class Disable_Blog {
 		// Hide Feed links
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );
-		
+
+		// Modify REST API Support
+		$this->loader->add_action( 'init', $plugin_public, 'modify_rest_api', 25 );
+
 	}
 
 	/**
