@@ -250,6 +250,10 @@ class Disable_Blog_Public {
 	 * @return boolean
 	 */
 	public function modify_rest_api() {
+		
+		if( true !== apply_filters( 'dwpb_disable_rest_api', true ) )
+			return;
+		
 		global $wp_post_types;
 		$post_type_name = 'post';
 		if( isset( $wp_post_types[ $post_type_name ] ) ) {
