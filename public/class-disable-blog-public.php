@@ -240,4 +240,23 @@ class Disable_Blog_Public {
 		
 		return $boolean;
 	}
+
+
+	/**
+	 * Remove 'post' type from the REST API results
+	 *
+	 * Requires the REST API plugin be enabled
+	 *
+	 * @return boolean
+	 */
+	public function modify_rest_api() {
+		global $wp_post_types;
+		$post_type_name = 'post';
+		if( isset( $wp_post_types[ $post_type_name ] ) ) {
+			$wp_post_types[$post_type_name]->show_in_rest = false;
+			return true;
+		}
+
+		return false;
+	}
 }
