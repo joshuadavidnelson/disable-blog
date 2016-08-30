@@ -1,5 +1,8 @@
 ### Changelog
 
+##### 0.4.2
+- Disable the REST API for 'post' post type. Props to @shawnhooper.
+
 ##### 0.4.1
 - Fix unintended redirect for custom admin pages under tools.php. Props to @greatislander for the catch.
 

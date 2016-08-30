@@ -36,6 +36,7 @@ Does the following:
 - Removes post from author archive query.
 - Removes comment and trackback support for posts.
 - Alters the comment count to remove any comments associated with 'post' post type.
+- Disables the REST API for 'post' post type.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
@@ -58,5 +59,4 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then s
 - Filter or remove post-related topics in help tab (specifically in the Dashboard)
 - Remove posts from comment feeds, if they are enabled
 - Disable XML-RPC for posts
-- Disable REST API for posts
 - Hide blog-related settings in customizer view
