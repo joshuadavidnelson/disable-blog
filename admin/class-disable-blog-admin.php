@@ -78,17 +78,14 @@ class Disable_Blog_Admin {
 	 * @param object $comments
 	 * @param int $post_id
 	 *
-	 * @return object $comments
+	 * @return array $comments
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
 		// if this is grabbing all the comments, filter out the 'post' comments.
-		if( 0 == $post_id )
+		if( 0 == $post_id ) {
 			$comments = $this->get_comment_counts();
-
-		// If we filtered it above, it needs to be an object, not an array.
-		if( !empty( $comments ) )
-			$comments = (object) $comments;
+		}
 
 		return $comments;
 	}
