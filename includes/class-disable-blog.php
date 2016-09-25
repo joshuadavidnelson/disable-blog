@@ -249,6 +249,9 @@ class Disable_Blog {
 		// Filter wp_count_comments, which addresses comments in admin bar.
 		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
 		
+		// Convert the $comments object back into an array if older version of WooCommerce is active.
+		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_woocommerce_comment_count', 10, 2 );
+		
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
 		
