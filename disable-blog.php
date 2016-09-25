@@ -37,6 +37,25 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
+ * The code that runs during plugin activation.
+ * This action is documented in includes/class-disable-blog-activator.php
+ */
+function activate_plugin_name() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-activator.php';
+	Disable_Blog_Activator::activate();
+}
+/**
+ * The code that runs during plugin deactivation.
+ * This action is documented in includes/class-disable-blog-deactivator.php
+ */
+function deactivate_plugin_name() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-deactivator.php';
+	Disable_Blog_Deactivator::deactivate();
+}
+register_activation_hook( __FILE__, 'activate_plugin_name' );
+register_deactivation_hook( __FILE__, 'deactivate_plugin_name' );
+
+/**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
