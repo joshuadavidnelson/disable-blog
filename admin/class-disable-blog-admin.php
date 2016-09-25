@@ -74,6 +74,7 @@ class Disable_Blog_Admin {
 	 * Filter the comment counts to remove comments to 'post' post type.
 	 *
 	 * @since 0.4.0
+	 * @since 0.4.3 Moved everything into the post id check and reset the cache.
 	 *
 	 * @param object $comments
 	 * @param int $post_id
@@ -85,6 +86,12 @@ class Disable_Blog_Admin {
 		// if this is grabbing all the comments, filter out the 'post' comments.
 		if( 0 == $post_id ) {
 			$comments = $this->get_comment_counts();
+			
+			$comments['moderated'] = $comments['awaiting_moderation'];
+			unset( $comments['awaiting_moderation'] );
+			
+			$comments = (object) $comments;
+			wp_cache_set( "comments-0", $comments, 'counts' );
 		}
 
 		return $comments;
@@ -139,14 +146,13 @@ class Disable_Blog_Admin {
 	 * Retreive the comment counts without the 'post' comments.
 	 *
 	 * @since 0.4.0
+	 * @since 0.4.3 Removed Unused "count" function.
 	 *
 	 * @see get_comment_count()
 	 *
-	 * @param mixed $count Array or string of the specific count you're looking for, defaults to all.
-	 *
 	 * @return array $comment_counts
 	 */
-	public function get_comment_counts( $count = null ) {
+	public function get_comment_counts() {
 
 		global $wpdb;
 
