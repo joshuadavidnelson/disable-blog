@@ -44,16 +44,16 @@ if( !defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  */
 if( !is_user_logged_in() ) {
 	wp_die(
-		__( 'You must be logged in to run this script.', DWPB_DOMAIN ),
-		__( 'Disable Blog', DWPB_DOMAIN ),
+		__( 'You must be logged in to run this script.', 'disable-blog' ),
+		__( 'Disable Blog', 'disable-blog' ),
 		array( 'back_link' => true )
 	);
 } 
 
 if( !current_user_can( 'install_plugins' ) ) {
 	wp_die(
-		__( 'You do not have permission to run this script.', DWPB_DOMAIN ),
-		__( 'Disable Blog', DWPB_DOMAIN ),
+		__( 'You do not have permission to run this script.', 'disable-blog' ),
+		__( 'Disable Blog', 'disable-blog' ),
 		array( 'back_link' => true )
 	);	
 }
