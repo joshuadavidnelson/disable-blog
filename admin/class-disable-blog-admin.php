@@ -74,22 +74,48 @@ class Disable_Blog_Admin {
 	 * Filter the comment counts to remove comments to 'post' post type.
 	 *
 	 * @since 0.4.0
+	 * @since 0.4.3 Moved everything into the post id check and reset the cache.
 	 *
 	 * @param object $comments
 	 * @param int $post_id
 	 *
-	 * @return object $comments
+	 * @return array $comments
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
 		// if this is grabbing all the comments, filter out the 'post' comments.
-		if( 0 == $post_id )
+		if( 0 == $post_id ) {
 			$comments = $this->get_comment_counts();
-
-		// If we filtered it above, it needs to be an object, not an array.
-		if( !empty( $comments ) )
+			
+			$comments['moderated'] = $comments['awaiting_moderation'];
+			unset( $comments['awaiting_moderation'] );
+			
 			$comments = (object) $comments;
+			wp_cache_set( "comments-0", $comments, 'counts' );
+		}
 
+		return $comments;
+	}
+	
+	/**
+	 * Turn the comments object back into an array if WooCommerce is active.
+	 *
+	 * This is only necessary for version of WooCommerce prior to 2.6.3, where it failed
+	 * to check/convert the $comment object into an array.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param object $comments
+	 * @param int $post_id
+	 *
+	 * @return array $comments
+	 */
+	public function filter_woocommerce_comment_count( $comments, $post_id ) {
+		
+		if( 0 == $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+			$comments = (array) $comments;
+		}
+		
 		return $comments;
 	}
 
@@ -120,14 +146,13 @@ class Disable_Blog_Admin {
 	 * Retreive the comment counts without the 'post' comments.
 	 *
 	 * @since 0.4.0
+	 * @since 0.4.3 Removed Unused "count" function.
 	 *
 	 * @see get_comment_count()
 	 *
-	 * @param mixed $count Array or string of the specific count you're looking for, defaults to all.
-	 *
 	 * @return array $comment_counts
 	 */
-	public function get_comment_counts( $count = null ) {
+	public function get_comment_counts() {
 
 		global $wpdb;
 
