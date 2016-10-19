@@ -1,5 +1,10 @@
 ### Changelog
 
+##### 0.4.3
+- Fix fatal error conflict with WooCommerce versions older than 2.6.3 (props to @Mahjouba91 for the heads up), no returns an array of comments in the filter for those older WooCommerce versions.
+- Add de/activation hooks to clear comment caches
+- Cleanup comment count functions.
+
 ##### 0.4.2
 - Disable the REST API for 'post' post type. Props to @shawnhooper.
 
