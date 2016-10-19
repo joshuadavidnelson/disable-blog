@@ -77,7 +77,7 @@ class Disable_Blog {
 	public function __construct() {
 		
 		$this->plugin_name = 'disable-blog';
-		$this->version = '0.4.0';
+		$this->version = '0.4.3';
 		
 		do_action( 'dwpb_init' );
 		
