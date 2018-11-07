@@ -1,5 +1,8 @@
 ### Changelog
 
+##### 0.4.4
+- Hide the Settings > Writing menu item, which shows up with Disable Comments enabled everywhere. Thanks to @dater for identifying.
+
 ##### 0.4.3
 - Fix fatal error conflict with WooCommerce versions older than 2.6.3 (props to @Mahjouba91 for the heads up), no returns an array of comments in the filter for those older WooCommerce versions.
 - Add de/activation hooks to clear comment caches
