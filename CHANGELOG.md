@@ -1,5 +1,19 @@
 ### Changelog
 
+##### 0.4.4
+- Hide the Settings > Writing menu item, which shows up with Disable Comments enabled everywhere. Thanks to @dater for identifying.
+
+##### 0.4.3
+- Fix fatal error conflict with WooCommerce versions older than 2.6.3 (props to @Mahjouba91 for the heads up), no returns an array of comments in the filter for those older WooCommerce versions.
+- Add de/activation hooks to clear comment caches
+- Cleanup comment count functions.
+
+##### 0.4.2
+- Disable the REST API for 'post' post type. Props to @shawnhooper.
+
+##### 0.4.1
+- Fix unintended redirect for custom admin pages under tools.php. Props to @greatislander for the catch.
+
 ##### 0.4.0
 - Refactor code to match WP Plugin Boilerplate structure, including:
  - Move hooks and filters into loader class.
