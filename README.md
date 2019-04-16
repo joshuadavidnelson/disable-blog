@@ -2,8 +2,8 @@ Disable Blog
 ======================
 
 **Requires at least:** 3.1.0
-**Tested up to:** 4.9.8
-**Stable version:** 0.4.4
+**Tested up to:** 5.1.1
+**Stable version:** 0.4.5
 **License:** GPLv2 or later
 
 ## Description

@@ -60,6 +60,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 */
 	public function remove_post_comment_support() {
+		
 		if( post_type_supports( 'post', 'comments' ) && apply_filters( 'dwpb_remove_post_comment_support', true ) ) {
 			remove_post_type_support( 'post', 'comments' );
 		}
@@ -68,6 +69,7 @@ class Disable_Blog_Admin {
 		if( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
 			remove_post_type_support( 'post', 'trackbacks' );
 		}
+		
 	}
 
 	/**
@@ -95,6 +97,7 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
+		
 	}
 	
 	/**
@@ -117,6 +120,7 @@ class Disable_Blog_Admin {
 		}
 		
 		return $comments;
+		
 	}
 
 	/**
@@ -129,6 +133,7 @@ class Disable_Blog_Admin {
 	 * @return array $views
 	 */
 	public function filter_admin_table_comment_count( $views ) {
+		
 	    global $current_screen;
 
 	    if( 'edit-comments' == $current_screen->id ) {
@@ -139,7 +144,9 @@ class Disable_Blog_Admin {
 					$views[ $view ] = preg_replace( "/\([^)]+\)/", '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
 			}
 	    }
+		
 	    return $views;
+		
 	}
 
 	/**
@@ -208,6 +215,7 @@ class Disable_Blog_Admin {
 	    }
 
 		return $comment_count;
+		
 	}
 
 	/**
@@ -221,8 +229,11 @@ class Disable_Blog_Admin {
 	 * @return boolean
 	 */
 	public function filter_comment_status( $open, $post_id ) {
+		
 		$post_type = get_post_type( $post_id );
+		
 		return ( 'post' == $post_type ) ? false : $open;
+		
 	}
 
 	/**
@@ -236,8 +247,11 @@ class Disable_Blog_Admin {
 	 * @return boolean
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
+		
 		$post_type = get_post_type( $post_id );
+		
 		return ( 'post' == $post_type ) ? array() : $comments;
+		
 	}
 
 	/**
@@ -250,10 +264,12 @@ class Disable_Blog_Admin {
 	 * @return array $headers
 	 */
 	public function filter_wp_headers( $headers ) {
+		
 		if( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) )
 			unset( $headers['X-Pingback'] );
 
 		return $headers;
+		
 	}
 
 	/**
@@ -277,9 +293,12 @@ class Disable_Blog_Admin {
 
 		// Submenu Pages
 		$remove_subpages = array(
-			'options-general.php' => 'options-writing.php',
 			'tools.php' => 'tools.php',
 		);
+		
+		// Remove the writings page, if the filter tells us so.
+		if( $this->remove_writing_options() )
+			$remove_subpages['options-general.php'] = 'options-writing.php';
 
 		// If there are no other post types supporting comments, remove the discussion page
 		if( ! dwpb_post_types_with_feature( 'comments' ) ) {
@@ -291,6 +310,7 @@ class Disable_Blog_Admin {
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
 		}
+		
 	}
 
 	/**
@@ -302,6 +322,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0 added single post edit screen redirect
 	 */
 	public function redirect_admin_pages() {
+		
 		global $pagenow;
 
 		if( !isset( $pagenow ) ) {
@@ -353,15 +374,15 @@ class Disable_Blog_Admin {
 		}
 
 		// Redirect writing options to general options
-		if( 'options-writing.php' == $pagenow && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
+		if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
 			$url = admin_url( '/options-general.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 		}
 
 		// Redirect available tools page
-		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
+		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
 		 	$url = admin_url( '/index.php' );
-		 	$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+		 	$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
 		}
 
 		// If we have a redirect url, do it
@@ -369,6 +390,18 @@ class Disable_Blog_Admin {
 			wp_redirect( esc_url_raw( $redirect_url ), 301 );
 			exit;
 		}
+		
+	}
+	
+	/**
+	 * Filter for removing the writing options page.
+	 *
+	 * @since 0.4.5
+	 */
+	function remove_writing_options() {
+		
+		return apply_filters( 'dwpb_redirect_admin_options_writing', false );
+		
 	}
 
 	/**
@@ -381,6 +414,7 @@ class Disable_Blog_Admin {
 	 * @since 0.1.0
 	 */
 	public function remove_admin_bar_links() {
+		
 		global $wp_admin_bar;
 
 		// If only posts support comments, then remove comment from admin bar
@@ -389,6 +423,7 @@ class Disable_Blog_Admin {
 
 		// Remove New Post from Content
 		$wp_admin_bar->remove_node( 'new-post' );
+		
 	}
 
 	/**
@@ -401,6 +436,7 @@ class Disable_Blog_Admin {
 	 * @param  (wp_query object) $comments
 	 */
 	public function comment_filter( $comments ) {
+		
 		global $pagenow;
 
 		if( !isset( $pagenow ) )
@@ -414,6 +450,7 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
+		
 	}
 
 	/**
@@ -422,28 +459,22 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 *
 	 * @since 0.1.0
+	 * @since 0.4.1 dry out the code with a foreach loop
 	 */
 	function remove_dashboard_widgets() {
-
-		// recent comments
-		if( apply_filters( 'dwpb_disable_dashboard_recent_comments', true ) && ! dwpb_post_types_with_feature( 'comments' ) )
-			remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' );
-
-		// incoming links
-		if( apply_filters( 'dwpb_disable_dashboard_incoming_links', true ) )
-			remove_meta_box( 'dashboard_incoming_links', 'dashboard', 'normal' );
-
-		// quick press
-		if( apply_filters( 'dwpb_disable_dashboard_quick_press', true ) )
-			remove_meta_box( 'dashboard_quick_press', 'dashboard', 'normal' );
-
-		// recent drafts
-		if( apply_filters( 'dwpb_disable_dashboard_recent_drafts', true ) )
-			remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'normal' );
-
-		// activity
-		if( apply_filters( 'dwpb_disable_dashboard_activity', true ) )
-			remove_meta_box( 'dashboard_activity', 'dashboard', 'normal' );
+		
+		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary 
+		$metabox = array(
+			'dashboard_quick_press' => 'side', // Quick Press
+			'dashboard_recent_drafts' => 'side', // Recent Drafts
+			'dashboard_incoming_links' => 'normal', // Incoming Links
+			'dashboard_activity' => 'normal' // Activity
+		);
+		foreach ( $metabox as $id => $context ) {
+			if( apply_filters( 'dwpb_disable_' . $id, true ) )
+				remove_meta_box( $id, 'dashboard', $context );
+		}
+		
 	}
 
 	/**
@@ -456,11 +487,13 @@ class Disable_Blog_Admin {
 	 *
 	 */
 	public function reading_settings() {
+		
 		if( 'posts' == get_option( 'show_on_front' ) ) {
 			update_option( 'show_on_front', 'page' );
 			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 0 ) );
 			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 1 ) );
 		}
+		
 	}
 
 	/**
@@ -469,7 +502,9 @@ class Disable_Blog_Admin {
 	 * @since 0.2.0
 	 */
 	public function disable_press_this() {
+		
 		wp_die( '"Press This" functionality has been disabled.' );
+		
 	}
 
 	/**
@@ -524,6 +559,7 @@ class Disable_Blog_Admin {
 			$boolean = false;
 
 		return $boolean;
+		
 	}
 
 	/**
@@ -532,18 +568,6 @@ class Disable_Blog_Admin {
 	 * @since    0.4.0
 	 */
 	public function enqueue_styles() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Disable_Blog_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Disable_Blog_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/disable-blog-admin.css', array(), $this->version, 'all' );
 

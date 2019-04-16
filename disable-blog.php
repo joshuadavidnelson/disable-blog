@@ -16,7 +16,7 @@
  * Plugin Name:       Disable Blog
  * Plugin URI:        https://wordpress.org/plugins/disable-blog/
  * Description:       A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting).
- * Version:           0.4.4
+ * Version:           0.4.5
  * Author:            Joshua Nelson
  * Author URI:        http://joshuadnelson.com
  * License:           GPL-2.0+
@@ -44,6 +44,7 @@ function activate_plugin_name() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-activator.php';
 	Disable_Blog_Activator::activate();
 }
+
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-disable-blog-deactivator.php
