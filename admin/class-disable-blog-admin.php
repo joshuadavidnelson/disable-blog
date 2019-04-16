@@ -380,9 +380,9 @@ class Disable_Blog_Admin {
 		}
 
 		// Redirect available tools page
-		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_writing', true ) ) {
+		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
 		 	$url = admin_url( '/index.php' );
-		 	$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+		 	$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
 		}
 
 		// If we have a redirect url, do it
