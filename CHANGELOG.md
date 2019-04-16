@@ -1,5 +1,9 @@
 ### Changelog
 
+##### 0.4.5
+- Remove the functionality hiding the Settings > Writing admin page, allow this option to be re-enabled via the older filter. This page used to be entirely related to posts, but is also used to select the editor type (Gutenberg vs Classic).
+- Correct misspelled dwpb_redirect_options_tools filter.
+
 ##### 0.4.4
 - Hide the Settings > Writing menu item, which shows up with Disable Comments enabled everywhere. Thanks to @dater for identifying.
 

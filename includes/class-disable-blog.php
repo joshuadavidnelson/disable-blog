@@ -77,7 +77,7 @@ class Disable_Blog {
 	public function __construct() {
 		
 		$this->plugin_name = 'disable-blog';
-		$this->version = '0.4.3';
+		$this->version = '0.4.5';
 		
 		do_action( 'dwpb_init' );
 		
@@ -98,6 +98,7 @@ class Disable_Blog {
 	 * @access   private
 	 */
 	private static function upgrade_check() {
+		
 		// Get the current version option
 		$current_version = get_option( 'dwpb_version', false );
 		
@@ -113,6 +114,7 @@ class Disable_Blog {
 			// Save current version
 			update_option( 'dwpb_version', DWPB_VERSION );
 		}
+		
 	}
 	
 	/**
@@ -123,6 +125,7 @@ class Disable_Blog {
 	 * @access   private
 	 */
 	private function setup_constants() {
+		
 		// For includes and whatnot
 		if( !defined( 'DWPB_DIR' ) )
 			define( 'DWPB_DIR', dirname( __FILE__ ) );
