@@ -44,6 +44,7 @@ function activate_plugin_name() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-activator.php';
 	Disable_Blog_Activator::activate();
 }
+
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-disable-blog-deactivator.php

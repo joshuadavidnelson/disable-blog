@@ -24,8 +24,3 @@
 #front-static-pages ul {
  	margin: 0
 }
-
-/* Hide the menu link for options-writing.php the appears with Disable Comments enabled */
-#menu-settings a[href="options-writing.php"] {
-	display: none;
-}
