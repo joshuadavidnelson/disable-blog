@@ -188,7 +188,7 @@ class Disable_Blog_Public {
 		
 		// Option to override this via filter and check to confirm post type
 		global $post;
-		if( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && $post->post_type == 'post' ) {
+		if( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && isset( $post->post_type ) && $post->post_type == 'post' ) {
 			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $is_comment_feed );
 			
 			// Provide option to show a message with a link instead of redirect
