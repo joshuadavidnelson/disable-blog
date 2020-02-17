@@ -231,7 +231,7 @@ class Disable_Blog {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
 	
 		// Redirect Admin Page
-		$this->loader->add_action( 'admin_init', $plugin_admin, 'redirect_admin_pages' );
+		$this->loader->add_action( 'current_screen', $plugin_admin, 'redirect_admin_pages' );
 	
 		// Remove Admin Bar Links
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
