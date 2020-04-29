@@ -77,4 +77,4 @@ function run_disable_blog() {
 	$plugin->run();
 
 }
-run_disable_blog();
+add_action( 'plugins_loaded', 'run_disable_blog', 10, 0 );
