@@ -47,6 +47,7 @@ jobs:
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: "7.3"
-        tools: "phpstan"
+    - name: "Install PHPStan"
+      run: "composer require --dev szepeviktor/phpstan-wordpress"
     - name: "Run PHPStan"
-      run: "phpstan analyze"
+      run: "vendor/bin/phpstan analyze"
