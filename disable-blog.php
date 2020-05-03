@@ -32,7 +32,7 @@
  *
  * @since 0.1.0
  */
-if ( ! defined( 'WPINC' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 
@@ -72,9 +72,7 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog.php';
  * @since    0.4.0
  */
 function run_disable_blog() {
-
 	$plugin = new Disable_Blog();
 	$plugin->run();
-
 }
-run_disable_blog();
+add_action( 'plugins_loaded', 'run_disable_blog', 10, 0 );

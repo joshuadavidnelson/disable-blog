@@ -162,33 +162,34 @@ class Disable_Blog {
 	 */
 	private function load_dependencies() {
 
+		$includes_dir = plugin_dir_path( dirname( __FILE__ ) ) . 'includes';
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-disable-blog-loader.php';
+		require_once $includes_dir . '/class-disable-blog-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-disable-blog-i18n.php';
+		require_once $includes_dir . '/class-disable-blog-i18n.php';
 
 		/**
 		 * The class containing all common functions for use in the plugin
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/disable-blog-common-functions.php';
+		require_once $includes_dir . '/functions.php';
 		
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-disable-blog-admin.php';
+		require_once $includes_dir . '/class-disable-blog-admin.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-disable-blog-public.php';
+		require_once $includes_dir . '/class-disable-blog-public.php';
 
 		$this->loader = new Disable_Blog_Loader();
 
@@ -357,5 +358,4 @@ class Disable_Blog {
 	public function get_version() {
 		return $this->version;
 	}
-
 }
