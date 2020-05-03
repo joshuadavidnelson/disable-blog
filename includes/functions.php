@@ -46,24 +46,24 @@ function dwpb_post_types_with_feature( $feature ) {
  *
  * Basically, we need to know if there are post types, other than 'post'
  * that support the taxonomy.
- * 
+ *
  * @since 0.2.0
  * @since 0.4.0 pulled out of class, unique function.
- * 
+ *
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @uses get_post_types(), get_object_taxonomies(), apply_filters()
- * 
- * @param string $taxonomy Required. The name of the feature to check against post type support.
- * @param array | string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
+ *
+ * @param string|object $taxonomy Required. The name of the feature to check against post type support.
+ * @param array|string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
  * @param string $output Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
- * 
- * @return array | boolean	A list of post type names or objects that have the taxonomy or false if nothing found.
+ *
+ * @return array|boolean A list of post type names or objects that have the taxonomy or false if nothing found.
  */
 function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 	$post_types = get_post_types( $args, $output );
 
 	// We just need the taxonomy name
-	if( is_object( $taxonomy ) ){
+	if ( is_object( $taxonomy ) ) {
 		$taxonomy = $taxonomy->name;
 
 	// If it's not an object or a string, it won't work, so send it back

@@ -105,7 +105,7 @@ class Disable_Blog_Public {
 		
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
-		$protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === true ? 'https://' : 'http://';
+		$protocol = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
 		$curent_url = esc_url( $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"] );
 		if( $redirect_url == $curent_url || ! $redirect_url )
 			return;
@@ -193,7 +193,7 @@ class Disable_Blog_Public {
 			
 			// Provide option to show a message with a link instead of redirect
 			if( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
-				$message = sprintf( 'No feed available, please visit our <a href="%s">homepage</a>!', esc_url_raw( $redirect_url ), 'disable-blog' );
+				$message = sprintf( __( 'No feed available, please visit our <a href="%s">homepage</a>!', 'disable-blog' ), esc_url_raw( $redirect_url ) );
 				$message = apply_filters( 'dwpb_feed_die_message', $message );
 				wp_die( $message );
 				
@@ -253,7 +253,7 @@ class Disable_Blog_Public {
 	 */
 	public function modify_rest_api() {
 		if( true !== apply_filters( 'dwpb_disable_rest_api', true ) )
-			return;
+			return false;
 		
 		global $wp_post_types;
 		$post_type_name = 'post';

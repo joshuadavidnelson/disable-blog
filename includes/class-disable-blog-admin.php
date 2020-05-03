@@ -81,7 +81,7 @@ class Disable_Blog_Admin {
 	 * @param object $comments
 	 * @param int $post_id
 	 *
-	 * @return array $comments
+	 * @return object $comments
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
@@ -97,7 +97,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
-		
 	}
 	
 	/**
@@ -242,7 +241,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 *
 	 * @param boolean $comments
-	 * @param string $post_id
+	 * @param int $post_id
 	 *
 	 * @return boolean
 	 */
@@ -433,10 +432,10 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param  (wp_query object) $comments
+	 * @param WP_Query $comments
 	 */
 	public function comment_filter( $comments ) {
-		
+
 		global $pagenow;
 
 		if( !isset( $pagenow ) )
@@ -450,7 +449,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
-		
 	}
 
 	/**
