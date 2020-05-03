@@ -28,7 +28,7 @@
 /**
  * Exit if accessed directly.
  *
- * Prevent direct access to this file. 
+ * Prevent direct access to this file.
  *
  * @since 0.1.0
  */

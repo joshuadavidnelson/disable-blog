@@ -24,8 +24,8 @@
  * @subpackage Disable_Blog/includes
  * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
-class Disable_Blog_i18n {
-	
+class Disable_Blog_I18n {
+
 	/**
 	 * Load the plugin text domain for translation.
 	 *
@@ -40,5 +40,5 @@ class Disable_Blog_i18n {
 		);
 
 	}
-	
+
 }

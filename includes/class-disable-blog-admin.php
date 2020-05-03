@@ -43,14 +43,14 @@ class Disable_Blog_Admin {
 	/**
 	 * Initialize the class and set its properties.
 	 *
-	 * @since	0.4.0
-	 * @param	string    $plugin_name       The name of this plugin.
-	 * @param	string    $version    The version of this plugin.
+	 * @since   0.4.0
+	 * @param   string    $plugin_name       The name of this plugin.
+	 * @param   string    $version    The version of this plugin.
 	 */
 	public function __construct( $plugin_name, $version ) {
 
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->version     = $version;
 
 	}
 
@@ -60,16 +60,16 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 */
 	public function remove_post_comment_support() {
-		
-		if( post_type_supports( 'post', 'comments' ) && apply_filters( 'dwpb_remove_post_comment_support', true ) ) {
+
+		if ( post_type_supports( 'post', 'comments' ) && apply_filters( 'dwpb_remove_post_comment_support', true ) ) {
 			remove_post_type_support( 'post', 'comments' );
 		}
 
 		// Remove
-		if( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
+		if ( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
 			remove_post_type_support( 'post', 'trackbacks' );
 		}
-		
+
 	}
 
 	/**
@@ -86,19 +86,19 @@ class Disable_Blog_Admin {
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
 		// if this is grabbing all the comments, filter out the 'post' comments.
-		if( 0 == $post_id ) {
+		if ( 0 == $post_id ) {
 			$comments = $this->get_comment_counts();
-			
+
 			$comments['moderated'] = $comments['awaiting_moderation'];
 			unset( $comments['awaiting_moderation'] );
-			
+
 			$comments = (object) $comments;
-			wp_cache_set( "comments-0", $comments, 'counts' );
+			wp_cache_set( 'comments-0', $comments, 'counts' );
 		}
 
 		return $comments;
 	}
-	
+
 	/**
 	 * Turn the comments object back into an array if WooCommerce is active.
 	 *
@@ -113,13 +113,13 @@ class Disable_Blog_Admin {
 	 * @return array $comments
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
-		
-		if( 0 == $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+
+		if ( 0 == $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
 			$comments = (array) $comments;
 		}
-		
+
 		return $comments;
-		
+
 	}
 
 	/**
@@ -132,20 +132,21 @@ class Disable_Blog_Admin {
 	 * @return array $views
 	 */
 	public function filter_admin_table_comment_count( $views ) {
-		
-	    global $current_screen;
 
-	    if( 'edit-comments' == $current_screen->id ) {
+		global $current_screen;
+
+		if ( 'edit-comments' == $current_screen->id ) {
 
 			$updated_counts = $this->get_comment_counts();
-			foreach( $views as $view => $text ) {
-				if( isset( $updated_counts[ $view ] ) )
-					$views[ $view ] = preg_replace( "/\([^)]+\)/", '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
+			foreach ( $views as $view => $text ) {
+				if ( isset( $updated_counts[ $view ] ) ) {
+					$views[ $view ] = preg_replace( '/\([^)]+\)/', '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
+				}
 			}
-	    }
-		
-	    return $views;
-		
+		}
+
+		return $views;
+
 	}
 
 	/**
@@ -163,7 +164,8 @@ class Disable_Blog_Admin {
 		global $wpdb;
 
 		// Grab the comments that are not associated with 'post' post_type
-	    $totals = (array) $wpdb->get_results("
+		$totals = (array) $wpdb->get_results(
+			"
 	        SELECT comment_approved, COUNT( * ) AS total
 	        FROM {$wpdb->comments}
 		    WHERE comment_post_ID in (
@@ -172,49 +174,51 @@ class Disable_Blog_Admin {
 		         WHERE post_type != 'post'
 		         AND post_status = 'publish')
 	        GROUP BY comment_approved
-	    ", ARRAY_A);
-
-		$comment_count = array(
-			'moderated' 		  => 0,
-	        'approved'            => 0,
-	        'awaiting_moderation' => 0,
-	        'spam'                => 0,
-	        'trash'               => 0,
-	        'post-trashed'        => 0,
-	        'total_comments'      => 0,
-	        'all'                 => 0,
+	    ",
+			ARRAY_A
 		);
 
-	    foreach ( $totals as $row ) {
-	        switch ( $row['comment_approved'] ) {
-	            case 'trash':
-	                $comment_count['trash'] = $row['total'];
-	                break;
-	            case 'post-trashed':
-	                $comment_count['post-trashed'] = $row['total'];
-	                break;
-	            case 'spam':
-	                $comment_count['spam'] = $row['total'];
-	                $comment_count['total_comments'] += $row['total'];
-	                break;
-	            case '1':
-	                $comment_count['approved'] = $row['total'];
-	                $comment_count['total_comments'] += $row['total'];
-	                $comment_count['all'] += $row['total'];
-	                break;
-	            case '0':
-	                $comment_count['awaiting_moderation'] = $row['total'];
-					$comment_count['moderated'] = $comment_count['awaiting_moderation'];
-	                $comment_count['total_comments'] += $row['total'];
-	                $comment_count['all'] += $row['total'];
-	                break;
-	            default:
-	                break;
-	        }
-	    }
+		$comment_count = array(
+			'moderated'           => 0,
+			'approved'            => 0,
+			'awaiting_moderation' => 0,
+			'spam'                => 0,
+			'trash'               => 0,
+			'post-trashed'        => 0,
+			'total_comments'      => 0,
+			'all'                 => 0,
+		);
+
+		foreach ( $totals as $row ) {
+			switch ( $row['comment_approved'] ) {
+				case 'trash':
+					$comment_count['trash'] = $row['total'];
+					break;
+				case 'post-trashed':
+					$comment_count['post-trashed'] = $row['total'];
+					break;
+				case 'spam':
+					$comment_count['spam']            = $row['total'];
+					$comment_count['total_comments'] += $row['total'];
+					break;
+				case '1':
+					$comment_count['approved']        = $row['total'];
+					$comment_count['total_comments'] += $row['total'];
+					$comment_count['all']            += $row['total'];
+					break;
+				case '0':
+					$comment_count['awaiting_moderation'] = $row['total'];
+					$comment_count['moderated']           = $comment_count['awaiting_moderation'];
+					$comment_count['total_comments']     += $row['total'];
+					$comment_count['all']                += $row['total'];
+					break;
+				default:
+					break;
+			}
+		}
 
 		return $comment_count;
-		
+
 	}
 
 	/**
@@ -228,11 +232,11 @@ class Disable_Blog_Admin {
 	 * @return boolean
 	 */
 	public function filter_comment_status( $open, $post_id ) {
-		
+
 		$post_type = get_post_type( $post_id );
-		
+
 		return ( 'post' == $post_type ) ? false : $open;
-		
+
 	}
 
 	/**
@@ -246,11 +250,11 @@ class Disable_Blog_Admin {
 	 * @return boolean
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
-		
+
 		$post_type = get_post_type( $post_id );
-		
+
 		return ( 'post' == $post_type ) ? array() : $comments;
-		
+
 	}
 
 	/**
@@ -263,12 +267,13 @@ class Disable_Blog_Admin {
 	 * @return array $headers
 	 */
 	public function filter_wp_headers( $headers ) {
-		
-		if( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) )
+
+		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
 			unset( $headers['X-Pingback'] );
+		}
 
 		return $headers;
-		
+
 	}
 
 	/**
@@ -286,7 +291,7 @@ class Disable_Blog_Admin {
 
 		// Remove Top Level Menu Pages
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
-		foreach( $pages as $page ) {
+		foreach ( $pages as $page ) {
 			remove_menu_page( $page );
 		}
 
@@ -294,22 +299,23 @@ class Disable_Blog_Admin {
 		$remove_subpages = array(
 			'tools.php' => 'tools.php',
 		);
-		
+
 		// Remove the writings page, if the filter tells us so.
-		if( $this->remove_writing_options() )
+		if ( $this->remove_writing_options() ) {
 			$remove_subpages['options-general.php'] = 'options-writing.php';
+		}
 
 		// If there are no other post types supporting comments, remove the discussion page
-		if( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
+			$remove_subpages['options-general.php'] = 'options-discussion.php'; // Settings > Discussion
 		}
 
 		// Remove Admin Menu Subpages
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
-		foreach( $subpages as $page => $subpage ) {
+		foreach ( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
 		}
-		
+
 	}
 
 	/**
@@ -321,10 +327,10 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0 added single post edit screen redirect
 	 */
 	public function redirect_admin_pages() {
-		
+
 		global $pagenow;
 
-		if( !isset( $pagenow ) ) {
+		if ( ! isset( $pagenow ) ) {
 			return;
 		}
 
@@ -332,20 +338,20 @@ class Disable_Blog_Admin {
 		$redirect_url = false;
 
 		//Redirect Edit Single Post to Dashboard.
-		if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
-			$url = admin_url( '/index.php' );
+		if ( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
+			$url          = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
 		}
 
 		// Redirect Edit Posts Screen to Edit Page
-		if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
-			$url = admin_url( '/edit.php?post_type=page' );
+		if ( 'edit.php' == $pagenow && ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && 'post' === $_GET['post_type'] ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
+			$url          = admin_url( '/edit.php?post_type=page' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
 		}
 
 		// Redirect New Post to New Page
-		if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
-			$url = admin_url('/post-new.php?post_type=page' );
+		if ( 'post-new.php' == $pagenow && ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && 'post' === $_GET['post_type'] ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
+			$url          = admin_url( '/post-new.php?post_type=page' );
 			$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
 		}
 
@@ -355,52 +361,52 @@ class Disable_Blog_Admin {
 		// or if this is either the edit-tags page and a taxonomy is not set
 		// and the built-in default 'post_tags' is not supported by other post types
 		// then redirect!
-		if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
-			$url = admin_url( '/index.php' );
+		if ( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
+			$url          = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 		}
 
 		// Redirect posts-only comment queries to comments
-		if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
-			$url = admin_url( '/edit-comments.php' );
+		if ( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+			$url          = admin_url( '/edit-comments.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
 		}
 
 		// Redirect disccusion options page if only supported by 'post' type
-		if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
-			$url = admin_url( '/index.php' );
+		if ( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
+			$url          = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
 		}
 
 		// Redirect writing options to general options
-		if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
-			$url = admin_url( '/options-general.php' );
+		if ( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
+			$url          = admin_url( '/options-general.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 		}
 
 		// Redirect available tools page
-		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-		 	$url = admin_url( '/index.php' );
-		 	$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
+		if ( 'tools.php' == $pagenow && ! isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
+			$url          = admin_url( '/index.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
 		}
 
 		// If we have a redirect url, do it
-		if( $redirect_url ) {
+		if ( $redirect_url ) {
 			wp_redirect( esc_url_raw( $redirect_url ), 301 );
 			exit;
 		}
-		
+
 	}
-	
+
 	/**
 	 * Filter for removing the writing options page.
 	 *
 	 * @since 0.4.5
 	 */
 	function remove_writing_options() {
-		
+
 		return apply_filters( 'dwpb_redirect_admin_options_writing', false );
-		
+
 	}
 
 	/**
@@ -413,16 +419,17 @@ class Disable_Blog_Admin {
 	 * @since 0.1.0
 	 */
 	public function remove_admin_bar_links() {
-		
+
 		global $wp_admin_bar;
 
 		// If only posts support comments, then remove comment from admin bar
-		if( ! dwpb_post_types_with_feature( 'comments' ) )
-		    $wp_admin_bar->remove_menu( 'comments' );
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
+			$wp_admin_bar->remove_menu( 'comments' );
+		}
 
 		// Remove New Post from Content
 		$wp_admin_bar->remove_node( 'new-post' );
-		
+
 	}
 
 	/**
@@ -438,12 +445,14 @@ class Disable_Blog_Admin {
 
 		global $pagenow;
 
-		if( !isset( $pagenow ) )
+		if ( ! isset( $pagenow ) ) {
 			return $comments;
+		}
 
 		// Filter out comments from post
-		if( is_admin() && $pagenow == 'edit-comments.php' ) {
-			if( $post_types = dwpb_post_types_with_feature( 'comments' ) ) {
+		if ( is_admin() && 'edit-comments.php' === $pagenow ) {
+			$post_types = dwpb_post_types_with_feature( 'comments' );
+			if ( $post_types ) {
 				$comments->query_vars['post_type'] = $post_types;
 			}
 		}
@@ -460,19 +469,20 @@ class Disable_Blog_Admin {
 	 * @since 0.4.1 dry out the code with a foreach loop
 	 */
 	function remove_dashboard_widgets() {
-		
-		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary 
+
+		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary
 		$metabox = array(
-			'dashboard_quick_press' => 'side', // Quick Press
-			'dashboard_recent_drafts' => 'side', // Recent Drafts
+			'dashboard_quick_press'    => 'side', // Quick Press
+			'dashboard_recent_drafts'  => 'side', // Recent Drafts
 			'dashboard_incoming_links' => 'normal', // Incoming Links
-			'dashboard_activity' => 'normal' // Activity
+			'dashboard_activity'       => 'normal', // Activity
 		);
 		foreach ( $metabox as $id => $context ) {
-			if( apply_filters( 'dwpb_disable_' . $id, true ) )
+			if ( apply_filters( 'dwpb_disable_' . $id, true ) ) {
 				remove_meta_box( $id, 'dashboard', $context );
+			}
 		}
-		
+
 	}
 
 	/**
@@ -485,13 +495,13 @@ class Disable_Blog_Admin {
 	 *
 	 */
 	public function reading_settings() {
-		
-		if( 'posts' == get_option( 'show_on_front' ) ) {
+
+		if ( 'posts' == get_option( 'show_on_front' ) ) {
 			update_option( 'show_on_front', 'page' );
 			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 0 ) );
 			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 1 ) );
 		}
-		
+
 	}
 
 	/**
@@ -500,9 +510,9 @@ class Disable_Blog_Admin {
 	 * @since 0.2.0
 	 */
 	public function disable_press_this() {
-		
+
 		wp_die( '"Press This" functionality has been disabled.' );
-		
+
 	}
 
 	/**
@@ -514,21 +524,22 @@ class Disable_Blog_Admin {
 	public function remove_widgets() {
 
 		// Unregister widgets that don't require a check
-        $widgets = array(
+		$widgets = array(
 			'WP_Widget_Recent_Comments', // Recent Comments
 			'WP_Widget_Tag_Cloud', // Tag Cloud
 			'WP_Widget_Categories', // Categories
-            'WP_Widget_Archives', // Archives
-            'WP_Widget_Calendar', // Calendar
-            'WP_Widget_Links', // Links
-            'WP_Widget_Recent_Posts', // Recent Posts
-            'WP_Widget_RSS', // RSS
-            'WP_Widget_Tag_Cloud' // Tag Cloud
-        );
-        foreach( $widgets as $widget ) {
-			if( apply_filters( "dwpb_unregister_widgets", true, $widget ) )
-	            unregister_widget( $widget );
-        }
+			'WP_Widget_Archives', // Archives
+			'WP_Widget_Calendar', // Calendar
+			'WP_Widget_Links', // Links
+			'WP_Widget_Recent_Posts', // Recent Posts
+			'WP_Widget_RSS', // RSS
+			'WP_Widget_Tag_Cloud', // Tag Cloud
+		);
+		foreach ( $widgets as $widget ) {
+			if ( apply_filters( 'dwpb_unregister_widgets', true, $widget ) ) {
+				unregister_widget( $widget );
+			}
+		}
 
 	}
 
@@ -545,19 +556,22 @@ class Disable_Blog_Admin {
 	public function filter_widget_removal( $boolean, $widget ) {
 
 		// Remove Categories Widget
-		if( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) )
+		if ( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) ) {
 			$boolean = false;
+		}
 
 		// Remove Recent Comments Widget if posts are the only type with comments
-		if( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) )
+		if ( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) ) {
 			$boolean = false;
+		}
 
 		// Remove Tag Cloud
-		if( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) )
+		if ( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) ) {
 			$boolean = false;
+		}
 
 		return $boolean;
-		
+
 	}
 
 	/**

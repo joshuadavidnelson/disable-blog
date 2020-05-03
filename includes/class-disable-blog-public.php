@@ -50,72 +50,74 @@ class Disable_Blog_Public {
 	public function __construct( $plugin_name, $version ) {
 
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->version     = $version;
 
 	}
-	
+
 	/**
 	 * Redirect single post pages
 	 *
 	 * @uses dwpb_post_types_with_tax()
-	 * 
+	 *
 	 * @since 0.2.0
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 */
 	public function redirect_posts() {
-		if( is_admin() || !get_option( 'page_on_front' ) )
+		if ( is_admin() || ! get_option( 'page_on_front' ) ) {
 			return;
-		
+		}
+
 		// Get the front page id and url
 		$page_id = get_option( 'page_on_front' );
-		$url = get_permalink( $page_id );
-		
+		$url     = get_permalink( $page_id );
+
 		// Run the redirects
-		if( is_singular( 'post' ) ) {
-		
+		if ( is_singular( 'post' ) ) {
+
 			global $post;
-			$redirect_url = apply_filters( "dwpb_redirect_posts", $url, $post );
+			$redirect_url = apply_filters( 'dwpb_redirect_posts', $url, $post );
 			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
-		
-		} elseif( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
-		
+
+		} elseif ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+
 			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
-		
-		} elseif( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
-		
+
+		} elseif ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
+
 			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
-		
-		} elseif( is_post_type_archive( 'post' ) ) {
-		
+
+		} elseif ( is_post_type_archive( 'post' ) ) {
+
 			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
-		
-		} elseif( is_home() ) {
-			
+
+		} elseif ( is_home() ) {
+
 			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
-		
-		} elseif( is_date() ) {
-		
+
+		} elseif ( is_date() ) {
+
 			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
-		
+
 		} else {
-			
+
 			$redirect_url = false;
-				
+
 		}
-		
+
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
-		$protocol = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
-		$curent_url = esc_url( $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"] );
-		if( $redirect_url == $curent_url || ! $redirect_url )
+		$protocol   = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
+		$curent_url = esc_url( $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+		if ( $redirect_url == $curent_url || ! $redirect_url ) {
 			return;
-		
-		if( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
+		}
+
+		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
 			wp_redirect( esc_url( $redirect_url ), 301 );
 			exit();
 		}
 	}
-	
+
 	/**
 	 * Remove post type from query array.
 	 *
@@ -123,25 +125,25 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param object $query 
-	 * @param array $array 
-	 * @param string $filter 
+	 * @param object $query
+	 * @param array $array
+	 * @param string $filter
 	 *
 	 * @return boolean
 	 */
 	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
-		if( is_array( $array ) && in_array( 'post', $array ) ) {
-			unset( $array[ 'post' ] );
+		if ( is_array( $array ) && in_array( 'post', $array, true ) ) {
+			unset( $array['post'] );
 			$set_to = empty( $filter ) ? $array : apply_filters( $filter, $array, $query );
-			if( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
+			if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
 				$query->set( 'post_type', $set_to );
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Modify query.
 	 *
@@ -151,29 +153,35 @@ class Disable_Blog_Public {
 	 *
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @link http://stackoverflow.com/questions/7225070/php-array-delete-by-value-not-key#7225113
-	 * 
+	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
 	 */
 	public function modify_query( $query ) {
-		
+
 		// Bail if we're in the admin or not on the main query
-		if( is_admin() || ! $query->is_main_query() )
+		if ( is_admin() || ! $query->is_main_query() ) {
 			return;
-		
+		}
+
 		// Remove 'post' post_type from search results, replace with page
-		if( $query->is_search() ) {
+		if ( $query->is_search() ) {
 			$in_search_post_types = get_post_types( array( 'exclude_from_search' => false ) );
 			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
 		}
-	
+
 		// Remove Posts from Author Page
-		if( $query->is_author() ) {
-			$author_post_types = get_post_types( array( 'publicly_queryable' => true, 'exclude_from_search' => false ) );
+		if ( $query->is_author() ) {
+			$author_post_types = get_post_types(
+				array(
+					'publicly_queryable'  => true,
+					'exclude_from_search' => false,
+				)
+			);
 			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
 		}
 	}
-	
+
 	/**
 	 * Disable Blog feeds.
 	 *
@@ -181,31 +189,32 @@ class Disable_Blog_Public {
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
 	 */
 	public function disable_feed( $is_comment_feed ) {
-		
+
 		// If this is a comment feed and comments are supported by other post types, bail
-		if( $is_comment_feed && dwpb_post_types_with_feature( 'comments' ) )
+		if ( $is_comment_feed && dwpb_post_types_with_feature( 'comments' ) ) {
 			return;
-		
+		}
+
 		// Option to override this via filter and check to confirm post type
 		global $post;
-		if( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && isset( $post->post_type ) && $post->post_type == 'post' ) {
+		if ( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
 			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $is_comment_feed );
-			
+
 			// Provide option to show a message with a link instead of redirect
-			if( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
+			if ( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
+				// translators: the placeholser is the URL of our website
 				$message = sprintf( __( 'No feed available, please visit our <a href="%s">homepage</a>!', 'disable-blog' ), esc_url_raw( $redirect_url ) );
 				$message = apply_filters( 'dwpb_feed_die_message', $message );
 				wp_die( $message );
-				
-			// Default option: redirect to homepage
+
+				// Default option: redirect to homepage
 			} else {
 				wp_redirect( esc_url_raw( $redirect_url ), 301 );
 				exit;
 			}
-			
 		}
 	}
-	
+
 	/**
 	 * Turn off the feed link.
 	 *
@@ -213,14 +222,14 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean 
+	 * @param string $boolean
 	 *
 	 * @return boolean
 	 */
 	public function feed_links_show_posts_feed( $boolean ) {
 		return false;
 	}
-	
+
 	/**
 	 * Turn off the comment's feed link.
 	 *
@@ -228,16 +237,17 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean 
+	 * @param string $boolean
 	 *
 	 * @return boolean
 	 */
 	public function feed_links_show_comments_feed( $boolean ) {
-		
+
 		// If 'post' type is the only type supporting comments, then disable the comment feed link
-		if( ! dwpb_post_types_with_feature( 'comments' ) )
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
 			$boolean = false;
-		
+		}
+
 		return $boolean;
 	}
 
@@ -252,14 +262,15 @@ class Disable_Blog_Public {
 	 * @return boolean
 	 */
 	public function modify_rest_api() {
-		if( true !== apply_filters( 'dwpb_disable_rest_api', true ) )
+		if ( true !== apply_filters( 'dwpb_disable_rest_api', true ) ) {
 			return false;
-		
+		}
+
 		global $wp_post_types;
 		$post_type_name = 'post';
-		
-		if( isset( $wp_post_types[ $post_type_name ] ) ) {
-			$wp_post_types[$post_type_name]->show_in_rest = false;
+
+		if ( isset( $wp_post_types[ $post_type_name ] ) ) {
+			$wp_post_types[ $post_type_name ]->show_in_rest = false;
 			return true;
 		}
 

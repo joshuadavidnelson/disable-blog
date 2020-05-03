@@ -33,9 +33,10 @@ jobs:
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: "7.3"
-        tools: "phpcs"
+    - name: "Install PHPCS"
+      run: "composer require --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer"
     - name: "Run PHPCS"
-      run: "true || phpcs"
+      run: "vendor/bin/phpcs --standard=WordPress-Core --exclude=WordPress.PHP.StrictComparisons *.php includes/"
 
   static-analysis:
     name: "Run static analysis"
