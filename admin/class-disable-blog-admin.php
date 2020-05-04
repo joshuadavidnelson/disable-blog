@@ -328,68 +328,75 @@ class Disable_Blog_Admin {
 		if( !isset( $pagenow ) ) {
 			return;
 		}
+		
+		$screen = get_current_screen();
+		
+		// on multisite: Do not redirect if we are on a network page
+		if( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin('network') ) {
+            return;
+        }
 
-		// setup false redirect url value for final check
-		$redirect_url = false;
+        // setup false redirect url value for final check
+        $redirect_url = false;
+        
+        // Redirect Edit Single Post to Dashboard.
+        if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
+        }
 
-		//Redirect Edit Single Post to Dashboard.
-		if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
-			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
-		}
+        // Redirect Edit Posts Screen to Edit Page
+        if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
+            $url = admin_url( '/edit.php?post_type=page' );
+            $redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
+        }
 
-		// Redirect Edit Posts Screen to Edit Page
-		if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
-			$url = admin_url( '/edit.php?post_type=page' );
-			$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
-		}
+        // Redirect New Post to New Page
+        if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
+            $url = admin_url('/post-new.php?post_type=page' );
+            $redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
+        }
 
-		// Redirect New Post to New Page
-		if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
-			$url = admin_url('/post-new.php?post_type=page' );
-			$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
-		}
+        // Redirect at edit tags screen
+        // If this is a post type other than 'post' that supports categories or tags,
+        // then bail. Otherwise if it is a taxonomy only used by 'post'
+        // or if this is either the edit-tags page and a taxonomy is not set
+        // and the built-in default 'post_tags' is not supported by other post types
+        // then redirect!
+        if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
+        }
 
-		// Redirect at edit tags screen
-		// If this is a post type other than 'post' that supports categories or tags,
-		// then bail. Otherwise if it is a taxonomy only used by 'post'
-		// or if this is either the edit-tags page and a taxonomy is not set
-		// and the built-in default 'post_tags' is not supported by other post types
-		// then redirect!
-		if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
-			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
-		}
+        // Redirect posts-only comment queries to comments
+        if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+            $url = admin_url( '/edit-comments.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
+        }
 
-		// Redirect posts-only comment queries to comments
-		if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
-			$url = admin_url( '/edit-comments.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
-		}
+        // Redirect disccusion options page if only supported by 'post' type
+        if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
+        }
 
-		// Redirect disccusion options page if only supported by 'post' type
-		if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
-			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
-		}
+        // Redirect writing options to general options
+        if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
+            $url = admin_url( '/options-general.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+        }
 
-		// Redirect writing options to general options
-		if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
-			$url = admin_url( '/options-general.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
-		}
+        // Redirect available tools page
+        if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
+        }
 
-		// Redirect available tools page
-		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-		 	$url = admin_url( '/index.php' );
-		 	$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
-		}
-
-		// If we have a redirect url, do it
-		if( $redirect_url ) {
-			wp_redirect( esc_url_raw( $redirect_url ), 301 );
-			exit;
-		}
+        // If we have a redirect url, do it
+        if( $redirect_url ) {
+            wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+            exit;
+        }
 		
 	}
 	
