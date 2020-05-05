@@ -109,8 +109,8 @@ class Disable_Blog_Public {
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
 		$protocol   = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
-		$curent_url = esc_url( $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
-		if ( $redirect_url == $curent_url || ! $redirect_url ) {
+		$current_url = esc_url( $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+		if ( $redirect_url == $current_url || ! $redirect_url ) {
 			return;
 		}
 
