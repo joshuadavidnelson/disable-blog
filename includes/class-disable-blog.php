@@ -263,10 +263,13 @@ class Disable_Blog {
 	
 		// Remove Dashboard Widgets
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
-	
-		// Force Reading Settings
-		$this->loader->add_action( 'admin_init', $plugin_admin, 'reading_settings' );
-	
+
+		// Admin notices
+        $this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
+        
+        // Add a class to the admin body for the reading options page
+        $this->loader->add_filter( 'admin_body_class', $plugin_admin, 'admin_body_class', 10, 1 );
+
 		// Remove Post via Email Settings
 		add_filter( 'enable_post_by_email_configuration', '__return_false' );
 	

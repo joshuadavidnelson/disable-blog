@@ -310,8 +310,24 @@ class Disable_Blog_Admin {
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
 		}
-		
-	}
+
+    }
+    
+    /**
+     * Filter the body classes for admin screens to toggle on plugin specific styles.
+     *
+     * @param array $classes
+     * 
+     * @return array
+     */
+    function admin_body_class( $classes ) {
+
+        if( $this->has_front_page() )
+            $classes .= ' disabled-blog';
+
+        return $classes;
+
+    }
 
 	/**
 	 * Redirect blog-related admin pages
@@ -485,23 +501,75 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Set Page for Posts options: 'show_on_front', 'page_for_posts', 'page_on_front'
+	 * Throw an admin notice if settings are misconfigured.
 	 *
-	 * If the 'show_on_front' option is set to 'posts', then set it to 'page'
-	 * and also set the page
+	 * If there is not a homepage correctly set, then redirects don't work.
+     * The intention with this notice is to highlight what is needed for the plugin to function properly.
 	 *
-	 * @since 0.2.0
-	 *
+	 * @since 0.2.0 
+     * @since 0.4.7 Changed this to an error notice function.
 	 */
-	public function reading_settings() {
-		
-		if( 'posts' == get_option( 'show_on_front' ) ) {
-			update_option( 'show_on_front', 'page' );
-			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 0 ) );
-			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 1 ) );
-		}
-		
-	}
+	public function admin_notices() {
+
+        // only throwing this notice in the edit.php, plugins.php, and options-reading.php admin pages
+        $current_screen = get_current_screen();
+        $screens = array(
+            'plugins',
+            'options-reading',
+            'edit',
+        );
+        if( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
+            return;
+
+        // Throw a notice if the we don't have a front page
+		if( ! $this->has_front_page() ) {
+
+            // The second part of the notice depends on which screen we're on.
+            if( 'options-reading' == $current_screen->base ) {
+
+                // translators: Direct the user to set a homepage in the current screen.
+                $message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
+
+            // If we're not on the Reading Options page, then direct the user there
+            } else {
+
+                // translators: Direct the user to the Reading Settings admin page.
+                $reading_options_page = get_admin_url( null, 'options-reading.php' );
+                $message_link = ' ' . sprintf( __( 'Change in <a href="%s">Reading Settings</a>.', 'disable-blog' ), $reading_options_page );
+
+            }
+
+            // translators: Prompt to configure the site for static homepage and posts page.
+            $message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
+
+            printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
+
+        // If we have a front page set, but no posts page or they are the same
+        // Then let the user know the expected behavior of these two.
+        } elseif( 'options-reading' == $current_screen->base 
+                    && ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
+
+            // translators: Tell the user the plugin needs a static homepage and the posts page will be redirected.
+            $message = __( 'Disable Blog requires a static homepage and will redirect the "posts page" to the homepage.', 'disable-blog' );
+
+            printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
+
+        }
+
+    }
+    
+    /**
+     * Check that the site has a front page set in the Settings > Reading.
+     * 
+     * @since 0.4.7
+     *
+     * @return boolean
+     */
+    function has_front_page() {
+
+        return ( 'page' == get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
+
+    }
 
 	/**
 	 * Kill the Press This functionality
