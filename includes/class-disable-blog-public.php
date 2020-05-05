@@ -4,7 +4,7 @@
  * The public-facing functionality of the plugin.
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
- * @since      1.0.0
+ * @since      0.2.0
  *
  * @package    Disable_Blog
  * @subpackage Disable_Blog/public
@@ -25,7 +25,7 @@ class Disable_Blog_Public {
 	/**
 	 * The ID of this plugin.
 	 *
-	 * @since    1.0.0
+	 * @since    0.2.0
 	 * @access   private
 	 * @var      string    $plugin_name    The ID of this plugin.
 	 */
@@ -34,7 +34,7 @@ class Disable_Blog_Public {
 	/**
 	 * The version of this plugin.
 	 *
-	 * @since    1.0.0
+	 * @since    0.2.0
 	 * @access   private
 	 * @var      string    $version    The current version of this plugin.
 	 */
@@ -43,7 +43,7 @@ class Disable_Blog_Public {
 	/**
 	 * Initialize the class and set its properties.
 	 *
-	 * @since    1.0.0
+	 * @since    0.2.0
 	 * @param      string    $plugin_name       The name of the plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
@@ -112,10 +112,21 @@ class Disable_Blog_Public {
 			return;
 		}
 
-		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
-			wp_redirect( esc_url( $redirect_url ), 301 );
+        /**
+         * Filter to toggle the plugin's front-end redirection.
+         *
+         * @since 0.2.0
+         * @since 0.4.0 added the current_url param.
+         *
+         * @param bool  $bool True to enable, false to disable.
+         * @param string $redirect_url The url being used for the redirect.
+         * @param string $current_url The current url.
+         */
+		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url, $current_url ) ) {
+			wp_safe_redirect( esc_url( $redirect_url ), 301 );
 			exit();
-		}
+        }
+        
 	}
 
 	/**
@@ -132,8 +143,22 @@ class Disable_Blog_Public {
 	 * @return boolean
 	 */
 	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
+
 		if ( is_array( $array ) && in_array( 'post', $array, true ) ) {
-			unset( $array['post'] );
+            unset( $array['post'] );
+            
+            /**
+             * If there is a filter name passed, then a filter is applied on the array and query.
+             * 
+             * Used for 'dwpb_search_post_types' and 'dwpb_author_post_types' filters.
+             * 
+             * @see Disable_Blog_Public->modify_query
+             * 
+             * @since 0.4.0
+             * 
+             * @param array $array
+             * @param object $query
+             */
 			$set_to = empty( $filter ) ? $array : apply_filters( $filter, $array, $query );
 			if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
 				$query->set( 'post_type', $set_to );
@@ -141,7 +166,8 @@ class Disable_Blog_Public {
 			}
 		}
 
-		return false;
+        return false;
+
 	}
 
 	/**
@@ -166,18 +192,18 @@ class Disable_Blog_Public {
 
 		// Remove 'post' post_type from search results, replace with page
 		if ( $query->is_search() ) {
-			$in_search_post_types = get_post_types( array( 'exclude_from_search' => false ) );
+			$in_search_post_types = get_post_types( array(
+                'exclude_from_search' => false,
+            ) );
 			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
 		}
 
 		// Remove Posts from Author Page
 		if ( $query->is_author() ) {
-			$author_post_types = get_post_types(
-				array(
-					'publicly_queryable'  => true,
-					'exclude_from_search' => false,
-				)
-			);
+			$author_post_types = get_post_types( array(
+                'publicly_queryable'  => true,
+                'exclude_from_search' => false,
+            ) );
 			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
 		}
 	}
@@ -196,21 +222,71 @@ class Disable_Blog_Public {
 		}
 
 		// Option to override this via filter and check to confirm post type
-		global $post;
+        global $post;
+
+        /**
+         * Toggle the disable feed via this filter.
+         * 
+         * @since 0.4.0
+         * 
+         * @param bool $bool True to cancel the feed, assuming it's a post feed.
+         * @param object $post Global post object.
+         * @param bool $is_comment_feed True if the feed is a comment feed.
+         */
 		if ( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
+
+            /**
+             * Filter the feed redirect url.
+             * 
+             * @since 0.4.0
+             * 
+             * @param string $url The redirect url (defaults to homepage)
+             * @param bool $is_comment_feed True if the feed is a comment feed.
+             */
 			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $is_comment_feed );
 
-			// Provide option to show a message with a link instead of redirect
+            /**
+             * Filter to toggle on a message instead of a redirect.
+             * 
+             * Defaults to false, so a redirect is the expacted default behavior.
+             * 
+             * @since 0.4.0
+             * 
+             * @param bool $bool True to use a message, false to redirect.
+             * @param object $post Global post object.
+             * @param bool $is_comment_feed True if the feed is a comment feed.
+             */
 			if ( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
-				// translators: the placeholser is the URL of our website
-				$message = sprintf( __( 'No feed available, please visit our <a href="%s">homepage</a>!', 'disable-blog' ), esc_url_raw( $redirect_url ) );
-				$message = apply_filters( 'dwpb_feed_die_message', $message );
-				wp_die( $message );
 
-				// Default option: redirect to homepage
+                // translators: the placeholser is the URL of our website
+                $message = sprintf( __( 'No feed available, please visit our <a href="%s">homepage</a>!', 'disable-blog' ), esc_url_raw( $redirect_url ) );
+
+                /**
+                 * Filter the feed die message.
+                 * 
+                 * If the `dwpb_feed_message` is set to true, use this filter to set a custom message.
+                 * 
+                 * @since 0.4.0
+                 * 
+                 * @param string $message
+                 */
+                $message = apply_filters( 'dwpb_feed_die_message', $message );
+                $allowed_html = array(
+                    'a' => array(
+                        'href' => array(),
+                        'name' => array(),
+                        'id'   => array(),
+                    )
+                );
+                $safe_message = wp_kses( $message, $allowed_html );
+				wp_die( $safe_message );
+
+			// Default option: redirect to homepage
 			} else {
-				wp_redirect( esc_url_raw( $redirect_url ), 301 );
-				exit;
+
+				wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+                exit;
+
 			}
 		}
 	}
@@ -262,6 +338,14 @@ class Disable_Blog_Public {
 	 * @return boolean
 	 */
 	public function modify_rest_api() {
+
+        /**
+         * Filter to toggle the disable rest API.
+         * 
+         * @since 0.4.2
+         * 
+         * @param bool $bool True to modify API, false to cancel.
+         */
 		if ( true !== apply_filters( 'dwpb_disable_rest_api', true ) ) {
 			return false;
 		}
@@ -274,6 +358,7 @@ class Disable_Blog_Public {
 			return true;
 		}
 
-		return false;
+        return false;
+
 	}
 }
