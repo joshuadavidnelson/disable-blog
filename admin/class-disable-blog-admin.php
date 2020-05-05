@@ -242,7 +242,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 *
 	 * @param boolean $comments
-	 * @param string $post_id
+	 * @param int $post_id
 	 *
 	 * @return boolean
 	 */
@@ -264,12 +264,20 @@ class Disable_Blog_Admin {
 	 * @return array $headers
 	 */
 	public function filter_wp_headers( $headers ) {
-		
-		if( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) )
+
+        /**
+         * Toggle the disable pinback header feature.
+         * 
+         * @since 0.4.0
+         * 
+         * @param bool $bool True to disable the header, false to keep it.
+         */
+		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
 			unset( $headers['X-Pingback'] );
+		}
 
 		return $headers;
-		
+
 	}
 
 	/**
@@ -285,7 +293,13 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_menu_pages() {
 
-		// Remove Top Level Menu Pages
+        /**
+         * Top level admin pages to remove.
+         * 
+         * @since 0.4.0
+         * 
+         * @param array $remove_subpages Array of page => subpage.
+         */
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
 		foreach( $pages as $page ) {
 			remove_menu_page( $page );
@@ -305,7 +319,13 @@ class Disable_Blog_Admin {
 			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
 		}
 
-		// Remove Admin Menu Subpages
+        /**
+         * Admin subpages to be removed.
+         * 
+         * @since 0.4.0
+         * 
+         * @param array $remove_subpages Array of page => subpage.
+         */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
@@ -422,7 +442,14 @@ class Disable_Blog_Admin {
 	 * @since 0.4.5
 	 */
 	function remove_writing_options() {
-		
+
+        /**
+         * Toggle the options-writing page redirect.
+         * 
+         * @since 0.4.5
+         * 
+         * @param bool $bool Defaults to false, keeping the writing page visible.
+         */
 		return apply_filters( 'dwpb_redirect_admin_options_writing', false );
 		
 	}
@@ -493,9 +520,22 @@ class Disable_Blog_Admin {
 			'dashboard_incoming_links' => 'normal', // Incoming Links
 			'dashboard_activity' => 'normal' // Activity
 		);
-		foreach ( $metabox as $id => $context ) {
-			if( apply_filters( 'dwpb_disable_' . $id, true ) )
-				remove_meta_box( $id, 'dashboard', $context );
+		foreach ( $metabox as $metabox_id => $context ) {
+
+            /**
+             * Filter to change the dashboard widgets beinre removed.
+             * 
+             * Filter name baed on the name of the widget above,
+             * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
+             * 
+             * @since 0.4.1
+             * 
+             * @param bool $bool True to remove the dashboard widget.
+             */
+			if ( apply_filters( "dwpb_disable_{$metabox_id}", true ) ) {
+				remove_meta_box( $metabox_id, 'dashboard', $context );
+            }
+            
 		}
 		
 	}
@@ -590,27 +630,41 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_widgets() {
 
-		// Unregister widgets that don't require a check
-        $widgets = array(
+		// Unregister blog-related widgets
+		$widgets = array(
 			'WP_Widget_Recent_Comments', // Recent Comments
 			'WP_Widget_Tag_Cloud', // Tag Cloud
 			'WP_Widget_Categories', // Categories
-            'WP_Widget_Archives', // Archives
-            'WP_Widget_Calendar', // Calendar
-            'WP_Widget_Links', // Links
-            'WP_Widget_Recent_Posts', // Recent Posts
-            'WP_Widget_RSS', // RSS
-            'WP_Widget_Tag_Cloud' // Tag Cloud
-        );
-        foreach( $widgets as $widget ) {
-			if( apply_filters( "dwpb_unregister_widgets", true, $widget ) )
-	            unregister_widget( $widget );
-        }
+			'WP_Widget_Archives', // Archives
+			'WP_Widget_Calendar', // Calendar
+			'WP_Widget_Links', // Links
+			'WP_Widget_Recent_Posts', // Recent Posts
+			'WP_Widget_RSS', // RSS
+			'WP_Widget_Tag_Cloud', // Tag Cloud
+		);
+		foreach ( $widgets as $widget ) {
+
+            /**
+             * The ability to stop the widget unregsiter.
+             * 
+             * @since 0.4.0
+             * 
+             * @param bool   $bool   True to unregister the widget.
+             * @param string $widget The name of the widget to be unregistered.
+             */
+			if ( apply_filters( 'dwpb_unregister_widgets', true, $widget ) ) {
+				unregister_widget( $widget );
+            }
+            
+		}
 
 	}
 
 	/**
 	 * Filter the widget removal & check for reasons to not remove specific widgets.
+     * 
+     * If there are post types using the comments or built-in taxonomies outside of the default 'post'
+     *    then we stop the plugin from removing the widget.
 	 *
 	 * @since 0.4.0
 	 *
