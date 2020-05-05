@@ -335,16 +335,16 @@ class Disable_Blog_Admin {
 			remove_submenu_page( $page, $subpage );
 		}
 
-    }
-    
-    /**
-     * Filter the body classes for admin screens to toggle on plugin specific styles.
-     *
-     * @param array $classes
-     * 
-     * @return array
-     */
-    function admin_body_class( $classes ) {
+	}
+	
+	/**
+	 * Filter the body classes for admin screens to toggle on plugin specific styles.
+	 *
+	 * @param string $classes
+	 * 
+	 * @return string
+	 */
+	function admin_body_class( $classes ) {
 
         if( $this->has_front_page() )
             $classes .= ' disabled-blog';
