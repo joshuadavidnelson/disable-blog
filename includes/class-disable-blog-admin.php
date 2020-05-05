@@ -379,7 +379,7 @@ class Disable_Blog_Admin {
 		$screen = get_current_screen();
 
 		// on multisite: Do not redirect if we are on a network page
-		if ( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin('network') ) {
+		if ( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin( 'network' ) ) {
 			return;
 		}
 
@@ -557,7 +557,6 @@ class Disable_Blog_Admin {
 			if ( apply_filters( "dwpb_disable_{$metabox_id}", true ) ) {
 				remove_meta_box( $metabox_id, 'dashboard', $context );
 			}
-
 		}
 
 	}
@@ -582,7 +581,7 @@ class Disable_Blog_Admin {
 			'options-reading',
 			'edit',
 		);
-		if ( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) ) {
+		if ( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens, true ) ) ) {
 			return;
 		}
 
@@ -609,8 +608,8 @@ class Disable_Blog_Admin {
 
 			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
 
-		// If we have a front page set, but no posts page or they are the same
-		// Then let the user know the expected behavior of these two.
+			// If we have a front page set, but no posts page or they are the same
+			// Then let the user know the expected behavior of these two.
 		} elseif ( 'options-reading' == $current_screen->base
 					&& ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
 
@@ -684,7 +683,6 @@ class Disable_Blog_Admin {
 			if ( apply_filters( 'dwpb_unregister_widgets', true, $widget ) ) {
 				unregister_widget( $widget );
 			}
-
 		}
 
 	}
