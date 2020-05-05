@@ -236,7 +236,7 @@ class Disable_Blog {
 
 		// Redirect Admin Page
 		$this->loader->add_action( 'current_screen', $plugin_admin, 'redirect_admin_pages' );
-	
+
 		// Remove Admin Bar Links
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
 
@@ -270,7 +270,7 @@ class Disable_Blog {
 
 		// Admin notices
 		$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
-		
+
 		// Add a class to the admin body for the reading options page
 		$this->loader->add_filter( 'admin_body_class', $plugin_admin, 'admin_body_class', 10, 1 );
 

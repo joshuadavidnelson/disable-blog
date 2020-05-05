@@ -61,7 +61,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.2.0
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
-	 * 
+	 *
 	 * @return void
 	 */
 	public function redirect_posts() {
@@ -108,7 +108,7 @@ class Disable_Blog_Public {
 
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
-		$protocol   = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
+		$protocol    = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
 		$current_url = esc_url( $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
 		if ( $redirect_url == $current_url || ! $redirect_url ) {
 			return;
@@ -184,7 +184,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
-	 * 
+	 *
 	 * @return void
 	 */
 	public function modify_query( $query ) {
@@ -222,9 +222,9 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
-	 * 
+	 *
 	 * @param bool $is_comment_feed
-	 * 
+	 *
 	 * @return void
 	 */
 	public function disable_feed( $is_comment_feed ) {
@@ -283,7 +283,7 @@ class Disable_Blog_Public {
 				 *
 				 * @param string $message
 				 */
-				$message = apply_filters( 'dwpb_feed_die_message', $message );
+				$message      = apply_filters( 'dwpb_feed_die_message', $message );
 				$allowed_html = array(
 					'a' => array(
 						'href' => array(),
@@ -294,8 +294,7 @@ class Disable_Blog_Public {
 				$safe_message = wp_kses( $message, $allowed_html );
 				wp_die( $safe_message );
 
-			// Default option: redirect to homepage
-			} else {
+			} else { // Default option: redirect to homepage
 
 				wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
 				exit;
