@@ -2,11 +2,14 @@ Disable Blog
 ======================
 
 **Requires at least:** 3.1.0  
-**Tested up to:** 5.2.1  
-**Stable version:** 0.4.6  
+**Tested up to:** 5.4.1  
+**Stable version:** 0.4.7  
 **License:** GPLv2 or later
 
 ## Description
+
+WordPress, without the blog. Activate to disable the blog functions within WordPres, for a site without a blog.
+
 A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
 
 Does the following:
