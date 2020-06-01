@@ -58,7 +58,7 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 * Using GitHub actions publish on WP.org from github releases.
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
 * Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
-* Added Constributing and Code of Contduct documentation.
+* Added Contributing and Code of Conduct documentation.
 
 = 0.4.6 =
 * Added check on disable feed functionality to confirm post type prior to disabling feed. 
@@ -137,7 +137,7 @@ A bunch of stuff:
 * Using GitHub actions publish on WP.org from github releases.
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
 * Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
-* Added Constributing and Code of Contduct documentation.
+* Added Contributing and Code of Conduct documentation.
 
 = 0.4.6 =
 Added check on disable feed functionality to confirm post type prior to disabling feed.
