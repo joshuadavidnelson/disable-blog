@@ -242,7 +242,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 *
 	 * @param boolean $comments
-	 * @param string $post_id
+	 * @param int $post_id
 	 *
 	 * @return boolean
 	 */
@@ -264,12 +264,20 @@ class Disable_Blog_Admin {
 	 * @return array $headers
 	 */
 	public function filter_wp_headers( $headers ) {
-		
-		if( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) )
+
+        /**
+         * Toggle the disable pinback header feature.
+         * 
+         * @since 0.4.0
+         * 
+         * @param bool $bool True to disable the header, false to keep it.
+         */
+		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
 			unset( $headers['X-Pingback'] );
+		}
 
 		return $headers;
-		
+
 	}
 
 	/**
@@ -285,7 +293,13 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_menu_pages() {
 
-		// Remove Top Level Menu Pages
+        /**
+         * Top level admin pages to remove.
+         * 
+         * @since 0.4.0
+         * 
+         * @param array $remove_subpages Array of page => subpage.
+         */
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
 		foreach( $pages as $page ) {
 			remove_menu_page( $page );
@@ -305,13 +319,35 @@ class Disable_Blog_Admin {
 			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
 		}
 
-		// Remove Admin Menu Subpages
+        /**
+         * Admin subpages to be removed.
+         * 
+         * @since 0.4.0
+         * 
+         * @param array $remove_subpages Array of page => subpage.
+         */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
 		}
-		
-	}
+
+    }
+    
+    /**
+     * Filter the body classes for admin screens to toggle on plugin specific styles.
+     *
+     * @param array $classes
+     * 
+     * @return array
+     */
+    function admin_body_class( $classes ) {
+
+        if( $this->has_front_page() )
+            $classes .= ' disabled-blog';
+
+        return $classes;
+
+    }
 
 	/**
 	 * Redirect blog-related admin pages
@@ -328,68 +364,75 @@ class Disable_Blog_Admin {
 		if( !isset( $pagenow ) ) {
 			return;
 		}
+		
+		$screen = get_current_screen();
+		
+		// on multisite: Do not redirect if we are on a network page
+		if( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin('network') ) {
+            return;
+        }
 
-		// setup false redirect url value for final check
-		$redirect_url = false;
+        // setup false redirect url value for final check
+        $redirect_url = false;
+        
+        // Redirect Edit Single Post to Dashboard.
+        if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
+        }
 
-		//Redirect Edit Single Post to Dashboard.
-		if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
-			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
-		}
+        // Redirect Edit Posts Screen to Edit Page
+        if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
+            $url = admin_url( '/edit.php?post_type=page' );
+            $redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
+        }
 
-		// Redirect Edit Posts Screen to Edit Page
-		if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
-			$url = admin_url( '/edit.php?post_type=page' );
-			$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
-		}
+        // Redirect New Post to New Page
+        if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
+            $url = admin_url('/post-new.php?post_type=page' );
+            $redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
+        }
 
-		// Redirect New Post to New Page
-		if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
-			$url = admin_url('/post-new.php?post_type=page' );
-			$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
-		}
+        // Redirect at edit tags screen
+        // If this is a post type other than 'post' that supports categories or tags,
+        // then bail. Otherwise if it is a taxonomy only used by 'post'
+        // or if this is either the edit-tags page and a taxonomy is not set
+        // and the built-in default 'post_tags' is not supported by other post types
+        // then redirect!
+        if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
+        }
 
-		// Redirect at edit tags screen
-		// If this is a post type other than 'post' that supports categories or tags,
-		// then bail. Otherwise if it is a taxonomy only used by 'post'
-		// or if this is either the edit-tags page and a taxonomy is not set
-		// and the built-in default 'post_tags' is not supported by other post types
-		// then redirect!
-		if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
-			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
-		}
+        // Redirect posts-only comment queries to comments
+        if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+            $url = admin_url( '/edit-comments.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
+        }
 
-		// Redirect posts-only comment queries to comments
-		if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
-			$url = admin_url( '/edit-comments.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
-		}
+        // Redirect disccusion options page if only supported by 'post' type
+        if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
+        }
 
-		// Redirect disccusion options page if only supported by 'post' type
-		if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
-			$url = admin_url( '/index.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
-		}
+        // Redirect writing options to general options
+        if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
+            $url = admin_url( '/options-general.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+        }
 
-		// Redirect writing options to general options
-		if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
-			$url = admin_url( '/options-general.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
-		}
+        // Redirect available tools page
+        if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
+            $url = admin_url( '/index.php' );
+            $redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
+        }
 
-		// Redirect available tools page
-		if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-		 	$url = admin_url( '/index.php' );
-		 	$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
-		}
-
-		// If we have a redirect url, do it
-		if( $redirect_url ) {
-			wp_redirect( esc_url_raw( $redirect_url ), 301 );
-			exit;
-		}
+        // If we have a redirect url, do it
+        if( $redirect_url ) {
+            wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+            exit;
+        }
 		
 	}
 	
@@ -399,7 +442,14 @@ class Disable_Blog_Admin {
 	 * @since 0.4.5
 	 */
 	function remove_writing_options() {
-		
+
+        /**
+         * Toggle the options-writing page redirect.
+         * 
+         * @since 0.4.5
+         * 
+         * @param bool $bool Defaults to false, keeping the writing page visible.
+         */
 		return apply_filters( 'dwpb_redirect_admin_options_writing', false );
 		
 	}
@@ -470,31 +520,96 @@ class Disable_Blog_Admin {
 			'dashboard_incoming_links' => 'normal', // Incoming Links
 			'dashboard_activity' => 'normal' // Activity
 		);
-		foreach ( $metabox as $id => $context ) {
-			if( apply_filters( 'dwpb_disable_' . $id, true ) )
-				remove_meta_box( $id, 'dashboard', $context );
+		foreach ( $metabox as $metabox_id => $context ) {
+
+            /**
+             * Filter to change the dashboard widgets beinre removed.
+             * 
+             * Filter name baed on the name of the widget above,
+             * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
+             * 
+             * @since 0.4.1
+             * 
+             * @param bool $bool True to remove the dashboard widget.
+             */
+			if ( apply_filters( "dwpb_disable_{$metabox_id}", true ) ) {
+				remove_meta_box( $metabox_id, 'dashboard', $context );
+            }
+            
 		}
 		
 	}
 
 	/**
-	 * Set Page for Posts options: 'show_on_front', 'page_for_posts', 'page_on_front'
+	 * Throw an admin notice if settings are misconfigured.
 	 *
-	 * If the 'show_on_front' option is set to 'posts', then set it to 'page'
-	 * and also set the page
+	 * If there is not a homepage correctly set, then redirects don't work.
+     * The intention with this notice is to highlight what is needed for the plugin to function properly.
 	 *
-	 * @since 0.2.0
-	 *
+	 * @since 0.2.0 
+     * @since 0.4.7 Changed this to an error notice function.
 	 */
-	public function reading_settings() {
-		
-		if( 'posts' == get_option( 'show_on_front' ) ) {
-			update_option( 'show_on_front', 'page' );
-			update_option( 'page_for_posts', apply_filters( 'dwpb_page_for_posts', 0 ) );
-			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 1 ) );
-		}
-		
-	}
+	public function admin_notices() {
+
+        // only throwing this notice in the edit.php, plugins.php, and options-reading.php admin pages
+        $current_screen = get_current_screen();
+        $screens = array(
+            'plugins',
+            'options-reading',
+            'edit',
+        );
+        if( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
+            return;
+
+        // Throw a notice if the we don't have a front page
+		if( ! $this->has_front_page() ) {
+
+            // The second part of the notice depends on which screen we're on.
+            if( 'options-reading' == $current_screen->base ) {
+
+                // translators: Direct the user to set a homepage in the current screen.
+                $message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
+
+            // If we're not on the Reading Options page, then direct the user there
+            } else {
+
+                // translators: Direct the user to the Reading Settings admin page.
+                $reading_options_page = get_admin_url( null, 'options-reading.php' );
+                $message_link = ' ' . sprintf( __( 'Change in <a href="%s">Reading Settings</a>.', 'disable-blog' ), $reading_options_page );
+
+            }
+
+            // translators: Prompt to configure the site for static homepage and posts page.
+            $message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
+
+            printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
+
+        // If we have a front page set, but no posts page or they are the same
+        // Then let the user know the expected behavior of these two.
+        } elseif( 'options-reading' == $current_screen->base 
+                    && ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
+
+            // translators: Tell the user the plugin needs a static homepage and the posts page will be redirected.
+            $message = __( 'Disable Blog requires a static homepage and will redirect the "posts page" to the homepage.', 'disable-blog' );
+
+            printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
+
+        }
+
+    }
+    
+    /**
+     * Check that the site has a front page set in the Settings > Reading.
+     * 
+     * @since 0.4.7
+     *
+     * @return boolean
+     */
+    function has_front_page() {
+
+        return ( 'page' == get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
+
+    }
 
 	/**
 	 * Kill the Press This functionality
@@ -515,27 +630,41 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_widgets() {
 
-		// Unregister widgets that don't require a check
-        $widgets = array(
+		// Unregister blog-related widgets
+		$widgets = array(
 			'WP_Widget_Recent_Comments', // Recent Comments
 			'WP_Widget_Tag_Cloud', // Tag Cloud
 			'WP_Widget_Categories', // Categories
-            'WP_Widget_Archives', // Archives
-            'WP_Widget_Calendar', // Calendar
-            'WP_Widget_Links', // Links
-            'WP_Widget_Recent_Posts', // Recent Posts
-            'WP_Widget_RSS', // RSS
-            'WP_Widget_Tag_Cloud' // Tag Cloud
-        );
-        foreach( $widgets as $widget ) {
-			if( apply_filters( "dwpb_unregister_widgets", true, $widget ) )
-	            unregister_widget( $widget );
-        }
+			'WP_Widget_Archives', // Archives
+			'WP_Widget_Calendar', // Calendar
+			'WP_Widget_Links', // Links
+			'WP_Widget_Recent_Posts', // Recent Posts
+			'WP_Widget_RSS', // RSS
+			'WP_Widget_Tag_Cloud', // Tag Cloud
+		);
+		foreach ( $widgets as $widget ) {
+
+            /**
+             * The ability to stop the widget unregsiter.
+             * 
+             * @since 0.4.0
+             * 
+             * @param bool   $bool   True to unregister the widget.
+             * @param string $widget The name of the widget to be unregistered.
+             */
+			if ( apply_filters( 'dwpb_unregister_widgets', true, $widget ) ) {
+				unregister_widget( $widget );
+            }
+            
+		}
 
 	}
 
 	/**
 	 * Filter the widget removal & check for reasons to not remove specific widgets.
+     * 
+     * If there are post types using the comments or built-in taxonomies outside of the default 'post'
+     *    then we stop the plugin from removing the widget.
 	 *
 	 * @since 0.4.0
 	 *

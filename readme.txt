@@ -3,20 +3,22 @@ Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 3.1.0
-Tested up to: 5.2.1
-Stable tag: 0.4.6
+Tested up to: 5.4.1
+Stable tag: 0.4.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting).
+All the power of WordPress, but without a blog.
 
 == Description ==
 
-This plugin to disables the blog functionality of WordPress, mostly by hiding admin pages and settings and redirecting pages on both the front-end and admin side. This can be useful when you want a WordPress site to remain static and hide blog-related elements from admin users to avoid confusion.
+Free your WordPress site from the blog! Maintain a static website without "posts."
 
-**Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will update it to that option, but **you still need to select a page to act as the front page**. Not doing so will mean that your post page can still be visible on the front-end of the site.
+This plugin to disables the "blog" functions of WordPress - mostly by hiding admin pages/settings and redirecting urls on both the front-end and admin portions of your site.
 
-**Comments**: Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also typical support comments so they don't disappear in most cases). If you're looking to disable them completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin (by others).
+**Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
+
+**Comments**: Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also support comments by default, so the comments section won't disappear in most cases). If you're looking to disable comments completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
 
 **Categories & Tags**: These are hidden and redirected, unless they are supported by a custom post type.
 
@@ -51,6 +53,13 @@ This could be done, but other post types (like Pages) may have comment support. 
 Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
 == Changelog ==
+
+= 0.4.7 =
+* Using GitHub actions publish on WP.org from github releases.
+* Cleaned up the Reading settings, adding admin notices if front page is not set.
+* Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
+* Added Contributing and Code of Conduct documentation.
+* Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
 = 0.4.6 =
 * Added check on disable feed functionality to confirm post type prior to disabling feed. 
@@ -124,6 +133,13 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.4.7 =
+* Using GitHub actions publish on WP.org from github releases.
+* Cleaned up the Reading settings, adding admin notices if front page is not set.
+* Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
+* Added Contributing and Code of Conduct documentation.
+* Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
 = 0.4.6 =
 Added check on disable feed functionality to confirm post type prior to disabling feed.
