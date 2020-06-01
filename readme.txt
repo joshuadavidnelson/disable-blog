@@ -59,6 +59,7 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
 * Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
 * Added Contributing and Code of Conduct documentation.
+* Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
 = 0.4.6 =
 * Added check on disable feed functionality to confirm post type prior to disabling feed. 
@@ -138,6 +139,7 @@ A bunch of stuff:
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
 * Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
 * Added Contributing and Code of Conduct documentation.
+* Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
 = 0.4.6 =
 Added check on disable feed functionality to confirm post type prior to disabling feed.
