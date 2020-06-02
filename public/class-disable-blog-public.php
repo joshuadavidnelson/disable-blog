@@ -53,12 +53,12 @@ class Disable_Blog_Public {
 		$this->version = $version;
 
 	}
-	
+
 	/**
 	 * Redirect single post pages
 	 *
 	 * @uses dwpb_post_types_with_tax()
-	 * 
+	 *
 	 * @since 0.2.0
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 */
@@ -109,8 +109,8 @@ class Disable_Blog_Public {
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
 		$protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === true ? 'https://' : 'http://';
-		$curent_url = esc_url( $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"] );
-		if( $redirect_url == $curent_url || ! $redirect_url ) {
+		$current_url = esc_url( $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"] );
+		if( $redirect_url == $current_url || ! $redirect_url ) {
 			return;
 		}
 
@@ -138,9 +138,9 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param object $query 
-	 * @param array $array 
-	 * @param string $filter 
+	 * @param object $query
+	 * @param array $array
+	 * @param string $filter
 	 *
 	 * @return boolean
 	 */
@@ -151,13 +151,13 @@ class Disable_Blog_Public {
 
 			/**
 			 * If there is a filter name passed, then a filter is applied on the array and query.
-			 * 
+			 *
 			 * Used for 'dwpb_search_post_types' and 'dwpb_author_post_types' filters.
-			 * 
+			 *
 			 * @see Disable_Blog_Public->modify_query
-			 * 
+			 *
 			 * @since 0.4.0
-			 * 
+			 *
 			 * @param array $array
 			 * @param object $query
 			 */
@@ -182,7 +182,7 @@ class Disable_Blog_Public {
 	 *
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @link http://stackoverflow.com/questions/7225070/php-array-delete-by-value-not-key#7225113
-	 * 
+	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
 	 */
@@ -227,9 +227,9 @@ class Disable_Blog_Public {
 
 		/**
 		 * Toggle the disable feed via this filter.
-		 * 
+		 *
 		 * @since 0.4.0
-		 * 
+		 *
 		 * @param bool $bool True to cancel the feed, assuming it's a post feed.
 		 * @param object $post Global post object.
 		 * @param bool $is_comment_feed True if the feed is a comment feed.
@@ -238,9 +238,9 @@ class Disable_Blog_Public {
 
 			/**
 			 * Filter the feed redirect url.
-			 * 
+			 *
 			 * @since 0.4.0
-			 * 
+			 *
 			 * @param string $url The redirect url (defaults to homepage)
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
 			 */
@@ -248,11 +248,11 @@ class Disable_Blog_Public {
 
 			/**
 			 * Filter to toggle on a message instead of a redirect.
-			 * 
+			 *
 			 * Defaults to false, so a redirect is the expacted default behavior.
-			 * 
+			 *
 			 * @since 0.4.0
-			 * 
+			 *
 			 * @param bool $bool True to use a message, false to redirect.
 			 * @param object $post Global post object.
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
@@ -264,11 +264,11 @@ class Disable_Blog_Public {
 
 				/**
 				 * Filter the feed die message.
-				 * 
+				 *
 				 * If the `dwpb_feed_message` is set to true, use this filter to set a custom message.
-				 * 
+				 *
 				 * @since 0.4.0
-				 * 
+				 *
 				 * @param string $message
 				 */
 				$message = apply_filters( 'dwpb_feed_die_message', $message );
@@ -300,14 +300,14 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean 
+	 * @param string $boolean
 	 *
 	 * @return boolean
 	 */
 	public function feed_links_show_posts_feed( $boolean ) {
 		return false;
 	}
-	
+
 	/**
 	 * Turn off the comment's feed link.
 	 *
@@ -315,7 +315,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean 
+	 * @param string $boolean
 	 *
 	 * @return boolean
 	 */
@@ -342,9 +342,9 @@ class Disable_Blog_Public {
 
 		/**
 		 * Filter to toggle the disable rest API.
-		 * 
+		 *
 		 * @since 0.4.2
-		 * 
+		 *
 		 * @param bool $bool True to modify API, false to cancel.
 		 */
 		if ( true !== apply_filters( 'dwpb_disable_rest_api', true ) ) {
@@ -353,7 +353,7 @@ class Disable_Blog_Public {
 
 		global $wp_post_types;
 		$post_type_name = 'post';
-		
+
 		if( isset( $wp_post_types[ $post_type_name ] ) ) {
 			$wp_post_types[$post_type_name]->show_in_rest = false;
 			return true;
