@@ -64,7 +64,7 @@ class Disable_Blog_Public {
 	 */
 	public function redirect_posts() {
 
-		if( is_admin() || !get_option( 'page_on_front' ) )
+		if( is_admin() || ! get_option( 'page_on_front' ) )
 			return;
 
 		// Get the front page id and url
@@ -142,7 +142,7 @@ class Disable_Blog_Public {
 	 * @param array $array 
 	 * @param string $filter 
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
 
@@ -208,6 +208,7 @@ class Disable_Blog_Public {
 			) );
 			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
 		}
+
 	}
 
 	/**
@@ -300,11 +301,11 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean 
+	 * @param string $bool 
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
-	public function feed_links_show_posts_feed( $boolean ) {
+	public function feed_links_show_posts_feed( $bool ) {
 		return false;
 	}
 	
@@ -315,17 +316,17 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean 
+	 * @param string $bool 
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
-	public function feed_links_show_comments_feed( $boolean ) {
+	public function feed_links_show_comments_feed( $bool ) {
 
 		// If 'post' type is the only type supporting comments, then disable the comment feed link
 		if( ! dwpb_post_types_with_feature( 'comments' ) )
-			$boolean = false;
+			$bool = false;
 
-		return $boolean;
+		return $bool;
 
 	}
 
@@ -336,7 +337,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.2
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function modify_rest_api() {
 
