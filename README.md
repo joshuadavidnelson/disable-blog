@@ -45,6 +45,10 @@ Does the following:
 
 If Settings > Reading > Front Page Displays is not set to show on a page, then some aspects of the plugin won't work, be sure to set your front page to a static page.
 
+#### Contributing
+
+All contributions are welcomed and considered, please refer to [contributing.md](contributing.md).
+
 #### FAQ
 
 1. Why Not Disable Comments Entirely?
