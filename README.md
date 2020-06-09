@@ -56,7 +56,7 @@ All contributions are welcomed and considered, please refer to [contributing.md]
 2. I want to delete my posts and comments
  - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
-##### Todo
+#### Todo
 - Enhanced support for tags and categories with custom post types (replace the count, tag cloud, etc to exclude posts)
 - Change count in category and tag screen, if taxonomies are supported by another post type
 - Change tag cloud in similar condition as above
