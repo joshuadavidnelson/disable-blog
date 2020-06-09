@@ -53,6 +53,22 @@ class Disable_Blog_Admin {
 		$this->version = $version;
 
 	}
+	
+	/**
+	 * Check that we're on a specific admin page.
+	 * 
+	 * @since 0.4.8
+	 *
+	 * @param  string  $page
+	 * 
+	 * @return boolean
+	 */
+	private function is_admin_page( $page ) {
+
+		global $pagenow;
+		return ( is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' == $pagenow );
+
+	}
 
 	/**
 	 * Remove comment and pingback support for posts.
@@ -482,21 +498,16 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 *
 	 * @since 0.1.0
+	 * @since 0.4.8 updated use with is_admin_page function
 	 *
 	 * @param  (wp_query object) $comments
 	 */
 	public function comment_filter( $comments ) {
-		
-		global $pagenow;
-
-		if( ! isset( $pagenow ) )
-			return $comments;
 
 		// Filter out comments from post
-		if( is_admin() && $pagenow == 'edit-comments.php' ) {
-			if( $post_types = dwpb_post_types_with_feature( 'comments' ) ) {
+		if( $this->is_admin_page( 'edit-comments' )
+			&& ( $post_types = dwpb_post_types_with_feature( 'comments' ) ) ) {
 				$comments->query_vars['post_type'] = $post_types;
-			}
 		}
 
 		return $comments;
@@ -594,7 +605,7 @@ class Disable_Blog_Admin {
 
 			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
 
-        }
+		}
 
 	}
 
