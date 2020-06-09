@@ -2,9 +2,9 @@
 
 ##### 0.4.8
 - Fixed typo in variable name for current vs redirect url check. (h/t @chesio, PR #30)
-- Update function names from template to `disable_blog`. (h/t @szepeciktor, PR #31)
-- Add WP.org Badge to readme.md.  (h/t @szepeciktor, PR #32)
-- Change the name of the CI workflow to be specific to deploymnet. (h/t @szepeciktor, PR #33)
+- Update function names from template to `disable_blog`. (h/t @szepeviktor, PR #31)
+- Add WP.org Badge to readme.md.  (h/t @szepeviktor, PR #32)
+- Change the name of the CI workflow to be specific to deploymnet. (h/t @szepeviktor, PR #33)
 - Some code tidying andninline documentation.
 
 ##### 0.4.7
