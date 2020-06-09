@@ -44,6 +44,7 @@ class Disable_Blog_Admin {
 	 * Initialize the class and set its properties.
 	 *
 	 * @since	0.4.0
+	 *
 	 * @param	string    $plugin_name       The name of this plugin.
 	 * @param	string    $version    The version of this plugin.
 	 */
@@ -335,13 +336,13 @@ class Disable_Blog_Admin {
 			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
 		}
 
-        /**
-         * Admin subpages to be removed.
-         * 
-         * @since 0.4.0
-         * 
-         * @param array $remove_subpages Array of page => subpage.
-         */
+		/**
+		 * Admin subpages to be removed.
+		 * 
+		 * @since 0.4.0
+		 * 
+		 * @param array $remove_subpages Array of page => subpage.
+		 */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
