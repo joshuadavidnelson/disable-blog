@@ -40,7 +40,7 @@ if ( ! defined( 'WPINC' ) ) {
  * The code that runs during plugin activation.
  * This action is documented in includes/class-disable-blog-activator.php
  */
-function activate_plugin_name() {
+function activate_disable_blog() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-activator.php';
 	Disable_Blog_Activator::activate();
 }
@@ -49,12 +49,12 @@ function activate_plugin_name() {
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-disable-blog-deactivator.php
  */
-function deactivate_plugin_name() {
+function deactivate_disable_blog() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-deactivator.php';
 	Disable_Blog_Deactivator::deactivate();
 }
-register_activation_hook( __FILE__, 'activate_plugin_name' );
-register_deactivation_hook( __FILE__, 'deactivate_plugin_name' );
+register_activation_hook( __FILE__, 'activate_disable_blog' );
+register_deactivation_hook( __FILE__, 'deactivate_disable_blog' );
 
 /**
  * The core plugin class that is used to define internationalization,

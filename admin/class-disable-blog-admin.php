@@ -44,6 +44,7 @@ class Disable_Blog_Admin {
 	 * Initialize the class and set its properties.
 	 *
 	 * @since	0.4.0
+	 *
 	 * @param	string    $plugin_name       The name of this plugin.
 	 * @param	string    $version    The version of this plugin.
 	 */
@@ -51,6 +52,22 @@ class Disable_Blog_Admin {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
+
+	}
+	
+	/**
+	 * Check that we're on a specific admin page.
+	 * 
+	 * @since 0.4.8
+	 *
+	 * @param  string  $page
+	 * 
+	 * @return boolean
+	 */
+	private function is_admin_page( $page ) {
+
+		global $pagenow;
+		return ( is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' == $pagenow );
 
 	}
 
@@ -215,7 +232,7 @@ class Disable_Blog_Admin {
 	    }
 
 		return $comment_count;
-		
+
 	}
 
 	/**
@@ -223,10 +240,10 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param boolean $open
+	 * @param bool $open
 	 * @param int $post_id
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function filter_comment_status( $open, $post_id ) {
 		
@@ -241,10 +258,10 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param boolean $comments
+	 * @param bool $comments
 	 * @param int $post_id
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
 		
@@ -319,13 +336,13 @@ class Disable_Blog_Admin {
 			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
 		}
 
-        /**
-         * Admin subpages to be removed.
-         * 
-         * @since 0.4.0
-         * 
-         * @param array $remove_subpages Array of page => subpage.
-         */
+		/**
+		 * Admin subpages to be removed.
+		 * 
+		 * @since 0.4.0
+		 * 
+		 * @param array $remove_subpages Array of page => subpage.
+		 */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
@@ -361,12 +378,12 @@ class Disable_Blog_Admin {
 		
 		global $pagenow;
 
-		if( !isset( $pagenow ) ) {
+		if( ! isset( $pagenow ) ) {
 			return;
 		}
-		
+
 		$screen = get_current_screen();
-		
+
 		// on multisite: Do not redirect if we are on a network page
 		if( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin('network') ) {
             return;
@@ -482,21 +499,16 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 *
 	 * @since 0.1.0
+	 * @since 0.4.8 updated use with is_admin_page function
 	 *
 	 * @param  (wp_query object) $comments
 	 */
 	public function comment_filter( $comments ) {
-		
-		global $pagenow;
-
-		if( !isset( $pagenow ) )
-			return $comments;
 
 		// Filter out comments from post
-		if( is_admin() && $pagenow == 'edit-comments.php' ) {
-			if( $post_types = dwpb_post_types_with_feature( 'comments' ) ) {
+		if( $this->is_admin_page( 'edit-comments' )
+			&& ( $post_types = dwpb_post_types_with_feature( 'comments' ) ) ) {
 				$comments->query_vars['post_type'] = $post_types;
-			}
 		}
 
 		return $comments;
@@ -512,7 +524,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.1 dry out the code with a foreach loop
 	 */
 	function remove_dashboard_widgets() {
-		
+
 		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary 
 		$metabox = array(
 			'dashboard_quick_press' => 'side', // Quick Press
@@ -522,94 +534,94 @@ class Disable_Blog_Admin {
 		);
 		foreach ( $metabox as $metabox_id => $context ) {
 
-            /**
-             * Filter to change the dashboard widgets beinre removed.
-             * 
-             * Filter name baed on the name of the widget above,
-             * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
-             * 
-             * @since 0.4.1
-             * 
-             * @param bool $bool True to remove the dashboard widget.
-             */
+			/**
+			 * Filter to change the dashboard widgets beinre removed.
+			 *
+			 * Filter name baed on the name of the widget above,
+			 * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
+			 *
+			 * @since 0.4.1
+			 *
+			 * @param bool $bool True to remove the dashboard widget.
+			 */
 			if ( apply_filters( "dwpb_disable_{$metabox_id}", true ) ) {
 				remove_meta_box( $metabox_id, 'dashboard', $context );
-            }
-            
+			}
+
 		}
-		
+
 	}
 
 	/**
 	 * Throw an admin notice if settings are misconfigured.
 	 *
 	 * If there is not a homepage correctly set, then redirects don't work.
-     * The intention with this notice is to highlight what is needed for the plugin to function properly.
+	 * The intention with this notice is to highlight what is needed for the plugin to function properly.
 	 *
 	 * @since 0.2.0 
-     * @since 0.4.7 Changed this to an error notice function.
+	 * @since 0.4.7 Changed this to an error notice function.
 	 */
 	public function admin_notices() {
 
-        // only throwing this notice in the edit.php, plugins.php, and options-reading.php admin pages
-        $current_screen = get_current_screen();
-        $screens = array(
-            'plugins',
-            'options-reading',
-            'edit',
-        );
-        if( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
-            return;
+		// only throwing this notice in the edit.php, plugins.php, and options-reading.php admin pages
+		$current_screen = get_current_screen();
+		$screens = array(
+			'plugins',
+			'options-reading',
+			'edit',
+		);
+		if( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
+			return;
 
-        // Throw a notice if the we don't have a front page
+		// Throw a notice if the we don't have a front page
 		if( ! $this->has_front_page() ) {
 
-            // The second part of the notice depends on which screen we're on.
-            if( 'options-reading' == $current_screen->base ) {
+			// The second part of the notice depends on which screen we're on.
+			if( 'options-reading' == $current_screen->base ) {
 
-                // translators: Direct the user to set a homepage in the current screen.
-                $message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
+				// translators: Direct the user to set a homepage in the current screen.
+				$message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
 
-            // If we're not on the Reading Options page, then direct the user there
-            } else {
+			// If we're not on the Reading Options page, then direct the user there
+			} else {
 
-                // translators: Direct the user to the Reading Settings admin page.
-                $reading_options_page = get_admin_url( null, 'options-reading.php' );
-                $message_link = ' ' . sprintf( __( 'Change in <a href="%s">Reading Settings</a>.', 'disable-blog' ), $reading_options_page );
+				// translators: Direct the user to the Reading Settings admin page.
+				$reading_options_page = get_admin_url( null, 'options-reading.php' );
+				$message_link = ' ' . sprintf( __( 'Change in <a href="%s">Reading Settings</a>.', 'disable-blog' ), $reading_options_page );
 
-            }
+			}
 
-            // translators: Prompt to configure the site for static homepage and posts page.
-            $message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
+			// translators: Prompt to configure the site for static homepage and posts page.
+			$message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
 
-            printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
+			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
 
-        // If we have a front page set, but no posts page or they are the same
-        // Then let the user know the expected behavior of these two.
-        } elseif( 'options-reading' == $current_screen->base 
-                    && ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
+		// If we have a front page set, but no posts page or they are the same
+		// Then let the user know the expected behavior of these two.
+		} elseif( 'options-reading' == $current_screen->base 
+					&& ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
 
-            // translators: Tell the user the plugin needs a static homepage and the posts page will be redirected.
-            $message = __( 'Disable Blog requires a static homepage and will redirect the "posts page" to the homepage.', 'disable-blog' );
+			// translators: Tell the user the plugin needs a static homepage and the posts page will be redirected.
+			$message = __( 'Disable Blog requires a static homepage and will redirect the "posts page" to the homepage.', 'disable-blog' );
 
-            printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
+			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
 
-        }
+		}
 
-    }
-    
-    /**
-     * Check that the site has a front page set in the Settings > Reading.
-     * 
-     * @since 0.4.7
-     *
-     * @return boolean
-     */
-    function has_front_page() {
+	}
 
-        return ( 'page' == get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
+	/**
+	 * Check that the site has a front page set in the Settings > Reading.
+	 * 
+	 * @since 0.4.7
+	 *
+	 * @return bool
+	 */
+	function has_front_page() {
 
-    }
+		return ( 'page' == get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
+
+	}
 
 	/**
 	 * Kill the Press This functionality
@@ -644,61 +656,63 @@ class Disable_Blog_Admin {
 		);
 		foreach ( $widgets as $widget ) {
 
-            /**
-             * The ability to stop the widget unregsiter.
-             * 
-             * @since 0.4.0
-             * 
-             * @param bool   $bool   True to unregister the widget.
-             * @param string $widget The name of the widget to be unregistered.
-             */
+			/**
+			 * The ability to stop the widget unregsiter.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param bool   $bool   True to unregister the widget.
+			 * @param string $widget The name of the widget to be unregistered.
+			 */
 			if ( apply_filters( 'dwpb_unregister_widgets', true, $widget ) ) {
 				unregister_widget( $widget );
-            }
-            
+			}
+
 		}
 
 	}
 
 	/**
 	 * Filter the widget removal & check for reasons to not remove specific widgets.
-     * 
-     * If there are post types using the comments or built-in taxonomies outside of the default 'post'
-     *    then we stop the plugin from removing the widget.
+	 * 
+	 * If there are post types using the comments or built-in taxonomies outside of the default 'post'
+	 *    then we stop the plugin from removing the widget.
 	 *
 	 * @since 0.4.0
+	 * @since 0.4.8 added check on RSS feed support for the RSS widget.
 	 *
-	 * @param boolean $boolean
+	 * @param bool $bool
 	 * @param string $widget
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
-	public function filter_widget_removal( $boolean, $widget ) {
+	public function filter_widget_removal( $bool, $widget ) {
 
 		// Remove Categories Widget
 		if( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) )
-			$boolean = false;
+			$bool = false;
 
 		// Remove Recent Comments Widget if posts are the only type with comments
 		if( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) )
-			$boolean = false;
+			$bool = false;
 
-		// Remove Tag Cloud
+		// Remove Tag Cloud unless there are other post types using it
 		if( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) )
-			$boolean = false;
+			$bool = false;
 
-		return $boolean;
+		return $bool;
 		
 	}
 
 	/**
 	 * Register the stylesheets for the admin area.
 	 *
-	 * @since    0.4.0
+	 * @since 0.4.0
 	 */
 	public function enqueue_styles() {
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/disable-blog-admin.css', array(), $this->version, 'all' );
 
 	}
+
 }
