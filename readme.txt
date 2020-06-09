@@ -56,6 +56,13 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 
 == Changelog ==
 
+= 0.4.8 = 
+- Fixed typo in variable name for current vs redirect url check.
+- Update function names from template to `disable_blog`.
+- Add WP.org Badge to readme.md.
+- Change the name of the CI workflow to be specific to deployment.
+- Some code tidying and inline documentation.
+
 = 0.4.7 =
 * Using GitHub actions publish on WP.org from github releases.
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
@@ -135,6 +142,13 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.4.8 = 
+- Fixed typo in variable name for current vs redirect url check.
+- Update function names from template to `disable_blog`.
+- Add WP.org Badge to readme.md.
+- Change the name of the CI workflow to be specific to deployment.
+- Some code tidying and inline documentation.
 
 = 0.4.7 =
 * Using GitHub actions publish on WP.org from github releases.
