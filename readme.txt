@@ -18,12 +18,6 @@ This plugin to disables the "blog" functions of WordPress - mostly by hiding adm
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
-Notice
-
-This plugin does not delete any data on WordPress. It simply hides and disables those features that are blog related. If you have any existing, posts, comments, categories and tags on your website; they must be manually deleted if you do not want to keep any of that information. All plugin features can be enabled or disabled in the plugin’s settings (Settings > Blogging).
-
-Links to previous posts will still be accessible and previous comments will be hidden from view.
-
 **Comments**: Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also support comments by default, so the comments section won't disappear in most cases). If you're looking to disable comments completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
 
 **Categories & Tags**: These are hidden and redirected, unless they are supported by a custom post type.
