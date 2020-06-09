@@ -1,5 +1,8 @@
 ### Changelog
 
+##### 0.4.8.1
+- Do'h! Forgot to update the version number in the main plugin file. Bump.
+
 ##### 0.4.8
 - Fixed typo in variable name for current vs redirect url check. (h/t @chesio, PR #30)
 - Update function names from template to `disable_blog`. (h/t @szepeviktor, PR #31)

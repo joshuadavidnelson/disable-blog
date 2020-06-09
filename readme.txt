@@ -4,7 +4,7 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 3.1.0
 Tested up to: 5.4.1
-Stable tag: 0.4.8
+Stable tag: 0.4.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,9 @@ This could be done, but other post types (like Pages) may have comment support. 
 Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
 == Changelog ==
+
+##### 0.4.8.1
+- Forgot to update the version number in the main plugin file, so this is a version bump only.
 
 = 0.4.8 = 
 - Fixed typo in variable name for current vs redirect url check.
@@ -142,6 +145,9 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+##### 0.4.8.1
+- Forgot to update the version number in the main plugin file, so this is a version bump only. See 0.4.8 release notes for changes since 0.4.7.
 
 = 0.4.8 = 
 - Fixed typo in variable name for current vs redirect url check.

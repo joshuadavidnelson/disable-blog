@@ -5,7 +5,7 @@ Disable Blog
 
 **Requires at least:** 3.1.0  
 **Tested up to:** 5.4.1  
-**Stable version:** 0.4.7  
+**Stable version:** 0.4.8.1
 **License:** GPLv2 or later
 
 ## Description
