@@ -260,7 +260,10 @@ class Disable_Blog {
 	
 		// Force Reading Settings
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'reading_settings' );
-	
+
+		// Hide Posts, Categories, and Tags in Appearance > Menus
+		$this->loader->add_action( 'nav_menu_meta_box_object', $plugin_admin, 'filter_nav_menu_meta_boxes', 10, 1 );
+
 		// Remove Post via Email Settings
 		add_filter( 'enable_post_by_email_configuration', '__return_false' );
 	

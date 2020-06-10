@@ -437,7 +437,20 @@ class Disable_Blog_Admin {
 			update_option( 'page_on_front', apply_filters( 'dwpb_page_on_front', 1 ) );
 		}
 	}
-	
+
+	/**
+	 * Hide Posts, Categories, and Tags metabox in Appearance > Menus
+	 *
+	 * @since 0.5.0
+	 */
+	public function filter_nav_menu_meta_boxes( $object ) {
+		if ( is_object( $object ) && in_array( $object->name, array( 'post', 'category', 'post_tag' ), true ) ) {
+			return false;
+		}
+
+		return $object;
+	}
+
 	/**
 	 * Kill the Press This functionality
 	 * 
