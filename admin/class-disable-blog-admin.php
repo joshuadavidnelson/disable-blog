@@ -631,7 +631,20 @@ class Disable_Blog_Admin {
 	public function disable_press_this() {
 		
 		wp_die( '"Press This" functionality has been disabled.' );
-		
+
+	}
+
+	/**
+	 * Hide Posts, Categories, and Tags metabox in Appearance > Menus
+	 *
+	 * @since 0.5.0
+	 */
+	public function filter_nav_menu_meta_boxes( $object ) {
+		if ( is_object( $object ) && in_array( $object->name, array( 'post', 'category', 'post_tag' ), true ) ) {
+			return false;
+		}
+
+		return $object;
 	}
 
 	/**
