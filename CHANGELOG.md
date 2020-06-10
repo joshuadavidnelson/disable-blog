@@ -1,5 +1,43 @@
 ### Changelog
 
+##### 0.4.8.1
+- Do'h! Forgot to update the version number in the main plugin file. Bump.
+
+##### 0.4.8
+- Fixed typo in variable name for current vs redirect url check. (h/t @chesio, PR #30)
+- Update function names from template to `disable_blog`. (h/t @szepeviktor, PR #31)
+- Add WP.org Badge to readme.md.  (h/t @szepeviktor, PR #32)
+- Change the name of the CI workflow to be specific to deployment. (h/t @szepeviktor, PR #33)
+- Some code tidying and inline documentation.
+
+##### 0.4.7
+- Using GitHub actions publish on WP.org from github releases.
+- Cleaned up the Reading settings, adding admin notices if front page is not set.
+- Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
+- Added Contributing and Code of Conduct documentation.
+- Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
+
+##### 0.4.6
+- Added check on disable feed functionality to confirm post type prior to disabling feed.
+
+##### 0.4.5
+- Remove the functionality hiding the Settings > Writing admin page, allow this option to be re-enabled via the older filter. This page used to be entirely related to posts, but is also used to select the editor type (Gutenberg vs Classic).
+- Correct misspelled dwpb_redirect_options_tools filter.
+
+##### 0.4.4
+- Hide the Settings > Writing menu item, which shows up with Disable Comments enabled everywhere. Thanks to @dater for identifying.
+
+##### 0.4.3
+- Fix fatal error conflict with WooCommerce versions older than 2.6.3 (props to @Mahjouba91 for the heads up), no returns an array of comments in the filter for those older WooCommerce versions.
+- Add de/activation hooks to clear comment caches
+- Cleanup comment count functions.
+
+##### 0.4.2
+- Disable the REST API for 'post' post type. Props to @shawnhooper.
+
+##### 0.4.1
+- Fix unintended redirect for custom admin pages under tools.php. Props to @greatislander for the catch.
+
 ##### 0.4.0
 - Refactor code to match WP Plugin Boilerplate structure, including:
  - Move hooks and filters into loader class.

@@ -15,8 +15,8 @@
  * @wordpress-plugin
  * Plugin Name:       Disable Blog
  * Plugin URI:        https://wordpress.org/plugins/disable-blog/
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
- * Version:           0.4.0
+ * Description:       Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting). 
+ * Version:           0.4.8.1
  * Author:            Joshua Nelson
  * Author URI:        http://joshuadnelson.com
  * License:           GPL-2.0+
@@ -35,6 +35,26 @@
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
+
+/**
+ * The code that runs during plugin activation.
+ * This action is documented in includes/class-disable-blog-activator.php
+ */
+function activate_disable_blog() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-activator.php';
+	Disable_Blog_Activator::activate();
+}
+
+/**
+ * The code that runs during plugin deactivation.
+ * This action is documented in includes/class-disable-blog-deactivator.php
+ */
+function deactivate_disable_blog() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog-deactivator.php';
+	Disable_Blog_Deactivator::deactivate();
+}
+register_activation_hook( __FILE__, 'activate_disable_blog' );
+register_deactivation_hook( __FILE__, 'deactivate_disable_blog' );
 
 /**
  * The core plugin class that is used to define internationalization,

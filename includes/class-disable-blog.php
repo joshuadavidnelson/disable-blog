@@ -77,7 +77,7 @@ class Disable_Blog {
 	public function __construct() {
 		
 		$this->plugin_name = 'disable-blog';
-		$this->version = '0.4.0';
+		$this->version = '0.4.8';
 		
 		do_action( 'dwpb_init' );
 		
@@ -98,6 +98,7 @@ class Disable_Blog {
 	 * @access   private
 	 */
 	private static function upgrade_check() {
+		
 		// Get the current version option
 		$current_version = get_option( 'dwpb_version', false );
 		
@@ -113,6 +114,7 @@ class Disable_Blog {
 			// Save current version
 			update_option( 'dwpb_version', DWPB_VERSION );
 		}
+		
 	}
 	
 	/**
@@ -123,6 +125,7 @@ class Disable_Blog {
 	 * @access   private
 	 */
 	private function setup_constants() {
+		
 		// For includes and whatnot
 		if( !defined( 'DWPB_DIR' ) )
 			define( 'DWPB_DIR', dirname( __FILE__ ) );
@@ -228,7 +231,7 @@ class Disable_Blog {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
 	
 		// Redirect Admin Page
-		$this->loader->add_action( 'admin_init', $plugin_admin, 'redirect_admin_pages' );
+		$this->loader->add_action( 'current_screen', $plugin_admin, 'redirect_admin_pages' );
 	
 		// Remove Admin Bar Links
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
@@ -249,6 +252,9 @@ class Disable_Blog {
 		// Filter wp_count_comments, which addresses comments in admin bar.
 		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
 		
+		// Convert the $comments object back into an array if older version of WooCommerce is active.
+		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_woocommerce_comment_count', 10, 2 );
+		
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
 		
@@ -257,10 +263,13 @@ class Disable_Blog {
 	
 		// Remove Dashboard Widgets
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
-	
-		// Force Reading Settings
-		$this->loader->add_action( 'admin_init', $plugin_admin, 'reading_settings' );
-	
+
+		// Admin notices
+        $this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
+        
+        // Add a class to the admin body for the reading options page
+        $this->loader->add_filter( 'admin_body_class', $plugin_admin, 'admin_body_class', 10, 1 );
+
 		// Remove Post via Email Settings
 		add_filter( 'enable_post_by_email_configuration', '__return_false' );
 	
@@ -313,7 +322,10 @@ class Disable_Blog {
 		// Hide Feed links
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );
-		
+
+		// Modify REST API Support
+		$this->loader->add_action( 'init', $plugin_public, 'modify_rest_api', 25 );
+
 	}
 
 	/**
