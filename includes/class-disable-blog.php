@@ -257,6 +257,9 @@ class Disable_Blog {
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
 
+		// Disable Update Services configruation, no pingbacks
+		add_filter( 'enable_update_services_configuration', '__return_false' );
+
 		// Clear comments from 'post' post type.
 		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
 
