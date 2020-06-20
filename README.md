@@ -5,14 +5,12 @@ Disable Blog
 
 **Requires at least:** 3.1.0  
 **Tested up to:** 5.4.1  
-**Stable version:** 0.4.7  
+**Stable version:** 0.4.8.1
 **License:** GPLv2 or later
 
 ## Description
 
-WordPress, without the blog. Activate to disable the blog functions within WordPres, for a site without a blog.
-
-A plugin to disable the blog functionality of WordPress (by hiding, removing, and redirecting). Useful when you want a WordPress site to remain static and hide blog-related elements from admin users.
+Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting). 
 
 Does the following:
 
@@ -58,7 +56,7 @@ All contributions are welcomed and considered, please refer to [contributing.md]
 2. I want to delete my posts and comments
  - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
-##### Todo
+#### Todo
 - Enhanced support for tags and categories with custom post types (replace the count, tag cloud, etc to exclude posts)
 - Change count in category and tag screen, if taxonomies are supported by another post type
 - Change tag cloud in similar condition as above

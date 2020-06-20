@@ -4,7 +4,7 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 3.1.0
 Tested up to: 5.4.1
-Stable tag: 0.4.8
+Stable tag: 0.4.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,21 +12,21 @@ All the power of WordPress, but without a blog.
 
 == Description ==
 
-Free your WordPress site from the blog! Maintain a static website without "posts."
+Free your WordPress site from the blog! Maintain a static website without "posts." Go blog-less with WordPress.
 
-This plugin to disables the "blog" functions of WordPress - mostly by hiding admin pages/settings and redirecting urls on both the front-end and admin portions of your site.
+This plugin disables all blog-related functionality, mostly by hiding admin pages/settings and redirecting urls on both the front-end and admin portions of your site.
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
+
+**Site Content & Data**: This plugin will not delete any of your site's data, however it does by default redirect all posts and post comments to the homepage (refer to the documentation on ways to change this behavior).
+
+If you have any posts, comments, categories, and/or tags, delete them prior to activation (or deactivate this plugin, delete them, and re-active). If you don't delete them, they will remain in your database and become accessible if you deactivate this plugin or modify the plugin behavior to show posts.
 
 **Comments**: Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also support comments by default, so the comments section won't disappear in most cases). If you're looking to disable comments completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
 
 **Categories & Tags**: These are hidden and redirected, unless they are supported by a custom post type.
 
 **Custom Post Types**: For the most part this plugin shouldn't bother any custom post types. If you are using a custom post type that supports the built-in `category` and/or `post_tag` taxonomies, they will be visible and accessible through that post type.
-
-**Site Content & Data**: This plugin will not delete any of your site's data, however it does by default redirect all posts and post comments to the homepage (refer to the documentation on ways to change this behavior).
-
-If you have any posts, comments, categories, and/or tags, delete them prior to activation (or deactivate this plugin, delete them, and re-active). If you don't delete them, they will remain in your database and become accessible if you deactivate this plugin or modify the plugin bevhior to show posts.
 
 **Support**: This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [support forums](https://wordpress.org/support/plugin/disable-blog) or the [issue](https://github.com/joshuadavidnelson/disable-blog/issues) section of the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog).
 
@@ -55,6 +55,16 @@ This could be done, but other post types (like Pages) may have comment support. 
 Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
 == Changelog ==
+
+##### 0.4.8.1
+- Forgot to update the version number in the main plugin file, so this is a version bump only.
+
+= 0.4.8 = 
+- Fixed typo in variable name for current vs redirect url check.
+- Update function names from template to `disable_blog`.
+- Add WP.org Badge to readme.md.
+- Change the name of the CI workflow to be specific to deployment.
+- Some code tidying and inline documentation.
 
 = 0.4.7 =
 * Using GitHub actions publish on WP.org from github releases.
@@ -135,6 +145,16 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+##### 0.4.8.1
+- Forgot to update the version number in the main plugin file, so this is a version bump only. See 0.4.8 release notes for changes since 0.4.7.
+
+= 0.4.8 = 
+- Fixed typo in variable name for current vs redirect url check.
+- Update function names from template to `disable_blog`.
+- Add WP.org Badge to readme.md.
+- Change the name of the CI workflow to be specific to deployment.
+- Some code tidying and inline documentation.
 
 = 0.4.7 =
 * Using GitHub actions publish on WP.org from github releases.
