@@ -242,6 +242,9 @@ class Disable_Blog {
 		$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
 		$this->loader->add_action( 'pings_open', $plugin_admin, 'filter_comment_status', 20, 2 );
 
+		// Disable internal pingbacks
+		$this->loader->add_action( 'pre_ping', $plugin_admin, 'internal_pingbacks', 10, 1 );
+
 		// Remove Comment & Trackback support for posts.
 		$this->loader->add_action( 'wp_loaded', $plugin_admin, 'remove_post_comment_support', 20 );
 	

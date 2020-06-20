@@ -90,6 +90,24 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * Disable internal pingbacks to posts.
+	 *
+	 * @param  array $links
+	 * 
+	 * @return void
+	 */
+	public function internal_pingbacks( &$links ) {
+
+		// Unset each internal ping
+		foreach ( $links as $key => $link ) {
+			if ( 0 === strpos( $link, get_option( 'home' ) ) ) {
+				unset( $links[ $key ] );
+			}
+		}
+
+	}
+
+	/**
 	 * Filter the comment counts to remove comments to 'post' post type.
 	 *
 	 * @since 0.4.0
