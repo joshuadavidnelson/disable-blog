@@ -1,8 +1,8 @@
 ### Changelog
 
 ##### 0.4.9
-- Extended method for disabling pingbacks to include internal pinbacks on posts and "update services."
-- Now fullly disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
+- Extended method for disabling pingbacks to include internal pingbacks on posts and "update services."
+- Now fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Re-order admin menu to place "Pages" below "Dashboard."
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
