@@ -316,6 +316,9 @@ class Disable_Blog {
 		$this->loader->add_action( 'do_feed_rss2', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_atom', $plugin_public, 'disable_feed', 1, 2 );
 
+		// Remove feed links from the header
+		$this->loader->add_action( 'wp_loaded', $plugin_public, 'header_feeds', 1, 1 );
+
 		// Hide Feed links
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );

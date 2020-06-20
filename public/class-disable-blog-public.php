@@ -362,4 +362,29 @@ class Disable_Blog_Public {
 
 		return false;
 	}
+
+	/** 
+	 * Remove feed urls from head.
+	 * 
+	 * @since 0.4.9
+	 * 
+	 * @return void
+	 */
+	public function header_feeds() {
+
+		// Various feed links
+		$feed = array(
+			'feed_links' => 2,
+			'feed_links_extra' => 3,
+			'rsd_link' => 10,
+			'wlwmanifest_link' => 10,
+		);
+
+		// Remove from head
+		foreach ( $feed as $function => $priority ) {
+			remove_action( 'wp_head', $function, $priority );
+		}
+
+	}
+
 }
