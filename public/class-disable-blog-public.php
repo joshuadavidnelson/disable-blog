@@ -456,4 +456,82 @@ class Disable_Blog_Public {
 
 	}
 
+	/**
+	 * Unset all post-related xmlrpc methods.
+	 * 
+	 * @see wp-includes/class-wp-xmlrpc-server.php
+	 * 
+	 * @since 0.4.9
+	 *
+	 * @param  array $methods
+	 * 
+	 * @return array $methods
+	 */
+	public function xmlrpc_methods( $methods ) {
+
+		// The methods to remove
+		$methods_to_remove = array(
+			'wp.getUsersBlogs',
+			'wp.newPost',
+			'wp.editPost',
+			'wp.deletePost',
+			'wp.getPost',
+			'wp.getPosts',
+			'blogger.getPost',
+			'blogger.getRecentPosts',
+			'blogger.newPost',
+			'blogger.editPost',
+			'blogger.deletePost',
+			'metaWeblog.newPost',
+			'metaWeblog.editPost',
+			'metaWeblog.getPost',
+			'metaWeblog.getRecentPosts',
+			'metaWeblog.deletePost',
+			'mt.getRecentPostTitles',
+			'mt.getTrackbackPings',
+			'mt.publishPost',
+			'pingback.ping',
+			'pingback.extensions.getPingbacks',
+			'system.multicall',
+			'system.listMethods',
+			'system.getCapabilities',
+			'demo.sayHello',
+			'demo.addTwoNumbers',
+		);
+
+		// Remove category / post tag terms, if not supported by another post type.
+		if( ! dwpb_post_types_with_tax( 'category' ) || ! dwpb_post_types_with_tax( 'post_tag' )) {
+			$taxonomy_methods = array(
+				'wp.newTerm',
+				'wp.editTerm',
+				'wp.deleteTerm',
+				'wp.getTerm',
+				'wp.getTerms',
+				'wp.getTaxonomy',
+				'wp.getTaxonomies',
+				'wp.getCategories',
+				'wp.getTags',
+				'wp.newCategory',
+				'wp.deleteeCategory',
+				'mt.getCategoryList',
+				'wp.suggestCategories',
+				'mt.getPostCategories',
+				'mt.setPostCategories',
+				'metaWeblog.getCategories',
+			);
+			$methods_to_remove = array_merge( $methods_to_remove, $taxonomy_methods );
+		}
+
+		if( is_array( $methods_to_remove ) ) {
+			foreach( $methods_to_remove as $method ) {
+				if( isset( $methods[ $method ] ) ) {
+					unset( $methods[ $method ] );
+				}
+			}
+		}
+
+		return $methods;
+
+	}
+
 }
