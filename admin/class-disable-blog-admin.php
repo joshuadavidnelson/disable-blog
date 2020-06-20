@@ -714,4 +714,45 @@ class Disable_Blog_Admin {
 
 	}
 
+	/**
+	 * Put the "pages" menu below the dashboard menu item.
+	 * 
+	 * @since 0.4.9
+	 *
+	 * @return $menu_slug
+	 */
+	public function reorder_page_admin_menu_item() {
+
+		$menu_slug = array(
+			'index.php', // Dashboard
+			'edit.php?post_type=page', // Pages
+			);
+
+		return $menu_slug;
+
+	}
+
+	/**
+	 * Remove the first separator between dashboard/pages and media.
+	 * 
+	 * @since 0.4.9
+	 *
+	 * @return void
+	 */
+	public function remove_first_menu_separator() {
+
+		global $menu;
+
+		$ii = 0;
+		if ( is_array( $menu ) || is_object( $menu ) ) {
+			foreach ( $menu as $group => $item ) {
+				if ( empty( $item[0] ) && 1 > $ii ) {
+					remove_menu_page( $item[2] );
+					$ii++;
+				}
+			}
+		}
+
+	}
+
 }

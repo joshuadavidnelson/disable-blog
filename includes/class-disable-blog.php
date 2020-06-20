@@ -284,6 +284,11 @@ class Disable_Blog {
 		// Filter removal of widgets for some checks
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
 
+		// Reorder menu
+		add_filter( 'custom_menu_order', '__return_true', 10, 1 );
+		$this->loader->add_filter( 'menu_order', $plugin_admin, 'reorder_page_admin_menu_item', 10, 1 );
+		$this->loader->add_filter( 'admin_init', $plugin_admin, 'remove_first_menu_separator', 10, 2 );
+
 	}
 
 	/**
