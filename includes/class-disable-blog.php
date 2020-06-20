@@ -323,8 +323,11 @@ class Disable_Blog {
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );
 
-		// Modify REST API Support
-		$this->loader->add_action( 'init', $plugin_public, 'modify_rest_api', 25 );
+		// Modify the main 'post' post_type arguments to shut pubic things down
+		$this->loader->add_action( 'init', $plugin_public, 'modify_post_type_arguments', 25 );
+
+		// Modify the core taxonomy arguments to filter out posts and shut down public things
+		$this->loader->add_action( 'init', $plugin_public, 'modify_taxonomies_arguments', 25 );
 
 	}
 

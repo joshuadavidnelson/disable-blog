@@ -331,36 +331,105 @@ class Disable_Blog_Public {
 	}
 
 	/**
-	 * Remove 'post' type from the REST API results
-	 *
-	 * Requires the REST API plugin be enabled.
+	 * Disable public arguments of the 'post' post type.
 	 *
 	 * @since 0.4.2
+	 * @since 0.4.9 removed rest api specific filter and updated function
+	 *                for disabling all public-facing aspects of the 'post' post type
 	 *
-	 * @return bool
+	 * @return void
 	 */
-	public function modify_rest_api() {
-
-		/**
-		 * Filter to toggle the disable rest API.
-		 *
-		 * @since 0.4.2
-		 *
-		 * @param bool $bool True to modify API, false to cancel.
-		 */
-		if ( true !== apply_filters( 'dwpb_disable_rest_api', true ) ) {
-			return false;
-		}
+	public function modify_post_type_arguments() {
 
 		global $wp_post_types;
 		$post_type_name = 'post';
 
 		if( isset( $wp_post_types[ $post_type_name ] ) ) {
-			$wp_post_types[$post_type_name]->show_in_rest = false;
-			return true;
+
+			$arguments_to_remove = array(
+				'has_archive',
+				'public',
+				'publicaly_queryable',
+				'rewrite',
+				'query_var',
+				'show_ui',
+				'show_in_admin_bar',
+				'show_in_nav_menus',
+				'show_in_menu',
+				'show_in_rest',
+			);
+
+			foreach( $arguments_to_remove as $arg ) {
+				if( isset( $wp_post_types[ $post_type_name ]->$arg ) ) {
+					$wp_post_types[ $post_type_name ]->$arg = false;
+				}
+			}
+
 		}
 
-		return false;
+	}
+
+	/**
+	 * Disable public arguments of the 'category' and 'post_tag' taxonomies.
+	 * 
+	 * Only disables these if the 'post' post type is the only post type using them.
+	 *
+	 * @since 0.4.9
+	 * 
+	 * @uses dwpb_post_types_with_tax()
+	 *
+	 * @return void
+	 */
+	public function modify_taxonomies_arguments() {
+
+		global $wp_taxonomies;
+		$taxonomies = array( 'category', 'post_tag' );
+
+		foreach( $taxonomies as $tax ) {
+			if( isset( $wp_taxonomies[ $tax ] ) ) {
+
+				// remove 'post' from object types
+				if( isset( $wp_taxonomies[ $tax ]->object_type ) ) {
+					if( is_array( $wp_taxonomies[ $tax ]->object_type ) 
+						&& ( ( $key = array_search( 'post', $wp_taxonomies[ $tax ]->object_type ) ) !== false ) ) {
+
+							unset( $wp_taxonomies[ $tax ]->object_type[ $key ] );
+
+					}
+						
+				}
+
+				// only modify the public arguments if 'post' is the only post type
+				//   using this taxonomy
+				if( ! dwpb_post_types_with_tax( $tax ) ) {
+
+					// public arguments to remove
+					$arguments_to_remove = array(
+						'has_archive',
+						'public',
+						'publicaly_queryable',
+						'query_var',
+						'show_ui',
+						'show_tagcloud',
+						'show_in_admin_bar',
+						'show_in_quick_edit',
+						'show_in_nav_menus',
+						'show_admin_column',
+						'show_in_menu',
+						'show_in_rest',
+					);
+		
+					foreach( $arguments_to_remove as $arg ) {
+						if( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
+							$wp_taxonomies[ $tax ]->$arg = false;
+						}
+					}
+
+				}
+	
+			}
+		}
+
 	}
 
 	/** 
