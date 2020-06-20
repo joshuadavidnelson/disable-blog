@@ -255,6 +255,11 @@ class Disable_Blog_Public {
 			 * Defaults to false, so a redirect is the expacted default behavior.
 			 *
 			 * @since 0.4.0
+			 * @since 0.4.9 updated variables passed to match other feed filters,
+			 *              previously only $is_comment_feed was passed and now
+			 *              the order is: bool, $post, $is_comment_feed.
+			 *              Note that if you used this filter before
+			 *              and relied on the $is_comment_feed, you'll need to update. 
 			 *
 			 * @param bool $bool True to use a message, false to redirect.
 			 * @param object $post Global post object.
