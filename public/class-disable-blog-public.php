@@ -185,6 +185,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
+	 * @since 0.4.9 remove 'post' from all archives
 	 */
 	public function modify_query( $query ) {
 
@@ -200,13 +201,12 @@ class Disable_Blog_Public {
 			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
 		}
 
-		// Remove Posts from Author Page
-		if ( $query->is_author() ) {
-			$author_post_types = get_post_types( array(
+		// Remove Posts from archives
+		if ( $query->is_archive() ) {
+			$archive_post_types = get_post_types( array(
 				'publicly_queryable'  => true,
-				'exclude_from_search' => false,
 			) );
-			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
+			$this->remove_post_from_array_in_query( $query, $archive_post_types, 'dwpb_archive_post_types' );
 		}
 
 	}
