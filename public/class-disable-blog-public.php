@@ -197,6 +197,8 @@ class Disable_Blog_Public {
 		if ( $query->is_search() ) {
 			$in_search_post_types = get_post_types( array(
 				'exclude_from_search' => false,
+				'public'              => true,
+				'publicly_queryable'  => true,
 			) );
 			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
 		}
