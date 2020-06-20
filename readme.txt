@@ -57,14 +57,14 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 == Changelog ==
 
 = 0.4.9 =
-- Extended pingback disable functionality to include internal pinbacks on posts and "update services."
-- Now disabling XMLRPC.
+- Extended method for disabling pingbacks to include internal pinbacks on posts and "update services."
+- Now fullly disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Re-order admin menu to place "Pages" below "Dashboard."
 - Flush rewrite rules at activation and deactivation.
-- Remove feed links from header.
-- Removes post, category, and tag options from all menus.
+- Filtering out `post` post types from all archives, previously it was just author archives and search results.
+- Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
 - Remove header feed urls, unless supported by another post type.
-- Expanded approach used to disable REST API to fully turn off all public arguments on `post` post type and built-in taxonomies.
+- Expanded the approach used to disable REST API to completely turn off all public arguments on `post` post type and built-in taxonomies, unless another post type supports them.
 - **Developers:** Some filters were removed and altered in this version:
  - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
  - The `dwpb_disable_rest_api` filter was removed.
@@ -161,14 +161,14 @@ A bunch of stuff:
 == Upgrade Notice ==
 
 = 0.4.9 =
-- Extended pingback disable functionality to include internal pinbacks on posts and "update services."
-- Now disabling XMLRPC.
+- Extended method for disabling pingbacks to include internal pinbacks on posts and "update services."
+- Now fullly disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Re-order admin menu to place "Pages" below "Dashboard."
 - Flush rewrite rules at activation and deactivation.
-- Remove feed links from header.
-- Removes post, category, and tag options from all menus.
+- Filtering out `post` post types from all archives, previously it was just author archives and search results.
+- Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
 - Remove header feed urls, unless supported by another post type.
-- Expanded approach used to disable REST API to fully turn off all public arguments on `post` post type and built-in taxonomies.
+- Expanded the approach used to disable REST API to completely turn off all public arguments on `post` post type and built-in taxonomies, unless another post type supports them.
 - **Developers:** Some filters were removed and altered in this version:
  - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
  - The `dwpb_disable_rest_api` filter was removed.
