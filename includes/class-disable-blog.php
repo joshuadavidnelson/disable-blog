@@ -75,12 +75,12 @@ class Disable_Blog {
 	 * @access   public
 	 */
 	public function __construct() {
-		
+
 		$this->plugin_name = 'disable-blog';
 		$this->version = '0.4.8';
-		
+
 		do_action( 'dwpb_init' );
-		
+
 		$this->setup_constants();
 		$this->upgrade_check();
 		$this->load_dependencies();
@@ -98,25 +98,24 @@ class Disable_Blog {
 	 * @access   private
 	 */
 	private static function upgrade_check() {
-		
+
 		// Get the current version option
 		$current_version = get_option( 'dwpb_version', false );
-		
+
 		// Update the previous version if we're upgrading
 		if ( $current_version && $current_version != DWPB_VERSION )
 			update_option( 'dwpb_previous_version', $current_version );
-	
+
 		// See if it's a previous version, which may not have set the version option
 		if ( false === $current_version || $current_version != DWPB_VERSION ) {
 			// do things on update
-			
-	
+
 			// Save current version
 			update_option( 'dwpb_version', DWPB_VERSION );
 		}
-		
+
 	}
-	
+
 	/**
 	 * Define Constants
 	 *
@@ -125,7 +124,7 @@ class Disable_Blog {
 	 * @access   private
 	 */
 	private function setup_constants() {
-		
+
 		// For includes and whatnot
 		if( !defined( 'DWPB_DIR' ) )
 			define( 'DWPB_DIR', dirname( __FILE__ ) );
@@ -140,7 +139,7 @@ class Disable_Blog {
 
 		// To keep track of versions, useful if you need to make updates specific to versions
 		define( 'DWPB_VERSION', $this->version );
-		
+
 	}
 
 	/**
@@ -178,7 +177,7 @@ class Disable_Blog {
 		 * The class containing all common functions for use in the plugin
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/disable-blog-common-functions.php';
-		
+
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
@@ -223,65 +222,65 @@ class Disable_Blog {
 	private function define_admin_hooks() {
 
 		$plugin_admin = new Disable_Blog_Admin( $this->get_plugin_name(), $this->get_version() );
-	
+
 		// Hide items with CSS
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-	
+
 		// Hide Posts Page from Admin Menu
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
-	
+
 		// Redirect Admin Page
 		$this->loader->add_action( 'current_screen', $plugin_admin, 'redirect_admin_pages' );
-	
+
 		// Remove Admin Bar Links
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
-	
+
 		// Filter Comments off Admin Page
 		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
-		
+
 		// Filter post open status for comments and pings.
 		$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
 		$this->loader->add_action( 'pings_open', $plugin_admin, 'filter_comment_status', 20, 2 );
-		
+
 		// Remove Comment & Trackback support for posts.
 		$this->loader->add_action( 'wp_loaded', $plugin_admin, 'remove_post_comment_support', 20 );
-		
+	
 		// Filter comment counts in admin table.
 		$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1);
-		
+
 		// Filter wp_count_comments, which addresses comments in admin bar.
 		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
-		
+
 		// Convert the $comments object back into an array if older version of WooCommerce is active.
 		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_woocommerce_comment_count', 10, 2 );
-		
+
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
-		
+
 		// Clear comments from 'post' post type.
 		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
-	
+
 		// Remove Dashboard Widgets
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
 
 		// Admin notices
-        $this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
-        
-        // Add a class to the admin body for the reading options page
-        $this->loader->add_filter( 'admin_body_class', $plugin_admin, 'admin_body_class', 10, 1 );
+		$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
+
+		// Add a class to the admin body for the reading options page
+		$this->loader->add_filter( 'admin_body_class', $plugin_admin, 'admin_body_class', 10, 1 );
 
 		// Remove Post via Email Settings
 		add_filter( 'enable_post_by_email_configuration', '__return_false' );
-	
+
 		// Disable Press This Function
 		$this->loader->add_action( 'load-press-this.php', $plugin_admin, 'disable_press_this' );
-	
+
 		// Remove Post Related Widgets
 		$this->loader->add_action( 'widgets_init', $plugin_admin, 'remove_widgets' );
-		
+
 		// Filter removal of widgets for some checks
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
-		
+
 	}
 
 	/**
@@ -308,7 +307,7 @@ class Disable_Blog {
 		$this->loader->add_action( 'do_feed_rss', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_rss2', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_atom', $plugin_public, 'disable_feed', 1, 2 );
-		
+
 		// Hide Feed links
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );

@@ -181,55 +181,55 @@ class Disable_Blog_Admin {
 		global $wpdb;
 
 		// Grab the comments that are not associated with 'post' post_type
-	    $totals = (array) $wpdb->get_results("
-	        SELECT comment_approved, COUNT( * ) AS total
-	        FROM {$wpdb->comments}
-		    WHERE comment_post_ID in (
-		         SELECT ID
-		         FROM {$wpdb->posts}
-		         WHERE post_type != 'post'
-		         AND post_status = 'publish')
-	        GROUP BY comment_approved
-	    ", ARRAY_A);
+		$totals = (array) $wpdb->get_results("
+			SELECT comment_approved, COUNT( * ) AS total
+			FROM {$wpdb->comments}
+			WHERE comment_post_ID in (
+					SELECT ID
+					FROM {$wpdb->posts}
+					WHERE post_type != 'post'
+					AND post_status = 'publish')
+			GROUP BY comment_approved
+		", ARRAY_A);
 
 		$comment_count = array(
 			'moderated' 		  => 0,
-	        'approved'            => 0,
-	        'awaiting_moderation' => 0,
-	        'spam'                => 0,
-	        'trash'               => 0,
-	        'post-trashed'        => 0,
-	        'total_comments'      => 0,
-	        'all'                 => 0,
+			'approved'            => 0,
+			'awaiting_moderation' => 0,
+			'spam'                => 0,
+			'trash'               => 0,
+			'post-trashed'        => 0,
+			'total_comments'      => 0,
+			'all'                 => 0,
 		);
 
-	    foreach ( $totals as $row ) {
-	        switch ( $row['comment_approved'] ) {
-	            case 'trash':
-	                $comment_count['trash'] = $row['total'];
-	                break;
-	            case 'post-trashed':
-	                $comment_count['post-trashed'] = $row['total'];
-	                break;
-	            case 'spam':
-	                $comment_count['spam'] = $row['total'];
-	                $comment_count['total_comments'] += $row['total'];
-	                break;
-	            case '1':
-	                $comment_count['approved'] = $row['total'];
-	                $comment_count['total_comments'] += $row['total'];
-	                $comment_count['all'] += $row['total'];
-	                break;
-	            case '0':
-	                $comment_count['awaiting_moderation'] = $row['total'];
+		foreach ( $totals as $row ) {
+			switch ( $row['comment_approved'] ) {
+				case 'trash':
+					$comment_count['trash'] = $row['total'];
+					break;
+				case 'post-trashed':
+					$comment_count['post-trashed'] = $row['total'];
+					break;
+				case 'spam':
+					$comment_count['spam'] = $row['total'];
+					$comment_count['total_comments'] += $row['total'];
+					break;
+				case '1':
+					$comment_count['approved'] = $row['total'];
+					$comment_count['total_comments'] += $row['total'];
+					$comment_count['all'] += $row['total'];
+					break;
+				case '0':
+					$comment_count['awaiting_moderation'] = $row['total'];
 					$comment_count['moderated'] = $comment_count['awaiting_moderation'];
-	                $comment_count['total_comments'] += $row['total'];
-	                $comment_count['all'] += $row['total'];
-	                break;
-	            default:
-	                break;
-	        }
-	    }
+					$comment_count['total_comments'] += $row['total'];
+					$comment_count['all'] += $row['total'];
+					break;
+				default:
+					break;
+			}
+		}
 
 		return $comment_count;
 
@@ -282,13 +282,13 @@ class Disable_Blog_Admin {
 	 */
 	public function filter_wp_headers( $headers ) {
 
-        /**
-         * Toggle the disable pinback header feature.
-         * 
-         * @since 0.4.0
-         * 
-         * @param bool $bool True to disable the header, false to keep it.
-         */
+		/**
+		 * Toggle the disable pinback header feature.
+		 * 
+		 * @since 0.4.0
+		 * 
+		 * @param bool $bool True to disable the header, false to keep it.
+		 */
 		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
 			unset( $headers['X-Pingback'] );
 		}
@@ -452,7 +452,6 @@ class Disable_Blog_Admin {
         }
 		
 	}
-	
 	/**
 	 * Filter for removing the writing options page.
 	 *
@@ -701,7 +700,7 @@ class Disable_Blog_Admin {
 			$bool = false;
 
 		return $bool;
-		
+
 	}
 
 	/**

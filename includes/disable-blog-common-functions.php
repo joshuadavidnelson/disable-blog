@@ -74,7 +74,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	$post_types = get_post_types( $args, $output );
 
 	// We just need the taxonomy name
-	if( is_object( $taxonomy ) ){
+	if( is_object( $taxonomy ) ) {
 		$taxonomy = $taxonomy->name;
 
 	// If it's not an object or a string, it won't work, so send it back
@@ -96,7 +96,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		}
 		
 		// is the post included in this post type, but not 'post' type.
-		if( !empty( $type ) && $type != 'post' ) {
+		if( ! empty( $type ) && $type != 'post' ) {
 			$taxonomies = get_object_taxonomies( $type, 'names' );
 			if( in_array( $taxonomy, $taxonomies ) ) {
 				$post_types_with_tax[] = $post_type;
