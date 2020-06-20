@@ -1,5 +1,19 @@
 ### Changelog
 
+##### 0.4.9
+- Extended pingback disable functionality to include internal pinbacks on posts and "update services."
+- Now disabling XMLRPC.
+- Re-order admin menu to place "Pages" below "Dashboard."
+- Flush rewrite rules at activation and deactivation.
+- Remove feed links from header.
+- Removes post, category, and tag options from all menus.
+- Remove header feed urls, unless supported by another post type.
+- Expanded approach used to disable REST API to fully turn off all public arguments on `post` post type and built-in taxonomies.
+- **Developers:** Some filters were removed and altered in this version:
+	- The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
+	- The `dwpb_disable_rest_api` filter was removed.
+	- The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
+
 ##### 0.4.8.1
 - Do'h! Forgot to update the version number in the main plugin file. Bump.
 
