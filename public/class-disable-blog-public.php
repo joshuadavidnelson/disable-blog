@@ -245,7 +245,7 @@ class Disable_Blog_Public {
 			 * @param string $url The redirect url (defaults to homepage)
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
 			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $is_comment_feed );
+			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $post, $is_comment_feed );
 
 			/**
 			 * Filter to toggle on a message instead of a redirect.
