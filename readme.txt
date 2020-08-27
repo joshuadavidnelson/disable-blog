@@ -3,6 +3,7 @@ Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 3.1.0
+Requires PHP: 5.6
 Tested up to: 5.5
 Stable tag: 0.4.9
 License: GPLv2 or later
@@ -77,7 +78,7 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 = 0.4.8.1 =
 - Forgot to update the version number in the main plugin file, so this is a version bump only.
 
-= 0.4.8 = 
+= 0.4.8 =
 - Fixed typo in variable name for current vs redirect url check.
 - Update function names from template to `disable_blog`.
 - Add WP.org Badge to readme.md.
@@ -92,7 +93,7 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 * Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
 = 0.4.6 =
-* Added check on disable feed functionality to confirm post type prior to disabling feed. 
+* Added check on disable feed functionality to confirm post type prior to disabling feed.
 
 = 0.4.5 =
 * Remove the functionality hiding the Settings > Writing admin page, allow this option to be re-enabled via the older filter. This page used to be entirely related to posts, but is also used to select the editor type (Gutenberg vs Classic).
@@ -185,7 +186,7 @@ A bunch of stuff:
 = 0.4.8.1 =
 - Forgot to update the version number in the main plugin file, so this is a version bump only. See 0.4.8 release notes for changes since 0.4.7.
 
-= 0.4.8 = 
+= 0.4.8 =
 - Fixed typo in variable name for current vs redirect url check.
 - Update function names from template to `disable_blog`.
 - Add WP.org Badge to readme.md.
