@@ -332,9 +332,7 @@ class Disable_Blog {
 		// Modify the core taxonomy arguments to filter out posts and shut down public things
 		$this->loader->add_action( 'init', $plugin_public, 'modify_taxonomies_arguments', 25 );
 
-		// Disable XML-RPC methods
-		add_filter( 'xmlrpc_enabled', '__return_false', 10, 1 );
-		add_filter( 'pre_option_enable_xmlrpc', '__return_zero', 10, 1 );
+		// Disable XML-RPC methods related to posts and built-in taxonomies.
 		$this->loader->add_filter( 'xmlrpc_methods', $plugin_public, 'xmlrpc_methods', 10, 1 );
 
 		// Remove posts from xml sitemaps.
