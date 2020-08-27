@@ -27,7 +27,7 @@ if ( !defined( 'ABSPATH' ) ) {
  *
  * @uses  WP_UNINSTALL_PLUGIN
  */
-if( !defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+if ( !defined( 'WP_UNINSTALL_PLUGIN' ) ) {
     header( 'Status: 403 Forbidden' );
     header( 'HTTP/1.1 403 Forbidden' );
 	exit();
@@ -42,7 +42,7 @@ if( !defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  * @uses  current_user_can()
  * @uses  wp_die()
  */
-if( !is_user_logged_in() ) {
+if ( !is_user_logged_in() ) {
 	wp_die(
 		__( 'You must be logged in to run this script.', 'disable-blog' ),
 		__( 'Disable Blog', 'disable-blog' ),
@@ -50,7 +50,7 @@ if( !is_user_logged_in() ) {
 	);
 } 
 
-if( !current_user_can( 'install_plugins' ) ) {
+if ( !current_user_can( 'install_plugins' ) ) {
 	wp_die(
 		__( 'You do not have permission to run this script.', 'disable-blog' ),
 		__( 'Disable Blog', 'disable-blog' ),

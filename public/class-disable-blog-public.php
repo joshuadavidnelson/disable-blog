@@ -69,7 +69,7 @@ class Disable_Blog_Public {
 	public function redirect_posts() {
 
 		// Don't redirect on admin or sitemap, and only if there is a homepage to redirect to.
-		if( is_admin()
+		if ( is_admin()
 			|| ! get_option( 'page_on_front' )
 			|| ! empty( get_query_var( 'sitemap' ) )
 			|| ! empty( get_query_var( 'sitemap-stylesheet' ) ) ) {
@@ -83,29 +83,29 @@ class Disable_Blog_Public {
 		// Run the redirects
 		global $post;
 
-		if( $post instanceof WP_Post && is_singular( 'post' ) ) {
+		if ( $post instanceof WP_Post && is_singular( 'post' ) ) {
 
 			global $post;
 			$redirect_url = apply_filters( "dwpb_redirect_posts", $url, $post );
 			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
 
-		} elseif( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+		} elseif ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
 
 			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
 
-		} elseif( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
+		} elseif ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
 
 			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
 
-		} elseif( is_post_type_archive( 'post' ) ) {
+		} elseif ( is_post_type_archive( 'post' ) ) {
 
 			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
 
-		} elseif( is_home() ) {
+		} elseif ( is_home() ) {
 
 			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
 
-		} elseif( is_date() ) {
+		} elseif ( is_date() ) {
 
 			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
 
@@ -119,7 +119,7 @@ class Disable_Blog_Public {
 		// If there is no redirect url, then also bail.
 		$protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === true ? 'https://' : 'http://';
 		$current_url = esc_url( $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"] );
-		if( $redirect_url == $current_url || ! $redirect_url ) {
+		if ( $redirect_url == $current_url || ! $redirect_url ) {
 			return;
 		}
 
@@ -199,7 +199,7 @@ class Disable_Blog_Public {
 	public function modify_query( $query ) {
 
 		// Bail if we're in the admin or not on the main query
-		if( is_admin() || ! $query->is_main_query() )
+		if ( is_admin() || ! $query->is_main_query() )
 			return;
 
 		// Remove 'post' post_type from search results, replace with page
@@ -231,7 +231,7 @@ class Disable_Blog_Public {
 	public function disable_feed( $is_comment_feed ) {
 
 		// If this is a comment feed and comments are supported by other post types, bail
-		if( $is_comment_feed && dwpb_post_types_with_feature( 'comments' ) )
+		if ( $is_comment_feed && dwpb_post_types_with_feature( 'comments' ) )
 			return;
 
 		// Option to override this via filter and check to confirm post type
@@ -322,7 +322,9 @@ class Disable_Blog_Public {
 	 * @return bool
 	 */
 	public function feed_links_show_posts_feed( $bool ) {
+
 		return false;
+
 	}
 
 	/**
@@ -339,7 +341,7 @@ class Disable_Blog_Public {
 	public function feed_links_show_comments_feed( $bool ) {
 
 		// If 'post' type is the only type supporting comments, then disable the comment feed link
-		if( ! dwpb_post_types_with_feature( 'comments' ) )
+		if ( ! dwpb_post_types_with_feature( 'comments' ) )
 			$bool = false;
 
 		return $bool;
@@ -360,7 +362,7 @@ class Disable_Blog_Public {
 		global $wp_post_types;
 		$post_type_name = 'post';
 
-		if( isset( $wp_post_types[ $post_type_name ] ) ) {
+		if ( isset( $wp_post_types[ $post_type_name ] ) ) {
 
 			$arguments_to_remove = array(
 				'has_archive',
@@ -375,8 +377,8 @@ class Disable_Blog_Public {
 				'show_in_rest',
 			);
 
-			foreach( $arguments_to_remove as $arg ) {
-				if( isset( $wp_post_types[ $post_type_name ]->$arg ) ) {
+			foreach ( $arguments_to_remove as $arg ) {
+				if ( isset( $wp_post_types[ $post_type_name ]->$arg ) ) {
 					$wp_post_types[ $post_type_name ]->$arg = false;
 				}
 			}
@@ -401,12 +403,12 @@ class Disable_Blog_Public {
 		global $wp_taxonomies;
 		$taxonomies = array( 'category', 'post_tag' );
 
-		foreach( $taxonomies as $tax ) {
-			if( isset( $wp_taxonomies[ $tax ] ) ) {
+		foreach ( $taxonomies as $tax ) {
+			if ( isset( $wp_taxonomies[ $tax ] ) ) {
 
 				// remove 'post' from object types
-				if( isset( $wp_taxonomies[ $tax ]->object_type ) ) {
-					if( is_array( $wp_taxonomies[ $tax ]->object_type ) 
+				if ( isset( $wp_taxonomies[ $tax ]->object_type ) ) {
+					if ( is_array( $wp_taxonomies[ $tax ]->object_type ) 
 						&& ( ( $key = array_search( 'post', $wp_taxonomies[ $tax ]->object_type ) ) !== false ) ) {
 
 							unset( $wp_taxonomies[ $tax ]->object_type[ $key ] );
@@ -417,7 +419,7 @@ class Disable_Blog_Public {
 
 				// only modify the public arguments if 'post' is the only post type
 				//   using this taxonomy
-				if( ! dwpb_post_types_with_tax( $tax ) ) {
+				if ( ! dwpb_post_types_with_tax( $tax ) ) {
 
 					// public arguments to remove
 					$arguments_to_remove = array(
@@ -435,8 +437,8 @@ class Disable_Blog_Public {
 						'show_in_rest',
 					);
 		
-					foreach( $arguments_to_remove as $arg ) {
-						if( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
+					foreach ( $arguments_to_remove as $arg ) {
+						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
 							$wp_taxonomies[ $tax ]->$arg = false;
 						}
 					}
@@ -459,9 +461,9 @@ class Disable_Blog_Public {
 
 		// Various feed links
 		$feed = array(
-			'feed_links' => 2,
+			'feed_links'       => 2,
 			'feed_links_extra' => 3,
-			'rsd_link' => 10,
+			'rsd_link'         => 10,
 			'wlwmanifest_link' => 10,
 		);
 
@@ -517,7 +519,7 @@ class Disable_Blog_Public {
 
 		// Remove category / post tag terms, if not supported by another post type.
 		$taxonomy_methods = array();
-		if( ! dwpb_post_types_with_tax( 'category' ) ) {
+		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
 			$taxonomy_methods = array(
 				'wp.newCategory',
 				'wp.deleteeCategory',
@@ -528,15 +530,15 @@ class Disable_Blog_Public {
 				'metaWeblog.getCategories',
 			);
 		}
-		if( ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+		if ( ! dwpb_post_types_with_tax( 'post_tag' ) ) {
 			$taxonomy_methods[] = 'wp.getTags';
 		}
 
 		$methods_to_remove = array_merge( $methods_to_remove, $taxonomy_methods );
 
-		if( is_array( $methods_to_remove ) ) {
-			foreach( $methods_to_remove as $method ) {
-				if( isset( $methods[ $method ] ) ) {
+		if ( is_array( $methods_to_remove ) ) {
+			foreach ( $methods_to_remove as $method ) {
+				if ( isset( $methods[ $method ] ) ) {
 					unset( $methods[ $method ] );
 				}
 			}
@@ -555,7 +557,7 @@ class Disable_Blog_Public {
 	 */
 	function wp_sitemaps_post_types( $post_types ) {
 
-		if( isset( $post_types['post'] ) ) {
+		if ( isset( $post_types['post'] ) ) {
 			unset( $post_types['post'] );
 		}
 
@@ -577,8 +579,8 @@ class Disable_Blog_Public {
 			'post_tag',
 			'category',
 		);
-		foreach( $built_in_taxonomies as $tax ) {
-			if( isset( $taxonomies[ $tax ] ) && ! dwpb_post_types_with_tax( $tax ) ) {
+		foreach ( $built_in_taxonomies as $tax ) {
+			if ( isset( $taxonomies[ $tax ] ) && ! dwpb_post_types_with_tax( $tax ) ) {
 				unset( $taxonomies[ $tax ] );
 			}
 		}

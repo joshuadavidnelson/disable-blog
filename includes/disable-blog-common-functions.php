@@ -28,8 +28,8 @@ function dwpb_post_types_with_feature( $feature ) {
 	$post_types = get_post_types( array(), 'names' );
 
 	$post_types_with_feature = array();
-	foreach( $post_types as $post_type ) {
-		if( post_type_supports( $post_type, $feature ) && $post_type != 'post' ) {
+	foreach ( $post_types as $post_type ) {
+		if ( post_type_supports( $post_type, $feature ) && $post_type != 'post' ) {
 			$post_types_with_feature[] = $post_type;
 		}
 	}
@@ -74,31 +74,31 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	$post_types = get_post_types( $args, $output );
 
 	// We just need the taxonomy name
-	if( is_object( $taxonomy ) ) {
+	if ( is_object( $taxonomy ) ) {
 		$taxonomy = $taxonomy->name;
 
 	// If it's not an object or a string, it won't work, so send it back
-	} elseif( ! is_string( $taxonomy ) ) {
+	} elseif ( ! is_string( $taxonomy ) ) {
 		return false;
 	}
 
 	// setup the finished product
 	$post_types_with_tax = array();
-	foreach( $post_types as $post_type ) {
+	foreach ( $post_types as $post_type ) {
 		// If post types are objects
-		if( is_object( $post_type ) ) {
+		if ( is_object( $post_type ) ) {
 			$type = $post_type->name;
 		// If post types are strings
-		} elseif( is_string( $post_type ) ) {
+		} elseif ( is_string( $post_type ) ) {
 			$type = $post_type;
 		} else {
 			$type = '';
 		}
 		
 		// is the post included in this post type, but not 'post' type.
-		if( ! empty( $type ) && $type != 'post' ) {
+		if ( ! empty( $type ) && $type != 'post' ) {
 			$taxonomies = get_object_taxonomies( $type, 'names' );
-			if( in_array( $taxonomy, $taxonomies ) ) {
+			if ( in_array( $taxonomy, $taxonomies ) ) {
 				$post_types_with_tax[] = $post_type;
 			}
 		}
@@ -106,12 +106,12 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 
 	// Ability to override the results
 	$override = apply_filters( 'dwpb_taxonomy_support', null, $taxonomy, $post_types, $args, $output );
-	if( ! is_null( $override ) ) {
+	if ( ! is_null( $override ) ) {
 		return $override;
 	}
 
 	// If there aren't any results, return false
-	if( empty( $post_types_with_tax ) ) {
+	if ( empty( $post_types_with_tax ) ) {
 		return false;
 	} else {
 		return $post_types_with_tax;

@@ -78,12 +78,12 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_post_comment_support() {
 		
-		if( post_type_supports( 'post', 'comments' ) && apply_filters( 'dwpb_remove_post_comment_support', true ) ) {
+		if ( post_type_supports( 'post', 'comments' ) && apply_filters( 'dwpb_remove_post_comment_support', true ) ) {
 			remove_post_type_support( 'post', 'comments' );
 		}
 
 		// Remove
-		if( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
+		if ( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
 			remove_post_type_support( 'post', 'trackbacks' );
 		}
 		
@@ -121,7 +121,7 @@ class Disable_Blog_Admin {
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
 		// if this is grabbing all the comments, filter out the 'post' comments.
-		if( 0 == $post_id ) {
+		if ( 0 == $post_id ) {
 			$comments = $this->get_comment_counts();
 			
 			$comments['moderated'] = $comments['awaiting_moderation'];
@@ -150,7 +150,7 @@ class Disable_Blog_Admin {
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
 		
-		if( 0 == $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+		if ( 0 == $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
 			$comments = (array) $comments;
 		}
 		
@@ -171,11 +171,11 @@ class Disable_Blog_Admin {
 		
 	    global $current_screen;
 
-	    if( 'edit-comments' == $current_screen->id ) {
+	    if ( 'edit-comments' == $current_screen->id ) {
 
 			$updated_counts = $this->get_comment_counts();
-			foreach( $views as $view => $text ) {
-				if( isset( $updated_counts[ $view ] ) )
+			foreach ( $views as $view => $text ) {
+				if ( isset( $updated_counts[ $view ] ) )
 					$views[ $view ] = preg_replace( "/\([^)]+\)/", '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
 			}
 	    }
@@ -336,7 +336,7 @@ class Disable_Blog_Admin {
          * @param array $remove_subpages Array of page => subpage.
          */
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
-		foreach( $pages as $page ) {
+		foreach ( $pages as $page ) {
 			remove_menu_page( $page );
 		}
 
@@ -346,11 +346,11 @@ class Disable_Blog_Admin {
 		);
 		
 		// Remove the writings page, if the filter tells us so.
-		if( $this->remove_writing_options() )
+		if ( $this->remove_writing_options() )
 			$remove_subpages['options-general.php'] = 'options-writing.php';
 
 		// If there are no other post types supporting comments, remove the discussion page
-		if( ! dwpb_post_types_with_feature( 'comments' ) ) {
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
 			$remove_subpages[ 'options-general.php' ] = 'options-discussion.php'; // Settings > Discussion
 		}
 
@@ -362,7 +362,7 @@ class Disable_Blog_Admin {
 		 * @param array $remove_subpages Array of page => subpage.
 		 */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
-		foreach( $subpages as $page => $subpage ) {
+		foreach ( $subpages as $page => $subpage ) {
 			remove_submenu_page( $page, $subpage );
 		}
 
@@ -377,7 +377,7 @@ class Disable_Blog_Admin {
      */
     function admin_body_class( $classes ) {
 
-        if( $this->has_front_page() )
+        if ( $this->has_front_page() )
             $classes .= ' disabled-blog';
 
         return $classes;
@@ -396,14 +396,14 @@ class Disable_Blog_Admin {
 		
 		global $pagenow;
 
-		if( ! isset( $pagenow ) ) {
+		if ( ! isset( $pagenow ) ) {
 			return;
 		}
 
 		$screen = get_current_screen();
 
 		// on multisite: Do not redirect if we are on a network page
-		if( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin('network') ) {
+		if ( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin('network') ) {
             return;
         }
 
@@ -411,19 +411,19 @@ class Disable_Blog_Admin {
         $redirect_url = false;
         
         // Redirect Edit Single Post to Dashboard.
-        if( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
+        if ( 'post.php' == $pagenow && ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
             $url = admin_url( '/index.php' );
             $redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
         }
 
         // Redirect Edit Posts Screen to Edit Page
-        if( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
+        if ( 'edit.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
             $url = admin_url( '/edit.php?post_type=page' );
             $redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
         }
 
         // Redirect New Post to New Page
-        if( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
+        if ( 'post-new.php' == $pagenow && ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
             $url = admin_url('/post-new.php?post_type=page' );
             $redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
         }
@@ -434,37 +434,37 @@ class Disable_Blog_Admin {
         // or if this is either the edit-tags page and a taxonomy is not set
         // and the built-in default 'post_tags' is not supported by other post types
         // then redirect!
-        if( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
+        if ( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) && apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
             $url = admin_url( '/index.php' );
             $redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
         }
 
         // Redirect posts-only comment queries to comments
-        if( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+        if ( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
             $url = admin_url( '/edit-comments.php' );
             $redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
         }
 
         // Redirect disccusion options page if only supported by 'post' type
-        if( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
+        if ( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
             $url = admin_url( '/index.php' );
             $redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
         }
 
         // Redirect writing options to general options
-        if( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
+        if ( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
             $url = admin_url( '/options-general.php' );
             $redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
         }
 
         // Redirect available tools page
-        if( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
+        if ( 'tools.php' == $pagenow && !isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
             $url = admin_url( '/index.php' );
             $redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
         }
 
         // If we have a redirect url, do it
-        if( $redirect_url ) {
+        if ( $redirect_url ) {
             wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
             exit;
         }
@@ -502,7 +502,7 @@ class Disable_Blog_Admin {
 		global $wp_admin_bar;
 
 		// If only posts support comments, then remove comment from admin bar
-		if( ! dwpb_post_types_with_feature( 'comments' ) )
+		if ( ! dwpb_post_types_with_feature( 'comments' ) )
 		    $wp_admin_bar->remove_menu( 'comments' );
 
 		// Remove New Post from Content
@@ -523,7 +523,7 @@ class Disable_Blog_Admin {
 	public function comment_filter( $comments ) {
 
 		// Filter out comments from post
-		if( $this->is_admin_page( 'edit-comments' )
+		if ( $this->is_admin_page( 'edit-comments' )
 			&& ( $post_types = dwpb_post_types_with_feature( 'comments' ) ) ) {
 				$comments->query_vars['post_type'] = $post_types;
 		}
@@ -587,14 +587,14 @@ class Disable_Blog_Admin {
 			'options-reading',
 			'edit',
 		);
-		if( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
+		if ( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
 			return;
 
 		// Throw a notice if the we don't have a front page
-		if( ! $this->has_front_page() ) {
+		if ( ! $this->has_front_page() ) {
 
 			// The second part of the notice depends on which screen we're on.
-			if( 'options-reading' == $current_screen->base ) {
+			if ( 'options-reading' == $current_screen->base ) {
 
 				// translators: Direct the user to set a homepage in the current screen.
 				$message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
@@ -615,7 +615,7 @@ class Disable_Blog_Admin {
 
 		// If we have a front page set, but no posts page or they are the same
 		// Then let the user know the expected behavior of these two.
-		} elseif( 'options-reading' == $current_screen->base 
+		} elseif ( 'options-reading' == $current_screen->base 
 					&& get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) {
 
 			// translators: Warning that the homepage and blog page cannot be the same, the post page is redirected to the homepage.
@@ -706,15 +706,15 @@ class Disable_Blog_Admin {
 	public function filter_widget_removal( $bool, $widget ) {
 
 		// Remove Categories Widget
-		if( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) )
+		if ( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) )
 			$bool = false;
 
 		// Remove Recent Comments Widget if posts are the only type with comments
-		if( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) )
+		if ( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) )
 			$bool = false;
 
 		// Remove Tag Cloud unless there are other post types using it
-		if( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) )
+		if ( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) )
 			$bool = false;
 
 		return $bool;

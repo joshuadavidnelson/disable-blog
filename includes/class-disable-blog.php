@@ -126,15 +126,15 @@ class Disable_Blog {
 	private function setup_constants() {
 
 		// For includes and whatnot
-		if( !defined( 'DWPB_DIR' ) )
+		if ( !defined( 'DWPB_DIR' ) )
 			define( 'DWPB_DIR', dirname( __FILE__ ) );
 
 		// For calling scripts and so forth
-		if( !defined( 'DWPB_URL' ) )
+		if ( !defined( 'DWPB_URL' ) )
 			define( 'DWPB_URL', plugins_url( '/' , __FILE__ ) );
 		
 		// For admin settings field
-		if( !defined( 'DWPB_SETTINGS_FIELD' ) )
+		if ( !defined( 'DWPB_SETTINGS_FIELD' ) )
 			define( 'DWPB_SETTINGS_FIELD', $this->plugin_name );
 
 		// To keep track of versions, useful if you need to make updates specific to versions
