@@ -516,17 +516,9 @@ class Disable_Blog_Public {
 		);
 
 		// Remove category / post tag terms, if not supported by another post type.
-		if( ! dwpb_post_types_with_tax( 'category' ) || ! dwpb_post_types_with_tax( 'post_tag' )) {
+		$taxonomy_methods = array();
+		if( ! dwpb_post_types_with_tax( 'category' ) ) {
 			$taxonomy_methods = array(
-				'wp.newTerm',
-				'wp.editTerm',
-				'wp.deleteTerm',
-				'wp.getTerm',
-				'wp.getTerms',
-				'wp.getTaxonomy',
-				'wp.getTaxonomies',
-				'wp.getCategories',
-				'wp.getTags',
 				'wp.newCategory',
 				'wp.deleteeCategory',
 				'mt.getCategoryList',
@@ -535,8 +527,12 @@ class Disable_Blog_Public {
 				'mt.setPostCategories',
 				'metaWeblog.getCategories',
 			);
-			$methods_to_remove = array_merge( $methods_to_remove, $taxonomy_methods );
 		}
+		if( ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+			$taxonomy_methods[] = 'wp.getTags';
+		}
+
+		$methods_to_remove = array_merge( $methods_to_remove, $taxonomy_methods );
 
 		if( is_array( $methods_to_remove ) ) {
 			foreach( $methods_to_remove as $method ) {
