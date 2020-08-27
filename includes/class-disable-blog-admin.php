@@ -43,11 +43,11 @@ class Disable_Blog_Admin {
 	/**
 	 * Initialize the class and set its properties.
 	 *
-	 * @since   0.4.0
-	 * @param   string    $plugin_name       The name of this plugin.
-	 * @param   string    $version    The version of this plugin.
+	 * @since 0.4.0
+	 * @param string $plugin_name The name of this plugin.
+	 * @param string $version     The version of this plugin.
 	 */
-	public function __construct( $plugin_name, $version ) {
+	function __construct( $plugin_name, $version ) {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
@@ -70,6 +70,24 @@ class Disable_Blog_Admin {
 		// Remove
 		if ( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
 			remove_post_type_support( 'post', 'trackbacks' );
+		}
+
+	}
+
+	/**
+	 * Disable internal pingbacks to posts.
+	 *
+	 * @param  array $links
+	 *
+	 * @return void
+	 */
+	public function internal_pingbacks( &$links ) {
+
+		// Unset each internal ping
+		foreach ( $links as $key => $link ) {
+			if ( 0 === strpos( $link, get_option( 'home' ) ) ) {
+				unset( $links[ $key ] );
+			}
 		}
 
 	}
@@ -348,7 +366,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @return string
 	 */
-	function admin_body_class( $classes ) {
+	public function admin_body_class( $classes ) {
 
 		if ( $this->has_front_page() ) {
 			$classes .= ' disabled-blog';
@@ -378,12 +396,12 @@ class Disable_Blog_Admin {
 
 		$screen = get_current_screen();
 
-		// on multisite: Do not redirect if we are on a network page
+		// on multisite: Do not redirect if we are on a network page.
 		if ( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin( 'network' ) ) {
 			return;
 		}
 
-		// setup false redirect url value for final check
+		// setup false redirect url value for final check.
 		$redirect_url = false;
 
 		//Redirect Edit Single Post to Dashboard.
@@ -392,13 +410,13 @@ class Disable_Blog_Admin {
 			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
 		}
 
-		// Redirect Edit Posts Screen to Edit Page
+		// Redirect Edit Posts Screen to Edit Page.
 		if ( 'edit.php' == $pagenow && ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && 'post' === $_GET['post_type'] ) && apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
 			$url          = admin_url( '/edit.php?post_type=page' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
 		}
 
-		// Redirect New Post to New Page
+		// Redirect New Post to New Page.
 		if ( 'post-new.php' == $pagenow && ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && 'post' === $_GET['post_type'] ) && apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
 			$url          = admin_url( '/post-new.php?post_type=page' );
 			$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
@@ -415,31 +433,31 @@ class Disable_Blog_Admin {
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 		}
 
-		// Redirect posts-only comment queries to comments
+		// Redirect posts-only comment queries to comments.
 		if ( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] && apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
 			$url          = admin_url( '/edit-comments.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
 		}
 
-		// Redirect disccusion options page if only supported by 'post' type
+		// Redirect disccusion options page if only supported by 'post' type.
 		if ( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) && apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
 			$url          = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
 		}
 
-		// Redirect writing options to general options
+		// Redirect writing options to general options.
 		if ( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
 			$url          = admin_url( '/options-general.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 		}
 
-		// Redirect available tools page
+		// Redirect available tools page.
 		if ( 'tools.php' == $pagenow && ! isset( $_GET['page'] ) && apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
 			$url          = admin_url( '/index.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
 		}
 
-		// If we have a redirect url, do it
+		// If we have a redirect url, do it.
 		if ( $redirect_url ) {
 			wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
 			exit;
@@ -454,7 +472,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @return bool
 	 */
-	function remove_writing_options() {
+	public function remove_writing_options() {
 
 		/**
 		 * Toggle the options-writing page redirect.
@@ -512,12 +530,10 @@ class Disable_Blog_Admin {
 			return $comments;
 		}
 
-		// Filter out comments from post
-		if ( is_admin() && 'edit-comments.php' === $pagenow ) {
-			$post_types = dwpb_post_types_with_feature( 'comments' );
-			if ( $post_types ) {
-				$comments->query_vars['post_type'] = $post_types;
-			}
+		// Filter out comments from post.
+		$post_types = dwpb_post_types_with_feature( 'comments' );
+		if ( $post_types && $this->is_admin_page( 'edit-comments' ) ) {
+			$comments->query_vars['post_type'] = $post_types;
 		}
 
 		return $comments;
@@ -533,14 +549,14 @@ class Disable_Blog_Admin {
 	 *
 	 * @return void
 	 */
-	function remove_dashboard_widgets() {
+	public function remove_dashboard_widgets() {
 
-		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary
+		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary.
 		$metabox = array(
-			'dashboard_quick_press'    => 'side', // Quick Press
-			'dashboard_recent_drafts'  => 'side', // Recent Drafts
-			'dashboard_incoming_links' => 'normal', // Incoming Links
-			'dashboard_activity'       => 'normal', // Activity
+			'dashboard_quick_press'    => 'side', // Quick Press.
+			'dashboard_recent_drafts'  => 'side', // Recent Drafts.
+			'dashboard_incoming_links' => 'normal', // Incoming Links.
+			'dashboard_activity'       => 'normal', // Activity.
 		);
 		foreach ( $metabox as $metabox_id => $context ) {
 
@@ -585,7 +601,7 @@ class Disable_Blog_Admin {
 			return;
 		}
 
-		// Throw a notice if the we don't have a front page
+		// Throw a notice if the we don't have a front page.
 		if ( ! $this->has_front_page() ) {
 
 			// The second part of the notice depends on which screen we're on.
@@ -608,15 +624,15 @@ class Disable_Blog_Admin {
 
 			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
 
-			// If we have a front page set, but no posts page or they are the same
+			// If we have a front page set, but no posts page or they are the same,.
 			// Then let the user know the expected behavior of these two.
-		} elseif ( 'options-reading' == $current_screen->base
-					&& ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
+		} elseif ( 'options-reading' === $current_screen->base
+					&& get_option( 'page_for_posts' ) === get_option( 'page_on_front' ) ) {
 
-			// translators: Tell the user the plugin needs a static homepage and the posts page will be redirected.
-			$message = __( 'Disable Blog requires a static homepage and will redirect the "posts page" to the homepage.', 'disable-blog' );
+			// translators: Warning that the homepage and blog page cannot be the same, the post page is redirected to the homepage.
+			$message = __( 'Disable Blog requires a homepage that is different from the post page. The "posts page" will be redirected to the homepage.', 'disable-blog' );
 
-			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
+			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
 
 		}
 
@@ -629,9 +645,9 @@ class Disable_Blog_Admin {
 	 *
 	 * @return bool
 	 */
-	function has_front_page() {
+	public function has_front_page() {
 
-		return ( 'page' == get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
+		return ( 'page' === get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
 
 	}
 
@@ -658,17 +674,17 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_widgets() {
 
-		// Unregister blog-related widgets
+		// Unregister blog-related widgets.
 		$widgets = array(
-			'WP_Widget_Recent_Comments', // Recent Comments
-			'WP_Widget_Tag_Cloud', // Tag Cloud
-			'WP_Widget_Categories', // Categories
-			'WP_Widget_Archives', // Archives
-			'WP_Widget_Calendar', // Calendar
-			'WP_Widget_Links', // Links
-			'WP_Widget_Recent_Posts', // Recent Posts
-			'WP_Widget_RSS', // RSS
-			'WP_Widget_Tag_Cloud', // Tag Cloud
+			'WP_Widget_Recent_Comments', // Recent Comments.
+			'WP_Widget_Tag_Cloud', // Tag Cloud.
+			'WP_Widget_Categories', // Categories.
+			'WP_Widget_Archives', // Archives.
+			'WP_Widget_Calendar', // Calendar.
+			'WP_Widget_Links', // Links.
+			'WP_Widget_Recent_Posts', // Recent Posts.
+			'WP_Widget_RSS', // RSS.
+			'WP_Widget_Tag_Cloud', // Tag Cloud.
 		);
 		foreach ( $widgets as $widget ) {
 
@@ -695,25 +711,25 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param bool $bool
-	 * @param string $widget
+	 * @param bool $bool     true to show.
+	 * @param string $widget the widget name.
 	 *
 	 * @return bool
 	 */
 	public function filter_widget_removal( $bool, $widget ) {
 
-		// Remove Categories Widget
-		if ( 'WP_Widget_Categories' == $widget && dwpb_post_types_with_tax( 'category' ) ) {
+		// Remove Categories Widget.
+		if ( 'WP_Widget_Categories' === $widget && dwpb_post_types_with_tax( 'category' ) ) {
 			$bool = false;
 		}
 
-		// Remove Recent Comments Widget if posts are the only type with comments
-		if ( 'WP_Widget_Recent_Comments' == $widget && dwpb_post_types_with_feature( 'comments' ) ) {
+		// Remove Recent Comments Widget if posts are the only type with comments.
+		if ( 'WP_Widget_Recent_Comments' === $widget && dwpb_post_types_with_feature( 'comments' ) ) {
 			$bool = false;
 		}
 
-		// Remove Tag Cloud
-		if ( 'WP_Widget_Tag_Cloud' == $widget && dwpb_post_types_with_tax( 'post_tag' ) ) {
+		// Remove Tag Cloud.
+		if ( 'WP_Widget_Tag_Cloud' === $widget && dwpb_post_types_with_tax( 'post_tag' ) ) {
 			$bool = false;
 		}
 
@@ -733,4 +749,46 @@ class Disable_Blog_Admin {
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . '../css/disable-blog-admin.css', array(), $this->version, 'all' );
 
 	}
+
+	/**
+	 * Put the "pages" menu below the dashboard menu item.
+	 *
+	 * @since 0.4.9
+	 *
+	 * @return $menu_slug
+	 */
+	public function reorder_page_admin_menu_item() {
+
+		$menu_slug = array(
+			'index.php', // Dashboard
+			'edit.php?post_type=page', // Pages
+		);
+
+		return $menu_slug;
+
+	}
+
+	/**
+	 * Remove the first separator between dashboard/pages and media.
+	 *
+	 * @since 0.4.9
+	 *
+	 * @return void
+	 */
+	public function remove_first_menu_separator() {
+
+		global $menu;
+
+		$ii = 0;
+		if ( is_array( $menu ) || is_object( $menu ) ) {
+			foreach ( $menu as $group => $item ) {
+				if ( empty( $item[0] ) && 1 > $ii ) {
+					remove_menu_page( $item[2] );
+					$ii++;
+				}
+			}
+		}
+
+	}
+
 }

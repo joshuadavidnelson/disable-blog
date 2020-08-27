@@ -25,27 +25,27 @@ class Disable_Blog_Public {
 	/**
 	 * The ID of this plugin.
 	 *
-	 * @since    0.2.0
-	 * @access   private
-	 * @var      string    $plugin_name    The ID of this plugin.
+	 * @since  0.2.0
+	 * @access private
+	 * @var    string $plugin_name The ID of this plugin.
 	 */
 	private $plugin_name;
 
 	/**
 	 * The version of this plugin.
 	 *
-	 * @since    0.2.0
-	 * @access   private
-	 * @var      string    $version    The current version of this plugin.
+	 * @since  0.2.0
+	 * @access private
+	 * @var    string $version The current version of this plugin.
 	 */
 	private $version;
 
 	/**
 	 * Initialize the class and set its properties.
 	 *
-	 * @since    0.2.0
-	 * @param      string    $plugin_name       The name of the plugin.
-	 * @param      string    $version    The version of this plugin.
+	 * @since 0.2.0
+	 * @param string $plugin_name The name of the plugin.
+	 * @param string $version     The version of this plugin.
 	 */
 	public function __construct( $plugin_name, $version ) {
 
@@ -60,21 +60,30 @@ class Disable_Blog_Public {
 	 * @uses dwpb_post_types_with_tax()
 	 *
 	 * @since 0.2.0
+	 * @since 0.4.9 added sitemap checks to avoid redirects on new sitemaps in WP v5.5.
+	 *
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 *
 	 * @return void
 	 */
 	public function redirect_posts() {
-		if ( is_admin() || ! get_option( 'page_on_front' ) ) {
+
+		// Don't redirect on admin or sitemap, and only if there is a homepage to redirect to.
+		if ( is_admin()
+			|| ! get_option( 'page_on_front' )
+			|| ! empty( get_query_var( 'sitemap' ) )
+			|| ! empty( get_query_var( 'sitemap-stylesheet' ) ) ) {
 			return;
 		}
 
-		// Get the front page id and url
+		// Get the front page id and url.
 		$page_id = get_option( 'page_on_front' );
 		$url     = get_permalink( $page_id );
 
-		// Run the redirects
-		if ( is_singular( 'post' ) ) {
+		// Run the redirects.
+		global $post;
+
+		if ( $post instanceof WP_Post && is_singular( 'post' ) ) {
 
 			global $post;
 			$redirect_url = apply_filters( 'dwpb_redirect_posts', $url, $post );
@@ -138,11 +147,11 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param object $query
-	 * @param array $array
-	 * @param string $filter
+	 * @param object $query  the main query object.
+	 * @param array  $array  the array of post types.
+	 * @param string $filter the filter to be applied.
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
 
@@ -184,35 +193,37 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
-	 *
+	 * @since 0.4.9 remove 'post' from all archives
+	 * @param object $query the query object.
 	 * @return void
 	 */
 	public function modify_query( $query ) {
 
-		// Bail if we're in the admin or not on the main query
+		// Bail if we're in the admin or not on the main query.
 		if ( is_admin() || ! $query->is_main_query() ) {
 			return;
 		}
 
-		// Remove 'post' post_type from search results, replace with page
+		// Remove 'post' post_type from search results, replace with page.
 		if ( $query->is_search() ) {
 			$in_search_post_types = get_post_types(
 				array(
 					'exclude_from_search' => false,
+					'public'              => true,
+					'publicly_queryable'  => true,
 				)
 			);
 			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
 		}
 
-		// Remove Posts from Author Page
-		if ( $query->is_author() ) {
-			$author_post_types = get_post_types(
+		// Remove Posts from archives.
+		if ( $query->is_archive() ) {
+			$archive_post_types = get_post_types(
 				array(
-					'publicly_queryable'  => true,
-					'exclude_from_search' => false,
+					'publicly_queryable' => true,
 				)
 			);
-			$this->remove_post_from_array_in_query( $query, $author_post_types, 'dwpb_author_post_types' );
+			$this->remove_post_from_array_in_query( $query, $archive_post_types, 'dwpb_archive_post_types' );
 		}
 
 	}
@@ -223,18 +234,18 @@ class Disable_Blog_Public {
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
 	 *
-	 * @param bool $is_comment_feed
+	 * @param bool $is_comment_feed true if a comment feed.
 	 *
 	 * @return void
 	 */
 	public function disable_feed( $is_comment_feed ) {
 
-		// If this is a comment feed and comments are supported by other post types, bail
+		// If this is a comment feed and comments are supported by other post types, bail.
 		if ( $is_comment_feed && dwpb_post_types_with_feature( 'comments' ) ) {
 			return;
 		}
 
-		// Option to override this via filter and check to confirm post type
+		// Option to override this via filter and check to confirm post type.
 		global $post;
 
 		/**
@@ -256,7 +267,7 @@ class Disable_Blog_Public {
 			 * @param string $url The redirect url (defaults to homepage)
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
 			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $is_comment_feed );
+			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $post, $is_comment_feed );
 
 			/**
 			 * Filter to toggle on a message instead of a redirect.
@@ -264,6 +275,11 @@ class Disable_Blog_Public {
 			 * Defaults to false, so a redirect is the expacted default behavior.
 			 *
 			 * @since 0.4.0
+			 * @since 0.4.9 updated variables passed to match other feed filters,
+			 *              previously only $is_comment_feed was passed and now
+			 *              the order is: bool, $post, $is_comment_feed.
+			 *              Note that if you used this filter before
+			 *              and relied on the $is_comment_feed, you'll need to update.
 			 *
 			 * @param bool $bool True to use a message, false to redirect.
 			 * @param object $post Global post object.
@@ -271,7 +287,7 @@ class Disable_Blog_Public {
 			 */
 			if ( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
 
-				// translators: the placeholser is the URL of our website
+				// translators: the placeholser is the URL of our website.
 				$message = sprintf( __( 'No feed available, please visit our <a href="%s">homepage</a>!', 'disable-blog' ), esc_url_raw( $redirect_url ) );
 
 				/**
@@ -291,10 +307,9 @@ class Disable_Blog_Public {
 						'id'   => array(),
 					),
 				);
-				$safe_message = wp_kses( $message, $allowed_html );
-				wp_die( $safe_message );
+				wp_die( wp_kses( $message, $allowed_html ) );
 
-			} else { // Default option: redirect to homepage
+			} else { // Default option: redirect to homepage.
 
 				wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
 				exit;
@@ -310,11 +325,11 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param string $boolean
+	 * @param bool $bool true to show the posts feed link.
 	 *
-	 * @return boolean
+	 * @return booln
 	 */
-	public function feed_links_show_posts_feed( $boolean ) {
+	public function feed_links_show_posts_feed( $bool ) {
 
 		return false;
 
@@ -327,53 +342,255 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param bool $boolean
+	 * @param bool $bool true to show the comments feed link.
 	 *
 	 * @return bool
 	 */
-	public function feed_links_show_comments_feed( $boolean ) {
+	public function feed_links_show_comments_feed( $bool ) {
 
-		// If 'post' type is the only type supporting comments, then disable the comment feed link
+		// If 'post' type is the only type supporting comments, then disable the comment feed link.
 		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$boolean = false;
+			$bool = false;
 		}
 
-		return $boolean;
+		return $bool;
 
 	}
 
 
 	/**
-	 * Remove 'post' type from the REST API results
-	 *
-	 * Requires the REST API plugin be enabled.
+	 * Disable public arguments of the 'post' post type.
 	 *
 	 * @since 0.4.2
-	 *
-	 * @return boolean
+	 * @since 0.4.9 removed rest api specific filter and updated function
+	 *              for disabling all public-facing aspects of the 'post' post type.
 	 */
-	public function modify_rest_api() {
-
-		/**
-		 * Filter to toggle the disable rest API.
-		 *
-		 * @since 0.4.2
-		 *
-		 * @param bool $bool True to modify API, false to cancel.
-		 */
-		if ( true !== apply_filters( 'dwpb_disable_rest_api', true ) ) {
-			return false;
-		}
+	public function modify_post_type_arguments() {
 
 		global $wp_post_types;
 		$post_type_name = 'post';
 
 		if ( isset( $wp_post_types[ $post_type_name ] ) ) {
-			$wp_post_types[ $post_type_name ]->show_in_rest = false;
-			return true;
+			$arguments_to_remove = array(
+				'has_archive',
+				'public',
+				'publicaly_queryable',
+				'rewrite',
+				'query_var',
+				'show_ui',
+				'show_in_admin_bar',
+				'show_in_nav_menus',
+				'show_in_menu',
+				'show_in_rest',
+			);
+
+			foreach ( $arguments_to_remove as $arg ) {
+				if ( isset( $wp_post_types[ $post_type_name ]->$arg ) ) {
+					$wp_post_types[ $post_type_name ]->$arg = false;
+				}
+			}
 		}
 
-		return false;
+	}
+
+	/**
+	 * Disable public arguments of the 'category' and 'post_tag' taxonomies.
+	 *
+	 * Only disables these if the 'post' post type is the only post type using them.
+	 *
+	 * @since 0.4.9
+	 *
+	 * @uses dwpb_post_types_with_tax()
+	 *
+	 * @return void
+	 */
+	public function modify_taxonomies_arguments() {
+
+		global $wp_taxonomies;
+		$taxonomies = array( 'category', 'post_tag' );
+
+		foreach ( $taxonomies as $tax ) {
+			if ( isset( $wp_taxonomies[ $tax ] ) ) {
+
+				// remove 'post' from object types.
+				if ( isset( $wp_taxonomies[ $tax ]->object_type ) ) {
+					if ( is_array( $wp_taxonomies[ $tax ]->object_type )
+						&& ( ( $key = array_search( 'post', $wp_taxonomies[ $tax ]->object_type, true ) ) !== false ) ) {
+
+							unset( $wp_taxonomies[ $tax ]->object_type[ $key ] );
+
+					}
+				}
+
+				// only modify the public arguments if 'post' is the only post type.
+				// using this taxonomy.
+				if ( ! dwpb_post_types_with_tax( $tax ) ) {
+
+					// public arguments to remove.
+					$arguments_to_remove = array(
+						'has_archive',
+						'public',
+						'publicaly_queryable',
+						'query_var',
+						'show_ui',
+						'show_tagcloud',
+						'show_in_admin_bar',
+						'show_in_quick_edit',
+						'show_in_nav_menus',
+						'show_admin_column',
+						'show_in_menu',
+						'show_in_rest',
+					);
+
+					foreach ( $arguments_to_remove as $arg ) {
+						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
+							$wp_taxonomies[ $tax ]->$arg = false;
+						}
+					}
+				}
+
+			}
+		}
 
 	}
+
+	/**
+	 * Remove feed urls from head.
+	 *
+	 * @since 0.4.9
+	 *
+	 * @return void
+	 */
+	public function header_feeds() {
+
+		// Various feed links.
+		$feed = array(
+			'feed_links'       => 2,
+			'feed_links_extra' => 3,
+			'rsd_link'         => 10,
+			'wlwmanifest_link' => 10,
+		);
+
+		// Remove from head.
+		foreach ( $feed as $function => $priority ) {
+			remove_action( 'wp_head', $function, $priority );
+		}
+
+	}
+
+	/**
+	 * Unset all post-related xmlrpc methods.
+	 *
+	 * @see wp-includes/class-wp-xmlrpc-server.php
+	 *
+	 * @since 0.4.9
+	 *
+	 * @param array $methods the arrayve of xmlrpc methods.
+	 *
+	 * @return array $methods
+	 */
+	public function xmlrpc_methods( $methods ) {
+
+		// The methods to remove.
+		$methods_to_remove = array(
+			'wp.getUsersBlogs',
+			'wp.newPost',
+			'wp.editPost',
+			'wp.deletePost',
+			'wp.getPost',
+			'wp.getPosts',
+			'blogger.getPost',
+			'blogger.getRecentPosts',
+			'blogger.newPost',
+			'blogger.editPost',
+			'blogger.deletePost',
+			'metaWeblog.newPost',
+			'metaWeblog.editPost',
+			'metaWeblog.getPost',
+			'metaWeblog.getRecentPosts',
+			'metaWeblog.deletePost',
+			'mt.getRecentPostTitles',
+			'mt.getTrackbackPings',
+			'mt.publishPost',
+			'pingback.ping',
+			'pingback.extensions.getPingbacks',
+			'system.multicall',
+			'system.listMethods',
+			'system.getCapabilities',
+			'demo.sayHello',
+			'demo.addTwoNumbers',
+		);
+
+		// Remove category / post tag terms, if not supported by another post type.
+		$taxonomy_methods = array();
+		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
+			$taxonomy_methods = array(
+				'wp.newCategory',
+				'wp.deleteeCategory',
+				'mt.getCategoryList',
+				'wp.suggestCategories',
+				'mt.getPostCategories',
+				'mt.setPostCategories',
+				'metaWeblog.getCategories',
+			);
+		}
+		if ( ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+			$taxonomy_methods[] = 'wp.getTags';
+		}
+
+		$methods_to_remove = array_merge( $methods_to_remove, $taxonomy_methods );
+
+		if ( is_array( $methods_to_remove ) ) {
+			foreach ( $methods_to_remove as $method ) {
+				if ( isset( $methods[ $method ] ) ) {
+					unset( $methods[ $method ] );
+				}
+			}
+		}
+
+		return $methods;
+
+	}
+
+	/**
+	 * Remove 'post' post type from sitemaps.
+	 *
+	 * @since 0.4.9
+	 * @param array $post_types an array of post type strings supported in sitemaps.
+	 * @return array $post_types
+	 */
+	public function wp_sitemaps_post_types( $post_types ) {
+
+		if ( isset( $post_types['post'] ) ) {
+			unset( $post_types['post'] );
+		}
+
+		return $post_types;
+
+	}
+
+	/**
+	 * Conditionally remove built-in taxonomies from sitemaps, if they are not being used by a custom post type.
+	 *
+	 * @since 0.4.9
+	 * @uses dwpb_post_types_with_tax()
+	 * @param array $taxonomies an array of taxonomy strings supported in sitemaps.
+	 * @return array $taxonomies
+	 */
+	public function wp_sitemaps_taxonomies( $taxonomies ) {
+
+		$built_in_taxonomies = array(
+			'post_tag',
+			'category',
+		);
+		foreach ( $built_in_taxonomies as $tax ) {
+			if ( isset( $taxonomies[ $tax ] ) && ! dwpb_post_types_with_tax( $tax ) ) {
+				unset( $taxonomies[ $tax ] );
+			}
+		}
+
+		return $taxonomies;
+
+	}
+
 }

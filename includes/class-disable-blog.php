@@ -77,8 +77,8 @@ class Disable_Blog {
 	public function __construct() {
 
 		$this->plugin_name = 'disable-blog';
-		$this->version = '0.4.8';
-		
+		$this->version = '0.4.9';
+
 		do_action( 'dwpb_init' );
 
 		$this->setup_constants();
@@ -99,19 +99,19 @@ class Disable_Blog {
 	 */
 	private static function upgrade_check() {
 
-		// Get the current version option
+		// Get the current version option.
 		$current_version = get_option( 'dwpb_version', false );
 
-		// Update the previous version if we're upgrading
+		// Update the previous version if we're upgrading.
 		if ( $current_version && DWPB_VERSION !== $current_version ) {
 			update_option( 'dwpb_previous_version', $current_version );
 		}
 
-		// See if it's a previous version, which may not have set the version option
+		// See if it's a previous version, which may not have set the version option.
 		if ( false === $current_version || DWPB_VERSION !== $current_version ) {
-			// do things on update
+			// do things on update.
 
-			// Save current version
+			// Save current version.
 			update_option( 'dwpb_version', DWPB_VERSION );
 		}
 
@@ -126,22 +126,22 @@ class Disable_Blog {
 	 */
 	private function setup_constants() {
 
-		// For includes and whatnot
+		// For includes and whatnot.
 		if ( ! defined( 'DWPB_DIR' ) ) {
 			define( 'DWPB_DIR', dirname( __FILE__ ) );
 		}
 
-		// For calling scripts and so forth
+		// For calling scripts and so forth.
 		if ( ! defined( 'DWPB_URL' ) ) {
 			define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
 		}
 
-		// For admin settings field
+		// For admin settings field.
 		if ( ! defined( 'DWPB_SETTINGS_FIELD' ) ) {
 			define( 'DWPB_SETTINGS_FIELD', $this->plugin_name );
 		}
 
-		// To keep track of versions, useful if you need to make updates specific to versions
+		// To keep track of versions, useful if you need to make updates specific to versions.
 		define( 'DWPB_VERSION', $this->version );
 
 	}
@@ -228,24 +228,27 @@ class Disable_Blog {
 
 		$plugin_admin = new Disable_Blog_Admin( $this->get_plugin_name(), $this->get_version() );
 
-		// Hide items with CSS
+		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 
-		// Hide Posts Page from Admin Menu
+		// Hide Posts Page from Admin Menu.
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
 
-		// Redirect Admin Page
+		// Redirect Admin Page.
 		$this->loader->add_action( 'current_screen', $plugin_admin, 'redirect_admin_pages' );
 
-		// Remove Admin Bar Links
+		// Remove Admin Bar Links.
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
 
-		// Filter Comments off Admin Page
+		// Filter Comments off Admin Page.
 		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
 
 		// Filter post open status for comments and pings.
 		$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
 		$this->loader->add_action( 'pings_open', $plugin_admin, 'filter_comment_status', 20, 2 );
+
+		// Disable internal pingbacks.
+		$this->loader->add_action( 'pre_ping', $plugin_admin, 'internal_pingbacks', 10, 1 );
 
 		// Remove Comment & Trackback support for posts.
 		$this->loader->add_action( 'wp_loaded', $plugin_admin, 'remove_post_comment_support', 20 );
@@ -262,29 +265,37 @@ class Disable_Blog {
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
 
+		// Disable Update Services configruation, no pingbacks.
+		add_filter( 'enable_update_services_configuration', '__return_false' );
+
 		// Clear comments from 'post' post type.
 		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
 
-		// Remove Dashboard Widgets
+		// Remove Dashboard Widgets.
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
 
-		// Admin notices
+		// Admin notices.
 		$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
 
-		// Add a class to the admin body for the reading options page
+		// Add a class to the admin body for the reading options page.
 		$this->loader->add_filter( 'admin_body_class', $plugin_admin, 'admin_body_class', 10, 1 );
 
-		// Remove Post via Email Settings
+		// Remove Post via Email Settings.
 		add_filter( 'enable_post_by_email_configuration', '__return_false' );
 
-		// Disable Press This Function
+		// Disable Press This Function.
 		$this->loader->add_action( 'load-press-this.php', $plugin_admin, 'disable_press_this' );
 
-		// Remove Post Related Widgets
+		// Remove Post Related Widgets.
 		$this->loader->add_action( 'widgets_init', $plugin_admin, 'remove_widgets' );
 
-		// Filter removal of widgets for some checks
+		// Filter removal of widgets for some checks.
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
+
+		// Reorder menu.
+		add_filter( 'custom_menu_order', '__return_true', 10, 1 );
+		$this->loader->add_filter( 'menu_order', $plugin_admin, 'reorder_page_admin_menu_item', 10, 1 );
+		$this->loader->add_filter( 'admin_init', $plugin_admin, 'remove_first_menu_separator', 10, 2 );
 
 	}
 
@@ -300,25 +311,40 @@ class Disable_Blog {
 
 		$plugin_public = new Disable_Blog_Public( $this->get_plugin_name(), $this->get_version() );
 
-		// Redirect Single Posts
+		// Redirect Single Posts.
 		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_posts' );
 
-		// Modify Query
+		// Modify Query.
 		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query' );
 
-		// Disable Feed
+		// Disable Feed.
 		$this->loader->add_action( 'do_feed', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_rdf', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_rss', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_rss2', $plugin_public, 'disable_feed', 1, 2 );
 		$this->loader->add_action( 'do_feed_atom', $plugin_public, 'disable_feed', 1, 2 );
 
-		// Hide Feed links
+		// Remove feed links from the header.
+		$this->loader->add_action( 'wp_loaded', $plugin_public, 'header_feeds', 1, 1 );
+
+		// Hide Feed links.
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );
 
-		// Modify REST API Support
-		$this->loader->add_action( 'init', $plugin_public, 'modify_rest_api', 25 );
+		// Modify the main 'post' post_type arguments to shut pubic things down.
+		$this->loader->add_action( 'init', $plugin_public, 'modify_post_type_arguments', 25 );
+
+		// Modify the core taxonomy arguments to filter out posts and shut down public things.
+		$this->loader->add_action( 'init', $plugin_public, 'modify_taxonomies_arguments', 25 );
+
+		// Disable XML-RPC methods related to posts and built-in taxonomies.
+		$this->loader->add_filter( 'xmlrpc_methods', $plugin_public, 'xmlrpc_methods', 10, 1 );
+
+		// Remove posts from xml sitemaps.
+		$this->loader->add_filter( 'wp_sitemaps_post_types', $plugin_public, 'wp_sitemaps_post_types', 10, 1 );
+
+		// Conditionally remove built-in taxonomies from sitemaps, if they are not being used by a custom post type.
+		$this->loader->add_filter( 'wp_sitemaps_taxonomies', $plugin_public, 'wp_sitemaps_taxonomies', 10, 1 );
 
 	}
 
