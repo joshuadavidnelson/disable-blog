@@ -587,8 +587,9 @@ class Disable_Blog_Admin {
 			'options-reading',
 			'edit',
 		);
-		if ( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) )
+		if ( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens ) ) ) {
 			return;
+		}
 
 		// Throw a notice if the we don't have a front page
 		if ( ! $this->has_front_page() ) {

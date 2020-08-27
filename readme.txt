@@ -3,7 +3,7 @@ Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 3.1.0
-Tested up to: 5.4.2
+Tested up to: 5.5
 Stable tag: 0.4.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -59,16 +59,20 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 = 0.4.9 =
 - Extended method for disabling pingbacks to include internal pingbacks on posts and "update services."
 - Now fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
-- Re-order admin menu to place "Pages" below "Dashboard."
+- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
 - Remove header feed urls, unless supported by another post type.
 - Expanded the approach used to disable REST API to completely turn off all public arguments on `post` post type and built-in taxonomies, unless another post type supports them.
+- Wordpress 5.5 support:
+  - Remove 'post' post type from XML sitemaps (WP version 5.5)
+  - Remove built-in taxonomies from XML sitemaps (WP version 5.5), if not being used by a custom post type.
+  - Fix sitemap redirect issues.
 - **Developers:** Some filters were removed and altered in this version:
- - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
- - The `dwpb_disable_rest_api` filter was removed.
- - The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
+  - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
+  - The `dwpb_disable_rest_api` filter was removed.
+  - The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
 
 = 0.4.8.1 =
 - Forgot to update the version number in the main plugin file, so this is a version bump only.
@@ -163,18 +167,22 @@ A bunch of stuff:
 = 0.4.9 =
 - Extended method for disabling pingbacks to include internal pingbacks on posts and "update services."
 - Now fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
-- Re-order admin menu to place "Pages" below "Dashboard."
+- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
 - Remove header feed urls, unless supported by another post type.
 - Expanded the approach used to disable REST API to completely turn off all public arguments on `post` post type and built-in taxonomies, unless another post type supports them.
+- Wordpress 5.5 support:
+  - Remove 'post' post type from XML sitemaps (WP version 5.5)
+  - Remove built-in taxonomies from XML sitemaps (WP version 5.5), if not being used by a custom post type.
+  - Fix sitemap redirect issues.
 - **Developers:** Some filters were removed and altered in this version:
- - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
- - The `dwpb_disable_rest_api` filter was removed.
- - The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
+  - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
+  - The `dwpb_disable_rest_api` filter was removed.
+  - The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
 
-##### 0.4.8.1
+= 0.4.8.1 =
 - Forgot to update the version number in the main plugin file, so this is a version bump only. See 0.4.8 release notes for changes since 0.4.7.
 
 = 0.4.8 = 

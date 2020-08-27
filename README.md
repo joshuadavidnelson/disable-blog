@@ -3,8 +3,8 @@ Disable Blog
 
 [![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/)
 
-**Requires at least:** 3.1.0
-**Tested up to:** 5.4.2
+**Requires at least:** 3.1.0  
+**Tested up to:** 5.5  
 **Stable version:** 0.4.9
 **License:** GPLv2 or later
 
@@ -18,7 +18,7 @@ Does the following:
 - Removes 'post' post type from queries.
 - Disables the Feed for Posts.
 - Disables the REST API for 'post' post type.
-- Disables XMLRPC.
+- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
 - Remove the Feed links from the header.
 - Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages.
 - Redirects 'Comments' admin page with query variable `post_type=post` to main comments page.
@@ -40,7 +40,11 @@ Does the following:
 - Removes post from author archive query.
 - Removes comment and trackback support for posts.
 - Removes and disabled pingbacks/trackbacks on `post` post type.
-- Places "Pages" above "Media" in admin menu.
+- Places "Pages" above "Media" in admin menu and removes divider below dashboard.
+- Alters the comment count to remove any comments associated with 'post' post type.
+- Disables the REST API for 'post' post type.
+- Remove 'post' post type from XML sitemaps (WP version 5.5)
+- Remove built-in taxonomies from XML sitemaps (WP version 5.5), if not being used by a custom post type.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
@@ -74,7 +78,6 @@ All contributions are welcomed and considered, please refer to [contributing.md]
 - Update "homepage settings" in Customizer to match admin page experience for setting front page & blog page.
 - Hide or remove post category and post format options on writing settings page.
 - Remove the widget submenu from the Appearance menu, if there are no widget areas.
-- Remove biographical informtion from user/profile page (and yoast & genesis versions) if author archives are a) disabled or b) only support "post" post type.
 - Unit & CI tests.
 - In permaliks page:
 	- Change the "post name" and `sample-post` on the permalink settings page to be "Page Name" and `sample-page`.
@@ -82,3 +85,7 @@ All contributions are welcomed and considered, please refer to [contributing.md]
 	- Remove options for %category% and %post_id% (change to %page_id% ?).
 	- Remove category base and tag base permalink options, if not supported by a custom post type.
 	- Remove "custom structures" section in help tab & update Overview & Permalink Settings tabs to remove "post" references.
+- Authors/user related:
+	- Author archives: redirect to homepage if only post type support on  is 'post'
+	- Author sitemaps: remove sitemaps for author archives if only post type support is 'post'
+	- Remove biographical informtion from user/profile page (and yoast & genesis versions) if author archives are a) disabled or b) only support "post" post type.

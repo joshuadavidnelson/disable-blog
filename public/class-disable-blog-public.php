@@ -76,11 +76,11 @@ class Disable_Blog_Public {
 			return;
 		}
 
-		// Get the front page id and url
+		// Get the front page id and url.
 		$page_id = get_option( 'page_on_front' );
 		$url = get_permalink( $page_id );
 
-		// Run the redirects
+		// Run the redirects.
 		global $post;
 
 		if ( $post instanceof WP_Post && is_singular( 'post' ) ) {
@@ -195,6 +195,8 @@ class Disable_Blog_Public {
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
 	 * @since 0.4.9 remove 'post' from all archives
+	 * 
+	 * @return void
 	 */
 	public function modify_query( $query ) {
 
@@ -227,6 +229,8 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
+	 * 
+	 * @return void
 	 */
 	public function disable_feed( $is_comment_feed ) {
 
