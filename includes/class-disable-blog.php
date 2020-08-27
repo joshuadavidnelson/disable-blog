@@ -104,7 +104,7 @@ class Disable_Blog {
 
 		// Update the previous version if we're upgrading.
 		if ( $current_version && DWPB_VERSION !== $current_version ) {
-			update_option( 'dwpb_previous_version', $current_version );
+			update_option( 'dwpb_previous_version', $current_version, false );
 		}
 
 		// See if it's a previous version, which may not have set the version option.
@@ -112,7 +112,7 @@ class Disable_Blog {
 			// do things on update.
 
 			// Save current version.
-			update_option( 'dwpb_version', DWPB_VERSION );
+			update_option( 'dwpb_version', DWPB_VERSION, false );
 		}
 
 	}
