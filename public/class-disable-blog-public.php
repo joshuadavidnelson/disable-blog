@@ -60,12 +60,21 @@ class Disable_Blog_Public {
 	 * @uses dwpb_post_types_with_tax()
 	 *
 	 * @since 0.2.0
+	 * @since 0.4.9 added sitemap checks to avoid redirects on new sitemaps in WP v5.5.
+	 * 
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
+	 * 
+	 * @return void
 	 */
 	public function redirect_posts() {
 
-		if( is_admin() || ! get_option( 'page_on_front' ) )
+		// Don't redirect on admin or sitemap, and only if there is a homepage to redirect to.
+		if( is_admin()
+			|| ! get_option( 'page_on_front' )
+			|| ! empty( get_query_var( 'sitemap' ) )
+			|| ! empty( get_query_var( 'sitemap-stylesheet' ) ) ) {
 			return;
+		}
 
 		// Get the front page id and url
 		$page_id = get_option( 'page_on_front' );
@@ -362,4 +371,46 @@ class Disable_Blog_Public {
 
 		return false;
 	}
+
+	/**
+	 * Remove 'post' post type from sitemaps.
+	 * 
+	 * @since 0.4.9
+	 * @param array $post_types an array of post type strings supported in sitemaps.
+	 * @return array $post_types
+	 */
+	function wp_sitemaps_post_types( $post_types ) {
+
+		if( isset( $post_types['post'] ) ) {
+			unset( $post_types['post'] );
+		}
+
+		return $post_types;
+
+	}
+
+	/**
+	 * Conditionally remove built-in taxonomies from sitemaps, if they are not being used by a custom post type.
+	 * 
+	 * @since 0.4.9
+	 * @uses dwpb_post_types_with_tax()
+	 * @param array $taxonomies an array of taxonomy strings supported in sitemaps.
+	 * @return array $taxonomies
+	 */
+	function wp_sitemaps_taxonomies( $taxonomies ) {
+
+		$built_in_taxonomies = array(
+			'post_tag',
+			'category',
+		);
+		foreach( $built_in_taxonomies as $tax ) {
+			if( isset( $taxonomies[ $tax ] ) && ! dwpb_post_types_with_tax( $tax ) ) {
+				unset( $taxonomies[ $tax ] );
+			}
+		}
+
+		return $taxonomies;
+
+	}
+
 }
