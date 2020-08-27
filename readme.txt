@@ -66,8 +66,8 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 - Remove header feed urls, unless supported by another post type.
 - Expanded the approach used to disable REST API to completely turn off all public arguments on `post` post type and built-in taxonomies, unless another post type supports them.
 - Wordpress 5.5 support:
-  - Remove 'post' post type from XML sitemaps (WP version 5.5)
-  - Remove built-in taxonomies from XML sitemaps (WP version 5.5), if not being used by a custom post type.
+  - Remove 'post' post type from XML sitemaps.
+  - Remove built-in taxonomies from XML sitemaps, if not being used by a custom post type.
   - Fix sitemap redirect issues.
 - **Developers:** Some filters were removed and altered in this version:
   - The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
