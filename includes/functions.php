@@ -24,6 +24,7 @@
  * @return array ( $post_types | bolean )
  */
 function dwpb_post_types_with_feature( $feature ) {
+
 	$post_types = get_post_types( array(), 'names' );
 
 	$post_types_with_feature = array();
@@ -36,8 +37,17 @@ function dwpb_post_types_with_feature( $feature ) {
 	// Keep the array if there are any, otherwise make it return false
 	$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
 
-	// Return the value
+	/**
+	 * Filter the returned value.
+	 * 
+	 * @since 0.4.0
+	 * 
+	 * @param array|bool $post_types_with_feature an array of post types support this feature or false if none.
+	 * 
+	 * @return array|bool
+	 */
 	return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature );
+
 }
 
 /**
@@ -53,13 +63,14 @@ function dwpb_post_types_with_feature( $feature ) {
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @uses get_post_types(), get_object_taxonomies(), apply_filters()
  *
- * @param string|object $taxonomy Required. The name of the feature to check against post type support.
- * @param array|string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
+ * @param string $taxonomy Required. The name of the feature to check against post type support.
+ * @param array | string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
  * @param string $output Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
- *
- * @return array|boolean A list of post type names or objects that have the taxonomy or false if nothing found.
+ * 
+ * @return array | bool	A list of post type names or objects that have the taxonomy or false if nothing found.
  */
 function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
+
 	$post_types = get_post_types( $args, $output );
 
 	// We just need the taxonomy name
@@ -105,4 +116,5 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	} else {
 		return $post_types_with_tax;
 	}
+
 }

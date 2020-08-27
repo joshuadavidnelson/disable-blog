@@ -1,5 +1,22 @@
 ### Changelog
 
+##### 0.4.8.1
+- Do'h! Forgot to update the version number in the main plugin file. Bump.
+
+##### 0.4.8
+- Fixed typo in variable name for current vs redirect url check. (h/t @chesio, PR #30)
+- Update function names from template to `disable_blog`. (h/t @szepeviktor, PR #31)
+- Add WP.org Badge to readme.md.  (h/t @szepeviktor, PR #32)
+- Change the name of the CI workflow to be specific to deployment. (h/t @szepeviktor, PR #33)
+- Some code tidying and inline documentation.
+
+##### 0.4.7
+- Using GitHub actions publish on WP.org from github releases.
+- Cleaned up the Reading settings, adding admin notices if front page is not set.
+- Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
+- Added Contributing and Code of Conduct documentation.
+- Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
+
 ##### 0.4.6
 - Added check on disable feed functionality to confirm post type prior to disabling feed.
 
