@@ -17,6 +17,7 @@ Does the following:
 - Removes 'Posts' Admin Menu.
 - Removes 'post' post type from queries.
 - Disables the Feed for Posts.
+- Disable post by email configuration.
 - Disables the REST API for 'post' post type.
 - Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
 - Remove the Feed links from the header.
