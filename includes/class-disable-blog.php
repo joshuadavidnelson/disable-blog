@@ -337,6 +337,12 @@ class Disable_Blog {
 		add_filter( 'pre_option_enable_xmlrpc', '__return_zero', 10, 1 );
 		$this->loader->add_filter( 'xmlrpc_methods', $plugin_public, 'xmlrpc_methods', 10, 1 );
 
+		// Remove posts from xml sitemaps.
+		$this->loader->add_filter( 'wp_sitemaps_post_types', $plugin_public, 'wp_sitemaps_post_types', 10, 1 );
+
+		// Conditionally remove built-in taxonomies from sitemaps, if they are not being used by a custom post type.
+		$this->loader->add_filter( 'wp_sitemaps_taxonomies', $plugin_public, 'wp_sitemaps_taxonomies', 10, 1 );
+
 	}
 
 	/**
