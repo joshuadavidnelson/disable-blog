@@ -616,12 +616,12 @@ class Disable_Blog_Admin {
 		// If we have a front page set, but no posts page or they are the same
 		// Then let the user know the expected behavior of these two.
 		} elseif( 'options-reading' == $current_screen->base 
-					&& ( ! get_option( 'page_for_posts' ) || get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) ) {
+					&& get_option( 'page_for_posts' ) == get_option( 'page_on_front' ) ) {
 
-			// translators: Tell the user the plugin needs a static homepage and the posts page will be redirected.
-			$message = __( 'Disable Blog requires a static homepage and will redirect the "posts page" to the homepage.', 'disable-blog' );
+			// translators: Warning that the homepage and blog page cannot be the same, the post page is redirected to the homepage.
+			$message = __( 'Disable Blog requires a homepage that is different from the post page. The "posts page" will be redirected to the homepage.', 'disable-blog' );
 
-			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-warning', $message );
+			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', $message );
 
 		}
 
