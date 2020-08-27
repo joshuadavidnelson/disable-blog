@@ -745,7 +745,7 @@ class Disable_Blog_Admin {
 		$menu_slug = array(
 			'index.php', // Dashboard
 			'edit.php?post_type=page', // Pages
-			);
+		);
 
 		return $menu_slug;
 
