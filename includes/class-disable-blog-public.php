@@ -387,7 +387,9 @@ class Disable_Blog_Public {
 
 			foreach ( $arguments_to_remove as $arg ) {
 				if ( isset( $wp_post_types[ $post_type_name ]->$arg ) ) {
+					// @codingStandardsIgnoreStart
 					$wp_post_types[ $post_type_name ]->$arg = false;
+					// @codingStandardsIgnoreEnd
 				}
 			}
 		}
@@ -445,7 +447,9 @@ class Disable_Blog_Public {
 
 					foreach ( $arguments_to_remove as $arg ) {
 						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
+							// @codingStandardsIgnoreStart
 							$wp_taxonomies[ $tax ]->$arg = false;
+							// @codingStandardsIgnoreEnd
 						}
 					}
 				}
