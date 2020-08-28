@@ -1,5 +1,4 @@
 <?php
-
 /**
  * A class of common functions.
  *
@@ -15,12 +14,12 @@
 
 /**
  * Get all the post types that support a featured (like 'comments')
- * 
+ *
  * @link http://codex.wordpress.org/Function_Reference/register_post_type#Arguments
- * 
+ *
  * @since 0.1.0
  * @since 0.4.0 pulled out of class, unique function.
- * 
+ * @param string $feature the feature in question.
  * @return array ( $post_types | bolean )
  */
 function dwpb_post_types_with_feature( $feature ) {
@@ -29,21 +28,21 @@ function dwpb_post_types_with_feature( $feature ) {
 
 	$post_types_with_feature = array();
 	foreach ( $post_types as $post_type ) {
-		if ( post_type_supports( $post_type, $feature ) && $post_type != 'post' ) {
+		if ( post_type_supports( $post_type, $feature ) && 'post' !== $post_type ) {
 			$post_types_with_feature[] = $post_type;
 		}
 	}
 
-	// Keep the array if there are any, otherwise make it return false
+	// Keep the array if there are any, otherwise make it return false.
 	$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
 
 	/**
 	 * Filter the returned value.
-	 * 
+	 *
 	 * @since 0.4.0
-	 * 
+	 *
 	 * @param array|bool $post_types_with_feature an array of post types support this feature or false if none.
-	 * 
+	 *
 	 * @return array|bool
 	 */
 	return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature );
@@ -63,54 +62,54 @@ function dwpb_post_types_with_feature( $feature ) {
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @uses get_post_types(), get_object_taxonomies(), apply_filters()
  *
- * @param string $taxonomy Required. The name of the feature to check against post type support.
- * @param array | string $args Optional. An array of key => value arguments to match against the post type objects. Default empty array.
- * @param string $output Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
- * 
- * @return array | bool	A list of post type names or objects that have the taxonomy or false if nothing found.
+ * @param string|object $taxonomy Required. The taxonomy object or taxonomy slug.
+ * @param array|string  $args     Optional. An array of key => value arguments to match against the post type objects. Default empty array.
+ * @param string        $output   Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
+ *
+ * @return array|bool A list of post type names or objects that have the taxonomy or false if nothing found.
  */
 function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 
 	$post_types = get_post_types( $args, $output );
 
-	// We just need the taxonomy name
+	// We just need the taxonomy name.
 	if ( is_object( $taxonomy ) ) {
 		$taxonomy = $taxonomy->name;
 
-	// If it's not an object or a string, it won't work, so send it back
+		// If it's not an object or a string, it won't work, so send it back.
 	} elseif ( ! is_string( $taxonomy ) ) {
 		return false;
 	}
 
-	// setup the finished product
+	// setup the finished product.
 	$post_types_with_tax = array();
 	foreach ( $post_types as $post_type ) {
-		// If post types are objects
+		// If post types are objects.
 		if ( is_object( $post_type ) ) {
 			$type = $post_type->name;
-		// If post types are strings
+			// If post types are strings.
 		} elseif ( is_string( $post_type ) ) {
 			$type = $post_type;
 		} else {
 			$type = '';
 		}
-		
+
 		// is the post included in this post type, but not 'post' type.
-		if ( ! empty( $type ) && $type != 'post' ) {
+		if ( ! empty( $type ) && 'post' !== $type ) {
 			$taxonomies = get_object_taxonomies( $type, 'names' );
-			if ( in_array( $taxonomy, $taxonomies ) ) {
+			if ( in_array( $taxonomy, $taxonomies, true ) ) {
 				$post_types_with_tax[] = $post_type;
 			}
 		}
 	}
 
-	// Ability to override the results
+	// Ability to override the results.
 	$override = apply_filters( 'dwpb_taxonomy_support', null, $taxonomy, $post_types, $args, $output );
 	if ( ! is_null( $override ) ) {
 		return $override;
 	}
 
-	// If there aren't any results, return false
+	// If there aren't any results, return false.
 	if ( empty( $post_types_with_tax ) ) {
 		return false;
 	} else {
