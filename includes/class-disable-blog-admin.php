@@ -99,11 +99,11 @@ class Disable_Blog_Admin {
 	 *
 	 * @param  object $comments the comments.
 	 * @param  int    $post_id  the post id.
-	 * @return object $comments
+	 * @return object
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
-		// if this is grabbing all the comments, filter out the 'post' comments.
+		// If this is grabbing all the comments, filter out the 'post' comments.
 		if ( 0 == $post_id ) {
 			$comments = $this->get_comment_counts();
 
@@ -127,8 +127,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @param object $comments the comments.
 	 * @param int    $post_id  the post id.
-	 *
-	 * @return array $comments
+	 * @return array
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
 
@@ -146,14 +145,13 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 *
 	 * @param array $views The views.
-	 * @return array $views
+	 * @return array
 	 */
 	public function filter_admin_table_comment_count( $views ) {
 
 		global $current_screen;
 
 		if ( 'edit-comments' == $current_screen->id ) {
-
 			$updated_counts = $this->get_comment_counts();
 			foreach ( $views as $view => $text ) {
 				if ( isset( $updated_counts[ $view ] ) ) {
@@ -174,7 +172,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @see get_comment_count()
 	 *
-	 * @return array $comment_counts
+	 * @return array
 	 */
 	public function get_comment_counts() {
 
@@ -243,15 +241,13 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param bool $open    true if comment opn.
+	 * @param bool $open    true if comment open.
 	 * @param int  $post_id the post id.
-	 * @return bool $open   return false if it's a post.
+	 * @return bool         return false if it's a post.
 	 */
 	public function filter_comment_status( $open, $post_id ) {
 
-		$post_type = get_post_type( $post_id );
-
-		return ( 'post' == $post_type ) ? false : $open;
+		return 'post' === get_post_type( $post_id ) ? false : $open;
 
 	}
 
@@ -262,13 +258,11 @@ class Disable_Blog_Admin {
 	 *
 	 * @param array $comments the comments, in an array.
 	 * @param int   $post_id  the post id.
-	 * @return array $comments return the original, unless we're a post then return empty comments.
+	 * @return array          return the original, unless we're a post then return empty comments.
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
 
-		$post_type = get_post_type( $post_id );
-
-		return ( 'post' === $post_type ) ? array() : $comments;
+		return 'post' === get_post_type( $post_id ) ? array() : $comments;
 
 	}
 
@@ -278,7 +272,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 *
 	 * @param array $headers the pingback headers.
-	 * @return array $headers
+	 * @return array
 	 */
 	public function filter_wp_headers( $headers ) {
 
@@ -529,7 +523,7 @@ class Disable_Blog_Admin {
 	 * @since 0.1.0
 	 *
 	 * @param object $comments the comments query object.
-	 * @return object $comments
+	 * @return object
 	 */
 	public function comment_filter( $comments ) {
 
@@ -567,6 +561,7 @@ class Disable_Blog_Admin {
 			'dashboard_incoming_links' => 'normal', // Incoming Links.
 			'dashboard_activity'       => 'normal', // Activity.
 		);
+
 		foreach ( $metabox as $metabox_id => $context ) {
 
 			/**
@@ -656,7 +651,7 @@ class Disable_Blog_Admin {
 	 */
 	public function has_front_page() {
 
-		return ( 'page' === get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) ) );
+		return 'page' === get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) );
 
 	}
 
@@ -764,16 +759,14 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.9
 	 * @see https://codex.wordpress.org/Plugin_API/Filter_Reference/menu_order
-	 * @return array $menu_slug
+	 * @return array
 	 */
 	public function reorder_page_admin_menu_item() {
 
-		$menu_slug = array(
+		return array(
 			'index.php', // Dashboard.
 			'edit.php?post_type=page', // Pages.
 		);
-
-		return $menu_slug;
 
 	}
 
@@ -812,7 +805,7 @@ class Disable_Blog_Admin {
 	private function is_admin_page( $page ) {
 
 		global $pagenow;
-		return ( is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow );
+		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow;
 
 	}
 
