@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Define the internationalization functionality
  *
@@ -29,7 +28,7 @@ class Disable_Blog_I18n {
 	/**
 	 * Load the plugin text domain for translation.
 	 *
-	 * @since    0.4.0
+	 * @since 0.4.0
 	 */
 	public function load_plugin_textdomain() {
 

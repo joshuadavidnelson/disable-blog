@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The file that defines the core plugin class
  *
@@ -70,14 +69,14 @@ class Disable_Blog {
 	 * Load the dependencies, define the locale, and set the hooks for the admin area and
 	 * the public-facing side of the site.
 	 *
-	 * @since    0.4.0
+	 * @since 0.4.0
 	 *
-	 * @access   public
+	 * @access public
 	 */
 	public function __construct() {
 
 		$this->plugin_name = 'disable-blog';
-		$this->version = '0.4.9';
+		$this->version     = '0.4.9';
 
 		do_action( 'dwpb_init' );
 
@@ -95,7 +94,7 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 *
-	 * @access   private
+	 * @access private
 	 */
 	private static function upgrade_check() {
 
@@ -122,7 +121,7 @@ class Disable_Blog {
 	 *
 	 * @since 0.3.0
 	 *
-	 * @access   private
+	 * @access private
 	 */
 	private function setup_constants() {
 
@@ -159,9 +158,9 @@ class Disable_Blog {
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
 	 *
-	 * @since    0.4.0
+	 * @since 0.4.0
 	 *
-	 * @access   private
+	 * @access private
 	 */
 	private function load_dependencies() {
 

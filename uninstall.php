@@ -1,14 +1,13 @@
 <?php
-
 /**
  * Disable Blog unintstall.
  *
  * Fired when the plugin is uninstalled.
  *
- * @link       https://github.com/joshuadavidnelson/disable-blog
- * @since      0.4.0
+ * @link    https://github.com/joshuadavidnelson/disable-blog
+ * @since   0.4.0
  *
- * @package    Disable_Blog
+ * @package Disable_Blog
  */
 
 /**
@@ -43,24 +42,29 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  * @uses  wp_die()
  */
 if ( ! is_user_logged_in() ) {
+	$message       = __( 'You must be logged in to run this script.', 'disable-blog' );
+	$message_title = __( 'Disable Blog', 'disable-blog' );
 	wp_die(
-		__( 'You must be logged in to run this script.', 'disable-blog' ),
-		__( 'Disable Blog', 'disable-blog' ),
+		esc_attr( $message ),
+		esc_attr( $message_title ),
 		array( 'back_link' => true )
 	);
 }
 
 if ( ! current_user_can( 'install_plugins' ) ) {
+	$message       = __( 'You do not have permission to run this script.', 'disable-blog' );
+	$message_title = __( 'Disable Blog', 'disable-blog' );
 	wp_die(
-		__( 'You do not have permission to run this script.', 'disable-blog' ),
-		__( 'Disable Blog', 'disable-blog' ),
+		esc_attr( $message ),
+		esc_attr( $message_title ),
 		array( 'back_link' => true )
 	);
 }
 
 /**
  * Delete options array (settings field) from the database.
- *    Note: Respects Multisite setups and single installs.
+ *
+ * Note: Respects Multisite setups and single installs.
  *
  * @since 0.4.0
  *
@@ -72,24 +76,24 @@ if ( ! current_user_can( 'install_plugins' ) ) {
  *
  * @global $wpdb
  */
-// First, check for Multisite, if yes, delete options on a per site basis
+// First, check for Multisite, if yes, delete options on a per site basis.
 if ( is_multisite() ) {
 	global $wpdb;
 
-	// Get array of Site/Blog IDs from the database
+	// Get array of Site/Blog IDs from the database.
 	$blogs = $wpdb->get_results( "SELECT blog_id FROM {$wpdb->blogs}", ARRAY_A );
 
 	if ( $blogs ) {
 		foreach ( $blogs as $blog ) {
-			// Repeat for every Site ID
+			// Repeat for every Site ID.
 			switch_to_blog( $blog['blog_id'] );
 
-			// Delete plugin options
+			// Delete plugin options.
 			delete_option( 'dwpb_version' );
 		}
 		restore_current_blog();
 	}
-} else { // Otherwise, delete options from main options table
-	// Delete plugin options
+} else { // Otherwise, delete options from main options table.
+	// Delete plugin options.
 	delete_option( 'dwpb_version' );
 }

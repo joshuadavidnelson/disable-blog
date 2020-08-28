@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The public-facing functionality of the plugin.
  *
@@ -117,9 +116,9 @@ class Disable_Blog_Public {
 
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
-		$protocol    = stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ? 'https://' : 'http://';
-		$current_url = esc_url( $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
-		if ( $redirect_url == $current_url || ! $redirect_url ) {
+		global $wp;
+		$current_url = home_url( add_query_arg( array(), $wp->request ) );
+		if ( $redirect_url === $current_url || ! $redirect_url ) {
 			return;
 		}
 
@@ -414,11 +413,11 @@ class Disable_Blog_Public {
 
 				// remove 'post' from object types.
 				if ( isset( $wp_taxonomies[ $tax ]->object_type ) ) {
-					if ( is_array( $wp_taxonomies[ $tax ]->object_type )
-						&& ( ( $key = array_search( 'post', $wp_taxonomies[ $tax ]->object_type, true ) ) !== false ) ) {
-
+					if ( is_array( $wp_taxonomies[ $tax ]->object_type ) ) {
+						$key = array_search( 'post', $wp_taxonomies[ $tax ]->object_type, true );
+						if ( false !== $key ) {
 							unset( $wp_taxonomies[ $tax ]->object_type[ $key ] );
-
+						}
 					}
 				}
 
@@ -448,7 +447,6 @@ class Disable_Blog_Public {
 						}
 					}
 				}
-
 			}
 		}
 

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Fired during plugin activation
  *
@@ -25,7 +24,7 @@ class Disable_Blog_Activator {
 	/**
 	 * Clear the global comment count cache.
 	 *
-	 * @since    0.4.3
+	 * @since 0.4.3
 	 */
 	public static function activate() {
 
