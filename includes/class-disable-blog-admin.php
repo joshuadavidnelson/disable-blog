@@ -763,8 +763,8 @@ class Disable_Blog_Admin {
 	 * Put the "pages" menu below the dashboard menu item.
 	 *
 	 * @since 0.4.9
-	 *
-	 * @return $menu_slug
+	 * @see https://codex.wordpress.org/Plugin_API/Filter_Reference/menu_order
+	 * @return array $menu_slug
 	 */
 	public function reorder_page_admin_menu_item() {
 
