@@ -30,7 +30,7 @@ class Disable_Blog_Activator {
 
 		wp_cache_delete( 'comments-0', 'counts' );
 		delete_transient( 'wc_count_comments' );
-		flush_rewrite_rules( true );
+		flush_rewrite_rules();
 
 	}
 
