@@ -68,10 +68,12 @@ class Disable_Blog_Public {
 	public function redirect_posts() {
 
 		// Don't redirect on admin or sitemap, and only if there is a homepage to redirect to.
+		$sitemap            = get_query_var( 'sitemap', false );
+		$sitemap_styelsheet = get_query_var( 'sitemap-stylesheet', false );
 		if ( is_admin()
 			|| ! get_option( 'page_on_front' )
-			|| ! empty( get_query_var( 'sitemap' ) )
-			|| ! empty( get_query_var( 'sitemap-stylesheet' ) ) ) {
+			|| ! empty( $sitemap )
+			|| ! empty( $sitemap_styelsheet ) ) {
 			return;
 		}
 
