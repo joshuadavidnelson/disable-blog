@@ -262,13 +262,13 @@ class Disable_Blog_Admin {
 	 *
 	 * @param array $comments the comments, in an array.
 	 * @param int   $post_id  the post id.
-	 * @return bool $comments return the original, unless we're a post then return empty comments.
+	 * @return array $comments return the original, unless we're a post then return empty comments.
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
 
 		$post_type = get_post_type( $post_id );
 
-		return ( 'post' == $post_type ) ? array() : $comments;
+		return ( 'post' === $post_type ) ? array() : $comments;
 
 	}
 
@@ -797,6 +797,22 @@ class Disable_Blog_Admin {
 				}
 			}
 		}
+
+	}
+
+	/**
+	 * Check that we're on a specific admin page.
+	 *
+	 * @since 0.4.8
+	 *
+	 * @param string $page the page slug.
+	 *
+	 * @return boolean
+	 */
+	private function is_admin_page( $page ) {
+
+		global $pagenow;
+		return ( is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow );
 
 	}
 

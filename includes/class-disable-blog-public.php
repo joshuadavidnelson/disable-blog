@@ -328,7 +328,7 @@ class Disable_Blog_Public {
 	 *
 	 * @param bool $bool true to show the posts feed link.
 	 *
-	 * @return booln
+	 * @return bool
 	 */
 	public function feed_links_show_posts_feed( $bool ) {
 

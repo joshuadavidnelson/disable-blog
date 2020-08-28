@@ -62,9 +62,9 @@ function dwpb_post_types_with_feature( $feature ) {
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @uses get_post_types(), get_object_taxonomies(), apply_filters()
  *
- * @param string       $taxonomy Required. The name of the feature to check against post type support.
- * @param array|string $args     Optional. An array of key => value arguments to match against the post type objects. Default empty array.
- * @param string       $output   Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
+ * @param string|object $taxonomy Required. The taxonomy object or taxonomy slug.
+ * @param array|string  $args     Optional. An array of key => value arguments to match against the post type objects. Default empty array.
+ * @param string        $output   Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
  *
  * @return array|bool A list of post type names or objects that have the taxonomy or false if nothing found.
  */
