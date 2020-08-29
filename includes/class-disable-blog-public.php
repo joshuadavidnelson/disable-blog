@@ -491,7 +491,7 @@ class Disable_Blog_Public {
 	 *
 	 * @param array $methods the arrayve of xmlrpc methods.
 	 *
-	 * @return array $methods
+	 * @return array
 	 */
 	public function xmlrpc_methods( $methods ) {
 
@@ -561,7 +561,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.9
 	 * @param array $post_types an array of post type strings supported in sitemaps.
-	 * @return array $post_types
+	 * @return array
 	 */
 	public function wp_sitemaps_post_types( $post_types ) {
 
@@ -579,7 +579,7 @@ class Disable_Blog_Public {
 	 * @since 0.4.9
 	 * @uses dwpb_post_types_with_tax()
 	 * @param array $taxonomies an array of taxonomy strings supported in sitemaps.
-	 * @return array $taxonomies
+	 * @return array
 	 */
 	public function wp_sitemaps_taxonomies( $taxonomies ) {
 

@@ -20,7 +20,7 @@
  * @since 0.1.0
  * @since 0.4.0 pulled out of class, unique function.
  * @param string $feature the feature in question.
- * @return array ( $post_types | bolean )
+ * @return array|bool A list of post type names that support the featured or false if nothing found.
  */
 function dwpb_post_types_with_feature( $feature ) {
 
@@ -43,7 +43,7 @@ function dwpb_post_types_with_feature( $feature ) {
 	 *
 	 * @param array|bool $post_types_with_feature an array of post types support this feature or false if none.
 	 *
-	 * @return array|bool
+	 * @return array|bool A list of post type names that support the featured or false if nothing found.
 	 */
 	return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature );
 
