@@ -182,7 +182,7 @@ class Disable_Blog_Admin {
 			return;
 		}
 
-		// setup false redirect url value for final check.
+		// setup false redirect url value for default/final check.
 		$redirect_url = false;
 
 		/**
@@ -733,6 +733,186 @@ class Disable_Blog_Admin {
 
 		global $pagenow;
 		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow;
+
+	}
+
+	/**
+	 * Filter the comment counts to remove comments to 'post' post type.
+	 *
+	 * @since 0.4.0
+	 * @since 0.4.3 Moved everything into the post id check and reset the cache.
+	 *
+	 * @param object $comments the comment count object.
+	 * @param int    $post_id  the post id.
+	 *
+	 * @return array
+	 */
+	public function filter_wp_count_comments( $comments, $post_id ) {
+
+		// if this is grabbing all the comments, filter out the 'post' comments.
+		if ( 0 === $post_id ) {
+			$comments = $this->get_comment_counts();
+
+			$comments['moderated'] = $comments['awaiting_moderation'];
+			unset( $comments['awaiting_moderation'] );
+
+			$comments = (object) $comments;
+			wp_cache_set( 'comments-0', $comments, 'counts' );
+		}
+
+		return $comments;
+
+	}
+
+	/**
+	 * Turn the comments object back into an array if WooCommerce is active.
+	 *
+	 * This is only necessary for version of WooCommerce prior to 2.6.3, where it failed
+	 * to check/convert the $comment object into an array.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param object $comments the array of comments.
+	 * @param int    $post_id  the post id.
+	 *
+	 * @return array
+	 */
+	public function filter_woocommerce_comment_count( $comments, $post_id ) {
+
+		if ( 0 === $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+			$comments = (array) $comments;
+		}
+
+		return $comments;
+
+	}
+
+	/**
+	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param array $views all the views.
+	 *
+	 * @return array
+	 */
+	public function filter_admin_table_comment_count( $views ) {
+
+		global $current_screen;
+
+		if ( 'edit-comments' === $current_screen->id ) {
+
+			$updated_counts = $this->get_comment_counts();
+			foreach ( $views as $view => $text ) {
+				if ( isset( $updated_counts[ $view ] ) ) {
+					$views[ $view ] = preg_replace( '/\([^)]+\)/', '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
+				}
+			}
+		}
+
+		return $views;
+
+	}
+
+	/**
+	 * Retreive the comment counts without the 'post' comments.
+	 *
+	 * @since 0.4.0
+	 * @since 0.4.3 Removed Unused "count" function.
+	 *
+	 * @see get_comment_count()
+	 *
+	 * @return array
+	 */
+	public function get_comment_counts() {
+
+		global $wpdb;
+
+		// Grab the comments that are not associated with 'post' post_type.
+		$totals = (array) $wpdb->get_results(
+			"SELECT comment_approved, COUNT( * ) AS total
+			FROM {$wpdb->comments}
+			WHERE comment_post_ID in (
+					SELECT ID
+					FROM {$wpdb->posts}
+					WHERE post_type != 'post'
+					AND post_status = 'publish')
+			GROUP BY comment_approved",
+			ARRAY_A
+		);
+
+		$comment_count = array(
+			'moderated'           => 0,
+			'approved'            => 0,
+			'awaiting_moderation' => 0,
+			'spam'                => 0,
+			'trash'               => 0,
+			'post-trashed'        => 0,
+			'total_comments'      => 0,
+			'all'                 => 0,
+		);
+
+		foreach ( $totals as $row ) {
+			switch ( $row['comment_approved'] ) {
+				case 'trash':
+					$comment_count['trash'] = $row['total'];
+					break;
+				case 'post-trashed':
+					$comment_count['post-trashed'] = $row['total'];
+					break;
+				case 'spam':
+					$comment_count['spam']            = $row['total'];
+					$comment_count['total_comments'] += $row['total'];
+					break;
+				case '1':
+					$comment_count['approved']        = $row['total'];
+					$comment_count['total_comments'] += $row['total'];
+					$comment_count['all']            += $row['total'];
+					break;
+				case '0':
+					$comment_count['awaiting_moderation'] = $row['total'];
+					$comment_count['moderated']           = $comment_count['awaiting_moderation'];
+					$comment_count['total_comments']     += $row['total'];
+					$comment_count['all']                += $row['total'];
+					break;
+				default:
+					break;
+			}
+		}
+
+		return $comment_count;
+
+	}
+
+	/**
+	 * Clear out the status of all post comments.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param bool $open    true if comments are open.
+	 * @param int  $post_id the post id.
+	 *
+	 * @return bool
+	 */
+	public function filter_comment_status( $open, $post_id ) {
+
+		return ( 'post' === get_post_type( $post_id ) ) ? false : $open;
+
+	}
+
+	/**
+	 * Clear comments from 'post' post type.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param array $comments the array of comments.
+	 * @param int   $post_id  the post id.
+	 *
+	 * @return bool
+	 */
+	public function filter_existing_comments( $comments, $post_id ) {
+
+		return ( 'post' === get_post_type( $post_id ) ) ? array() : $comments;
 
 	}
 
