@@ -25,6 +25,7 @@ class Disable_Blog_Activator {
 	 * Clear the global comment count cache.
 	 *
 	 * @since 0.4.3
+	 * @since 0.4.9 flush rewrite rules.
 	 */
 	public static function activate() {
 

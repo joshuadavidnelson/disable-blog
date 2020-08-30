@@ -185,42 +185,88 @@ class Disable_Blog_Admin {
 		// setup false redirect url value for final check.
 		$redirect_url = false;
 
-		// Redirect at edit tags screen
-		// If this is a post type other than 'post' that supports categories or tags,
-		// then bail. Otherwise if it is a taxonomy only used by 'post'
-		// or if this is either the edit-tags page and a taxonomy is not set
-		// and the built-in default 'post_tags' is not supported by other post types
-		// then redirect!
+		/**
+		 * Redirect admin page at edit tags screen.
+		 *
+		 * If this is either the edit-tags page or term page and the taxonomy is
+		 * not supported by post types other than `post` then redirect.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
+		 */
 		if ( apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
 			// @codingStandardsIgnoreStart
 			if ( ( 'edit-tags.php' === $pagenow || 'term.php' === $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) ) {
 			// @codingStandardsIgnoreEnd
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
+
+				/**
+				 * The redirect url used at the edit-tags.php and term.php pages.
+				 *
+				 * @since 0.4.0
+				 *
+				 * @param string $url the url to redirct to, defaults to dashboard.
+				 */
+				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', admin_url( '/index.php' ) );
 			}
 		}
 
-		// Redirect disccusion options page if only supported by 'post' type.
+		/**
+		 * Redirect disccusion options page.
+		 *
+		 * Will only work comments are only supported by 'post' type.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the options-discussion.php page, default is true.
+		 */
 		if ( apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
 			if ( 'options-discussion.php' === $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
+
+				/**
+				 * The redirect url used at the blog page.
+				 *
+				 * @since 0.4.0
+				 *
+				 * @param string $url the url to redirct to, defaults to dashboard.
+				 */
+				$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', admin_url( '/index.php' ) );
 			}
 		}
 
 		// Redirect writing options to general options.
 		if ( 'options-writing.php' === $pagenow && $this->remove_writing_options() ) {
-			$url          = admin_url( '/options-general.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+
+			/**
+			 * The redirect url used at the blog page.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to, defaults to options-general.php.
+			 */
+			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', admin_url( '/options-general.php' ) );
 		}
 
-		// Redirect available tools page.
+		/**
+		 * Redirect available tools page.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the tools.php page, default is true.
+		 */
 		if ( apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
 			// @codingStandardsIgnoreStart
 			if ( 'tools.php' === $pagenow && ! isset( $_GET['page'] ) ) {
 			// @codingStandardsIgnoreEnd
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
+
+				/**
+				 * The redirect url used at the blog page.
+				 *
+				 * @since 0.4.0
+				 *
+				 * @param string $url the url to redirct to, defaults to dashboard.
+				 */
+				$redirect_url = apply_filters( 'dwpb_redirect_options_tools', admin_url( '/index.php' ) );
 			}
 		}
 
@@ -232,7 +278,15 @@ class Disable_Blog_Admin {
 			return;
 		}
 
-		// If we have a redirect url, do it.
+		/**
+		 * Redirect blog related admin pages.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool   $bool         True to enable, default is true.
+		 * @param string $redirect_url The url to being used in the redirect.
+		 * @param string $current_url  The current url.
+		 */
 		if ( apply_filters( 'dwpb_redirect_admin', true, $redirect_url, $current_url ) ) {
 			wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
 			exit;
@@ -324,6 +378,8 @@ class Disable_Blog_Admin {
 	/**
 	 * Filter the body classes for admin screens to toggle on plugin specific styles.
 	 *
+	 * @since 0.4.7
+	 *
 	 * @param string $classes the admin body classes, which is a string *not* an array.
 	 *
 	 * @return string
@@ -348,7 +404,10 @@ class Disable_Blog_Admin {
 	public function remove_writing_options() {
 
 		/**
-		 * Toggle the options-writing page redirect.
+		 * Toggle the options-writing page on/off.
+		 *
+		 * Defaults to false, true will create a redirect for the page
+		 * and remove it from the admin menu.
 		 *
 		 * @since 0.4.5
 		 *

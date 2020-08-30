@@ -37,7 +37,12 @@ function dwpb_post_types_with_feature( $feature ) {
 	$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
 
 	/**
-	 * Filter the returned value.
+	 * Filter the returned "post types with feature".
+	 *
+	 * This function is used to determine if there are any post types with a specific
+	 * feature, not including the `post` type. Often this toggles on/off options in
+	 * the plugin. For instance, if comments are only support by posts, then they will
+	 * be disabled and the options-discussion.php admin page redirected.
 	 *
 	 * @since 0.4.0
 	 *
@@ -103,7 +108,20 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		}
 	}
 
-	// Ability to override the results.
+	/**
+	 * Filter the returned value of "post types with tax".
+	 *
+	 * This function is used to determine if there are any post types using a taxonomy,
+	 * not including the `post` type. This is used to determine if there are custom
+	 * post types using the built-in `post_tag` and `category` taxonomies and toggle
+	 * off related features if they are not being used by anything other than built-in posts.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param array|bool $post_types_with_tax an array of post types use this taxonomy or false if none.
+	 *
+	 * @return array|bool A list of post type names that use this taxonomy or false if nothing found.
+	 */
 	$override = apply_filters( 'dwpb_taxonomy_support', null, $taxonomy, $post_types, $args, $output );
 	if ( ! is_null( $override ) ) {
 		return $override;

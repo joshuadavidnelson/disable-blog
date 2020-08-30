@@ -87,27 +87,67 @@ class Disable_Blog_Public {
 		if ( $post instanceof WP_Post && is_singular( 'post' ) ) {
 
 			global $post;
+
+			/**
+			 * The redirect url used at any single post page.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to.
+			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_posts', $url, $post );
+
+			/**
+			 * The redirect url used for a specific post id.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to.
+			 */
 			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
 
 		} elseif ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
 
+			/**
+			 * The redirect url used at tag archives.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to.
+			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
 
 		} elseif ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
 
+			/**
+			 * The redirect url used at category archives
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to.
+			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
-
-		} elseif ( is_post_type_archive( 'post' ) ) {
-
-			$redirect_url = apply_filters( 'dwpb_redirect_post_archive', $url );
 
 		} elseif ( is_home() ) {
 
+			/**
+			 * The redirect url used at the blog page.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to.
+			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
 
 		} elseif ( is_date() ) {
 
+			/**
+			 * The redirect url used at date archives.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to.
+			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
 
 		} else {
@@ -130,9 +170,9 @@ class Disable_Blog_Public {
 		 * @since 0.2.0
 		 * @since 0.4.0 added the current_url param.
 		 *
-		 * @param bool  $bool True to enable, false to disable.
+		 * @param bool   $bool         True to enable, false to disable.
 		 * @param string $redirect_url The url being used for the redirect.
-		 * @param string $current_url The current url.
+		 * @param string $current_url  The current url.
 		 */
 		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url, $current_url ) ) {
 			wp_safe_redirect( esc_url( $redirect_url ), 301 );
