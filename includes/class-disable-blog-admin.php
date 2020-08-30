@@ -212,6 +212,31 @@ class Disable_Blog_Admin {
 		}
 
 		/**
+		 * Redirect the comments admin page.
+		 *
+		 * Will only work comments are only supported by 'post' type,
+		 * note that pages and attachments support comments by default.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the edit-comments.php page, default is true.
+		 */
+		if ( apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
+			if ( 'edit-comments.php' === $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
+
+				/**
+				 * The redirect url used at the edit-tags.php and term.php pages.
+				 *
+				 * @since 0.4.0
+				 *
+				 * @param string $url the url to redirct to, defaults to dashboard.
+				 */
+				$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', admin_url( 'index.php' ) );
+
+			}
+		}
+
+		/**
 		 * Redirect disccusion options page.
 		 *
 		 * Will only work comments are only supported by 'post' type.
@@ -334,14 +359,22 @@ class Disable_Blog_Admin {
 	 */
 	public function remove_menu_pages() {
 
+		// Main pages to be removed.
+		$remove_pages = array( 'edit.php' );
+
+		// If no post type supports comments, then remove the edit-comments.php page from the admin.
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
+			$remove_pages[] = 'edit-comments.php';
+		}
+
 		/**
 		 * Top level admin pages to remove.
 		 *
 		 * @since 0.4.0
 		 *
-		 * @param array $remove_subpages Array of page => subpage.
+		 * @param array $remove_pages Array of page strings.
 		 */
-		$pages = apply_filters( 'dwpb_menu_pages_to_remove', array( 'edit.php' ) );
+		$pages = apply_filters( 'dwpb_menu_pages_to_remove', $remove_pages );
 		foreach ( $pages as $page ) {
 			remove_menu_page( $page );
 		}
