@@ -184,7 +184,7 @@ class Disable_Blog_Public {
 	/**
 	 * Modify query.
 	 *
-	 * Remove 'post' post type from any searches and quthor pages.
+	 * Remove 'post' post type from any searches and archives.
 	 *
 	 * @uses $this->remove_post_from_array_in_query
 	 *
