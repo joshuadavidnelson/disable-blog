@@ -778,7 +778,7 @@ class Disable_Blog_Admin {
 	 * @param object $comments the comment count object.
 	 * @param int    $post_id  the post id.
 	 *
-	 * @return array
+	 * @return object
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
@@ -941,7 +941,7 @@ class Disable_Blog_Admin {
 	 * @param array $comments the array of comments.
 	 * @param int   $post_id  the post id.
 	 *
-	 * @return bool
+	 * @return array
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
 
