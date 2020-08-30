@@ -142,47 +142,6 @@ class Disable_Blog_Public {
 	}
 
 	/**
-	 * Remove post type from query array.
-	 *
-	 * Used in $this->modify_query to remove 'post' type from specific queries.
-	 *
-	 * @since 0.4.0
-	 *
-	 * @param object $query  the main query object.
-	 * @param array  $array  the array of post types.
-	 * @param string $filter the filter to be applied.
-	 *
-	 * @return bool
-	 */
-	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
-
-		if ( is_array( $array ) && in_array( 'post', $array, true ) ) {
-			unset( $array['post'] );
-
-			/**
-			 * If there is a filter name passed, then a filter is applied on the array and query.
-			 *
-			 * Used for 'dwpb_search_post_types' and 'dwpb_author_post_types' filters.
-			 *
-			 * @see Disable_Blog_Public->modify_query
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param array $array
-			 * @param object $query
-			 */
-			$set_to = empty( $filter ) ? $array : apply_filters( $filter, $array, $query );
-			if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
-				$query->set( 'post_type', $set_to );
-				return true;
-			}
-		}
-
-		return false;
-
-	}
-
-	/**
 	 * Modify query.
 	 *
 	 * Remove 'post' post type from any searches and quthor pages.
@@ -226,6 +185,47 @@ class Disable_Blog_Public {
 			);
 			$this->remove_post_from_array_in_query( $query, $archive_post_types, 'dwpb_archive_post_types' );
 		}
+
+	}
+
+	/**
+	 * Remove post type from query array.
+	 *
+	 * Used in $this->modify_query to remove 'post' type from specific queries.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param object $query  the main query object.
+	 * @param array  $array  the array of post types.
+	 * @param string $filter the filter to be applied.
+	 *
+	 * @return bool
+	 */
+	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
+
+		if ( is_array( $array ) && in_array( 'post', $array, true ) ) {
+			unset( $array['post'] );
+
+			/**
+			 * If there is a filter name passed, then a filter is applied on the array and query.
+			 *
+			 * Used for 'dwpb_search_post_types' and 'dwpb_author_post_types' filters.
+			 *
+			 * @see Disable_Blog_Public->modify_query
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param array $array
+			 * @param object $query
+			 */
+			$set_to = empty( $filter ) ? $array : apply_filters( $filter, $array, $query );
+			if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
+				$query->set( 'post_type', $set_to );
+				return true;
+			}
+		}
+
+		return false;
 
 	}
 
