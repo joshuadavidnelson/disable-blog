@@ -55,16 +55,21 @@ This could be done, but other post types (like Pages) may have comment support. 
 
 Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
 
+= How can I change the plugin's behavior? =
+
+There are numerous filters available to change the way this plugin works. Refer to the [GitHub page](https://github.com/joshuadavidnelson/disable-blog) or reach out on the [support forums](https://wordpress.org/support/plugin/disable-blog) if you have any questions.
+
 == Changelog ==
 
 = 0.4.9 =
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
 - **Big change:** the plugin now changes the `post_type` arguments for posts so they are no longer public and removes all post_type support parameters. This disables the post-related admin rediects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
 - Disable pingbacks entirely.
-- Fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
+- Fix comment redirect/menu functionality, now correctly removes comments and redirects `edit-comments.php` admin page if no other post type support comments (note that WordPress default is for pages and attachments to support comments).
+- Disable XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
-- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
 - Initiate plugin via hook.
+- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
@@ -172,10 +177,11 @@ A bunch of stuff:
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
 - **Big change:** the plugin now changes the `post_type` arguments for posts so they are no longer public and removes all post_type support parameters. This disables the post-related admin rediects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
 - Disable pingbacks entirely.
-- Fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
+- Fix comment redirect/menu functionality, now correctly removes comments and redirects `edit-comments.php` admin page if no other post type support comments (note that WordPress default is for pages and attachments to support comments).
+- Disable XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
-- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
 - Initiate plugin via hook.
+- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.

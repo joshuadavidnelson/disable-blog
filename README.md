@@ -15,38 +15,40 @@ Go blog-less with WordPress. This plugin disables all blog-related functionality
 
 Does the following:
 
-- Removes 'Posts' Admin Menu.
-- Removes 'post' post type from queries.
-- Disables the Feed for Posts.
-- Disable post by email configuration.
-- Disables the REST API for 'post' post type.
-- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
-- Remove the Feed links from the header.
-- Redirects 'New Post' and 'Edit Post' admin pages to 'New Page' and 'Edit Page' admin pages.
-- Redirects 'Comments' admin page with query variable `post_type=post` to main comments page.
-- Disable comments feed only if 'post' is only type shown.
-- Redirects Single Posts, Post Archives, Tag & Category archives to home page (the latter two are only redirected if 'post' post type is the only post type associated with it).
-- Filters out the 'post' post type fromm 'Comments' admin page.
-- Removes Post from '+New' admin bar menu.
-- Filters 'post' post type out of main query.
-- Removes post-related dashboard widgets.
-- Hides number of posts and comment count on Activity dashboard widget.
-- Hides 'Posts' options on 'Menus' admin page.
-- Removes Post Related Widgets.
-- Disables "Press This" functionality.
-- Removes Available Tools from admin menu and redirects page (houses Press This and Category/Tag converter).
-- Hide/redirect discussion options page if 'post' is the only post type supporting it (typically supported by pages).
-- Removes the feed link from front end (for WP >= 4.4.0), removes comment feed link if 'post' is the only post type supporting comments.
-- Hide options in Reading Settings page related to posts (shows front page and search engine options).
-- Hides other post-related reading options, except Search Engine Visibilty.
-- Removes post from author archive query.
-- Removes comment and trackback support for posts.
-- Removes and disabled pingbacks/trackbacks on `post` post type.
-- Places "Pages" above "Media" in admin menu and removes divider below dashboard.
-- Alters the comment count to remove any comments associated with 'post' post type.
-- Disables the REST API for 'post' post type.
-- Remove 'post' post type from XML sitemaps (WP version 5.5)
-- Remove built-in taxonomies from XML sitemaps (WP version 5.5), if not being used by a custom post type.
+- Turns the `post` type into a non-public type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page.
+
+- Front-end:
+	- Remove the Feed links from the header.
+	- Removes the feed link from front end (for WP >= 4.4.0), removes comment feed link if 'post' is the only post type supporting comments.
+	- Removes posts from all archive pages.
+	- Disables the Feed for Posts.
+	- Remove 'post' post type from XML sitemaps and built-in taxonomies from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
+	- Disable comments feed only if 'post' is only type shown.
+	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
+	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
+	- Redirects (301):
+		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
+		- The blog page to the homepage.
+		- All Tag & Category archives to home page, unless they are supported by a custom post type.
+
+- Admin side:
+	- Redirects tag and category pages to dashboard, unless used by a custom post type.
+	- If comments are not supported by other post types (by default comments are supported by pages and attachments), it will hide the menu links for and redirect discussion options page and 'Comments' admin page to the dashboard.
+	- Filters out the 'post' post type fromm 'Comments' admin page.
+	- Alters the comment count to remove any comments associated with 'post' post type.
+	- Optionally remove/redirect the Settings > Writting page via `dwpb_redirect_admin_options_writing` filter (default is false).
+	- Removes Available Tools from admin menu and redirects page (houses Press This and Category/Tag converter).
+	- Removes Post from '+New' admin bar menu.
+	- Removes 'Posts' Admin Menu.
+	- Removes post-related dashboard widgets.
+	- Hides number of posts and comment count on Activity dashboard widget.
+	- Removes Post Related Widgets.
+	- Hide options in Reading Settings page related to posts (shows front page and search engine options).
+	- Places "Pages" above "Media" in admin menu and removes divider below dashboard.
+	- Removes 'Post' options on 'Menus' admin page.
+	- Filters 'post' post type out of main query.
+	- Disables "Press This" functionality.
+	- Disables post by email configuration.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
