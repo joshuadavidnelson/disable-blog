@@ -54,38 +54,104 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Remove comment and pingback support for posts.
+	 * Disable public arguments of the 'post' post type.
 	 *
-	 * @since 0.4.0
-	 *
-	 * @return void
+	 * @since 0.4.2
+	 * @since 0.4.9 removed rest api specific filter and updated function
+	 *              for disabling all public-facing aspects of the 'post' post type.
 	 */
-	public function remove_post_comment_support() {
+	public function modify_post_type_arguments() {
 
-		// Remove comment support from posts.
-		if ( post_type_supports( 'post', 'comments' ) && apply_filters( 'dwpb_remove_post_comment_support', true ) ) {
-			remove_post_type_support( 'post', 'comments' );
-		}
+		global $wp_post_types;
 
-		// Remove trackback suport on posts.
-		if ( post_type_supports( 'post', 'trackbacks' ) && apply_filters( 'dwpb_remove_post_trackback_support', true ) ) {
-			remove_post_type_support( 'post', 'trackbacks' );
+		if ( isset( $wp_post_types['post'] ) ) {
+			$arguments_to_remove = array(
+				'has_archive',
+				'public',
+				'publicaly_queryable',
+				'rewrite',
+				'query_var',
+				'show_ui',
+				'show_in_admin_bar',
+				'show_in_nav_menus',
+				'show_in_menu',
+				'show_in_rest',
+			);
+
+			foreach ( $arguments_to_remove as $arg ) {
+				if ( isset( $wp_post_types['post']->$arg ) ) {
+					// @codingStandardsIgnoreStart
+					$wp_post_types['post']->$arg = false;
+					// @codingStandardsIgnoreEnd
+				}
+			}
+
+			// exclude from search.
+			$wp_post_types['post']->exclude_from_search = true;
+
+			// remove supports.
+			$wp_post_types['post']->supports = array();
 		}
 
 	}
 
 	/**
-	 * Disable internal pingbacks to posts.
+	 * Disable public arguments of the 'category' and 'post_tag' taxonomies.
 	 *
-	 * @param  array $links The pingback links.
+	 * Only disables these if the 'post' post type is the only post type using them.
+	 *
+	 * @since 0.4.9
+	 *
+	 * @uses dwpb_post_types_with_tax()
+	 *
 	 * @return void
 	 */
-	public function internal_pingbacks( &$links ) {
+	public function modify_taxonomies_arguments() {
 
-		// Unset each internal ping.
-		foreach ( $links as $key => $link ) {
-			if ( 0 === strpos( $link, get_option( 'home' ) ) ) {
-				unset( $links[ $key ] );
+		global $wp_taxonomies;
+		$taxonomies = array( 'category', 'post_tag' );
+
+		foreach ( $taxonomies as $tax ) {
+			if ( isset( $wp_taxonomies[ $tax ] ) ) {
+
+				// remove 'post' from object types.
+				if ( isset( $wp_taxonomies[ $tax ]->object_type ) ) {
+					if ( is_array( $wp_taxonomies[ $tax ]->object_type ) ) {
+						$key = array_search( 'post', $wp_taxonomies[ $tax ]->object_type, true );
+						if ( false !== $key ) {
+							unset( $wp_taxonomies[ $tax ]->object_type[ $key ] );
+						}
+					}
+				}
+
+				// only modify the public arguments if 'post' is the only post type.
+				// using this taxonomy.
+				if ( ! dwpb_post_types_with_tax( $tax ) ) {
+
+					// public arguments to remove.
+					$arguments_to_remove = array(
+						'has_archive',
+						'public',
+						'publicaly_queryable',
+						'query_var',
+						'show_ui',
+						'show_tagcloud',
+						'show_in_admin_bar',
+						'show_in_quick_edit',
+						'show_in_nav_menus',
+						'show_admin_column',
+						'show_in_menu',
+						'show_in_rest',
+					);
+
+					foreach ( $arguments_to_remove as $arg ) {
+						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
+							// @codingStandardsIgnoreStart
+							$wp_taxonomies[ $tax ]->$arg = false;
+							// @codingStandardsIgnoreEnd
+						}
+					}
+				}
 			}
 		}
 
