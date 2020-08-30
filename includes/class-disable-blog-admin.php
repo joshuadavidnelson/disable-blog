@@ -193,31 +193,33 @@ class Disable_Blog_Admin {
 		// then redirect!
 		if ( apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
 			// @codingStandardsIgnoreStart
-			if ( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) ) {
+			if ( ( 'edit-tags.php' === $pagenow || 'term.php' === $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) ) {
 			// @codingStandardsIgnoreEnd
-				$url = admin_url( '/index.php' );
+				$url          = admin_url( '/index.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 			}
 		}
 
 		// Redirect disccusion options page if only supported by 'post' type.
 		if ( apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
-			if ( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
-				$url = admin_url( '/index.php' );
+			if ( 'options-discussion.php' === $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
+				$url          = admin_url( '/index.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
 			}
 		}
 
 		// Redirect writing options to general options.
-		if ( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
-			$url = admin_url( '/options-general.php' );
+		if ( 'options-writing.php' === $pagenow && $this->remove_writing_options() ) {
+			$url          = admin_url( '/options-general.php' );
 			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
 		}
 
 		// Redirect available tools page.
 		if ( apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-			if ( 'tools.php' == $pagenow && ! isset( $_GET['page'] ) ) {
-				$url = admin_url( '/index.php' );
+			// @codingStandardsIgnoreStart
+			if ( 'tools.php' === $pagenow && ! isset( $_GET['page'] ) ) {
+			// @codingStandardsIgnoreEnd
+				$url          = admin_url( '/index.php' );
 				$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
 			}
 		}
@@ -226,7 +228,7 @@ class Disable_Blog_Admin {
 		// If there is no redirect url, then also bail.
 		global $wp;
 		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
-		if ( $redirect_url == $current_url || ! $redirect_url ) {
+		if ( $redirect_url === $current_url || ! $redirect_url ) {
 			return;
 		}
 
@@ -475,7 +477,7 @@ class Disable_Blog_Admin {
 		if ( ! $this->has_front_page() ) {
 
 			// The second part of the notice depends on which screen we're on.
-			if ( 'options-reading' == $current_screen->base ) {
+			if ( 'options-reading' === $current_screen->base ) {
 
 				// translators: Direct the user to set a homepage in the current screen.
 				$message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
