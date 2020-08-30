@@ -59,10 +59,12 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 
 = 0.4.9 =
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
-- **Big change:** the plugin now changes the `post_type` arguments for posts so they are now non-public and removes all post_type support parameters. This disables the post-related admin rediects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
+- **Big change:** the plugin now changes the `post_type` arguments for posts so they are no longer public and removes all post_type support parameters. This disables the post-related admin rediects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
+- Disable pingbacks entirely.
+- Fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
-- Now fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
+- Initiate plugin via hook.
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
@@ -74,7 +76,7 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 - **Developers:** Filters were removed and altered in this version:
 	- The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
 	- The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
-	- Removed filters: `dwpb_disable_rest_api`, `dwpb_remove_post_comment_support`, `dwpb_remove_post_trackback_support`, `dwpb_redirect_admin_edit_single_post`, `dwpb_redirect_single_post_edit`, `dwpb_redirect_admin_edit_post`, `dwpb_redirect_edit`, `dwpb_redirect_admin_post_new`, `dwpb_redirect_post_new` as these are rendered obsolute by above changes.
+	- Removed filters: `dwpb_disable_rest_api`, `dwpb_remove_post_comment_support`, `dwpb_remove_post_trackback_support`, `dwpb_redirect_admin_edit_single_post`, `dwpb_redirect_single_post_edit`, `dwpb_redirect_admin_edit_post`, `dwpb_redirect_edit`, `dwpb_redirect_admin_post_new`, `dwpb_redirect_post_new` as these are rendered obsolete by above changes.
 
 = 0.4.8.1 =
 - Forgot to update the version number in the main plugin file, so this is a version bump only.
@@ -168,10 +170,12 @@ A bunch of stuff:
 
 = 0.4.9 =
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
-- **Big change:** the plugin now changes the `post_type` arguments for posts so they are now non-public and removes all post_type support parameters. This disables the post-related admin rediects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
+- **Big change:** the plugin now changes the `post_type` arguments for posts so they are no longer public and removes all post_type support parameters. This disables the post-related admin rediects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
+- Disable pingbacks entirely.
+- Fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
-- Now fully disabling XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
+- Initiate plugin via hook.
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
@@ -183,7 +187,7 @@ A bunch of stuff:
 - **Developers:** Filters were removed and altered in this version:
 	- The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
 	- The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
-	- Removed filters: `dwpb_disable_rest_api`, `dwpb_remove_post_comment_support`, `dwpb_remove_post_trackback_support`, `dwpb_redirect_admin_edit_single_post`, `dwpb_redirect_single_post_edit`, `dwpb_redirect_admin_edit_post`, `dwpb_redirect_edit`, `dwpb_redirect_admin_post_new`, `dwpb_redirect_post_new` as these are rendered obsolute by above changes.
+	- Removed filters: `dwpb_disable_rest_api`, `dwpb_remove_post_comment_support`, `dwpb_remove_post_trackback_support`, `dwpb_redirect_admin_edit_single_post`, `dwpb_redirect_single_post_edit`, `dwpb_redirect_admin_edit_post`, `dwpb_redirect_edit`, `dwpb_redirect_admin_post_new`, `dwpb_redirect_post_new` as these are rendered obsolete by above changes.
 
 = 0.4.8.1 =
 - Forgot to update the version number in the main plugin file, so this is a version bump only. See 0.4.8 release notes for changes since 0.4.7.
