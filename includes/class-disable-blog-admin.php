@@ -158,177 +158,83 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Filter the comment counts to remove comments to 'post' post type.
+	 * Redirect blog-related admin pages
 	 *
-	 * @since 0.4.0
-	 * @since 0.4.3 Moved everything into the post id check and reset the cache.
+	 * @uses dwpb_post_types_with_tax()
 	 *
-	 * @param  object $comments the comments.
-	 * @param  int    $post_id  the post id.
-	 * @return object
+	 * @since 0.1.0
+	 * @since 0.4.0 added single post edit screen redirect
+	 *
+	 * @return void
 	 */
-	public function filter_wp_count_comments( $comments, $post_id ) {
+	public function redirect_admin_pages() {
 
-		// If this is grabbing all the comments, filter out the 'post' comments.
-		if ( 0 == $post_id ) {
-			$comments = $this->get_comment_counts();
+		global $pagenow;
 
-			$comments['moderated'] = $comments['awaiting_moderation'];
-			unset( $comments['awaiting_moderation'] );
-
-			$comments = (object) $comments;
-			wp_cache_set( 'comments-0', $comments, 'counts' );
+		if ( ! isset( $pagenow ) ) {
+			return;
 		}
 
-		return $comments;
-	}
+		$screen = get_current_screen();
 
-	/**
-	 * Turn the comments object back into an array if WooCommerce is active.
-	 *
-	 * This is only necessary for version of WooCommerce prior to 2.6.3, where it failed
-	 * to check/convert the $comment object into an array.
-	 *
-	 * @since 0.4.3
-	 *
-	 * @param object $comments the comments.
-	 * @param int    $post_id  the post id.
-	 * @return array
-	 */
-	public function filter_woocommerce_comment_count( $comments, $post_id ) {
-
-		if ( 0 == $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
-			$comments = (array) $comments;
+		// on multisite: Do not redirect if we are on a network page.
+		if ( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin( 'network' ) ) {
+			return;
 		}
 
-		return $comments;
+		// setup false redirect url value for final check.
+		$redirect_url = false;
 
-	}
-
-	/**
-	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
-	 *
-	 * @since 0.4.0
-	 *
-	 * @param array $views The views.
-	 * @return array
-	 */
-	public function filter_admin_table_comment_count( $views ) {
-
-		global $current_screen;
-
-		if ( 'edit-comments' == $current_screen->id ) {
-			$updated_counts = $this->get_comment_counts();
-			foreach ( $views as $view => $text ) {
-				if ( isset( $updated_counts[ $view ] ) ) {
-					$views[ $view ] = preg_replace( '/\([^)]+\)/', '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
-				}
+		// Redirect at edit tags screen
+		// If this is a post type other than 'post' that supports categories or tags,
+		// then bail. Otherwise if it is a taxonomy only used by 'post'
+		// or if this is either the edit-tags page and a taxonomy is not set
+		// and the built-in default 'post_tags' is not supported by other post types
+		// then redirect!
+		if ( apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
+			// @codingStandardsIgnoreStart
+			if ( ( 'edit-tags.php' == $pagenow || 'term.php' == $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) ) {
+			// @codingStandardsIgnoreEnd
+				$url = admin_url( '/index.php' );
+				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
 			}
 		}
 
-		return $views;
-
-	}
-
-	/**
-	 * Retreive the comment counts without the 'post' comments.
-	 *
-	 * @since 0.4.0
-	 * @since 0.4.3 Removed Unused "count" function.
-	 *
-	 * @see get_comment_count()
-	 *
-	 * @return array
-	 */
-	public function get_comment_counts() {
-
-		global $wpdb;
-
-		// Grab the comments that are not associated with 'post' post_type.
-		$totals = (array) $wpdb->get_results(
-			"
-			SELECT comment_approved, COUNT( * ) AS total
-			FROM {$wpdb->comments}
-			WHERE comment_post_ID in (
-				 SELECT ID
-				 FROM {$wpdb->posts}
-				 WHERE post_type != 'post'
-				 AND post_status = 'publish')
-			GROUP BY comment_approved
-		",
-			ARRAY_A
-		);
-
-		$comment_count = array(
-			'moderated'           => 0,
-			'approved'            => 0,
-			'awaiting_moderation' => 0,
-			'spam'                => 0,
-			'trash'               => 0,
-			'post-trashed'        => 0,
-			'total_comments'      => 0,
-			'all'                 => 0,
-		);
-
-		foreach ( $totals as $row ) {
-			switch ( $row['comment_approved'] ) {
-				case 'trash':
-					$comment_count['trash'] = $row['total'];
-					break;
-				case 'post-trashed':
-					$comment_count['post-trashed'] = $row['total'];
-					break;
-				case 'spam':
-					$comment_count['spam']            = $row['total'];
-					$comment_count['total_comments'] += $row['total'];
-					break;
-				case '1':
-					$comment_count['approved']        = $row['total'];
-					$comment_count['total_comments'] += $row['total'];
-					$comment_count['all']            += $row['total'];
-					break;
-				case '0':
-					$comment_count['awaiting_moderation'] = $row['total'];
-					$comment_count['moderated']           = $comment_count['awaiting_moderation'];
-					$comment_count['total_comments']     += $row['total'];
-					$comment_count['all']                += $row['total'];
-					break;
-				default:
-					break;
+		// Redirect disccusion options page if only supported by 'post' type.
+		if ( apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
+			if ( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
+				$url = admin_url( '/index.php' );
+				$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
 			}
 		}
 
-		return $comment_count;
+		// Redirect writing options to general options.
+		if ( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
+			$url = admin_url( '/options-general.php' );
+			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
+		}
 
-	}
+		// Redirect available tools page.
+		if ( apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
+			if ( 'tools.php' == $pagenow && ! isset( $_GET['page'] ) ) {
+				$url = admin_url( '/index.php' );
+				$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
+			}
+		}
 
-	/**
-	 * Clear out the status of all post comments.
-	 *
-	 * @since 0.4.0
-	 *
-	 * @param bool $open    true if comment open.
-	 * @param int  $post_id the post id.
-	 * @return bool         return false if it's a post.
-	 */
-	public function filter_comment_status( $open, $post_id ) {
+		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
+		// If there is no redirect url, then also bail.
+		global $wp;
+		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
+		if ( $redirect_url == $current_url || ! $redirect_url ) {
+			return;
+		}
 
-		return 'post' === get_post_type( $post_id ) ? false : $open;
-
-	}
-
-	/**
-	 * Clear comments from 'post' post type.
-	 *
-	 * @since 0.4.0
-	 *
-	 * @param array $comments the comments, in an array.
-	 * @param int   $post_id  the post id.
-	 * @return array          return the original, unless we're a post then return empty comments.
-	 */
-	public function filter_existing_comments( $comments, $post_id ) {
-
-		return 'post' === get_post_type( $post_id ) ? array() : $comments;
+		// If we have a redirect url, do it.
+		if ( apply_filters( 'dwpb_redirect_admin', true, $redirect_url, $current_url ) ) {
+			wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+			exit;
+		}
 
 	}
 
@@ -427,112 +333,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $classes;
-
-	}
-
-	/**
-	 * Redirect blog-related admin pages
-	 *
-	 * @uses dwpb_post_types_with_tax()
-	 *
-	 * @since 0.1.0
-	 * @since 0.4.0 added single post edit screen redirect
-	 *
-	 * @return void
-	 */
-	public function redirect_admin_pages() {
-
-		global $pagenow;
-
-		if ( ! isset( $pagenow ) ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-
-		// on multisite: Do not redirect if we are on a network page.
-		if ( is_multisite() && is_callable( array( $screen, 'in_admin' ) ) && $screen->in_admin( 'network' ) ) {
-			return;
-		}
-
-		// setup false redirect url value for final check.
-		$redirect_url = false;
-
-		// Redirect Edit Single Post to Dashboard.
-		if ( apply_filters( 'dwpb_redirect_admin_edit_single_post', true ) ) {
-			$post_type = get_post_type();
-			if ( 'post.php' === $pagenow && 'post' === $post_type ) {
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', $url );
-			}
-		}
-
-		// Redirect Edit Posts Screen to Edit Page.
-		if ( apply_filters( 'dwpb_redirect_admin_edit_post', true ) ) {
-			$post_type = get_post_type();
-			if ( 'edit.php' === $pagenow && ( ! $post_type ) || 'post' === $post_type ) {
-				$url          = admin_url( '/edit.php?post_type=page' );
-				$redirect_url = apply_filters( 'dwpb_redirect_edit', $url );
-			}
-		}
-
-		// Redirect New Post to New Page.
-		if ( apply_filters( 'dwpb_redirect_admin_post_new', true ) ) {
-			if ( 'post-new.php' == $pagenow && ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && 'post' === $_GET['post_type'] ) ) {
-				$url          = admin_url( '/post-new.php?post_type=page' );
-				$redirect_url = apply_filters( 'dwpb_redirect_post_new', $url );
-			}
-		}
-
-		// Redirect at edit tags screen
-		// If this is a post type other than 'post' that supports categories or tags,
-		// then bail. Otherwise if it is a taxonomy only used by 'post'
-		// or if this is either the edit-tags page and a taxonomy is not set
-		// and the built-in default 'post_tags' is not supported by other post types
-		// then redirect!
-		if ( apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
-			$taxonomy = isset( $_GET['taxonomy'] ) ? sanitize_title( wp_unslash( $_GET['taxonomy'] ) ) : false;
-			if ( ( 'edit-tags.php' === $pagenow || 'term.php' === $pagenow ) && $taxonomy && ! dwpb_post_types_with_tax( $taxonomy ) ) {
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', $url );
-			}
-		}
-
-		// Redirect posts-only comment queries to comments.
-		if ( apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
-			if ( 'edit-comments.php' == $pagenow && isset( $_GET['post_type'] ) && 'post' == $_GET['post_type'] ) {
-				$url          = admin_url( '/edit-comments.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', $url );
-			}
-		}
-
-		// Redirect disccusion options page if only supported by 'post' type.
-		if ( apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
-			if ( 'options-discussion.php' == $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', $url );
-			}
-		}
-
-		// Redirect writing options to general options.
-		if ( 'options-writing.php' == $pagenow && $this->remove_writing_options() ) {
-			$url          = admin_url( '/options-general.php' );
-			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', $url );
-		}
-
-		// Redirect available tools page.
-		if ( apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-			if ( 'tools.php' == $pagenow && ! isset( $_GET['page'] ) ) {
-				$url          = admin_url( '/index.php' );
-				$redirect_url = apply_filters( 'dwpb_redirect_options_tools', $url );
-			}
-		}
-
-		// If we have a redirect url, do it.
-		if ( $redirect_url ) {
-			wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
-			exit;
-		}
 
 	}
 

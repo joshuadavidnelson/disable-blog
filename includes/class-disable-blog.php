@@ -230,7 +230,7 @@ class Disable_Blog {
 		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 
-		// Hide Posts Page from Admin Menu.
+		// Hide Blog Related Admin pages.
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
 
 		// Modify the main 'post' post_type arguments to shut pubic things down.
@@ -247,25 +247,6 @@ class Disable_Blog {
 
 		// Filter Comments off Admin Page.
 		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
-
-		// Filter post open status for comments and pings.
-		$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
-		$this->loader->add_action( 'pings_open', $plugin_admin, 'filter_comment_status', 20, 2 );
-
-		// Disable internal pingbacks.
-		$this->loader->add_action( 'pre_ping', $plugin_admin, 'internal_pingbacks', 10, 1 );
-
-		// Remove Comment & Trackback support for posts.
-		$this->loader->add_action( 'wp_loaded', $plugin_admin, 'remove_post_comment_support', 20 );
-
-		// Filter comment counts in admin table.
-		$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1 );
-
-		// Filter wp_count_comments, which addresses comments in admin bar.
-		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
-
-		// Convert the $comments object back into an array if older version of WooCommerce is active.
-		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_woocommerce_comment_count', 10, 2 );
 
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
