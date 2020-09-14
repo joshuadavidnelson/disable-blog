@@ -98,6 +98,11 @@ class Disable_Blog {
 	 */
 	private static function upgrade_check() {
 
+		// let's only run these checks on the admin page load.
+		if ( ! is_admin() ) {
+			return;
+		}
+
 		// Get the current version option.
 		$current_version = get_option( 'dwpb_version', false );
 
