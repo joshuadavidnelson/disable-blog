@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Define the internationalization functionality
  *
@@ -24,12 +23,12 @@
  * @subpackage Disable_Blog/includes
  * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
-class Disable_Blog_i18n {
-	
+class Disable_Blog_I18n {
+
 	/**
 	 * Load the plugin text domain for translation.
 	 *
-	 * @since    0.4.0
+	 * @since 0.4.0
 	 */
 	public function load_plugin_textdomain() {
 
@@ -40,5 +39,5 @@ class Disable_Blog_i18n {
 		);
 
 	}
-	
+
 }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Fired during plugin activation
  *
@@ -25,11 +24,15 @@ class Disable_Blog_Activator {
 	/**
 	 * Clear the global comment count cache.
 	 *
-	 * @since    0.4.3
+	 * @since 0.4.3
+	 * @since 0.4.9 flush rewrite rules.
 	 */
 	public static function activate() {
+
 		wp_cache_delete( 'comments-0', 'counts' );
 		delete_transient( 'wc_count_comments' );
+		flush_rewrite_rules();
+
 	}
 
 }

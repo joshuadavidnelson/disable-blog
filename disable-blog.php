@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The plugin bootstrap file
  *
@@ -8,31 +7,31 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              https://github.com/joshuadavidnelson/disable-blog
- * @since             0.4.0
- * @package           Disable_Blog
+ * @link    https://github.com/joshuadavidnelson/disable-blog
+ * @since   0.4.0
+ * @package Disable_Blog
  *
  * @wordpress-plugin
- * Plugin Name:       Disable Blog
- * Plugin URI:        https://wordpress.org/plugins/disable-blog/
- * Description:       Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting). 
- * Version:           0.4.8.1
- * Author:            Joshua Nelson
- * Author URI:        http://joshuadnelson.com
- * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       disable-blog
- * Domain Path:       /languages
+ * Plugin Name: Disable Blog
+ * Plugin URI:  https://wordpress.org/plugins/disable-blog/
+ * Description: Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting).
+ * Version:     0.4.9
+ * Author:      Joshua Nelson
+ * Author URI:  http://joshuadnelson.com
+ * License:     GPL-2.0+
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain: disable-blog
+ * Domain Path: /languages
  */
 
 /**
  * Exit if accessed directly.
  *
- * Prevent direct access to this file. 
+ * Prevent direct access to this file.
  *
  * @since 0.1.0
  */
-if ( ! defined( 'WPINC' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 
@@ -69,12 +68,10 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog.php';
  * then kicking off the plugin from this point in the file does
  * not affect the page life cycle.
  *
- * @since    0.4.0
+ * @since 0.4.0
  */
 function run_disable_blog() {
-
 	$plugin = new Disable_Blog();
 	$plugin->run();
-
 }
-run_disable_blog();
+add_action( 'plugins_loaded', 'run_disable_blog', 10, 0 );
