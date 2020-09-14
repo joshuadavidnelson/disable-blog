@@ -91,6 +91,7 @@ class Disable_Blog_Admin {
 
 			// remove supports.
 			$wp_post_types['post']->supports = array();
+
 		}
 
 	}

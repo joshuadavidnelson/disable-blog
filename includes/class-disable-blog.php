@@ -76,7 +76,7 @@ class Disable_Blog {
 	public function __construct() {
 
 		$this->plugin_name = 'disable-blog';
-		$this->version     = '0.4.9';
+		$this->version     = '0.4.10';
 
 		do_action( 'dwpb_init' );
 
@@ -97,6 +97,11 @@ class Disable_Blog {
 	 * @access private
 	 */
 	private static function upgrade_check() {
+
+		// let's only run these checks on the admin page load.
+		if ( ! is_admin() ) {
+			return;
+		}
 
 		// Get the current version option.
 		$current_version = get_option( 'dwpb_version', false );

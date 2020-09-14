@@ -5,7 +5,7 @@ Tags: remove blog, disable blog, disable settings, disable blogging, disable fee
 Requires at least: 3.1.0
 Requires PHP: 5.3
 Tested up to: 5.5.1
-Stable tag: 0.4.9
+Stable tag: 0.4.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,9 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 There are numerous filters available to change the way this plugin works. Refer to the [GitHub page](https://github.com/joshuadavidnelson/disable-blog) or reach out on the [support forums](https://wordpress.org/support/plugin/disable-blog) if you have any questions.
 
 == Changelog ==
+
+= 0.4.10 =
+- Fix a bug from v0.4.9 that caused redirects on custom post type archives, correcting the `modify_query` function to only remove posts from built-in taxonomy archives, as that was the original intent.
 
 = 0.4.9 =
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
@@ -172,6 +175,9 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.4.10 =
+- Fix a bug from v0.4.9 that caused redirects on custom post type archives.
 
 = 0.4.9 =
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
