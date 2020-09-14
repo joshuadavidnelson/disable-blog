@@ -36,7 +36,7 @@ jobs:
     - name: "Install PHPCS"
       run: "composer require --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer"
     - name: "Run PHPCS"
-      run: "vendor/bin/phpcs --standard=WordPress-Core --exclude=WordPress.PHP.StrictComparisons *.php includes/"
+      run: "vendor/bin/phpcs --standard=WordPress-Core *.php includes/"
 
   static-analysis:
     name: "Run static analysis"
