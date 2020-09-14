@@ -13,7 +13,7 @@
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
 - Remove header feed urls, unless supported by another post type.
-- Wordpress 5.5 support:
+- WordPress 5.5 support:
 	- Remove 'post' post type from XML sitemaps.
 	- Remove built-in taxonomies from XML sitemaps, if not being used by a custom post type.
 	- Fix sitemap redirect issues.
