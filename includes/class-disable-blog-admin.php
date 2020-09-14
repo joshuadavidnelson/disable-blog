@@ -80,7 +80,7 @@ class Disable_Blog_Admin {
 
 			foreach ( $arguments_to_remove as $arg ) {
 				if ( isset( $wp_post_types['post']->$arg ) ) {
-					// @codingStandardsIgnoreStart
+					// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
 					$wp_post_types['post']->$arg = false;
 					// @codingStandardsIgnoreEnd
 				}
@@ -146,7 +146,7 @@ class Disable_Blog_Admin {
 
 					foreach ( $arguments_to_remove as $arg ) {
 						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
-							// @codingStandardsIgnoreStart
+							// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
 							$wp_taxonomies[ $tax ]->$arg = false;
 							// @codingStandardsIgnoreEnd
 						}
@@ -196,7 +196,7 @@ class Disable_Blog_Admin {
 		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
 		 */
 		if ( apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
-			// @codingStandardsIgnoreStart
+			// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 			if ( ( 'edit-tags.php' === $pagenow || 'term.php' === $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) ) {
 			// @codingStandardsIgnoreEnd
 
@@ -280,7 +280,7 @@ class Disable_Blog_Admin {
 		 * @param bool $bool True to redirect the tools.php page, default is true.
 		 */
 		if ( apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-			// @codingStandardsIgnoreStart
+			// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
 			if ( 'tools.php' === $pagenow && ! isset( $_GET['page'] ) ) {
 			// @codingStandardsIgnoreEnd
 
