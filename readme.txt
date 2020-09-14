@@ -68,8 +68,8 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Fix comment redirect/menu functionality, now correctly removes comments and redirects `edit-comments.php` admin page if no other post type support comments (note that WordPress default is for pages and attachments to support comments).
 - Disable XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
-- Initiate plugin via hook.
-- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
+- Initiate plugin via hook into `plugins_loaded`.
+- Change the admin notice related to blog and home page settings, only showing notices if no homepage is set or if the blog and homepage are the same page.
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
@@ -180,8 +180,8 @@ A bunch of stuff:
 - Fix comment redirect/menu functionality, now correctly removes comments and redirects `edit-comments.php` admin page if no other post type support comments (note that WordPress default is for pages and attachments to support comments).
 - Disable XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
 - Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
-- Initiate plugin via hook.
-- Re-order admin menu to place "Pages" below "Dashboard," removing the divider after "dashboard."
+- Initiate plugin via hook into `plugins_loaded`.
+- Change the admin notice related to blog and home page settings, only showing notices if no homepage is set or if the blog and homepage are the same page.
 - Flush rewrite rules at activation and deactivation.
 - Filtering out `post` post types from all archives, previously it was just author archives and search results.
 - Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
