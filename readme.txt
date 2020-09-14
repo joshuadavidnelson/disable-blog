@@ -5,7 +5,7 @@ Tags: remove blog, disable blog, disable settings, disable blogging, disable fee
 Requires at least: 3.1.0
 Requires PHP: 5.3
 Tested up to: 5.5.1
-Stable tag: 0.4.9
+Stable tag: 0.4.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
