@@ -193,7 +193,8 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 added remove_post_from_array_in_query function
-	 * @since 0.4.9 remove 'post' from all archives
+	 * @since 0.4.9 remove 'post' from all archives.
+	 * @since 0.4.10 update to just remove 'post' from built-in taxonomy archives,
 	 * @param object $query the query object.
 	 * @return void
 	 */
@@ -204,65 +205,55 @@ class Disable_Blog_Public {
 			return;
 		}
 
-		// Remove 'post' post_type from search results, replace with page.
-		if ( $query->is_search() ) {
-			$in_search_post_types = get_post_types(
-				array(
-					'exclude_from_search' => false,
-					'public'              => true,
-					'publicly_queryable'  => true,
-				)
-			);
-			$this->remove_post_from_array_in_query( $query, $in_search_post_types, 'dwpb_search_post_types' );
-		}
+		// Let's see if there are any post types supporting build-in taxonomies.
+		$tag_post_types      = dwpb_post_types_with_tax( 'post_tag' );
+		$category_post_types = dwpb_post_types_with_tax( 'category' );
 
-		// Remove Posts from archives.
-		if ( $query->is_archive() ) {
-			$archive_post_types = get_post_types(
-				array(
-					'publicly_queryable' => true,
-				)
-			);
-			$this->remove_post_from_array_in_query( $query, $archive_post_types, 'dwpb_archive_post_types' );
+		// Remove existing posts from built-in taxonomy archives, if they are supported by another post type.
+		if ( $query->is_tag() && $tag_post_types ) {
+
+			$this->set_post_types_in_query( $query, $tag_post_types, 'dwpb_tag_post_types' );
+
+		} elseif ( $query->is_category() && $category_post_types ) {
+
+			$this->set_post_types_in_query( $query, $category_post_types, 'dwpb_category_post_types' );
+
 		}
 
 	}
 
 	/**
-	 * Remove post type from query array.
+	 * Set post types for tag and category archive queries, excluding 'post' as the default type.
 	 *
-	 * Used in $this->modify_query to remove 'post' type from specific queries.
+	 * Used in $this->modify_query to remove 'post' type from built-in archive queries.
 	 *
 	 * @since 0.4.0
 	 *
-	 * @param object $query  the main query object.
-	 * @param array  $array  the array of post types.
-	 * @param string $filter the filter to be applied.
+	 * @param object $query       the main query object.
+	 * @param array  $post_types  the array of post types.
+	 * @param string $filter the  filter to be applied.
 	 *
 	 * @return bool
 	 */
-	public function remove_post_from_array_in_query( $query, $array, $filter = '' ) {
+	public function set_post_types_in_query( $query, $post_types = array(), $filter = '' ) {
 
-		if ( is_array( $array ) && in_array( 'post', $array, true ) ) {
-			unset( $array['post'] );
-
-			/**
-			 * If there is a filter name passed, then a filter is applied on the array and query.
-			 *
-			 * Used for 'dwpb_search_post_types' and 'dwpb_author_post_types' filters.
-			 *
-			 * @see Disable_Blog_Public->modify_query
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param array $array
-			 * @param object $query
-			 */
-			$set_to = empty( $filter ) ? $array : apply_filters( $filter, $array, $query );
-			if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
-				$query->set( 'post_type', $set_to );
-				return true;
-			}
+		/**
+		 * If there is a filter name passed, then a filter is applied on the array and query.
+		 *
+		 * Used for 'dwpb_tag_post_types' and 'dwpb_category_post_types' filters.
+		 *
+		 * @see Disable_Blog_Public->modify_query
+		 *
+		 * @since 0.4.0
+		 * @since 0.4.10 fix bug in 0.4.9 causing cpt weirdness, now always using the filter.
+		 *
+		 * @param array $array
+		 * @param object $query
+		 */
+		$set_to = apply_filters( $filter, $post_types, $query );
+		if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
+			$query->set( 'post_type', $set_to );
+			return true;
 		}
 
 		return false;
