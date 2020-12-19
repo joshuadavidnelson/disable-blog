@@ -187,6 +187,78 @@ class Disable_Blog_Admin {
 		$redirect_url = false;
 
 		/**
+		 * Redirect Edit Single Post to Dashboard.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
+		 */
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		if ( apply_filters( 'dwpb_redirect_admin_edit_single_post', true )
+			&& $this->is_admin_page( 'post' )
+			&& ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) ) {
+			// @codingStandardsIgnoreEnd
+
+			/**
+			 * The redirect url used at the single post edit screen.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to, defaults to dashboard.
+			 */
+			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', admin_url( '/index.php' ) );
+
+		}
+
+		/**
+		 * Redirect Edit Posts Screen to Edit Page.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
+		 */
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		if ( apply_filters( 'dwpb_redirect_admin_edit_post', true )
+			&& $this->is_admin_page( 'edit' )
+			&& ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
+			// @codingStandardsIgnoreEnd
+
+			/**
+			 * The redirect url used at the edit-tags.php and term.php pages.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to, defaults to dashboard.
+			 */
+			$redirect_url = apply_filters( 'dwpb_redirect_edit', admin_url( '/edit.php?post_type=page' ) );
+
+		}
+
+		/**
+		 * Redirect New Post to New Page.
+		 *
+		 * @since 0.4.0
+		 *
+		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
+		 */
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		if ( apply_filters( 'dwpb_redirect_admin_post_new', true )
+			&& $this->is_admin_page( 'post-new' )
+			&& ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
+			// @codingStandardsIgnoreEnd
+
+			/**
+			 * The redirect url used at the edit-tags.php and term.php pages.
+			 *
+			 * @since 0.4.0
+			 *
+			 * @param string $url the url to redirct to, defaults to dashboard.
+			 */
+			$redirect_url = apply_filters( 'dwpb_redirect_post_new', admin_url( '/post-new.php?post_type=page' ) );
+
+		}
+
+		/**
 		 * Redirect admin page at edit tags screen.
 		 *
 		 * If this is either the edit-tags page or term page and the taxonomy is
