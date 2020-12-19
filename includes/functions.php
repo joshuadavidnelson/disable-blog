@@ -145,7 +145,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
  *
  * @see https://make.wordpress.org/core/2019/04/25/site-health-check-in-5-2/
  * @since 0.4.11
- * @return void
+ * @return array
  */
 function dwpb_get_test_rest_availability() {
 

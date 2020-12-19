@@ -363,7 +363,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.4.11
-	 * @return bool|string
+	 * @return bool
 	 */
 	public function redirect_admin_edit_comments() {
 
@@ -385,7 +385,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_options_discussion() {
 
-		return $this->redirect_admin_edit_comments;
+		return $this->redirect_admin_edit_comments();
 
 	}
 
@@ -1003,7 +1003,7 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_get_test_rest_availability()
 	 * @since 0.4.11
 	 * @param array $tests the tests, of course.
-	 * @return void
+	 * @return array
 	 */
 	public function site_status_tests( $tests ) {
 
