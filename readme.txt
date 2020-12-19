@@ -2,10 +2,10 @@
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
-Requires at least: 3.1.0
-Requires PHP: 5.3
-Tested up to: 5.5.1
-Stable tag: 0.4.10
+Requires at least: 4.0
+Requires PHP: 5.6
+Tested up to: 5.6
+Stable tag: 0.4.11
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,18 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 There are numerous filters available to change the way this plugin works. Refer to the [GitHub page](https://github.com/joshuadavidnelson/disable-blog) or reach out on the [support forums](https://wordpress.org/support/plugin/disable-blog) if you have any questions.
 
 == Changelog ==
+
+= 0.4.11 =
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur.
+- Dry out the admin redirect code, updating a few redirect-specific admin filters to a common format. Note that the following filters are now deprecated, replaced by new filters:
+	- `dwpb_redirect_admin_edit_post` has been replaced by `dwpb_redirect_admin_edit`.
+	- `dwpb_redirect_single_post_edit` has been replaced by `dwpb_redirect_post`.
+	- `dwpb_redirect_admin_edit_single_post` has been replaced by `dwpb_redirect_admin_post`.
+- Replace the REST API site health check (which usesthe `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
+- Bump minimum PHP to 5.6.
+- Tested up to WP Core version 5.6.
+- Updated minimum WP Core version to 4.0.
 
 = 0.4.10 =
 - Fix a bug from v0.4.9 that caused redirects on custom post type archives, correcting the `modify_query` function to only remove posts from built-in taxonomy archives, as that was the original intent.
@@ -206,6 +218,18 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.4.11 =
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur.
+- Dry out the admin redirect code, updating a few redirect-specific admin filters to a common format. Note that the following filters are now deprecated, replaced by new filters:
+	- `dwpb_redirect_admin_edit_post` has been replaced by `dwpb_redirect_admin_edit`.
+	- `dwpb_redirect_single_post_edit` has been replaced by `dwpb_redirect_post`.
+	- `dwpb_redirect_admin_edit_single_post` has been replaced by `dwpb_redirect_admin_post`.
+- Replace the REST API site health check (which usesthe `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
+- Bump minimum PHP to 5.6.
+- Tested up to WP Core version 5.6.
+- Updated minimum WP Core version to 4.0.
 
 = 0.4.10 =
 - Fix a bug from v0.4.9 that caused redirects on custom post type archives.

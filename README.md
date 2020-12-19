@@ -3,11 +3,11 @@ Disable Blog
 
 [![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/) ![Downloads](https://img.shields.io/wordpress/plugin/dt/disable-blog.svg) ![Rating](https://img.shields.io/wordpress/plugin/r/disable-blog.svg)
 
-**Requires at least:** 3.1.0
-**Tested up to:** 5.5.1
+**Requires at least:** 4.0
+**Tested up to:** 5.6
 **Stable version:** 0.4.9
 **License:** GPLv2 or later
-**Requires PHP:** 5.3
+**Requires PHP:** 5.6
 
 ## Description
 
