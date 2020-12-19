@@ -13,9 +13,42 @@ All the power of WordPress, but without a blog.
 
 == Description ==
 
-Free your WordPress site from the blog! Maintain a static website without "posts." Go blog-less with WordPress.
+Free your WordPress site from posts! Maintain a static website, a blog-less WordPress.
 
-This plugin disables all blog-related functionality, mostly by hiding admin pages/settings and redirecting urls on both the front-end and admin portions of your site.
+Disable Blog is a comprehensive plugin for to disable blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
+
+The blog is "disabled" mostly by hiding blog-related admin pages/settings and redirecting urls on both the front-end and admin portions of your site. Specifically does the following:
+
+- Turns the `post` type into a non-public type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page.
+
+- Front-end:
+	- Disables the post feed and remoives the feed links from the header (for WP >= 4.4.0) and disables the comment feed/removes comment feed link if 'post' is the only post type supporting comments (note that the default condition pages and attachments support comments).
+	- Removes posts from all archive pages.
+	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
+	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
+	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
+	- Redirects (301):
+		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
+		- The blog page to the homepage.
+		- All Tag & Category archives to home page, unless they are supported by a custom post type.
+
+- Admin side:
+	- Redirects tag and category pages to dashboard, unless used by a custom post type.
+	- If comments are not supported by other post types (by default comments are supported by pages and attachments), it will hide the menu links for and redirect discussion options page and 'Comments' admin page to the dashboard.
+	- Filters out the 'post' post type from 'Comments' admin page.
+	- Alters the comment count to remove any comments associated with 'post' post type.
+	- Optionally remove/redirect the Settings > Writting page via `dwpb_redirect_admin_options_writing` filter (default is false).
+	- Removes Available Tools from admin menu and redirects page to the dashboard (this admin page contains Press This and Category/Tag converter, both are no longer neededd without a blog).
+	- Removes Post from '+New' admin bar menu.
+	- Removes 'Posts' Admin Menu.
+	- Removes post-related dashboard widgets.
+	- Hides number of posts and comment count on Activity dashboard widget.
+	- Removes Post Related Widgets.
+	- Hide options in Reading Settings page related to posts (shows front page and search engine options).
+	- Removes 'Post' options on 'Menus' admin page.
+	- Filters 'post' post type out of main query.
+	- Disables "Press This" functionality.
+	- Disables post by email configuration.
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
@@ -32,7 +65,7 @@ If you have any posts, comments, categories, and/or tags, delete them prior to a
 **Support**: This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [support forums](https://wordpress.org/support/plugin/disable-blog) or the [issue](https://github.com/joshuadavidnelson/disable-blog/issues) section of the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog).
 
 = View on GitHub & Contribute =
-[View this plugin on GitHub](https://github.com/joshuadavidnelson/disable-blog) to see a comprehensive list of this plugin's functionality and the To-Do list of items yet to be included, as well as log any issues (or visit the WP support forums linked above).
+[View this plugin on GitHub](https://github.com/joshuadavidnelson/disable-blog) to contribute as well as log any issues (or visit the WP [support forums](https://wordpress.org/support/plugin/disable-blog)).
 
 Please feel free to contribute!
 
