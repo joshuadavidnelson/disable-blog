@@ -102,9 +102,7 @@ class Disable_Blog_Admin {
 	 * Only disables these if the 'post' post type is the only post type using them.
 	 *
 	 * @since 0.4.9
-	 *
 	 * @uses dwpb_post_types_with_tax()
-	 *
 	 * @return void
 	 */
 	public function modify_taxonomies_arguments() {
@@ -162,10 +160,8 @@ class Disable_Blog_Admin {
 	 * Redirect blog-related admin pages
 	 *
 	 * @uses dwpb_post_types_with_tax()
-	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 added single post edit screen redirect
-	 *
 	 * @return void
 	 */
 	public function redirect_admin_pages() {
@@ -186,185 +182,70 @@ class Disable_Blog_Admin {
 		// setup false redirect url value for default/final check.
 		$redirect_url = false;
 
-		/**
-		 * Redirect Edit Single Post to Dashboard.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
-		 */
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		if ( apply_filters( 'dwpb_redirect_admin_edit_single_post', true )
-			&& $this->is_admin_page( 'post' )
-			&& ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ) ) {
-			// @codingStandardsIgnoreEnd
+		// The admin page slugs to potentially be redirected.
+		$admin_pages = array(
+			'post',
+			'edit',
+			'post-new',
+			'edit-tags',
+			'term',
+			'edit-comments',
+			'options-discussion',
+			'options-writing',
+			'options-tools',
+		);
+
+		// cycle through each admin page, checking if we need to redirect.
+		foreach ( $admin_pages as $pagename ) {
+
+			// Filter names are all underscores.
+			$filter = str_replace( '-', '_', $pagename );
+
+			// Custom function within this class used to check if the page needs to be redirected.
+			$function = 'redirect_admin_' . $filter;
 
 			/**
-			 * The redirect url used at the single post edit screen.
+			 * Toggle the specific admin redriect on/off.
+			 *
+			 * Example: use 'dwpb_redirect_admin_edit' to filter on the edit.php page.
 			 *
 			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to, defaults to dashboard.
+			 * @since 0.4.11 combined filters by function name.
+			 * @param bool $bool True to redirect, default is true.
 			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_single_post_edit', admin_url( '/index.php' ) );
+			if ( apply_filters( 'dwpb_' . $function, true )
+				&& $this->is_admin_page( $pagename )
+				&& is_callable( array( $this, $function ) ) ) {
 
-		}
+				// Check the function for redirect clearance, or custom url.
+				$redirect = $this->$function();
 
-		/**
-		 * Redirect Edit Posts Screen to Edit Page.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
-		 */
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		if ( apply_filters( 'dwpb_redirect_admin_edit_post', true )
-			&& $this->is_admin_page( 'edit' )
-			&& ( !isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
-			// @codingStandardsIgnoreEnd
+				// If it's set to `true` then redirect to the dashboard,
+				// if it's set to a url, redirect to that url.
+				if ( true === $redirect || esc_url( $redirect ) ) {
 
-			/**
-			 * The redirect url used at the edit-tags.php and term.php pages.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to, defaults to dashboard.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_edit', admin_url( '/edit.php?post_type=page' ) );
+					// Either this is a custom redirect url or true, which defaults to the dashboard.
+					if ( esc_url( $redirect ) ) {
+						$url = esc_url( $redirect );
+					} else {
+						$url = admin_url( 'index.php' );
+					}
 
-		}
+					/**
+					 * The redirect url used for this admin page.
+					 *
+					 * Example: use 'dwpb_redirect_post' to change the redirect url
+					 * used for the post.php page.
+					 *
+					 * @since 0.4.0
+					 * @since 0.4.11 combine common filters.
+					 * @param string $url the url to redirct to, defaults to dashboard.
+					 */
+					$redirect_url = apply_filters( "dwpb_redirect_{$filter}", $url );
 
-		/**
-		 * Redirect New Post to New Page.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
-		 */
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		if ( apply_filters( 'dwpb_redirect_admin_post_new', true )
-			&& $this->is_admin_page( 'post-new' )
-			&& ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
-			// @codingStandardsIgnoreEnd
+					break; // no need to keep looping.
 
-			/**
-			 * The redirect url used at the edit-tags.php and term.php pages.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to, defaults to dashboard.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_post_new', admin_url( '/post-new.php?post_type=page' ) );
-
-		}
-
-		/**
-		 * Redirect admin page at edit tags screen.
-		 *
-		 * If this is either the edit-tags page or term page and the taxonomy is
-		 * not supported by post types other than `post` then redirect.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
-		 */
-		if ( apply_filters( 'dwpb_redirect_admin_edit_tags', true ) ) {
-			// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-			if ( ( 'edit-tags.php' === $pagenow || 'term.php' === $pagenow ) && ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ) ) {
-			// @codingStandardsIgnoreEnd
-
-				/**
-				 * The redirect url used at the edit-tags.php and term.php pages.
-				 *
-				 * @since 0.4.0
-				 *
-				 * @param string $url the url to redirct to, defaults to dashboard.
-				 */
-				$redirect_url = apply_filters( 'dwpb_redirect_edit_tax', admin_url( '/index.php' ) );
-			}
-		}
-
-		/**
-		 * Redirect the comments admin page.
-		 *
-		 * Will only work comments are only supported by 'post' type,
-		 * note that pages and attachments support comments by default.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the edit-comments.php page, default is true.
-		 */
-		if ( apply_filters( 'dwpb_redirect_admin_edit_comments', true ) ) {
-			if ( 'edit-comments.php' === $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
-
-				/**
-				 * The redirect url used at the edit-tags.php and term.php pages.
-				 *
-				 * @since 0.4.0
-				 *
-				 * @param string $url the url to redirct to, defaults to dashboard.
-				 */
-				$redirect_url = apply_filters( 'dwpb_redirect_edit_comments', admin_url( 'index.php' ) );
-
-			}
-		}
-
-		/**
-		 * Redirect disccusion options page.
-		 *
-		 * Will only work comments are only supported by 'post' type.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the options-discussion.php page, default is true.
-		 */
-		if ( apply_filters( 'dwpb_redirect_admin_options_discussion', true ) ) {
-			if ( 'options-discussion.php' === $pagenow && ! dwpb_post_types_with_feature( 'comments' ) ) {
-
-				/**
-				 * The redirect url used at the blog page.
-				 *
-				 * @since 0.4.0
-				 *
-				 * @param string $url the url to redirct to, defaults to dashboard.
-				 */
-				$redirect_url = apply_filters( 'dwpb_redirect_options_discussion', admin_url( '/index.php' ) );
-			}
-		}
-
-		// Redirect writing options to general options.
-		if ( 'options-writing.php' === $pagenow && $this->remove_writing_options() ) {
-
-			/**
-			 * The redirect url used at the blog page.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to, defaults to options-general.php.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_options_writing', admin_url( '/options-general.php' ) );
-		}
-
-		/**
-		 * Redirect available tools page.
-		 *
-		 * @since 0.4.0
-		 *
-		 * @param bool $bool True to redirect the tools.php page, default is true.
-		 */
-		if ( apply_filters( 'dwpb_redirect_admin_options_tools', true ) ) {
-			// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
-			if ( 'tools.php' === $pagenow && ! isset( $_GET['page'] ) ) {
-			// @codingStandardsIgnoreEnd
-
-				/**
-				 * The redirect url used at the blog page.
-				 *
-				 * @since 0.4.0
-				 *
-				 * @param string $url the url to redirct to, defaults to dashboard.
-				 */
-				$redirect_url = apply_filters( 'dwpb_redirect_options_tools', admin_url( '/index.php' ) );
+				}
 			}
 		}
 
@@ -380,7 +261,6 @@ class Disable_Blog_Admin {
 		 * Redirect blog related admin pages.
 		 *
 		 * @since 0.4.0
-		 *
 		 * @param bool   $bool         True to enable, default is true.
 		 * @param string $redirect_url The url to being used in the redirect.
 		 * @param string $current_url  The current url.
@@ -393,10 +273,163 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * The admin redirect arguments checked to redirect the post.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool
+	 */
+	public function redirect_admin_post() {
+
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		return ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) );
+		// @codingStandardsIgnoreEnd
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the edit.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool|string
+	 */
+	public function redirect_admin_edit() {
+
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		if ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) {
+			// @codingStandardsIgnoreEnd
+
+			return admin_url( 'edit.php?post_type=page' );
+
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the post-new.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool|string
+	 */
+	public function redirect_admin_post_new() {
+
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		if ( ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
+			// @codingStandardsIgnoreEnd
+
+			return admin_url( 'post-new.php?post_type=page' );
+
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the term.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool|string
+	 */
+	public function reidrect_admin_term() {
+
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the edit-tags.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool|string
+	 */
+	public function redirect_admin_edit_tags() {
+
+		/**
+		 * Redirect admin page at edit tags screen.
+		 *
+		 * @since 0.4.0
+		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
+		 */
+		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the edit-comments.php screen.
+	 *
+	 * @uses dwpb_post_types_with_feature()
+	 * @since 0.4.11
+	 * @return bool|string
+	 */
+	public function redirect_admin_edit_comments() {
+
+		/**
+		 * Will only work comments are only supported by 'post' type,
+		 * note that pages and attachments support comments by default.
+		 */
+		return ! dwpb_post_types_with_feature( 'comments' );
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the options-discussion.php screen.
+	 *
+	 * The same checks are performed by the edit-comments check, so this is a wrapper function.
+	 *
+	 * @since 0.4.11
+	 * @return bool
+	 */
+	public function redirect_admin_options_discussion() {
+
+		return $this->redirect_admin_edit_comments;
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the options-writing.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool|string
+	 */
+	public function redirect_admin_options_writing() {
+
+		// Redirect writing options to general options.
+		if ( $this->remove_writing_options() ) {
+
+			return admin_url( 'options-general.php' );
+
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * The admin redirect arguments checked to redirect the options-tools.php screen.
+	 *
+	 * @since 0.4.11
+	 * @return bool
+	 */
+	public function redirect_admin_options_tools() {
+
+		/**
+		 * The isset( $_GET['page'] ) check is to confirm the page
+		 * isn't a 3rd party plugin's option page built into the tools page.
+		 */
+		// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
+		return ! isset( $_GET['page'] );
+		// @codingStandardsIgnoreEnd
+
+	}
+
+	/**
 	 * Remove the X-Pingback HTTP header.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param array $headers the pingback headers.
 	 * @return array
 	 */
@@ -422,12 +455,9 @@ class Disable_Blog_Admin {
 	 *
 	 * @uses dwpb_post_types_with_tax()
 	 * @uses dwpb_post_types_with_feature()
-	 *
 	 * @link http://wordpress.stackexchange.com/questions/57464/remove-posts-from-admin-but-show-a-custom-post
-	 *
 	 * @since 0.1.0
-	 * @since 0.4.0 added tools and discussion subpages
-	 *
+	 * @since 0.4.0 added tools and discussion subpages.
 	 * @return void
 	 */
 	public function remove_menu_pages() {
@@ -444,7 +474,6 @@ class Disable_Blog_Admin {
 		 * Top level admin pages to remove.
 		 *
 		 * @since 0.4.0
-		 *
 		 * @param array $remove_pages Array of page strings.
 		 */
 		$pages = apply_filters( 'dwpb_menu_pages_to_remove', $remove_pages );
@@ -471,7 +500,6 @@ class Disable_Blog_Admin {
 		 * Admin subpages to be removed.
 		 *
 		 * @since 0.4.0
-		 *
 		 * @param array $remove_subpages Array of page => subpage.
 		 */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
@@ -485,9 +513,7 @@ class Disable_Blog_Admin {
 	 * Filter the body classes for admin screens to toggle on plugin specific styles.
 	 *
 	 * @since 0.4.7
-	 *
 	 * @param string $classes the admin body classes, which is a string *not* an array.
-	 *
 	 * @return string
 	 */
 	public function admin_body_class( $classes ) {
@@ -504,7 +530,6 @@ class Disable_Blog_Admin {
 	 * Filter for removing the writing options page.
 	 *
 	 * @since 0.4.5
-	 *
 	 * @return bool
 	 */
 	public function remove_writing_options() {
@@ -516,7 +541,6 @@ class Disable_Blog_Admin {
 		 * and remove it from the admin menu.
 		 *
 		 * @since 0.4.5
-		 *
 		 * @param bool $bool Defaults to false, keeping the writing page visible.
 		 */
 		return apply_filters( 'dwpb_redirect_admin_options_writing', false );
@@ -527,11 +551,8 @@ class Disable_Blog_Admin {
 	 * Remove blog-related admin bar links
 	 *
 	 * @uses dwpb_post_types_with_feature()
-	 *
 	 * @link http://www.paulund.co.uk/how-to-remove-links-from-wordpress-admin-bar
-	 *
 	 * @since 0.1.0
-	 *
 	 * @return void
 	 */
 	public function remove_admin_bar_links() {
@@ -552,9 +573,7 @@ class Disable_Blog_Admin {
 	 * Hide all comments from 'post' post type
 	 *
 	 * @uses dwpb_post_types_with_feature()
-	 *
 	 * @since 0.1.0
-	 *
 	 * @param object $comments the comments query object.
 	 * @return object
 	 */
@@ -579,10 +598,8 @@ class Disable_Blog_Admin {
 	 * Remove post-related dashboard widgets
 	 *
 	 * @uses dwpb_post_types_with_feature()
-	 *
 	 * @since 0.1.0
 	 * @since 0.4.1 dry out the code with a foreach loop
-	 *
 	 * @return void
 	 */
 	public function remove_dashboard_widgets() {
@@ -604,7 +621,6 @@ class Disable_Blog_Admin {
 			 * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
 			 *
 			 * @since 0.4.1
-			 *
 			 * @param bool $bool True to remove the dashboard widget.
 			 */
 			if ( apply_filters( "dwpb_disable_{$metabox_id}", true ) ) {
@@ -622,7 +638,6 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.2.0
 	 * @since 0.4.7 Changed this to an error notice function.
-	 *
 	 * @return void
 	 */
 	public function admin_notices() {
@@ -679,7 +694,6 @@ class Disable_Blog_Admin {
 	 * Check that the site has a front page set in the Settings > Reading.
 	 *
 	 * @since 0.4.7
-	 *
 	 * @return bool
 	 */
 	public function has_front_page() {
@@ -692,7 +706,6 @@ class Disable_Blog_Admin {
 	 * Kill the Press This functionality
 	 *
 	 * @since 0.2.0
-	 *
 	 * @return void
 	 */
 	public function disable_press_this() {
@@ -706,7 +719,6 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.2.0
 	 * @since 0.4.0 simplified unregistering and added dwpb_unregister_widgets filter.
-	 *
 	 * @return void
 	 */
 	public function remove_widgets() {
@@ -746,11 +758,10 @@ class Disable_Blog_Admin {
 	 * If there are post types using the comments or built-in taxonomies outside of the default 'post'
 	 * then we stop the plugin from removing the widget.
 	 *
+	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.4.0
-	 *
 	 * @param bool   $bool   true to show.
 	 * @param string $widget the widget name.
-	 *
 	 * @return bool
 	 */
 	public function filter_widget_removal( $bool, $widget ) {
@@ -778,7 +789,6 @@ class Disable_Blog_Admin {
 	 * Register the stylesheets for the admin area.
 	 *
 	 * @since  0.4.0
-	 *
 	 * @return void
 	 */
 	public function enqueue_styles() {
@@ -791,12 +801,10 @@ class Disable_Blog_Admin {
 	 * Check that we're on a specific admin page.
 	 *
 	 * @since 0.4.8
-	 *
 	 * @param string $page the page slug.
-	 *
 	 * @return boolean
 	 */
-	private function is_admin_page( $page ) {
+	public function is_admin_page( $page ) {
 
 		global $pagenow;
 		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow;
@@ -808,10 +816,8 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Moved everything into the post id check and reset the cache.
-	 *
 	 * @param object $comments the comment count object.
 	 * @param int    $post_id  the post id.
-	 *
 	 * @return object
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
@@ -838,10 +844,8 @@ class Disable_Blog_Admin {
 	 * to check/convert the $comment object into an array.
 	 *
 	 * @since 0.4.3
-	 *
 	 * @param object $comments the array of comments.
 	 * @param int    $post_id  the post id.
-	 *
 	 * @return array
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
@@ -858,9 +862,7 @@ class Disable_Blog_Admin {
 	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param array $views all the views.
-	 *
 	 * @return array
 	 */
 	public function filter_admin_table_comment_count( $views ) {
@@ -886,9 +888,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
-	 *
 	 * @see get_comment_count()
-	 *
 	 * @return array
 	 */
 	public function get_comment_counts() {
@@ -955,10 +955,8 @@ class Disable_Blog_Admin {
 	 * Clear out the status of all post comments.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param bool $open    true if comments are open.
 	 * @param int  $post_id the post id.
-	 *
 	 * @return bool
 	 */
 	public function filter_comment_status( $open, $post_id ) {
@@ -971,10 +969,8 @@ class Disable_Blog_Admin {
 	 * Clear comments from 'post' post type.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param array $comments the array of comments.
 	 * @param int   $post_id  the post id.
-	 *
 	 * @return array
 	 */
 	public function filter_existing_comments( $comments, $post_id ) {
@@ -987,7 +983,6 @@ class Disable_Blog_Admin {
 	 * Filters the default post display states used in the posts list table.
 	 *
 	 * @since 0.4.11
-	 *
 	 * @param string[] $post_states An array of post display states.
 	 * @param WP_Post  $post        The current post object.
 	 * @return array
