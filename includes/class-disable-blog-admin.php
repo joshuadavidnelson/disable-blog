@@ -983,4 +983,23 @@ class Disable_Blog_Admin {
 
 	}
 
+	/**
+	 * Filters the default post display states used in the posts list table.
+	 *
+	 * @since 0.4.11
+	 *
+	 * @param string[] $post_states An array of post display states.
+	 * @param WP_Post  $post        The current post object.
+	 * @return array
+	 */
+	public function page_post_states( $post_states, $post ) {
+
+		if ( $this->has_front_page() && isset( $post->ID ) && absint( get_option( 'page_for_posts' ) ) === $post->ID ) {
+			// translators: This string is used to indicate that the blog page is redirected to the homepage.
+			$post_states['dwpb-redirected'] = __( 'Redirected to the homepage', 'disable-blog' );
+		}
+
+		return $post_states;
+	}
+
 }

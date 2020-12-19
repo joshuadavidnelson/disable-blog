@@ -299,6 +299,9 @@ class Disable_Blog {
 		// Filter removal of widgets for some checks.
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
 
+		// Custom Post State for the Blog Page redirect.
+		$this->loader->add_filter( 'display_post_states', $plugin_admin, 'page_post_states', 10, 2 );
+
 	}
 
 	/**
