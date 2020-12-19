@@ -1002,4 +1002,22 @@ class Disable_Blog_Admin {
 		return $post_states;
 	}
 
+	/**
+	 * Removes the Site Health check for the post REST API.
+	 *
+	 * @uses dwpb_get_test_rest_availability()
+	 * @since 0.4.11
+	 * @param array $tests the tests, of course.
+	 * @return void
+	 */
+	public function site_status_tests( $tests ) {
+
+		if ( isset( $tests['direct']['rest_availability'] ) ) {
+			$tests['direct']['rest_availability']['test'] = 'dwpb_get_test_rest_availability';
+		}
+
+		return $tests;
+
+	}
+
 }

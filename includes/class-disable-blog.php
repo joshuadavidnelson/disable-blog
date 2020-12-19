@@ -307,6 +307,9 @@ class Disable_Blog {
 		// Custom Post State for the Blog Page redirect.
 		$this->loader->add_filter( 'display_post_states', $plugin_admin, 'page_post_states', 10, 2 );
 
+		// Remove REST API site health check related to posts.
+		$this->loader->add_filter( 'site_status_tests', $plugin_admin, 'site_status_tests', 10, 1 );
+
 	}
 
 	/**
