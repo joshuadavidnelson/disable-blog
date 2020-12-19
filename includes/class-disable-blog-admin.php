@@ -659,7 +659,7 @@ class Disable_Blog_Admin {
 			// translators: Prompt to configure the site for static homepage and posts page.
 			$message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
 
-			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', esc_attr( $message ) );
+			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', wp_kses_post( $message ) );
 
 			// If we have a front page set, but no posts page or they are the same,.
 			// Then let the user know the expected behavior of these two.
