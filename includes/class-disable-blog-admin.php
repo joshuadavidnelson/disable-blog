@@ -249,10 +249,20 @@ class Disable_Blog_Admin {
 			}
 		}
 
-		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
-		// If there is no redirect url, then also bail.
+		// Get the current url.
 		global $wp;
 		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
+
+		/**
+		 * Global admin url redirect filter.
+		 *
+		 * @since 0.4.11
+		 * @param string $redirect_url The redirect url.
+		 */
+		$redirect_url = apply_filters( 'dwpb_admin_redirect_url', $redirect_url, $pagenow );
+
+		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop
+		// If there is no valid redirect url, then also bail.
 		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
 			return;
 		}
