@@ -222,11 +222,11 @@ class Disable_Blog_Admin {
 
 				// If it's set to `true` then redirect to the dashboard,
 				// if it's set to a url, redirect to that url.
-				if ( true === $redirect || esc_url( $redirect ) ) {
+				if ( true === $redirect || esc_url_raw( $redirect ) ) {
 
 					// Either this is a custom redirect url or true, which defaults to the dashboard.
-					if ( esc_url( $redirect ) ) {
-						$url = esc_url( $redirect );
+					if ( esc_url_raw( $redirect ) ) {
+						$url = esc_url_raw( $redirect );
 					} else {
 						$url = admin_url( 'index.php' );
 					}
@@ -253,7 +253,7 @@ class Disable_Blog_Admin {
 		// If there is no redirect url, then also bail.
 		global $wp;
 		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
-		if ( $redirect_url === $current_url || ! $redirect_url ) {
+		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
 			return;
 		}
 

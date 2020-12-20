@@ -175,7 +175,7 @@ class Disable_Blog_Public {
 		 * @param string $current_url  The current url.
 		 */
 		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url, $current_url ) ) {
-			wp_safe_redirect( esc_url( $redirect_url ), 301 );
+			wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
 			exit();
 		}
 
