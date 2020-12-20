@@ -4,7 +4,6 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.2.0
- *
  * @package    Disable_Blog
  * @subpackage Disable_Blog/public
  */
@@ -57,12 +56,9 @@ class Disable_Blog_Public {
 	 * Redirect single post pages
 	 *
 	 * @uses dwpb_post_types_with_tax()
-	 *
+	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @since 0.2.0
 	 * @since 0.4.9 added sitemap checks to avoid redirects on new sitemaps in WP v5.5.
-	 *
-	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
-	 *
 	 * @return void
 	 */
 	public function redirect_posts() {
@@ -92,7 +88,6 @@ class Disable_Blog_Public {
 			 * The redirect url used at any single post page.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url the url to redirct to.
 			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_posts', $url, $post );
@@ -101,7 +96,6 @@ class Disable_Blog_Public {
 			 * The redirect url used for a specific post id.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url the url to redirct to.
 			 */
 			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
@@ -112,7 +106,6 @@ class Disable_Blog_Public {
 			 * The redirect url used at tag archives.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url the url to redirct to.
 			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
@@ -123,7 +116,6 @@ class Disable_Blog_Public {
 			 * The redirect url used at category archives
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url the url to redirct to.
 			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
@@ -134,7 +126,6 @@ class Disable_Blog_Public {
 			 * The redirect url used at the blog page.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url the url to redirct to.
 			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
@@ -145,7 +136,6 @@ class Disable_Blog_Public {
 			 * The redirect url used at date archives.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url the url to redirct to.
 			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
@@ -169,7 +159,6 @@ class Disable_Blog_Public {
 		 *
 		 * @since 0.2.0
 		 * @since 0.4.0 added the current_url param.
-		 *
 		 * @param bool   $bool         True to enable, false to disable.
 		 * @param string $redirect_url The url being used for the redirect.
 		 * @param string $current_url  The current url.
@@ -228,11 +217,9 @@ class Disable_Blog_Public {
 	 * Used in $this->modify_query to remove 'post' type from built-in archive queries.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param object $query       the main query object.
 	 * @param array  $post_types  the array of post types.
 	 * @param string $filter the  filter to be applied.
-	 *
 	 * @return bool
 	 */
 	public function set_post_types_in_query( $query, $post_types = array(), $filter = '' ) {
@@ -243,10 +230,8 @@ class Disable_Blog_Public {
 		 * Used for 'dwpb_tag_post_types' and 'dwpb_category_post_types' filters.
 		 *
 		 * @see Disable_Blog_Public->modify_query
-		 *
 		 * @since 0.4.0
 		 * @since 0.4.10 fix bug in 0.4.9 causing cpt weirdness, now always using the filter.
-		 *
 		 * @param array $array
 		 * @param object $query
 		 */
@@ -265,9 +250,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
-	 *
 	 * @param bool $is_comment_feed true if a comment feed.
-	 *
 	 * @return void
 	 */
 	public function disable_feed( $is_comment_feed ) {
@@ -284,7 +267,6 @@ class Disable_Blog_Public {
 		 * Toggle the disable feed via this filter.
 		 *
 		 * @since 0.4.0
-		 *
 		 * @param bool $bool True to cancel the feed, assuming it's a post feed.
 		 * @param object $post Global post object.
 		 * @param bool $is_comment_feed True if the feed is a comment feed.
@@ -295,7 +277,6 @@ class Disable_Blog_Public {
 			 * Filter the feed redirect url.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url The redirect url (defaults to homepage)
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
 			 */
@@ -312,7 +293,6 @@ class Disable_Blog_Public {
 			 *              the order is: bool, $post, $is_comment_feed.
 			 *              Note that if you used this filter before
 			 *              and relied on the $is_comment_feed, you'll need to update.
-			 *
 			 * @param bool $bool True to use a message, false to redirect.
 			 * @param object $post Global post object.
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
@@ -328,7 +308,6 @@ class Disable_Blog_Public {
 				 * If the `dwpb_feed_message` is set to true, use this filter to set a custom message.
 				 *
 				 * @since 0.4.0
-				 *
 				 * @param string $message
 				 */
 				$message      = apply_filters( 'dwpb_feed_die_message', $message );
@@ -356,9 +335,7 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param bool $bool true to show the posts feed link.
-	 *
 	 * @return bool
 	 */
 	public function feed_links_show_posts_feed( $bool ) {
@@ -373,9 +350,7 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param bool $bool true to show the comments feed link.
-	 *
 	 * @return bool
 	 */
 	public function feed_links_show_comments_feed( $bool ) {
@@ -393,7 +368,6 @@ class Disable_Blog_Public {
 	 * Remove feed urls from head.
 	 *
 	 * @since 0.4.9
-	 *
 	 * @return void
 	 */
 	public function header_feeds() {
@@ -417,11 +391,8 @@ class Disable_Blog_Public {
 	 * Unset all post-related xmlrpc methods.
 	 *
 	 * @see wp-includes/class-wp-xmlrpc-server.php
-	 *
 	 * @since 0.4.9
-	 *
 	 * @param array $methods the arrayve of xmlrpc methods.
-	 *
 	 * @return array
 	 */
 	public function xmlrpc_methods( $methods ) {
