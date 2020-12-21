@@ -12,8 +12,7 @@
 /**
  * The admin-specific functionality of the plugin.
  *
- * Defines the plugin name, version, and two examples hooks for how to
- * enqueue the admin-specific stylesheet and JavaScript.
+ * Defines the plugin name, version, and contains all the admin functions.
  *
  * @package    Disable_Blog
  * @subpackage Disable_Blog/admin
@@ -162,6 +161,8 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_tax()
 	 * @since 0.1.0
 	 * @since 0.4.0 added single post edit screen redirect
+	 * @since 0.4.11 condensed page rediects into a foreach loop with common structure
+	 *               for filters and functions used to check redirect conditions.
 	 * @return void
 	 */
 	public function redirect_admin_pages() {
@@ -213,9 +214,9 @@ class Disable_Blog_Admin {
 			 * @since 0.4.11 combined filters by function name.
 			 * @param bool $bool True to redirect, default is true.
 			 */
-			if ( apply_filters( 'dwpb_' . $function, true )
-				&& $this->is_admin_page( $pagename )
-				&& is_callable( array( $this, $function ) ) ) {
+			if ( apply_filters( 'dwpb_' . $function, true )     // check that we are allowing this page redirect.
+				&& $this->is_admin_page( $pagename )            // make sure we're on that page right now.
+				&& is_callable( array( $this, $function ) ) ) { // make sure the function used to check/provide the url is callable.
 
 				// Check the function for redirect clearance, or custom url.
 				$redirect = $this->$function();
@@ -224,7 +225,7 @@ class Disable_Blog_Admin {
 				// if it's set to a url, redirect to that url.
 				if ( true === $redirect || esc_url_raw( $redirect ) ) {
 
-					// Either this is a custom redirect url or true, which defaults to the dashboard.
+					// Either this is a custom redirect url or 'true', which defaults the url to the dashboard.
 					if ( esc_url_raw( $redirect ) ) {
 						$url = esc_url_raw( $redirect );
 					} else {
@@ -261,7 +262,7 @@ class Disable_Blog_Admin {
 		 */
 		$redirect_url = apply_filters( 'dwpb_admin_redirect_url', $redirect_url, $pagenow );
 
-		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop
+		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
 		// If there is no valid redirect url, then also bail.
 		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
 			return;
@@ -306,7 +307,7 @@ class Disable_Blog_Admin {
 
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		if ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) {
-			// @codingStandardsIgnoreEnd
+		// @codingStandardsIgnoreEnd
 
 			return admin_url( 'edit.php?post_type=page' );
 
@@ -326,7 +327,7 @@ class Disable_Blog_Admin {
 
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		if ( ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
-			// @codingStandardsIgnoreEnd
+		// @codingStandardsIgnoreEnd
 
 			return admin_url( 'post-new.php?post_type=page' );
 
@@ -346,6 +347,7 @@ class Disable_Blog_Admin {
 
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
+		// @codingStandardsIgnoreEnd
 
 	}
 
@@ -365,6 +367,7 @@ class Disable_Blog_Admin {
 		 */
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
+		// @codingStandardsIgnoreEnd
 
 	}
 
@@ -449,7 +452,6 @@ class Disable_Blog_Admin {
 		 * Toggle the disable pinback header feature.
 		 *
 		 * @since 0.4.0
-		 *
 		 * @param bool $bool True to disable the header, false to keep it.
 		 */
 		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
@@ -547,8 +549,11 @@ class Disable_Blog_Admin {
 		/**
 		 * Toggle the options-writing page on/off.
 		 *
-		 * Defaults to false, true will create a redirect for the page
+		 * Defaults to false because other plugins often extend this page.
+		 * Setting this to true will create a redirect for the page
 		 * and remove it from the admin menu.
+		 *
+		 * See: https://wordpress.org/support/topic/disabling-writing-settings-panel-is-a-problem/
 		 *
 		 * @since 0.4.5
 		 * @param bool $bool Defaults to false, keeping the writing page visible.
