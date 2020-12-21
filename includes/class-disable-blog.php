@@ -243,6 +243,9 @@ class Disable_Blog {
 		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 
+		// Hide items with JavaScript where CSS doesn't do the job as well.
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts', 100 );
+
 		// Hide Blog Related Admin pages.
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
 

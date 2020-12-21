@@ -813,6 +813,28 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * Register the scripts used in the admin area.
+	 *
+	 * @since  0.4.11
+	 * @return void
+	 */
+	public function enqueue_scripts() {
+
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . '../assets/js/disable-blog-admin.js', array(), $this->version, true );
+
+		// Localize some information on the page.
+		global $pagenow;
+		$js_vars = array(
+			'page'                => str_replace( '.php', '', $pagenow ),
+			'categoriesSupported' => (bool) dwpb_post_types_with_tax( 'category' ),
+			'tagsSupported'       => (bool) dwpb_post_types_with_tax( 'post_tag' ),
+			'commentsSupported'   => (bool) dwpb_post_types_with_feature( 'comments' ),
+		);
+		wp_localize_script( $this->plugin_name, 'dwpb', $js_vars );
+
+	}
+
+	/**
 	 * Check that we're on a specific admin page.
 	 *
 	 * @since 0.4.8
