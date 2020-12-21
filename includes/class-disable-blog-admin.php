@@ -1017,7 +1017,7 @@ class Disable_Blog_Admin {
 	 */
 	public function site_status_tests( $tests ) {
 
-		if ( isset( $tests['direct']['rest_availability'] ) ) {
+		if ( isset( $tests['direct']['rest_availability'] ) && function_exists( 'dwpb_get_test_rest_availability' ) ) {
 			$tests['direct']['rest_availability']['test'] = 'dwpb_get_test_rest_availability';
 		}
 
