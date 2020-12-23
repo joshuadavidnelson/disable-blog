@@ -49,6 +49,10 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 	- Filters 'post' post type out of main query.
 	- Disables "Press This" functionality.
 	- Disables post by email configuration.
+	- Hides Category and Tag permalink base options, if they are not supported by a custom post type.
+	- Hides "Toggle Comments" link on Welcome screen if comments are only supported for posts.
+	- Hides default category and default post format on Writing Options screen.
+	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
@@ -98,8 +102,9 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- `dwpb_redirect_admin_edit_post` has been replaced by `dwpb_redirect_admin_edit`.
 	- `dwpb_redirect_single_post_edit` has been replaced by `dwpb_redirect_post`.
 	- `dwpb_redirect_admin_edit_single_post` has been replaced by `dwpb_redirect_admin_post`.
-- Replace the REST API site health check (which usesthe `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
+- Add javascript to hide admin screen items not easily selected by CSS, include: hiding toggle comment link on welcome screen (if they are not supported by other post types), the category and tag permalink base options (if not supported by other post types), and default category & default post format on Writing options page.
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
@@ -225,8 +230,9 @@ A bunch of stuff:
 	- `dwpb_redirect_admin_edit_post` has been replaced by `dwpb_redirect_admin_edit`.
 	- `dwpb_redirect_single_post_edit` has been replaced by `dwpb_redirect_post`.
 	- `dwpb_redirect_admin_edit_single_post` has been replaced by `dwpb_redirect_admin_post`.
-- Replace the REST API site health check (which usesthe `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
+- Add javascript to hide admin screen items not easily selected by CSS, include: hiding toggle comment link on welcome screen (if they are not supported by other post types), the category and tag permalink base options (if not supported by other post types), and default category & default post format on Writing options page.
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.

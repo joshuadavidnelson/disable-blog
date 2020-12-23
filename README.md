@@ -3,11 +3,12 @@ Disable Blog
 
 [![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/) ![Downloads](https://img.shields.io/wordpress/plugin/dt/disable-blog.svg) ![Rating](https://img.shields.io/wordpress/plugin/r/disable-blog.svg)
 
-**Requires at least:** 4.0
-**Tested up to:** 5.6
-**Stable version:** 0.4.9
-**License:** GPLv2 or later
-**Requires PHP:** 5.6
+**Requires at least:** 4.0  
+**Tested up to WordPress:** 5.6  
+**Stable version:** 0.4.9  
+**License:** GPLv2 or later  
+**Requires PHP:** 5.6  
+**Tested up to PHP:** 7.4
 
 ## Description
 
@@ -45,6 +46,10 @@ Does the following:
 	- Filters 'post' post type out of main query.
 	- Disables "Press This" functionality.
 	- Disables post by email configuration.
+	- Hides Category and Tag permalink base options, if they are not supported by a custom post type.
+	- Hides "Toggle Comments" link on Welcome screen if comments are only supported for posts.
+	- Hides default category and default post format on Writing Options screen.
+	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 

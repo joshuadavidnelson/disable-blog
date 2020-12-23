@@ -6,8 +6,9 @@
 	- `dwpb_redirect_admin_edit_post` has been replaced by `dwpb_redirect_admin_edit`.
 	- `dwpb_redirect_single_post_edit` has been replaced by `dwpb_redirect_post`.
 	- `dwpb_redirect_admin_edit_single_post` has been replaced by `dwpb_redirect_admin_post`.
-- Replace the REST API site health check (which usesthe `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints. Closes #46.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints. Closes #46.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
+- Add javascript to hide admin screen items not easily selected by CSS, include: hiding toggle comment link on welcome screen (if they are not supported by other post types), the category and tag permalink base options (if not supported by other post types), and default category & default post format on Writing options page.
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
