@@ -58,9 +58,10 @@ class Disable_Blog_Public {
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @since 0.2.0
 	 * @since 0.4.9 added sitemap checks to avoid redirects on new sitemaps in WP v5.5.
+	 * @since 0.4.11 renamed to redirect_public_pages
 	 * @return void
 	 */
-	public function redirect_posts() {
+	public function redirect_public_pages() {
 
 		// Don't redirect on admin or sitemap, and only if there is a homepage to redirect to.
 		$sitemap            = get_query_var( 'sitemap', false );

@@ -325,8 +325,8 @@ class Disable_Blog {
 
 		$plugin_public = new Disable_Blog_Public( $this->get_plugin_name(), $this->get_version() );
 
-		// Redirect Single Posts.
-		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_posts' );
+		// Redirect Public pages (single posts, archives, etc).
+		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_public_pages' );
 
 		// Modify Query.
 		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query' );
