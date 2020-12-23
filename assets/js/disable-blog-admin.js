@@ -46,11 +46,9 @@
 
 				default:
 					break;
-			}
-
-		} // category_base
-
-	}
+			} // end switch
+		} // end if
+	} // end function
 
 	document.addEventListener( 'DOMContentLoaded', adminFunctions );
 
