@@ -199,11 +199,6 @@ class Disable_Blog {
 		require_once $includes_dir . '/class-disable-blog-public.php';
 
 		/**
-		 * Deprecated filters/hooks/etc.
-		 */
-		require_once $includes_dir . '/deprecated.php';
-
-		/**
 		 * Make it so.
 		 */
 		$this->loader = new Disable_Blog_Loader();
