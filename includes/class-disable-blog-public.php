@@ -74,75 +74,44 @@ class Disable_Blog_Public {
 		}
 
 		// Get the front page id and url.
-		$page_id = get_option( 'page_on_front' );
-		$url     = get_permalink( $page_id );
+		$page_id      = get_option( 'page_on_front' );
+		$homepage_url = get_permalink( $page_id );
+		$redirect_url = false;
 
-		// Run the redirects.
+		// The public pages to potentially be redirected.
 		global $post;
+		$public_redirects = array(
+			'post'             => ( $post instanceof WP_Post && is_singular( 'post' ) ),
+			'post_tag_archive' => ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
+			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
+			'blog_page'        => is_home(),
+			'date_archive'     => is_date(),
+		);
 
-		if ( $post instanceof WP_Post && is_singular( 'post' ) ) {
+		// cycle through each public page, checking if we need to redirect.
+		foreach( $public_redirects as $filtername => $bool ) {
 
-			global $post;
+			// Custom function within this class used to check if the page needs to be redirected.
+			$filter = 'dwpb_redirect_' . $filtername;
 
-			/**
-			 * The redirect url used at any single post page.
-			 *
-			 * @since 0.4.0
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_posts', $url, $post );
+			// If this is the right page, then setup the redirect url.
+			if ( $bool ) {
 
-			/**
-			 * The redirect url used for a specific post id.
-			 *
-			 * @since 0.4.0
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
+				/**
+				 * The redirect url used for this public page.
+				 *
+				 * Example: use 'dwpb_redirect_post' to change the redirect url used
+				 * on a post, or 'dwpb_redirect_post_tag_archive' to redirect tag archives.
+				 *
+				 * @since 0.4.0
+				 * @since 0.4.11 combine filters.
+				 * @param string $url the url to redirect to, defaults to homepage.
+				 */
+				$redirect_url = apply_filters( $filter, $homepage_url );
 
-		} elseif ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+				break; // no need to keep looping.
 
-			/**
-			 * The redirect url used at tag archives.
-			 *
-			 * @since 0.4.0
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
-
-		} elseif ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
-
-			/**
-			 * The redirect url used at category archives
-			 *
-			 * @since 0.4.0
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
-
-		} elseif ( is_home() ) {
-
-			/**
-			 * The redirect url used at the blog page.
-			 *
-			 * @since 0.4.0
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
-
-		} elseif ( is_date() ) {
-
-			/**
-			 * The redirect url used at date archives.
-			 *
-			 * @since 0.4.0
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
-
-		} else {
-
-			$redirect_url = false;
+			}
 
 		}
 
@@ -150,6 +119,17 @@ class Disable_Blog_Public {
 		// If there is no redirect url, then also bail.
 		global $wp;
 		$current_url = home_url( add_query_arg( array(), $wp->request ) );
+
+		/**
+		 * Global public url redirect filter.
+		 *
+		 * @since 0.4.11
+		 * @param string $redirect_url The redirect url.
+		 */
+		$redirect_url = apply_filters( 'dwpb_front_end_redirect_url', $redirect_url, $current_url );
+
+		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
+		// If there is no valid redirect url, then also bail.
 		if ( $redirect_url === $current_url || ! $redirect_url ) {
 			return;
 		}
