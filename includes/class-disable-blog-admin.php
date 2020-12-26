@@ -218,8 +218,7 @@ class Disable_Blog_Admin {
 			 * @since 0.4.11 combined filters by function name.
 			 * @param bool $bool True to redirect, default is true.
 			 */
-			if ( apply_filters( 'dwpb_' . $function, true )     // check that we are allowing this page redirect.
-				&& $this->is_admin_page( $pagename )            // make sure we're on that page right now.
+			if ( $this->is_admin_page( $pagename )            // make sure we're on that page right now.
 				&& is_callable( array( $this, $function ) ) ) { // make sure the function used to check/provide the url is callable.
 
 				// Check the function for redirect clearance, or custom url.
