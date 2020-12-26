@@ -181,10 +181,11 @@ class Disable_Blog_Admin {
 		}
 
 		// setup false redirect url value for default/final check.
-		$redirect_url = false;
+		$dashboard_url = admin_url( 'index.php' );
+		$redirect_url  = false;
 
 		// The admin page slugs to potentially be redirected.
-		$admin_pages = array(
+		$admin_redirects = array(
 			'post',
 			'edit',
 			'post-new',
@@ -197,13 +198,16 @@ class Disable_Blog_Admin {
 		);
 
 		// cycle through each admin page, checking if we need to redirect.
-		foreach ( $admin_pages as $pagename ) {
+		foreach ( $admin_redirects as $pagename ) {
 
 			// Filter names are all underscores.
-			$filter = str_replace( '-', '_', $pagename );
+			$filternme = str_replace( '-', '_', $pagename );
 
 			// Custom function within this class used to check if the page needs to be redirected.
-			$function = 'redirect_admin_' . $filter;
+			$function = 'redirect_admin_' . $filternme;
+
+			// build the filter.
+			$filter = 'dwpb_' . $function;
 
 			/**
 			 * Toggle the specific admin redriect on/off.
@@ -229,7 +233,7 @@ class Disable_Blog_Admin {
 					if ( esc_url_raw( $redirect ) ) {
 						$url = esc_url_raw( $redirect );
 					} else {
-						$url = admin_url( 'index.php' );
+						$url = $dashboard_url;
 					}
 
 					/**
@@ -242,7 +246,7 @@ class Disable_Blog_Admin {
 					 * @since 0.4.11 combine common filters.
 					 * @param string $url the url to redirct to, defaults to dashboard.
 					 */
-					$redirect_url = apply_filters( "dwpb_redirect_{$filter}", $url );
+					$redirect_url = apply_filters( $filter, $url );
 
 					break; // no need to keep looping.
 
