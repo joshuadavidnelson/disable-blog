@@ -89,7 +89,7 @@ class Disable_Blog_Public {
 		);
 
 		// cycle through each public page, checking if we need to redirect.
-		foreach( $public_redirects as $filtername => $bool ) {
+		foreach ( $public_redirects as $filtername => $bool ) {
 
 			// Custom function within this class used to check if the page needs to be redirected.
 			$filter = 'dwpb_redirect_' . $filtername;
@@ -111,9 +111,8 @@ class Disable_Blog_Public {
 
 				break; // no need to keep looping.
 
-			}
-
-		}
+			} // end if
+		} // end foreach
 
 		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
 		// If there is no redirect url, then also bail.
