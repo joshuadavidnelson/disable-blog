@@ -209,17 +209,11 @@ class Disable_Blog_Admin {
 			// build the filter.
 			$filter = 'dwpb_' . $function;
 
-			/**
-			 * Toggle the specific admin redriect on/off.
-			 *
-			 * Example: use 'dwpb_redirect_admin_edit' to filter on the edit.php page.
-			 *
-			 * @since 0.4.0
-			 * @since 0.4.11 combined filters by function name.
-			 * @param bool $bool True to redirect, default is true.
-			 */
-			if ( $this->is_admin_page( $pagename )            // make sure we're on that page right now.
-				&& is_callable( array( $this, $function ) ) ) { // make sure the function used to check/provide the url is callable.
+			// If this is the right page, then setup the redirect url.
+			// make sure we're on that page right now.
+			// make sure the function used to check/provide the url is callable.
+			if ( $this->is_admin_page( $pagename )
+				&& is_callable( array( $this, $function ) ) ) {
 
 				// Check the function for redirect clearance, or custom url.
 				$redirect = $this->$function();
@@ -375,12 +369,6 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_edit_tags() {
 
-		/**
-		 * Redirect admin page at edit tags screen.
-		 *
-		 * @since 0.4.0
-		 * @param bool $bool True to redirect the edit-tags.php page, default is true.
-		 */
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
 		// @codingStandardsIgnoreEnd
@@ -531,6 +519,7 @@ class Disable_Blog_Admin {
 		 * @since 0.4.0
 		 * @since 0.4.11 in order to account for mulitple subpages with a common parent
 		 *               the `subpages` are now in arrays
+		 * @param array $remove_subpages Array of page => subpages where subpages is an array of strings.
 		 */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach ( $subpages as $page => $subpages ) {
@@ -873,6 +862,7 @@ class Disable_Blog_Admin {
 	public function is_admin_page( $page ) {
 
 		global $pagenow;
+
 		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow;
 
 	}
