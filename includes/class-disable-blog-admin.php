@@ -911,4 +911,94 @@ class Disable_Blog_Admin {
 
 	}
 
+	/**
+	 * Filter the taxonomy count on post_tag and category screens.
+	 *
+	 * Used on the post_tag and category screens for custom post types.
+	 *
+	 * @since 0.5.0
+	 *
+	 * @param string $slug
+	 * @param object $tag
+	 * @return string $slug
+	 */
+	public function filter_taxonomy_count( $actions, $tag ) {
+		if ( isset( $tag->taxonomy )
+			&& ( 'post_tag' === $tag->taxonomy || 'category' === $tag->taxonomy ) ) {
+			$screen     = get_current_screen();
+			$count      = $this->get_term_post_count_by_type( $tag->term_id, $tag->taxonomy, $screen->post_type );
+			$tag->count = $count;
+		}
+
+		return $actions;
+	}
+
+	/**
+	 * Return the post count for a term based by post type.
+	 *
+	 * @since 0.5.0
+	 *
+	 * @param object $term
+	 * @param string $taxonomy
+	 * @param string $type
+	 *
+	 * @return int
+	 */
+	public function get_term_post_count_by_type( $term, $taxonomy, $type ) {
+
+		$args = array(
+			'fields'                 => 'ids',
+			'posts_per_page'         => 500,
+			'post_type'              => $type,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'tax_query'              => array(
+				array(
+					'taxonomy' => $taxonomy,
+					'field'    => 'id',
+					'terms'    => intval( $term ),
+				),
+			),
+		);
+		$query = new WP_Query( $args );
+
+		if ( isset( $query->posts ) && count( $query->posts ) > 0 ) {
+			return count( $query->posts );
+		} else {
+			return 0;
+		}
+	}
+
+	/**
+	 * Remove posts column form user table.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @param string $column
+	 * @return void
+	 */
+	public function disable_user_posts_column( $column ) {
+		if( isset( $column['posts'] ) && apply_filters( 'dpwb_disable_user_post_column', true ) )
+			unset( $column['posts'] );
+
+		return $column;
+	}
+
+	/**
+	 * Hide things in customizer view.
+	 *
+	 * @since 0.4.0
+	 */
+	function customizer_styles() { ?>
+		<style>
+			#customize-theme-controls #customize-control-genesis_trackbacks_posts,
+			#customize-theme-controls #customize-control-genesis_comments_posts,
+			#customize-theme-controls #customize-control-show_on_front,
+			#customize-theme-controls #customize-control-page_for_posts {
+				display: none !important;
+			}
+		</style>
+		<?php
+
+	}
 }
