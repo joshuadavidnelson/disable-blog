@@ -2,16 +2,24 @@
 
 ##### 0.4.11
 - Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
-- Dry out the admin redirect code, updating a few redirect-specific admin filters to a common format. Note that the following filters are now deprecated, replaced by new filters:
-	- `dwpb_redirect_admin_edit_post` has been replaced by `dwpb_redirect_admin_edit`.
-	- `dwpb_redirect_single_post_edit` has been replaced by `dwpb_redirect_admin_post`.
-	- `dwpb_redirect_admin_edit_single_post` has been replaced by `dwpb_redirect_admin_edit`.
-	- `dwpb_redirect_edit_tax` has bee deleted. Use `dwpb_redirect_admin_edit_tags` or `dwpb_redirect_admin_term` instead, depending on the context.
-- Dry out the public redirect code, updating public redirect filters. New filters added to togle off the redirects. Note that the following filters are now deprecared, replaced by new filters:
-	- `dwpb_redirect_post_tag_archive` has been replaced by `dwpb_redirect_tag_archive`.
+- Dry out the admin redirect code, updating admin filters to a common format and removing redundent filters. Filter changes include:
+	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
+	- `dwpb_redirect_admin` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
+	- `dwpb_redirect_admin_edit_post` is now `dwpb_redirect_admin_edit`.
+	- `dwpb_redirect_single_post_edit` is now `dwpb_redirect_admin_post`.
+	- `dwpb_redirect_admin_edit_single_post` is now `dwpb_redirect_admin_edit`.
+	- `dwpb_redirect_edit_tax` has been removed. Use `dwpb_redirect_admin_edit_tags` or `dwpb_redirect_admin_term` instead, depending on the context.
+	- `dwpb_redirect_edit_comments` has been removed. use `dwpb_redirect_admin_edit_comments` instead.
+	- `dwpb_redirect_options_discussion` has been removed. Use `dwpb_redirect_admin_options_discussion` instead.
+	- The filter `dwpb_redirect_admin_options_writing` that would pass a boolean to toggle off the options writing page has been remaned `dwpb_remove_options_writing` and must be passed with `true` in order to have the page redirect _and_ the admin menu item removed. By default the value filtered is false and the options Writing page does not go away, as numerous other plugins use this page for non-blog related settings. Now `dwpb_redirect_admin_options_writing` is used to filter the redirect url itself, replacing the previously named `dwpb_redirect_options_writing` filter.  
+	- `dwpb_redirect_options_tools` has been removed. Use `dwpb_redirect_admin_options_tools` instead.
+	- In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, thought still supposed subpages as strings for backwards compatibility.
+- Dry out the public redirect code, updating public redirect filters. Filer changes include:
+	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
+	- `dwpb_redirect_post_tag_archive` is now `dwpb_redirect_tag_archive`.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
-	- Breaking change: `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id.
-- New filter: `dwpb_redirect_front_end` accepts boolean to toggle front-end redirects on/off, default is true (redirects on).
+	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
+	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`)
 - Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints. Closes #46.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
 - Add javascript to hide admin screen items not easily selected by CSS, include: hiding toggle comment link on welcome screen (if they are not supported by other post types), the category and tag permalink base options (if not supported by other post types), and default category & default post format on Writing options page.
