@@ -6,7 +6,7 @@
  * @since      0.4.0
  *
  * @package    Disable_Blog
- * @subpackage Disable_Blog/admin
+ * @subpackage Disable_Blog_Admin
  */
 
 /**

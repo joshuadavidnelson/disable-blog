@@ -5,7 +5,7 @@
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.2.0
  * @package    Disable_Blog
- * @subpackage Disable_Blog/public
+ * @subpackage Disable_Blog_Public
  */
 
 /**
