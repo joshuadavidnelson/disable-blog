@@ -511,28 +511,41 @@ class Disable_Blog_Admin {
 
 		// Submenu Pages.
 		$remove_subpages = array(
-			'tools.php' => 'tools.php',
+			'tools.php'           => array( 'tools.php' ),
+			'options-general.php' => array(),
 		);
 
 		// Remove the writings page, if the filter tells us so.
 		if ( $this->remove_writing_options() ) {
-			$remove_subpages['options-general.php'] = 'options-writing.php';
+			$remove_subpages['options-general.php'][] = 'options-writing.php';
 		}
 
 		// If there are no other post types supporting comments, remove the discussion page.
 		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$remove_subpages['options-general.php'] = 'options-discussion.php'; // Settings > Discussion.
+			$remove_subpages['options-general.php'][] = 'options-discussion.php'; // Settings > Discussion.
 		}
 
 		/**
 		 * Admin subpages to be removed.
 		 *
 		 * @since 0.4.0
-		 * @param array $remove_subpages Array of page => subpage.
+		 * @since 0.4.11 in order to account for mulitple subpages with a common parent
+		 *               the `subpages` are now in arrays
 		 */
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
-		foreach ( $subpages as $page => $subpage ) {
-			remove_submenu_page( $page, $subpage );
+		foreach ( $subpages as $page => $subpages ) {
+			if ( is_array( $subpages ) && ! empty( $subpages ) ) {
+
+				foreach( $subpages as $subpage ) {
+					remove_submenu_page( $page, $subpage );
+				}
+
+			} elseif ( is_string( $subpages ) ) { // for backwards compatibility.
+
+				remove_submenu_page( $page, $subpages );
+
+			}
+
 		}
 
 	}
