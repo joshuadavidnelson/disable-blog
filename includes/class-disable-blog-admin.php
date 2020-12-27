@@ -524,17 +524,12 @@ class Disable_Blog_Admin {
 		$subpages = apply_filters( 'dwpb_menu_subpages_to_remove', $remove_subpages );
 		foreach ( $subpages as $page => $subpages ) {
 			if ( is_array( $subpages ) && ! empty( $subpages ) ) {
-
-				foreach( $subpages as $subpage ) {
+				foreach ( $subpages as $subpage ) {
 					remove_submenu_page( $page, $subpage );
 				}
-
 			} elseif ( is_string( $subpages ) ) { // for backwards compatibility.
-
 				remove_submenu_page( $page, $subpages );
-
 			}
-
 		}
 
 	}
