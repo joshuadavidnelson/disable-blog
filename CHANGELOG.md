@@ -1,5 +1,30 @@
 ### Changelog
 
+##### 0.4.10
+- Fix a bug from v0.4.9 that caused redirects on custom post type archives, correcting the `modify_query` function to only remove posts from built-in taxonomy archives, as that was the original intent.
+
+##### 0.4.9
+- **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
+- **Big change:** the plugin now changes the `post_type` arguments for posts so they are no longer public and removes all post_type support parameters. This disables the post-related admin redirects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
+- Disable pingbacks entirely.
+- Fix comment redirect/menu functionality, now correctly removes comments and redirects `edit-comments.php` admin page if no other post type support comments (note that WordPress default is for pages and attachments to support comments).
+- Disable XMLRPC for posts and tags/categories. Tag/categories remain if another post type supports them.
+- Add basic static php tests and update code to pass those test. Huge props to @szepeviktor.
+- Initiate plugin via hook into `plugins_loaded`.
+- Change the admin notice related to blog and home page settings, only showing notices if no homepage is set or if the blog and homepage are the same page.
+- Flush rewrite rules at activation and deactivation.
+- Filtering out `post` post types from all archives, previously it was just author archives and search results.
+- Removes post, category, and tag options from all menus. Tag/categories remain if another post type supports them.
+- Remove header feed urls, unless supported by another post type.
+- WordPress 5.5 support:
+	- Remove 'post' post type from XML sitemaps.
+	- Remove built-in taxonomies from XML sitemaps, if not being used by a custom post type.
+	- Fix sitemap redirect issues.
+- **Developers:** Filters were removed and altered in this version:
+	- The `dwpb_redirect_feeds` filter now has (3) params, to match those in the `dwpb_disable_feed` filter: $bool, $post, $is_comment_feed.
+	- The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
+	- Removed filters: `dwpb_disable_rest_api`, `dwpb_remove_post_comment_support`, `dwpb_remove_post_trackback_support`, `dwpb_redirect_admin_edit_single_post`, `dwpb_redirect_single_post_edit`, `dwpb_redirect_admin_edit_post`, `dwpb_redirect_edit`, `dwpb_redirect_admin_post_new`, `dwpb_redirect_post_new` as these are rendered obsolete by above changes.
+
 ##### 0.4.8.1
 - Do'h! Forgot to update the version number in the main plugin file. Bump.
 
