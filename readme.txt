@@ -106,7 +106,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Dry out the public redirect code, updating public redirect filters. New filters added to togle off the redirects. Note that the following filters are now deprecared, replaced by new filters:
 	- `dwpb_redirect_post_tag_archive` has been replaced by `dwpb_redirect_tag_archive`.
 	- Breaking change: `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id.
-	- `dwpb_redirect_posts` is not `dwpb_redirect_post`.
+	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 - New filter: `dwpb_redirect_front_end` accepts boolean to toggle front-end redirects on/off, default is true (redirects on).
 - Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
@@ -240,7 +240,7 @@ A bunch of stuff:
 - Dry out the public redirect code, updating public redirect filters. New filters added to togle off the redirects. Note that the following filters are now deprecared, replaced by new filters:
 	- `dwpb_redirect_post_tag_archive` has been replaced by `dwpb_redirect_tag_archive`.
 	- Breaking change: `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id.
-	- `dwpb_redirect_posts` is not `dwpb_redirect_post`.
+	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 - New filter: `dwpb_redirect_front_end` accepts boolean to toggle front-end redirects on/off, default is true (redirects on).
 - Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
