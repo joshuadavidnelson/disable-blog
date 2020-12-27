@@ -42,7 +42,7 @@ class Disable_Blog_Common_Functions {
 
 		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
 		// If there is no valid redirect url, then also bail.
-		if ( $redirect_url === $current_url || ! $redirect_url ) {
+		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
 			return;
 		}
 
