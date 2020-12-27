@@ -574,9 +574,13 @@ class Disable_Blog_Admin {
 		 * See: https://wordpress.org/support/topic/disabling-writing-settings-panel-is-a-problem/
 		 *
 		 * @since 0.4.5
+		 * @since 0.4.11 renamed from `dwpb_redirect_admin_options_writing`
+		 *               to `dwpb_remove_options_writing`. The old filter name
+		 *               is not used by the admin redirect function to filter
+		 *               the redirect url used for this page.
 		 * @param bool $bool Defaults to false, keeping the writing page visible.
 		 */
-		return apply_filters( 'dwpb_redirect_admin_options_writing', false );
+		return apply_filters( 'dwpb_remove_options_writing', false );
 
 	}
 
