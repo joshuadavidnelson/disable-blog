@@ -76,7 +76,7 @@ class Disable_Blog {
 	public function __construct() {
 
 		$this->plugin_name = 'disable-blog';
-		$this->version     = '0.4.10';
+		$this->version     = '0.4.11';
 
 		do_action( 'dwpb_init' );
 
@@ -198,6 +198,9 @@ class Disable_Blog {
 		 */
 		require_once $includes_dir . '/class-disable-blog-public.php';
 
+		/**
+		 * Make it so.
+		 */
 		$this->loader = new Disable_Blog_Loader();
 
 	}
@@ -234,6 +237,9 @@ class Disable_Blog {
 
 		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
+
+		// Hide items with JavaScript where CSS doesn't do the job as well.
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts', 100 );
 
 		// Hide Blog Related Admin pages.
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
@@ -299,6 +305,12 @@ class Disable_Blog {
 		// Filter removal of widgets for some checks.
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
 
+		// Custom Post State for the Blog Page redirect.
+		$this->loader->add_filter( 'display_post_states', $plugin_admin, 'page_post_states', 10, 2 );
+
+		// Remove REST API site health check related to posts.
+		$this->loader->add_filter( 'site_status_tests', $plugin_admin, 'site_status_tests', 10, 1 );
+
 	}
 
 	/**
@@ -313,8 +325,8 @@ class Disable_Blog {
 
 		$plugin_public = new Disable_Blog_Public( $this->get_plugin_name(), $this->get_version() );
 
-		// Redirect Single Posts.
-		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_posts' );
+		// Redirect Public pages (single posts, archives, etc).
+		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_public_pages' );
 
 		// Modify Query.
 		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query' );

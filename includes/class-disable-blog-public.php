@@ -4,16 +4,14 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.2.0
- *
  * @package    Disable_Blog
- * @subpackage Disable_Blog/public
+ * @subpackage Disable_Blog_Public
  */
 
 /**
  * The public-facing functionality of the plugin.
  *
- * Defines the plugin name, version, and two examples hooks for how to
- * enqueue the admin-specific stylesheet and JavaScript.
+ * Defines the plugin name, version, and contains all the public functions.
  *
  * @package    Disable_Blog
  * @subpackage Disable_Blog/public
@@ -57,15 +55,13 @@ class Disable_Blog_Public {
 	 * Redirect single post pages
 	 *
 	 * @uses dwpb_post_types_with_tax()
-	 *
+	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @since 0.2.0
 	 * @since 0.4.9 added sitemap checks to avoid redirects on new sitemaps in WP v5.5.
-	 *
-	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
-	 *
+	 * @since 0.4.11 renamed to redirect_public_pages
 	 * @return void
 	 */
-	public function redirect_posts() {
+	public function redirect_public_pages() {
 
 		// Don't redirect on admin or sitemap, and only if there is a homepage to redirect to.
 		$sitemap            = get_query_var( 'sitemap', false );
@@ -78,106 +74,90 @@ class Disable_Blog_Public {
 		}
 
 		// Get the front page id and url.
-		$page_id = get_option( 'page_on_front' );
-		$url     = get_permalink( $page_id );
+		$page_id      = get_option( 'page_on_front' );
+		$homepage_url = get_permalink( $page_id );
+		$redirect_url = false;
 
-		// Run the redirects.
+		// The public pages to potentially be redirected.
 		global $post;
+		$public_redirects = array(
+			'post'             => ( $post instanceof WP_Post && is_singular( 'post' ) ),
+			'post_tag_archive' => ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
+			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
+			'blog_page'        => is_home(),
+			'date_archive'     => is_date(),
+		);
 
-		if ( $post instanceof WP_Post && is_singular( 'post' ) ) {
+		// cycle through each public page, checking if we need to redirect.
+		foreach ( $public_redirects as $filtername => $bool ) {
 
-			global $post;
+			// Custom function within this class used to check if the page needs to be redirected.
+			$filter = 'dwpb_redirect_' . $filtername;
 
-			/**
-			 * The redirect url used at any single post page.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_posts', $url, $post );
+			// If this is the right page, then setup the redirect url.
+			if ( $bool ) {
 
-			/**
-			 * The redirect url used for a specific post id.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( "dwpb_redirect_post_{$post->ID}", $redirect_url, $post );
+				/**
+				 * The redirect url used for this public page.
+				 *
+				 * Example: use 'dwpb_redirect_post' to change the redirect url used
+				 * on a post, or 'dwpb_redirect_post_tag_archive' to redirect tag archives.
+				 *
+				 * @since 0.4.0
+				 * @since 0.4.11 combine filters.
+				 * @param string $url the url to redirect to, defaults to homepage.
+				 */
+				$redirect_url = apply_filters( $filter, $homepage_url );
 
-		} elseif ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ) {
+				break; // no need to keep looping.
 
-			/**
-			 * The redirect url used at tag archives.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_post_tag_archive', $url );
+			} // end if
+		} // end foreach
 
-		} elseif ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ) {
-
-			/**
-			 * The redirect url used at category archives
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_category_archive', $url );
-
-		} elseif ( is_home() ) {
-
-			/**
-			 * The redirect url used at the blog page.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_blog_page', $url );
-
-		} elseif ( is_date() ) {
-
-			/**
-			 * The redirect url used at date archives.
-			 *
-			 * @since 0.4.0
-			 *
-			 * @param string $url the url to redirct to.
-			 */
-			$redirect_url = apply_filters( 'dwpb_redirect_date_archive', $url );
-
-		} else {
-
-			$redirect_url = false;
-
-		}
-
-		// Get the current url and compare to the redirect, if they are the same, bail to avoid a loop
-		// If there is no redirect url, then also bail.
-		global $wp;
-		$current_url = home_url( add_query_arg( array(), $wp->request ) );
-		if ( $redirect_url === $current_url || ! $redirect_url ) {
-			return;
-		}
+		/**
+		 * Global public url redirect filter.
+		 *
+		 * @since 0.4.11
+		 * @param string $redirect_url The redirect url.
+		 */
+		$redirect_url = apply_filters( 'dwpb_front_end_redirect_url', $redirect_url );
 
 		/**
 		 * Filter to toggle the plugin's front-end redirection.
 		 *
 		 * @since 0.2.0
 		 * @since 0.4.0 added the current_url param.
-		 *
+		 * @since 0.4.11 removed 3rd `$current_url` param.
 		 * @param bool   $bool         True to enable, false to disable.
 		 * @param string $redirect_url The url being used for the redirect.
-		 * @param string $current_url  The current url.
 		 */
-		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url, $current_url ) ) {
-			wp_safe_redirect( esc_url( $redirect_url ), 301 );
-			exit();
+		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
+			$this->redirect( $redirect_url );
 		}
+
+	}
+
+	/**
+	 * Redirect function, checks that a redirect looks safe and then runs it.
+	 *
+	 * @since 0.4.11
+	 * @param string $redirect_url the url to redirect to.
+	 * @return void
+	 */
+	public function redirect( $redirect_url ) {
+
+		// Get the current url.
+		global $wp;
+		$current_url = home_url( add_query_arg( array(), $wp->request ) );
+
+		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
+		// If there is no valid redirect url, then also bail.
+		if ( $redirect_url === $current_url || ! $redirect_url ) {
+			return;
+		}
+
+		wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+		exit;
 
 	}
 
@@ -228,11 +208,9 @@ class Disable_Blog_Public {
 	 * Used in $this->modify_query to remove 'post' type from built-in archive queries.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param object $query       the main query object.
 	 * @param array  $post_types  the array of post types.
 	 * @param string $filter the  filter to be applied.
-	 *
 	 * @return bool
 	 */
 	public function set_post_types_in_query( $query, $post_types = array(), $filter = '' ) {
@@ -243,10 +221,8 @@ class Disable_Blog_Public {
 		 * Used for 'dwpb_tag_post_types' and 'dwpb_category_post_types' filters.
 		 *
 		 * @see Disable_Blog_Public->modify_query
-		 *
 		 * @since 0.4.0
 		 * @since 0.4.10 fix bug in 0.4.9 causing cpt weirdness, now always using the filter.
-		 *
 		 * @param array $array
 		 * @param object $query
 		 */
@@ -265,9 +241,7 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
-	 *
 	 * @param bool $is_comment_feed true if a comment feed.
-	 *
 	 * @return void
 	 */
 	public function disable_feed( $is_comment_feed ) {
@@ -284,7 +258,6 @@ class Disable_Blog_Public {
 		 * Toggle the disable feed via this filter.
 		 *
 		 * @since 0.4.0
-		 *
 		 * @param bool $bool True to cancel the feed, assuming it's a post feed.
 		 * @param object $post Global post object.
 		 * @param bool $is_comment_feed True if the feed is a comment feed.
@@ -295,7 +268,6 @@ class Disable_Blog_Public {
 			 * Filter the feed redirect url.
 			 *
 			 * @since 0.4.0
-			 *
 			 * @param string $url The redirect url (defaults to homepage)
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
 			 */
@@ -312,7 +284,6 @@ class Disable_Blog_Public {
 			 *              the order is: bool, $post, $is_comment_feed.
 			 *              Note that if you used this filter before
 			 *              and relied on the $is_comment_feed, you'll need to update.
-			 *
 			 * @param bool $bool True to use a message, false to redirect.
 			 * @param object $post Global post object.
 			 * @param bool $is_comment_feed True if the feed is a comment feed.
@@ -328,7 +299,6 @@ class Disable_Blog_Public {
 				 * If the `dwpb_feed_message` is set to true, use this filter to set a custom message.
 				 *
 				 * @since 0.4.0
-				 *
 				 * @param string $message
 				 */
 				$message      = apply_filters( 'dwpb_feed_die_message', $message );
@@ -343,8 +313,7 @@ class Disable_Blog_Public {
 
 			} else { // Default option: redirect to homepage.
 
-				wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
-				exit;
+				$this->redirect( $redirect_url );
 
 			}
 		}
@@ -356,9 +325,7 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param bool $bool true to show the posts feed link.
-	 *
 	 * @return bool
 	 */
 	public function feed_links_show_posts_feed( $bool ) {
@@ -373,9 +340,7 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @param bool $bool true to show the comments feed link.
-	 *
 	 * @return bool
 	 */
 	public function feed_links_show_comments_feed( $bool ) {
@@ -393,7 +358,6 @@ class Disable_Blog_Public {
 	 * Remove feed urls from head.
 	 *
 	 * @since 0.4.9
-	 *
 	 * @return void
 	 */
 	public function header_feeds() {
@@ -417,11 +381,8 @@ class Disable_Blog_Public {
 	 * Unset all post-related xmlrpc methods.
 	 *
 	 * @see wp-includes/class-wp-xmlrpc-server.php
-	 *
 	 * @since 0.4.9
-	 *
 	 * @param array $methods the arrayve of xmlrpc methods.
-	 *
 	 * @return array
 	 */
 	public function xmlrpc_methods( $methods ) {

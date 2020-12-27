@@ -1,13 +1,14 @@
 Disable Blog
 ======================
 
-[![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/)
+[![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/) ![Downloads](https://img.shields.io/wordpress/plugin/dt/disable-blog.svg) ![Rating](https://img.shields.io/wordpress/plugin/r/disable-blog.svg)
 
-**Requires at least:** 3.1.0
-**Tested up to:** 5.5.1
-**Stable version:** 0.4.9
-**License:** GPLv2 or later
-**Requires PHP:** 5.3
+**Requires at least:** 4.0  
+**Tested up to WordPress:** 5.6  
+**Stable version:** 0.4.9  
+**License:** GPLv2 or later  
+**Requires PHP:** 5.6  
+**Tested up to PHP:** 7.4
 
 ## Description
 
@@ -18,12 +19,9 @@ Does the following:
 - Turns the `post` type into a non-public type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page.
 
 - Front-end:
-	- Remove the Feed links from the header.
-	- Removes the feed link from front end (for WP >= 4.4.0), removes comment feed link if 'post' is the only post type supporting comments.
+	- Disables the post feed and remoives the feed links from the header (for WP >= 4.4.0) and disables the comment feed/removes comment feed link if 'post' is the only post type supporting comments (note that the default condition pages and attachments support comments).
 	- Removes posts from all archive pages.
-	- Disables the Feed for Posts.
-	- Remove 'post' post type from XML sitemaps and built-in taxonomies from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
-	- Disable comments feed only if 'post' is only type shown.
+	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
 	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
 	- Redirects (301):
@@ -34,21 +32,24 @@ Does the following:
 - Admin side:
 	- Redirects tag and category pages to dashboard, unless used by a custom post type.
 	- If comments are not supported by other post types (by default comments are supported by pages and attachments), it will hide the menu links for and redirect discussion options page and 'Comments' admin page to the dashboard.
-	- Filters out the 'post' post type fromm 'Comments' admin page.
+	- Filters out the 'post' post type from 'Comments' admin page.
 	- Alters the comment count to remove any comments associated with 'post' post type.
 	- Optionally remove/redirect the Settings > Writting page via `dwpb_redirect_admin_options_writing` filter (default is false).
-	- Removes Available Tools from admin menu and redirects page (houses Press This and Category/Tag converter).
+	- Removes Available Tools from admin menu and redirects page to the dashboard (this admin page contains Press This and Category/Tag converter, both are no longer neededd without a blog).
 	- Removes Post from '+New' admin bar menu.
 	- Removes 'Posts' Admin Menu.
 	- Removes post-related dashboard widgets.
 	- Hides number of posts and comment count on Activity dashboard widget.
 	- Removes Post Related Widgets.
 	- Hide options in Reading Settings page related to posts (shows front page and search engine options).
-	- Places "Pages" above "Media" in admin menu and removes divider below dashboard.
 	- Removes 'Post' options on 'Menus' admin page.
 	- Filters 'post' post type out of main query.
 	- Disables "Press This" functionality.
 	- Disables post by email configuration.
+	- Hides Category and Tag permalink base options, if they are not supported by a custom post type.
+	- Hides "Toggle Comments" link on Welcome screen if comments are only supported for posts.
+	- Hides default category and default post format on Writing Options screen.
+	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
