@@ -253,17 +253,40 @@ class Disable_Blog_Admin {
 			}
 		}
 
-		// Get the current url.
-		global $wp;
-		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
-
 		/**
 		 * Global admin url redirect filter.
 		 *
 		 * @since 0.4.11
 		 * @param string $redirect_url The redirect url.
 		 */
-		$redirect_url = apply_filters( 'dwpb_admin_redirect_url', $redirect_url, $pagenow );
+		$redirect_url = apply_filters( 'dwpb_admin_redirect_url', $redirect_url );
+
+		/**
+		 * Redirect blog related admin pages.
+		 *
+		 * @since 0.4.0
+		 * @since 0.4.11 removed 3rd `$current_url` param.
+		 * @param bool   $bool         True to enable, default is true.
+		 * @param string $redirect_url The url to being used in the redirect.
+		 */
+		if ( apply_filters( 'dwpb_redirect_admin', true, $redirect_url ) ) {
+			$this->redirect( $redirect_url );
+		}
+
+	}
+
+	/**
+	 * Redirect function, checks that a redirect looks safe and then runs it.
+	 *
+	 * @since 0.4.11
+	 * @param string $redirect_url the url to redirect to.
+	 * @return void
+	 */
+	public function redirect( $redirect_url ) {
+
+		// Get the current url.
+		global $wp;
+		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
 
 		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
 		// If there is no valid redirect url, then also bail.
@@ -271,18 +294,8 @@ class Disable_Blog_Admin {
 			return;
 		}
 
-		/**
-		 * Redirect blog related admin pages.
-		 *
-		 * @since 0.4.0
-		 * @param bool   $bool         True to enable, default is true.
-		 * @param string $redirect_url The url to being used in the redirect.
-		 * @param string $current_url  The current url.
-		 */
-		if ( apply_filters( 'dwpb_redirect_admin', true, $redirect_url, $current_url ) ) {
-			wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
-			exit;
-		}
+		wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+		exit;
 
 	}
 
