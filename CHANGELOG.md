@@ -25,6 +25,7 @@
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
+- Updated translation file for all current plugin strings.
 
 ##### 0.4.10
 - Fix a bug from v0.4.9 that caused redirects on custom post type archives, correcting the `modify_query` function to only remove posts from built-in taxonomy archives, as that was the original intent.
