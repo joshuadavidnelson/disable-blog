@@ -333,8 +333,8 @@ class Disable_Blog {
 		// Redirect Public pages (single posts, archives, etc).
 		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_public_pages' );
 
-		// Modify Query.
-		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query' );
+		// Modify Query. Setting to priority 9 to allow default filter priority to override.
+		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query', 9 );
 
 		// Disable Feed.
 		$this->loader->add_action( 'do_feed', $plugin_public, 'disable_feed', 1, 2 );
@@ -358,6 +358,9 @@ class Disable_Blog {
 
 		// Conditionally remove built-in taxonomies from sitemaps, if they are not being used by a custom post type.
 		$this->loader->add_filter( 'wp_sitemaps_taxonomies', $plugin_public, 'wp_sitemaps_taxonomies', 10, 1 );
+
+		// Conditionally remove author sitemaps, if author archives are not being supported.
+		$this->loader->add_filter( 'wp_sitemaps_add_provider', $plugin_public, 'wp_author_sitemaps', 100, 2 );
 
 	}
 

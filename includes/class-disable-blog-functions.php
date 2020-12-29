@@ -50,4 +50,33 @@ class Disable_Blog_Functions {
 		exit;
 
 	}
+
+	/**
+	 * Check what post types are supporting author archives.
+	 *
+	 * @since 0.4.11
+	 * @return bool|array $post_types Either an array of post types or false.
+	 */
+	public function author_archive_post_types() {
+
+		/**
+		 * The post types supported on author archives.
+		 *
+		 * By default only posts are shown on author archives, if other post types are to appear
+		 * on the author archives, pass them with this filter.
+		 *
+		 * @since 0.4.11
+		 * @param array|bool $post_types an array of post type slugs for author archives, false to disable.
+		 */
+		$post_types = apply_filters( 'dwpb_author_archive_post_types', array() );
+
+		if ( ! empty( $post_types ) ) {
+			return $post_types;
+		}
+
+		// Return false if there are no supported post types.
+		return false;
+
+	}
+
 }
