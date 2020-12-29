@@ -210,7 +210,9 @@ class Disable_Blog_Public {
 		/**
 		 * If there is a filter name passed, then a filter is applied on the array and query.
 		 *
-		 * Used for 'dwpb_tag_post_types', 'dwpb_category_post_types', and 'dwpb_author_archive_post_types' filters.
+		 * Used for 'dwpb_tag_post_types' and 'dwpb_category_post_types' filters.
+		 * Note that the 'dwpb_author_archive_post_types' filter is passed in another function,
+		 * hence the reason $filter can be empty and not passed in this function.
 		 *
 		 * @see Disable_Blog_Public->modify_query
 		 * @since 0.4.0
