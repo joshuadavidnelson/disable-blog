@@ -1297,4 +1297,22 @@ class Disable_Blog_Admin {
 		return apply_filters( 'dwpb_admin_user_post_types', $post_types );
 
 	}
+
+	/**
+	 * Remove the user's "view" link if we are not supporting author archives.
+	 *
+	 * @since 0.4.11
+	 * @param array  $actions     an array of actions in a key => output format.
+	 * @param object $user_object the current user, WP_User object.
+	 * @return array
+	 */
+	public function user_row_actions( $actions, $user_object ) {
+
+		$post_types = $this->functions->author_archive_post_types();
+		if ( empty( $post_types ) && isset( $actions['view'] ) ) {
+			unset( $actions['view'] );
+		}
+
+		return $actions;
+	}
 }

@@ -309,6 +309,9 @@ class Disable_Blog {
 		$this->loader->add_action( 'manage_users_columns', $plugin_admin, 'manage_users_columns', 10, 1 );
 		$this->loader->add_filter( 'manage_users_custom_column', $plugin_admin, 'manage_users_custom_column', 10, 3 );
 
+		// Remove the "view" link from the user options if author archives are not supported.
+		$this->loader->add_filter( 'user_row_actions', $plugin_admin, 'user_row_actions', 10, 2 );
+
 	}
 
 	/**
