@@ -55,6 +55,7 @@ Does the following:
 	- Hides default category and default post format on Writing Options screen.
 	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 	- Replaces the "Posts" column in the user table with "Pages," linked to pages by that author.
+	- Remove the "view" link to author archives in the user screen if author archives are not supported.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 

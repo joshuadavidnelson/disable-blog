@@ -58,6 +58,7 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 	- Hides default category and default post format on Writing Options screen.
 	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 	- Replaces the "Posts" column in the user table with "Pages," linked to pages by that author.
+	- Remove the "view" link to author archives in the user screen if author archives are not supported.
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
@@ -107,6 +108,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
+- Remove the "view" link to author archives in the user screen if author archives are not supported.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and
@@ -263,6 +265,7 @@ A bunch of stuff:
 - Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
+- Remove the "view" link to author archives in the user screen if author archives are not supported.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and
