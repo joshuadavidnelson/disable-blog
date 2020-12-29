@@ -58,7 +58,7 @@ class Disable_Blog_Admin {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
-		$this->functions   = new Disable_Blog_Common_Functions();
+		$this->functions   = new Disable_Blog_Functions();
 
 	}
 

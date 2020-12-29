@@ -20,7 +20,7 @@
  * @subpackage Disable_Blog_Common_Functions
  * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
-class Disable_Blog_Common_Functions {
+class Disable_Blog_Functions {
 
 	/**
 	 * Redirect function, checks that a redirect looks safe and then runs it.

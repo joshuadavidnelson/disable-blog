@@ -190,7 +190,7 @@ class Disable_Blog {
 		/**
 		 * The class contains all the common functions used by multiple classes.
 		 */
-		require_once $includes_dir . '/class-disable-blog-common-functions.php';
+		require_once $includes_dir . '/class-disable-blog-functions.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
