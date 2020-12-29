@@ -16,7 +16,7 @@ Go blog-less with WordPress. This plugin disables all blog-related functionality
 
 Does the following:
 
-- Turns the `post` type into a non-public type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page.
+- Turns the `post` type into a non-public content type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page or be redirect to the homepage.
 
 - Front-end:
 	- Disables the post feed and remoives the feed links from the header (for WP >= 4.4.0) and disables the comment feed/removes comment feed link if 'post' is the only post type supporting comments (note that the default condition pages and attachments support comments).
@@ -24,17 +24,21 @@ Does the following:
 	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
 	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
+	- Removes post sitemaps and, if not supported via the `dwpb_redirect_author_archive` filter, user sitemaps. User sitemaps can be toggled back on via that filter or directly passing `false` to the `dwpb_disable_user_sitemap` filter.
 	- Redirects (301):
 		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
 		- The blog page to the homepage.
 		- All Tag & Category archives to home page, unless they are supported by a custom post type.
+		- Date archives to the homepage.
+		- As of v0.4.11 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
 
 - Admin side:
 	- Redirects tag and category pages to dashboard, unless used by a custom post type.
+	- Redirects post related screens (`post.php`, `post-new.php`, etc) to the `page` version of the same page.
 	- If comments are not supported by other post types (by default comments are supported by pages and attachments), it will hide the menu links for and redirect discussion options page and 'Comments' admin page to the dashboard.
 	- Filters out the 'post' post type from 'Comments' admin page.
 	- Alters the comment count to remove any comments associated with 'post' post type.
-	- Optionally remove/redirect the Settings > Writting page via `dwpb_redirect_admin_options_writing` filter (default is false).
+	- Optionally remove/redirect the Settings > Writting page via `dwpb_remove_options_writing` filter (default is false).
 	- Removes Available Tools from admin menu and redirects page to the dashboard (this admin page contains Press This and Category/Tag converter, both are no longer neededd without a blog).
 	- Removes Post from '+New' admin bar menu.
 	- Removes 'Posts' Admin Menu.
@@ -50,6 +54,7 @@ Does the following:
 	- Hides "Toggle Comments" link on Welcome screen if comments are only supported for posts.
 	- Hides default category and default post format on Writing Options screen.
 	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
+	- Replaces the "Posts" column in the user table with "Pages," linked to pages by that author.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 

@@ -19,7 +19,7 @@ Disable Blog is a comprehensive plugin for to disable blogging functionality on 
 
 The blog is "disabled" mostly by hiding blog-related admin pages/settings and redirecting urls on both the front-end and admin portions of your site. Specifically does the following:
 
-- Turns the `post` type into a non-public type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page.
+- Turns the `post` type into a non-public content type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page or be redirect to the homepage.
 
 - Front-end:
 	- Disables the post feed and remoives the feed links from the header (for WP >= 4.4.0) and disables the comment feed/removes comment feed link if 'post' is the only post type supporting comments (note that the default condition pages and attachments support comments).
@@ -27,17 +27,21 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
 	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
+	- Removes post sitemaps and, if not supported via the `dwpb_redirect_author_archive` filter, user sitemaps. User sitemaps can be toggled back on via that filter or directly passing `false` to the `dwpb_disable_user_sitemap` filter.
 	- Redirects (301):
 		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
 		- The blog page to the homepage.
 		- All Tag & Category archives to home page, unless they are supported by a custom post type.
+		- Date archives to the homepage.
+		- As of v0.4.11 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
 
 - Admin side:
 	- Redirects tag and category pages to dashboard, unless used by a custom post type.
+	- Redirects post related screens (`post.php`, `post-new.php`, etc) to the `page` version of the same page.
 	- If comments are not supported by other post types (by default comments are supported by pages and attachments), it will hide the menu links for and redirect discussion options page and 'Comments' admin page to the dashboard.
 	- Filters out the 'post' post type from 'Comments' admin page.
 	- Alters the comment count to remove any comments associated with 'post' post type.
-	- Optionally remove/redirect the Settings > Writting page via `dwpb_redirect_admin_options_writing` filter (default is false).
+	- Optionally remove/redirect the Settings > Writting page via `dwpb_remove_options_writing` filter (default is false).
 	- Removes Available Tools from admin menu and redirects page to the dashboard (this admin page contains Press This and Category/Tag converter, both are no longer neededd without a blog).
 	- Removes Post from '+New' admin bar menu.
 	- Removes 'Posts' Admin Menu.
@@ -53,6 +57,7 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 	- Hides "Toggle Comments" link on Welcome screen if comments are only supported for posts.
 	- Hides default category and default post format on Writing Options screen.
 	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
+	- Replaces the "Posts" column in the user table with "Pages," linked to pages by that author.
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
@@ -97,8 +102,24 @@ There are numerous filters available to change the way this plugin works. Refer 
 == Changelog ==
 
 = 0.4.11 =
-- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur.
-- Dry out the admin redirect code, updating admin filters to a common format and removing redundent filters. Filter changes include:
+
+**New:**
+- Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.
+- Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
+- Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
+- Add javascript to hide admin screen items not easily selected by CSS, include:
+	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
+	- Hiding the category and tag permalink base options (if not supported by other post types), and
+	- Hiding the default category & default post format on Writing options page.
+
+**Fixes:**
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
+- In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility. Fixes bugs were `options-writing.php` and `options-discussion.php` were conflicting.
+
+**Improvements/Updates:**
+- Update admin filters to a common format and removing redundent filters. Filter changes include:
 	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
 	- `dwpb_redirect_admin` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
 	- `dwpb_redirect_admin_edit_post` is now `dwpb_redirect_admin_edit`.
@@ -109,15 +130,13 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- `dwpb_redirect_options_discussion` has been removed. Use `dwpb_redirect_admin_options_discussion` instead.
 	- The filter `dwpb_redirect_admin_options_writing` that would pass a boolean to toggle off the options writing page has been remaned `dwpb_remove_options_writing` and must be passed with `true` in order to have the page redirect _and_ the admin menu item removed. By default the value filtered is false and the options Writing page does not go away, as numerous other plugins use this page for non-blog related settings. Now `dwpb_redirect_admin_options_writing` is used to filter the redirect url itself, replacing the previously named `dwpb_redirect_options_writing` filter.
 	- `dwpb_redirect_options_tools` has been removed. Use `dwpb_redirect_admin_options_tools` instead.
-	- In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility.
-- Dry out the public redirect code, updating public redirect filters. Filer changes include:
+- Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:
 	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
+	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives.
+	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
-	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`)
-- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
-- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
-- Add javascript to hide admin screen items not easily selected by CSS, include: hiding toggle comment link on welcome screen (if they are not supported by other post types), the category and tag permalink base options (if not supported by other post types), and default category & default post format on Writing options page.
+	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
@@ -239,8 +258,24 @@ A bunch of stuff:
 == Upgrade Notice ==
 
 = 0.4.11 =
-- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur.
-- Dry out the admin redirect code, updating admin filters to a common format and removing redundent filters. Filter changes include:
+
+**New:**
+- Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.
+- Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
+- Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
+- Add javascript to hide admin screen items not easily selected by CSS, include:
+	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
+	- Hiding the category and tag permalink base options (if not supported by other post types), and
+	- Hiding the default category & default post format on Writing options page.
+
+**Fixes:**
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
+- In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility. Fixes bugs were `options-writing.php` and `options-discussion.php` were conflicting.
+
+**Improvements/Updates:**
+- Update admin filters to a common format and removing redundent filters. Filter changes include:
 	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
 	- `dwpb_redirect_admin` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
 	- `dwpb_redirect_admin_edit_post` is now `dwpb_redirect_admin_edit`.
@@ -251,15 +286,13 @@ A bunch of stuff:
 	- `dwpb_redirect_options_discussion` has been removed. Use `dwpb_redirect_admin_options_discussion` instead.
 	- The filter `dwpb_redirect_admin_options_writing` that would pass a boolean to toggle off the options writing page has been remaned `dwpb_remove_options_writing` and must be passed with `true` in order to have the page redirect _and_ the admin menu item removed. By default the value filtered is false and the options Writing page does not go away, as numerous other plugins use this page for non-blog related settings. Now `dwpb_redirect_admin_options_writing` is used to filter the redirect url itself, replacing the previously named `dwpb_redirect_options_writing` filter.
 	- `dwpb_redirect_options_tools` has been removed. Use `dwpb_redirect_admin_options_tools` instead.
-	- In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility.
-- Dry out the public redirect code, updating public redirect filters. Filer changes include:
+- Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:
 	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
+	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives.
+	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
-	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`)
-- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type no longer in the REST endpoints.
-- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
-- Add javascript to hide admin screen items not easily selected by CSS, include: hiding toggle comment link on welcome screen (if they are not supported by other post types), the category and tag permalink base options (if not supported by other post types), and default category & default post format on Writing options page.
+	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
