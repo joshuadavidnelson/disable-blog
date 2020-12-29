@@ -3,21 +3,17 @@
  * Contains common functions used by other classes.
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
- * @since      0.4.12
+ * @since      0.4.11
  * @package    Disable_Blog
- * @subpackage Disable_Blog_Common_Functions
+ * @subpackage Disable_Blog_Functions
  */
 
 /**
- * Register all actions and filters for the plugin.
+ * Main class for functions used by other classes.
  *
- * Maintain a list of all hooks that are registered throughout
- * the plugin, and register them with the WordPress API. Call the
- * run function to execute the list of actions and filters.
- *
- * @since      0.4.12
+ * @since      0.4.11
  * @package    Disable_Blog
- * @subpackage Disable_Blog_Common_Functions
+ * @subpackage Disable_Blog_Functions
  * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 class Disable_Blog_Functions {
@@ -26,7 +22,6 @@ class Disable_Blog_Functions {
 	 * Redirect function, checks that a redirect looks safe and then runs it.
 	 *
 	 * @since 0.4.11
-	 * @since 0.4.12 moved to common functions class.
 	 * @param string $redirect_url the url to redirect to.
 	 * @return void
 	 */

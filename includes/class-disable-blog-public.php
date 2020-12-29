@@ -40,7 +40,7 @@ class Disable_Blog_Public {
 	/**
 	 * Object with common utility functions.
 	 *
-	 * @since  0.4.12
+	 * @since  0.4.11
 	 * @access private
 	 * @var    object
 	 */
