@@ -40,7 +40,14 @@
 						document.querySelector("label[for='tag_base']").parentNode.parentNode.classList.add("hidden");
 					}
 
-					// TODO: check if there are any other custom items in the "optional" section, if not then remove the title and intro paragraph.
+					// Remove the "Optional" title and paragraph on this screen if there are no other sub-items
+					var numberOfOptionalRows = document.querySelectorAll('table.form-table[role="presentation"] tbody tr').length;
+					if ( 2 == numberOfOptionalRows && ! dwpb.tagsSupported && ! dwpb.categoriesSupported ) {
+						var taxonomyBase = document.querySelector('table.form-table[role="presentation"]');
+						taxonomyBase.classList.add("hidden");
+						taxonomyBase.previousElementSibling.classList.add("hidden");
+						taxonomyBase.previousElementSibling.previousElementSibling.classList.add("hidden");
+					}
 
 					break;
 
