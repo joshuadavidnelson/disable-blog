@@ -1243,10 +1243,11 @@ class Disable_Blog_Admin {
 
 				// Get the couunts.
 				$page_counts = count_many_users_posts( array( $user_id ), $post_type );
-				$page_count  = $page_counts[ $user_id ];
+				$page_count  = absint( $page_counts[ $user_id ] );
 
 				// Note that we have to explicitly add the query variable for post type in order
 				// to avoid it being stripped by the admin redirect on the edit.php page.
+				// @codingStandardsIgnoreStart - phpcs doesn't like the mismatched placeholders, but it works.
 				$output = sprintf(
 					'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
 					"edit.php?post_type={$post_type}&author={$user_id}",
@@ -1259,6 +1260,7 @@ class Disable_Blog_Admin {
 						$post_type_obj->labels->name
 					)
 				);
+				// @codingStandardsIgnoreEnd
 			}
 		}
 

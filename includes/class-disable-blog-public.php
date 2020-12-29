@@ -314,7 +314,7 @@ class Disable_Blog_Public {
 
 			} else { // Default option: redirect to homepage.
 
-				$this->redirect( $redirect_url );
+				$this->functions->redirect( $redirect_url );
 
 			}
 		}
@@ -495,8 +495,8 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.4.11
 	 * @link https://developer.wordpress.org/reference/hooks/wp_sitemaps_add_provider/
-	 * @param object WP_Sitemaps_Provider $provider Instance of a WP_Sitemaps_Provider.
-	 * @param string                      $name     Name of the sitemap provider.
+	 * @param object $provider Instance of a WP_Sitemaps_Provider.
+	 * @param string $name     Name of the sitemap provider.
 	 * @return object|bool Instance of a WP_Sitemaps_Provider or false.
 	 */
 	public function wp_author_sitemaps( $provider, $name ) {
