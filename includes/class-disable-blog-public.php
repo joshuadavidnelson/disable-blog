@@ -289,8 +289,8 @@ class Disable_Blog_Public {
 			 */
 			if ( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
 
-				// translators: the placeholser is the URL of our website.
-				$message = sprintf( __( 'No feed available, please visit our <a href="%s">homepage</a>!', 'disable-blog' ), esc_url_raw( $redirect_url ) );
+				// translators: This message appears when the feed is disabled instead of redirect, it should point to the homepage.
+				$message = sprintf( '%s: <a href="%s">%s</a>', __( 'No feed available, please visit our homepage:', 'disable-blog' ), esc_url_raw( $redirect_url ), esc_url_raw( $redirect_url ) );
 
 				/**
 				 * Filter the feed die message.

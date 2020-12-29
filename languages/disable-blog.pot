@@ -1,0 +1,140 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Project-Id-Version: Disable Blog\n"
+"POT-Creation-Date: 2020-12-28 11:34+0000\n"
+"PO-Revision-Date: 2020-12-28 11:07+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.1\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: disable-blog.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.min.js\n"
+"X-Poedit-SearchPathExcluded-1: node_modules\n"
+
+#. translators: Direct the user to set a homepage in the current screen.
+#: includes/class-disable-blog-admin.php:695
+msgid "Select a page for your homepage below."
+msgstr ""
+
+#. translators: Direct the user to the Reading Settings admin page.
+#: includes/class-disable-blog-admin.php:702
+#, php-format
+msgid "Change in <a href=\"%s\">Reading Settings</a>."
+msgstr ""
+
+#. translators: Prompt to configure the site for static homepage and posts page.
+#: includes/class-disable-blog-admin.php:707
+msgid ""
+"Disable Blog is not fully active until a static page is selected for the "
+"site's homepage."
+msgstr ""
+
+#. translators: Warning that the homepage and blog page cannot be the same, the post page is redirected to the homepage.
+#: includes/class-disable-blog-admin.php:717
+msgid ""
+"Disable Blog requires a homepage that is different from the post page. The "
+"\"posts page\" will be redirected to the homepage."
+msgstr ""
+
+#. translators: This string is used to indicate that the blog page is redirected to the homepage.
+#: includes/class-disable-blog-admin.php:1049
+msgid "Redirected to the homepage"
+msgstr ""
+
+#. translators: This message appears when the feed is disabled instead of redirect, it should point to the homepage.
+#: includes/class-disable-blog-public.php:294
+msgid "No feed available, please visit our homepage:"
+msgstr ""
+
+#: includes/functions.php:155
+msgid "The REST API is available"
+msgstr ""
+
+#: includes/functions.php:158
+msgid "Performance"
+msgstr ""
+
+#: includes/functions.php:163
+msgid ""
+"The REST API is one way WordPress, and other applications, communicate with "
+"the server. One example is the block editor screen, which relies on this to "
+"display, and save, your posts and pages."
+msgstr ""
+
+#: includes/functions.php:199
+msgid "The REST API encountered an error"
+msgstr ""
+
+#: includes/functions.php:205
+msgid "The REST API request failed due to an error."
+msgstr ""
+
+#. translators: 1: The WordPress error message. 2: The WordPress error code.
+#: includes/functions.php:208
+#, php-format
+msgid "Error: %1$s (%2$s)"
+msgstr ""
+
+#: includes/functions.php:217
+msgid "The REST API encountered an unexpected result"
+msgstr ""
+
+#. translators: 1: The HTTP error code. 2: The HTTP error message.
+#: includes/functions.php:223
+#, php-format
+msgid "The REST API call gave the following unexpected result: (%1$d) %2$s."
+msgstr ""
+
+#: includes/functions.php:234
+msgid "The REST API did not behave correctly"
+msgstr ""
+
+#. translators: %s: The name of the query parameter being tested.
+#: includes/functions.php:240
+#, php-format
+msgid "The REST API did not process the %s query parameter correctly."
+msgstr ""
+
+#. translators: This error shows up when the uninstall process is run but the user login session is invalid.
+#: uninstall.php:46
+msgid "You must be logged in to run this script."
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+#: uninstall.php:47 uninstall.php:58
+msgid "Disable Blog"
+msgstr ""
+
+#. translators: This error shows up if the user does not have permissions to uninstall the plugin.
+#: uninstall.php:57
+msgid "You do not have permission to run this script."
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "https://wordpress.org/plugins/disable-blog/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Go blog-less with WordPress. This plugin disables all blog-related "
+"functionality (by hiding, removing, and redirecting)."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Joshua Nelson"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://joshuadnelson.com"
+msgstr ""
