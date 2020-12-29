@@ -1048,12 +1048,123 @@ class Disable_Blog_Admin {
 	 */
 	public function site_status_tests( $tests ) {
 
-		if ( isset( $tests['direct']['rest_availability'] ) && function_exists( 'dwpb_get_test_rest_availability' ) ) {
-			$tests['direct']['rest_availability']['test'] = 'dwpb_get_test_rest_availability';
+		if ( isset( $tests['direct']['rest_availability'] ) && is_callable( array( $this, 'get_test_rest_availability' ) ) ) {
+			$tests['direct']['rest_availability']['test'] = array( $this, 'get_test_rest_availability' );
 		}
 
 		return $tests;
 
 	}
 
+	/**
+	 * Replaces the core REST Availability Site Health check.
+	 *
+	 * Used by the site_status_tests filter in class-disable-blog-admin.php.
+	 *
+	 * Copied directly from https://developer.wordpress.org/reference/classes/wp_site_health/get_test_rest_availability/ but with the 'post' type updated to 'page' in the rest url.
+	 *
+	 * @see https://make.wordpress.org/core/2019/04/25/site-health-check-in-5-2/
+	 * @since 0.4.11
+	 * @return array
+	 */
+	public function get_test_rest_availability() {
+
+		$result = array(
+			'label'       => __( 'The REST API is available' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'Performance' ),
+				'color' => 'blue',
+			),
+			'description' => sprintf(
+				'<p>%s</p>',
+				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' )
+			),
+			'actions'     => '',
+			'test'        => 'rest_availability',
+		);
+
+		$cookies = wp_unslash( $_COOKIE );
+		$timeout = 10;
+		$headers = array(
+			'Cache-Control' => 'no-cache',
+			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
+		);
+		/** This filter is documented in wp-includes/class-wp-http-streams.php */
+		$sslverify = apply_filters( 'https_local_ssl_verify', false );
+
+		// Include Basic auth in loopback requests.
+		// @codingStandardsIgnoreStart
+		if ( isset( $_SERVER['PHP_AUTH_USER'] ) && isset( $_SERVER['PHP_AUTH_PW'] ) ) {
+			$headers['Authorization'] = 'Basic ' . base64_encode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) . ':' . wp_unslash( $_SERVER['PHP_AUTH_PW'] ) );
+		}
+		// @codingStandardsIgnoreEnd
+
+		// -- here's the money, change this ti 'page' from 'post'.
+		$url = rest_url( 'wp/v2/types/page' );
+
+		// The context for this is editing with the new block editor.
+		$url = add_query_arg(
+			array(
+				'context' => 'edit',
+			),
+			$url
+		);
+
+		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) );
+
+		if ( is_wp_error( $r ) ) {
+			$result['status'] = 'critical';
+
+			$result['label'] = __( 'The REST API encountered an error' );
+
+			$result['description'] .= sprintf(
+				'<p>%s</p>',
+				sprintf(
+					'%s<br>%s',
+					__( 'The REST API request failed due to an error.' ),
+					sprintf(
+						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
+						__( 'Error: %1$s (%2$s)' ),
+						$r->get_error_message(),
+						$r->get_error_code()
+					)
+				)
+			);
+		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
+			$result['status'] = 'recommended';
+
+			$result['label'] = __( 'The REST API encountered an unexpected result' );
+
+			$result['description'] .= sprintf(
+				'<p>%s</p>',
+				sprintf(
+					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
+					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ),
+					wp_remote_retrieve_response_code( $r ),
+					esc_html( wp_remote_retrieve_body( $r ) )
+				)
+			);
+		} else {
+			$json = json_decode( wp_remote_retrieve_body( $r ), true );
+
+			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
+				$result['status'] = 'recommended';
+
+				$result['label'] = __( 'The REST API did not behave correctly' );
+
+				$result['description'] .= sprintf(
+					'<p>%s</p>',
+					sprintf(
+						/* translators: %s: The name of the query parameter being tested. */
+						__( 'The REST API did not process the %s query parameter correctly.' ),
+						'<code>context</code>'
+					)
+				);
+			}
+		}
+
+		return $result;
+
+	}
 }
