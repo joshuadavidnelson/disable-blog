@@ -1167,4 +1167,132 @@ class Disable_Blog_Admin {
 		return $result;
 
 	}
+
+	/**
+	 * Remove posts column form user table.
+	 *
+	 * @since 0.4.11
+	 * @param array $columns the column slugs => title array.
+	 * @return array
+	 */
+	public function manage_users_columns( $columns ) {
+
+		/**
+		 * Disable the user post column.
+		 *
+		 * @since 0.4.11
+		 * @param bool $bool True to remove the column, defaults to true.
+		 * @return bool
+		 */
+		if ( apply_filters( 'dpwb_disable_user_post_column', true )
+			&& isset( $columns['posts'] ) ) {
+			unset( $columns['posts'] );
+		}
+
+		// Get the current screen.
+		$screen = get_current_screen();
+
+		// cycle through the post types to be displayed.
+		$post_types = $this->user_column_post_types();
+		foreach ( $post_types as $post_type ) {
+			/**
+			 * Create a new column for 'pages' similar to the orginal 'post' column.
+			 *
+			 * @since 0.4.11
+			 * @param bool $bool True to remove the column, defaults to true.
+			 * @return bool
+			 */
+			if ( apply_filters( "dpwb_create_user_{$post_type}_column", true )
+				// Taken from core functions for users page, don't display the posts column on site-users-network core page.
+				// see wp-admin/includes/class-wp-users-list-table.php.
+				&& isset( $screen->id ) && 'site-users-network' !== $screen->id ) {
+
+				$post_type_obj = get_post_type_object( $post_type );
+				if ( isset( $post_type_obj->labels->name ) ) {
+					$columns[ $post_type ] = $post_type_obj->labels->name;
+				}
+			}
+		}
+
+		return $columns;
+
+	}
+
+	/**
+	 * Mange the new custom user columns.
+	 *
+	 * @since 0.4.11
+	 * @see wp-admin/includes/class-wp-users-list-table.php.
+	 * @param string $output      the column output.
+	 * @param string $column_name the current column slug.
+	 * @param int    $user_id     the current user's id.
+	 * @return string
+	 */
+	public function manage_users_custom_column( $output, $column_name, $user_id ) {
+
+		$post_types = $this->user_column_post_types();
+		foreach ( $post_types as $post_type ) {
+			// Create new column output, mimicking core's 'post' column but for the 'page' and supported custom post types.
+			if ( $post_type === $column_name ) {
+
+				// make sure we can grab valid post type labels before continuing.
+				$post_type_obj = get_post_type_object( $post_type );
+				if ( ! isset( $post_type_obj->labels->name, $post_type_obj->labels->singular_name ) ) {
+					continue;
+				}
+
+				// Get the couunts.
+				$page_counts = count_many_users_posts( array( $user_id ), $post_type );
+				$page_count  = $page_counts[ $user_id ];
+
+				// Note that we have to explicitly add the query variable for post type in order
+				// to avoid it being stripped by the admin redirect on the edit.php page.
+				$output = sprintf(
+					'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
+					"edit.php?post_type={$post_type}&author={$user_id}",
+					$page_count,
+					sprintf(
+						// translators: %1$s: Number of pieces of content by this author. %2$s and %3$s are the singular and plural names, respectively, for the content type. For example: "1 page by this author" and "2 pages by this author".
+						_n( '%1$s %2$s by this author', '%1$s %3$s by this author', $page_count, 'disable-blog' ),
+						number_format_i18n( $page_count ),
+						$post_type_obj->labels->singular_name,
+						$post_type_obj->labels->name
+					)
+				);
+			}
+		}
+
+		return $output;
+
+	}
+
+	/**
+	 * Grab the post types that
+	 *
+	 * @since 0.4.11
+	 * @return array
+	 */
+	private function user_column_post_types() {
+
+		// Include any post types using author archives.
+		$post_types = $this->functions->author_archive_post_types();
+
+		// The author_archive_post_type function returns false if empy, but we need an array.
+		$post_types = empty( $post_types ) ? array() : $post_types;
+
+		// Also include pages, which is not in the author archive by default,
+		// however we run array_unique in case the 'page' post type has been added
+		// to the author archives.
+		$post_types = array_unique( array_merge( array( 'page' ), $post_types ) );
+
+		/**
+		 * Filter the post types that appear in the user table.
+		 *
+		 * @since 0.4.11
+		 * @param array $post_types an array of post type slugs.
+		 * @return array
+		 */
+		return apply_filters( 'dwpb_admin_user_post_types', $post_types );
+
+	}
 }

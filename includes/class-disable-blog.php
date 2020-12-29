@@ -316,6 +316,10 @@ class Disable_Blog {
 		// Remove REST API site health check related to posts.
 		$this->loader->add_filter( 'site_status_tests', $plugin_admin, 'site_status_tests', 10, 1 );
 
+		// Replace 'post' column with 'page' column.
+		$this->loader->add_action( 'manage_users_columns', $plugin_admin, 'manage_users_columns', 10, 1 );
+		$this->loader->add_filter( 'manage_users_custom_column', $plugin_admin, 'manage_users_custom_column', 10, 3 );
+
 	}
 
 	/**
