@@ -30,7 +30,7 @@ Does the following:
 		- The blog page to the homepage.
 		- All Tag & Category archives to home page, unless they are supported by a custom post type.
 		- Date archives to the homepage.
-		- As of v0.4.11 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
+		- As of v0.5.0 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
 
 - Admin side:
 	- Redirects tag and category pages to dashboard, unless used by a custom post type.

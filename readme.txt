@@ -5,7 +5,7 @@ Tags: remove blog, disable blog, disable settings, disable blogging, disable fee
 Requires at least: 4.0
 Requires PHP: 5.6
 Tested up to: 5.6
-Stable tag: 0.4.11
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,7 +33,7 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 		- The blog page to the homepage.
 		- All Tag & Category archives to home page, unless they are supported by a custom post type.
 		- Date archives to the homepage.
-		- As of v0.4.11 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
+		- As of v0.5.0 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
 
 - Admin side:
 	- Redirects tag and category pages to dashboard, unless used by a custom post type.
@@ -102,7 +102,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 == Changelog ==
 
-= 0.4.11 =
+= 0.5.0 =
 
 **New:**
 - Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.
@@ -259,7 +259,7 @@ A bunch of stuff:
 
 == Upgrade Notice ==
 
-= 0.4.11 =
+= 0.5.0 =
 
 **New:**
 - Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.

@@ -41,7 +41,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Object with common utility functions.
 	 *
-	 * @since  0.4.11
+	 * @since  0.5.0
 	 * @access private
 	 * @var    object
 	 */
@@ -171,7 +171,7 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_tax()
 	 * @since 0.1.0
 	 * @since 0.4.0 added single post edit screen redirect
-	 * @since 0.4.11 condensed page rediects into a foreach loop with common structure
+	 * @since 0.5.0 condensed page rediects into a foreach loop with common structure
 	 *               for filters and functions used to check redirect conditions.
 	 * @return void
 	 */
@@ -246,7 +246,7 @@ class Disable_Blog_Admin {
 					 * used for the post.php page.
 					 *
 					 * @since 0.4.0
-					 * @since 0.4.11 combine common filters.
+					 * @since 0.5.0 combine common filters.
 					 * @param string $url the url to redirct to, defaults to dashboard.
 					 */
 					$redirect_url = apply_filters( $filter, $url );
@@ -260,7 +260,7 @@ class Disable_Blog_Admin {
 		/**
 		 * Global admin url redirect filter.
 		 *
-		 * @since 0.4.11
+		 * @since 0.5.0
 		 * @param string $redirect_url The redirect url.
 		 */
 		$redirect_url = apply_filters( 'dwpb_admin_redirect_url', $redirect_url );
@@ -269,7 +269,7 @@ class Disable_Blog_Admin {
 		 * Redirect blog related admin pages.
 		 *
 		 * @since 0.4.0
-		 * @since 0.4.11 removed 3rd `$current_url` param.
+		 * @since 0.5.0 removed 3rd `$current_url` param.
 		 * @param bool   $bool         True to enable, default is true.
 		 * @param string $redirect_url The url to being used in the redirect.
 		 */
@@ -282,7 +282,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the post.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool
 	 */
 	public function redirect_admin_post() {
@@ -296,7 +296,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the edit.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool|string
 	 */
 	public function redirect_admin_edit() {
@@ -316,7 +316,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the post-new.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool|string
 	 */
 	public function redirect_admin_post_new() {
@@ -336,7 +336,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the term.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool|string
 	 */
 	public function reidrect_admin_term() {
@@ -350,7 +350,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the edit-tags.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool|string
 	 */
 	public function redirect_admin_edit_tags() {
@@ -365,7 +365,7 @@ class Disable_Blog_Admin {
 	 * The admin redirect arguments checked to redirect the edit-comments.php screen.
 	 *
 	 * @uses dwpb_post_types_with_feature()
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool
 	 */
 	public function redirect_admin_edit_comments() {
@@ -383,7 +383,7 @@ class Disable_Blog_Admin {
 	 *
 	 * The same checks are performed by the edit-comments check, so this is a wrapper function.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool
 	 */
 	public function redirect_admin_options_discussion() {
@@ -395,7 +395,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the options-writing.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool|string
 	 */
 	public function redirect_admin_options_writing() {
@@ -414,7 +414,7 @@ class Disable_Blog_Admin {
 	/**
 	 * The admin redirect arguments checked to redirect the options-tools.php screen.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool
 	 */
 	public function redirect_admin_options_tools() {
@@ -503,7 +503,7 @@ class Disable_Blog_Admin {
 		 * Admin subpages to be removed.
 		 *
 		 * @since 0.4.0
-		 * @since 0.4.11 in order to account for mulitple subpages with a common parent
+		 * @since 0.5.0 in order to account for mulitple subpages with a common parent
 		 *               the `subpages` are now in arrays
 		 * @param array $remove_subpages Array of page => subpages where subpages is an array of strings.
 		 */
@@ -555,7 +555,7 @@ class Disable_Blog_Admin {
 		 * See: https://wordpress.org/support/topic/disabling-writing-settings-panel-is-a-problem/
 		 *
 		 * @since 0.4.5
-		 * @since 0.4.11 renamed from `dwpb_redirect_admin_options_writing`
+		 * @since 0.5.0 renamed from `dwpb_redirect_admin_options_writing`
 		 *               to `dwpb_remove_options_writing`. The old filter name
 		 *               is not used by the admin redirect function to filter
 		 *               the redirect url used for this page.
@@ -818,7 +818,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Register the scripts used in the admin area.
 	 *
-	 * @since  0.4.11
+	 * @since  0.5.0
 	 * @return void
 	 */
 	public function enqueue_scripts() {
@@ -1023,7 +1023,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Filters the default post display states used in the posts list table.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @param string[] $post_states An array of post display states.
 	 * @param WP_Post  $post        The current post object.
 	 * @return array
@@ -1042,7 +1042,7 @@ class Disable_Blog_Admin {
 	 * Removes the Site Health check for the post REST API.
 	 *
 	 * @uses dwpb_get_test_rest_availability()
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @param array $tests the tests, of course.
 	 * @return array
 	 */
@@ -1064,7 +1064,7 @@ class Disable_Blog_Admin {
 	 * Copied directly from https://developer.wordpress.org/reference/classes/wp_site_health/get_test_rest_availability/ but with the 'post' type updated to 'page' in the rest url.
 	 *
 	 * @see https://make.wordpress.org/core/2019/04/25/site-health-check-in-5-2/
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return array
 	 */
 	public function get_test_rest_availability() {
@@ -1171,7 +1171,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Remove posts column form user table.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @param array $columns the column slugs => title array.
 	 * @return array
 	 */
@@ -1180,7 +1180,7 @@ class Disable_Blog_Admin {
 		/**
 		 * Disable the user post column.
 		 *
-		 * @since 0.4.11
+		 * @since 0.5.0
 		 * @param bool $bool True to remove the column, defaults to true.
 		 * @return bool
 		 */
@@ -1198,7 +1198,7 @@ class Disable_Blog_Admin {
 			/**
 			 * Create a new column for 'pages' similar to the orginal 'post' column.
 			 *
-			 * @since 0.4.11
+			 * @since 0.5.0
 			 * @param bool $bool True to remove the column, defaults to true.
 			 * @return bool
 			 */
@@ -1221,7 +1221,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Mange the new custom user columns.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @see wp-admin/includes/class-wp-users-list-table.php.
 	 * @param string $output      the column output.
 	 * @param string $column_name the current column slug.
@@ -1271,7 +1271,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Grab the post types that
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return array
 	 */
 	private function user_column_post_types() {
@@ -1290,7 +1290,7 @@ class Disable_Blog_Admin {
 		/**
 		 * Filter the post types that appear in the user table.
 		 *
-		 * @since 0.4.11
+		 * @since 0.5.0
 		 * @param array $post_types an array of post type slugs.
 		 * @return array
 		 */
@@ -1301,7 +1301,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Remove the user's "view" link if we are not supporting author archives.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @param array  $actions     an array of actions in a key => output format.
 	 * @param object $user_object the current user, WP_User object.
 	 * @return array

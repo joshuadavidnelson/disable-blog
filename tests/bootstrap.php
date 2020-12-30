@@ -6,4 +6,4 @@
  * @package Disable_Blog
  */
 
-define( 'DWPB_VERSION', '0.4.11' );
+define( 'DWPB_VERSION', '0.5.0' );

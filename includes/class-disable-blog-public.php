@@ -40,7 +40,7 @@ class Disable_Blog_Public {
 	/**
 	 * Object with common utility functions.
 	 *
-	 * @since  0.4.11
+	 * @since  0.5.0
 	 * @access private
 	 * @var    object
 	 */
@@ -68,7 +68,7 @@ class Disable_Blog_Public {
 	 * @link http://codex.wordpress.org/Plugin_API/Action_Reference/template_redirect
 	 * @since 0.2.0
 	 * @since 0.4.9 added sitemap checks to avoid redirects on new sitemaps in WP v5.5.
-	 * @since 0.4.11 renamed to redirect_public_pages
+	 * @since 0.5.0 renamed to redirect_public_pages
 	 * @return void
 	 */
 	public function redirect_public_pages() {
@@ -115,7 +115,7 @@ class Disable_Blog_Public {
 				 * on a post, or 'dwpb_redirect_post_tag_archive' to redirect tag archives.
 				 *
 				 * @since 0.4.0
-				 * @since 0.4.11 combine filters.
+				 * @since 0.5.0 combine filters.
 				 * @param string $url the url to redirect to, defaults to homepage.
 				 */
 				$redirect_url = apply_filters( $filter, $homepage_url );
@@ -128,7 +128,7 @@ class Disable_Blog_Public {
 		/**
 		 * Global public url redirect filter.
 		 *
-		 * @since 0.4.11
+		 * @since 0.5.0
 		 * @param string $redirect_url The redirect url.
 		 */
 		$redirect_url = apply_filters( 'dwpb_front_end_redirect_url', $redirect_url );
@@ -138,7 +138,7 @@ class Disable_Blog_Public {
 		 *
 		 * @since 0.2.0
 		 * @since 0.4.0 added the current_url param.
-		 * @since 0.4.11 removed 3rd `$current_url` param.
+		 * @since 0.5.0 removed 3rd `$current_url` param.
 		 * @param bool   $bool         True to enable, false to disable.
 		 * @param string $redirect_url The url being used for the redirect.
 		 */
@@ -162,7 +162,7 @@ class Disable_Blog_Public {
 	 * @since 0.4.0 added remove_post_from_array_in_query function
 	 * @since 0.4.9 remove 'post' from all archives.
 	 * @since 0.4.10 update to just remove 'post' from built-in taxonomy archives,
-	 * @since 0.4.11 remove 'post' type from author archives.
+	 * @since 0.5.0 remove 'post' type from author archives.
 	 * @param object $query the query object.
 	 * @return void
 	 */
@@ -217,7 +217,7 @@ class Disable_Blog_Public {
 		 * @see Disable_Blog_Public->modify_query
 		 * @since 0.4.0
 		 * @since 0.4.10 fix bug in 0.4.9 causing cpt weirdness, now always using the filter.
-		 * @since 0.4.11 made the filter part of this function optional, since the author
+		 * @since 0.5.0 made the filter part of this function optional, since the author
 		 *               post type filter is located in the functions class.
 		 * @param array  $post_types An array of post type slugs.
 		 * @param object $query      The query object being modified.
@@ -493,7 +493,7 @@ class Disable_Blog_Public {
 	/**
 	 * Remove author sitemaps.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @link https://developer.wordpress.org/reference/hooks/wp_sitemaps_add_provider/
 	 * @param object $provider Instance of a WP_Sitemaps_Provider.
 	 * @param string $name     Name of the sitemap provider.
@@ -510,7 +510,7 @@ class Disable_Blog_Public {
 		/**
 		 * Turn off user/author sitemaps.
 		 *
-		 * @since 0.4.11
+		 * @since 0.5.0
 		 * @param bool $bool True to disable, defaults to true.
 		 * @return bool
 		 */

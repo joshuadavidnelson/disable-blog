@@ -3,7 +3,7 @@
  * Contains common functions used by other classes.
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
- * @since      0.4.11
+ * @since      0.5.0
  * @package    Disable_Blog
  * @subpackage Disable_Blog_Functions
  */
@@ -11,7 +11,7 @@
 /**
  * Main class for functions used by other classes.
  *
- * @since      0.4.11
+ * @since      0.5.0
  * @package    Disable_Blog
  * @subpackage Disable_Blog_Functions
  * @author     Joshua Nelson <josh@joshuadnelson.com>
@@ -21,7 +21,7 @@ class Disable_Blog_Functions {
 	/**
 	 * Redirect function, checks that a redirect looks safe and then runs it.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @param string $redirect_url the url to redirect to.
 	 * @return void
 	 */
@@ -49,7 +49,7 @@ class Disable_Blog_Functions {
 	/**
 	 * Check what post types are supporting author archives.
 	 *
-	 * @since 0.4.11
+	 * @since 0.5.0
 	 * @return bool|array $post_types Either an array of post types or false.
 	 */
 	public function author_archive_post_types() {
@@ -60,7 +60,7 @@ class Disable_Blog_Functions {
 		 * By default only posts are shown on author archives, if other post types are to appear
 		 * on the author archives, pass them with this filter.
 		 *
-		 * @since 0.4.11
+		 * @since 0.5.0
 		 * @param array|bool $post_types an array of post type slugs for author archives, false to disable.
 		 */
 		$post_types = apply_filters( 'dwpb_author_archive_post_types', array() );

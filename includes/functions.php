@@ -19,7 +19,7 @@
  *
  * @since 0.1.0
  * @since 0.4.0 pulled out of class, unique function.
- * @since 0.4.11 added $args parameter for passing specific arguments to get_post_types.
+ * @since 0.5.0 added $args parameter for passing specific arguments to get_post_types.
  * @param string $feature the feature in question.
  * @param array  $args    the arguments passed to get_post_types.
  * @return array|bool A list of post type names that support the featured or false if nothing found.
@@ -47,7 +47,7 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
 	 * be disabled and the options-discussion.php admin page redirected.
 	 *
 	 * @since 0.4.0
-	 * @since 0.4.11 Added the $args paramenter.
+	 * @since 0.5.0 Added the $args paramenter.
 	 * @param array|bool $post_types_with_feature an array of post types support this feature or false if none.
 	 * @param array      $args                    the arguments passed to get_post_types.
 	 * @return array|bool A list of post type names that support the featured or false if nothing found.

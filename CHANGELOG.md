@@ -1,6 +1,6 @@
 ### Changelog
 
-#### 0.4.11
+#### 0.5.0
 
 **New:**
 - Redirecting Author archives to homepage. Includes new `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place. Default is to remove the archives entirely, since posts are the only post type that show up on these archives.
