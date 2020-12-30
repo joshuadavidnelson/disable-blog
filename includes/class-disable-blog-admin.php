@@ -39,6 +39,15 @@ class Disable_Blog_Admin {
 	private $version;
 
 	/**
+	 * Object with common utility functions.
+	 *
+	 * @since  0.4.11
+	 * @access private
+	 * @var    object
+	 */
+	private $functions;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since 0.4.0
@@ -49,6 +58,7 @@ class Disable_Blog_Admin {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
+		$this->functions   = new Disable_Blog_Functions();
 
 	}
 
@@ -264,32 +274,8 @@ class Disable_Blog_Admin {
 		 * @param string $redirect_url The url to being used in the redirect.
 		 */
 		if ( apply_filters( 'dwpb_redirect_admin', true, $redirect_url ) ) {
-			$this->redirect( $redirect_url );
+			$this->functions->redirect( $redirect_url );
 		}
-
-	}
-
-	/**
-	 * Redirect function, checks that a redirect looks safe and then runs it.
-	 *
-	 * @since 0.4.11
-	 * @param string $redirect_url the url to redirect to.
-	 * @return void
-	 */
-	public function redirect( $redirect_url ) {
-
-		// Get the current url.
-		global $wp;
-		$current_url = admin_url( add_query_arg( array(), $wp->request ) );
-
-		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
-		// If there is no valid redirect url, then also bail.
-		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
-			return;
-		}
-
-		wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
-		exit;
 
 	}
 
@@ -1062,12 +1048,271 @@ class Disable_Blog_Admin {
 	 */
 	public function site_status_tests( $tests ) {
 
-		if ( isset( $tests['direct']['rest_availability'] ) && function_exists( 'dwpb_get_test_rest_availability' ) ) {
-			$tests['direct']['rest_availability']['test'] = 'dwpb_get_test_rest_availability';
+		if ( isset( $tests['direct']['rest_availability'] ) && is_callable( array( $this, 'get_test_rest_availability' ) ) ) {
+			$tests['direct']['rest_availability']['test'] = array( $this, 'get_test_rest_availability' );
 		}
 
 		return $tests;
 
 	}
 
+	/**
+	 * Replaces the core REST Availability Site Health check.
+	 *
+	 * Used by the site_status_tests filter in class-disable-blog-admin.php.
+	 *
+	 * Copied directly from https://developer.wordpress.org/reference/classes/wp_site_health/get_test_rest_availability/ but with the 'post' type updated to 'page' in the rest url.
+	 *
+	 * @see https://make.wordpress.org/core/2019/04/25/site-health-check-in-5-2/
+	 * @since 0.4.11
+	 * @return array
+	 */
+	public function get_test_rest_availability() {
+
+		$result = array(
+			'label'       => __( 'The REST API is available' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'Performance' ),
+				'color' => 'blue',
+			),
+			'description' => sprintf(
+				'<p>%s</p>',
+				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' )
+			),
+			'actions'     => '',
+			'test'        => 'rest_availability',
+		);
+
+		$cookies = wp_unslash( $_COOKIE );
+		$timeout = 10;
+		$headers = array(
+			'Cache-Control' => 'no-cache',
+			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
+		);
+		/** This filter is documented in wp-includes/class-wp-http-streams.php */
+		$sslverify = apply_filters( 'https_local_ssl_verify', false );
+
+		// Include Basic auth in loopback requests.
+		// @codingStandardsIgnoreStart
+		if ( isset( $_SERVER['PHP_AUTH_USER'] ) && isset( $_SERVER['PHP_AUTH_PW'] ) ) {
+			$headers['Authorization'] = 'Basic ' . base64_encode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) . ':' . wp_unslash( $_SERVER['PHP_AUTH_PW'] ) );
+		}
+		// @codingStandardsIgnoreEnd
+
+		// -- here's the money, change this ti 'page' from 'post'.
+		$url = rest_url( 'wp/v2/types/page' );
+
+		// The context for this is editing with the new block editor.
+		$url = add_query_arg(
+			array(
+				'context' => 'edit',
+			),
+			$url
+		);
+
+		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) );
+
+		if ( is_wp_error( $r ) ) {
+			$result['status'] = 'critical';
+
+			$result['label'] = __( 'The REST API encountered an error' );
+
+			$result['description'] .= sprintf(
+				'<p>%s</p>',
+				sprintf(
+					'%s<br>%s',
+					__( 'The REST API request failed due to an error.' ),
+					sprintf(
+						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
+						__( 'Error: %1$s (%2$s)' ),
+						$r->get_error_message(),
+						$r->get_error_code()
+					)
+				)
+			);
+		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
+			$result['status'] = 'recommended';
+
+			$result['label'] = __( 'The REST API encountered an unexpected result' );
+
+			$result['description'] .= sprintf(
+				'<p>%s</p>',
+				sprintf(
+					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
+					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ),
+					wp_remote_retrieve_response_code( $r ),
+					esc_html( wp_remote_retrieve_body( $r ) )
+				)
+			);
+		} else {
+			$json = json_decode( wp_remote_retrieve_body( $r ), true );
+
+			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
+				$result['status'] = 'recommended';
+
+				$result['label'] = __( 'The REST API did not behave correctly' );
+
+				$result['description'] .= sprintf(
+					'<p>%s</p>',
+					sprintf(
+						/* translators: %s: The name of the query parameter being tested. */
+						__( 'The REST API did not process the %s query parameter correctly.' ),
+						'<code>context</code>'
+					)
+				);
+			}
+		}
+
+		return $result;
+
+	}
+
+	/**
+	 * Remove posts column form user table.
+	 *
+	 * @since 0.4.11
+	 * @param array $columns the column slugs => title array.
+	 * @return array
+	 */
+	public function manage_users_columns( $columns ) {
+
+		/**
+		 * Disable the user post column.
+		 *
+		 * @since 0.4.11
+		 * @param bool $bool True to remove the column, defaults to true.
+		 * @return bool
+		 */
+		if ( apply_filters( 'dpwb_disable_user_post_column', true )
+			&& isset( $columns['posts'] ) ) {
+			unset( $columns['posts'] );
+		}
+
+		// Get the current screen.
+		$screen = get_current_screen();
+
+		// cycle through the post types to be displayed.
+		$post_types = $this->user_column_post_types();
+		foreach ( $post_types as $post_type ) {
+			/**
+			 * Create a new column for 'pages' similar to the orginal 'post' column.
+			 *
+			 * @since 0.4.11
+			 * @param bool $bool True to remove the column, defaults to true.
+			 * @return bool
+			 */
+			if ( apply_filters( "dpwb_create_user_{$post_type}_column", true )
+				// Taken from core functions for users page, don't display the posts column on site-users-network core page.
+				// see wp-admin/includes/class-wp-users-list-table.php.
+				&& isset( $screen->id ) && 'site-users-network' !== $screen->id ) {
+
+				$post_type_obj = get_post_type_object( $post_type );
+				if ( isset( $post_type_obj->labels->name ) ) {
+					$columns[ $post_type ] = $post_type_obj->labels->name;
+				}
+			}
+		}
+
+		return $columns;
+
+	}
+
+	/**
+	 * Mange the new custom user columns.
+	 *
+	 * @since 0.4.11
+	 * @see wp-admin/includes/class-wp-users-list-table.php.
+	 * @param string $output      the column output.
+	 * @param string $column_name the current column slug.
+	 * @param int    $user_id     the current user's id.
+	 * @return string
+	 */
+	public function manage_users_custom_column( $output, $column_name, $user_id ) {
+
+		$post_types = $this->user_column_post_types();
+		foreach ( $post_types as $post_type ) {
+			// Create new column output, mimicking core's 'post' column but for the 'page' and supported custom post types.
+			if ( $post_type === $column_name ) {
+
+				// make sure we can grab valid post type labels before continuing.
+				$post_type_obj = get_post_type_object( $post_type );
+				if ( ! isset( $post_type_obj->labels->name, $post_type_obj->labels->singular_name ) ) {
+					continue;
+				}
+
+				// Get the couunts.
+				$page_counts = count_many_users_posts( array( $user_id ), $post_type );
+				$page_count  = absint( $page_counts[ $user_id ] );
+
+				// Note that we have to explicitly add the query variable for post type in order
+				// to avoid it being stripped by the admin redirect on the edit.php page.
+				// @codingStandardsIgnoreStart - phpcs doesn't like the mismatched placeholders, but it works.
+				$output = sprintf(
+					'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
+					"edit.php?post_type={$post_type}&author={$user_id}",
+					$page_count,
+					sprintf(
+						// translators: %1$s: Number of pieces of content by this author. %2$s and %3$s are the singular and plural names, respectively, for the content type. For example: "1 page by this author" and "2 pages by this author".
+						_n( '%1$s %2$s by this author', '%1$s %3$s by this author', $page_count, 'disable-blog' ),
+						number_format_i18n( $page_count ),
+						$post_type_obj->labels->singular_name,
+						$post_type_obj->labels->name
+					)
+				);
+				// @codingStandardsIgnoreEnd
+			}
+		}
+
+		return $output;
+
+	}
+
+	/**
+	 * Grab the post types that
+	 *
+	 * @since 0.4.11
+	 * @return array
+	 */
+	private function user_column_post_types() {
+
+		// Include any post types using author archives.
+		$post_types = $this->functions->author_archive_post_types();
+
+		// The author_archive_post_type function returns false if empy, but we need an array.
+		$post_types = empty( $post_types ) ? array() : $post_types;
+
+		// Also include pages, which is not in the author archive by default,
+		// however we run array_unique in case the 'page' post type has been added
+		// to the author archives.
+		$post_types = array_unique( array_merge( array( 'page' ), $post_types ) );
+
+		/**
+		 * Filter the post types that appear in the user table.
+		 *
+		 * @since 0.4.11
+		 * @param array $post_types an array of post type slugs.
+		 * @return array
+		 */
+		return apply_filters( 'dwpb_admin_user_post_types', $post_types );
+
+	}
+
+	/**
+	 * Remove the user's "view" link if we are not supporting author archives.
+	 *
+	 * @since 0.4.11
+	 * @param array  $actions     an array of actions in a key => output format.
+	 * @param object $user_object the current user, WP_User object.
+	 * @return array
+	 */
+	public function user_row_actions( $actions, $user_object ) {
+
+		$post_types = $this->functions->author_archive_post_types();
+		if ( empty( $post_types ) && isset( $actions['view'] ) ) {
+			unset( $actions['view'] );
+		}
+
+		return $actions;
+	}
 }

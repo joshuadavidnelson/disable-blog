@@ -38,6 +38,15 @@ class Disable_Blog_Public {
 	private $version;
 
 	/**
+	 * Object with common utility functions.
+	 *
+	 * @since  0.4.11
+	 * @access private
+	 * @var    object
+	 */
+	private $functions;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since 0.2.0
@@ -48,6 +57,7 @@ class Disable_Blog_Public {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
+		$this->functions   = new Disable_Blog_Functions();
 
 	}
 
@@ -86,6 +96,7 @@ class Disable_Blog_Public {
 			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
 			'blog_page'        => is_home(),
 			'date_archive'     => is_date(),
+			'author_archive'   => ( is_author() && empty( $this->functions->author_archive_post_types() ) ),
 		);
 
 		// cycle through each public page, checking if we need to redirect.
@@ -95,7 +106,7 @@ class Disable_Blog_Public {
 			$filter = 'dwpb_redirect_' . $filtername;
 
 			// If this is the right page, then setup the redirect url.
-			if ( $bool ) {
+			if ( true === $bool ) {
 
 				/**
 				 * The redirect url used for this public page.
@@ -132,32 +143,8 @@ class Disable_Blog_Public {
 		 * @param string $redirect_url The url being used for the redirect.
 		 */
 		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
-			$this->redirect( $redirect_url );
+			$this->functions->redirect( $redirect_url );
 		}
-
-	}
-
-	/**
-	 * Redirect function, checks that a redirect looks safe and then runs it.
-	 *
-	 * @since 0.4.11
-	 * @param string $redirect_url the url to redirect to.
-	 * @return void
-	 */
-	public function redirect( $redirect_url ) {
-
-		// Get the current url.
-		global $wp;
-		$current_url = home_url( add_query_arg( array(), $wp->request ) );
-
-		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
-		// If there is no valid redirect url, then also bail.
-		if ( $redirect_url === $current_url || ! $redirect_url ) {
-			return;
-		}
-
-		wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
-		exit;
 
 	}
 
@@ -175,6 +162,7 @@ class Disable_Blog_Public {
 	 * @since 0.4.0 added remove_post_from_array_in_query function
 	 * @since 0.4.9 remove 'post' from all archives.
 	 * @since 0.4.10 update to just remove 'post' from built-in taxonomy archives,
+	 * @since 0.4.11 remove 'post' type from author archives.
 	 * @param object $query the query object.
 	 * @return void
 	 */
@@ -188,18 +176,22 @@ class Disable_Blog_Public {
 		// Let's see if there are any post types supporting build-in taxonomies.
 		$tag_post_types      = dwpb_post_types_with_tax( 'post_tag' );
 		$category_post_types = dwpb_post_types_with_tax( 'category' );
+		$author_post_types   = $this->functions->author_archive_post_types();
 
 		// Remove existing posts from built-in taxonomy archives, if they are supported by another post type.
-		if ( $query->is_tag() && $tag_post_types ) {
+		if ( $query->is_tag() && $tag_post_types ) { // tag archives.
 
 			$this->set_post_types_in_query( $query, $tag_post_types, 'dwpb_tag_post_types' );
 
-		} elseif ( $query->is_category() && $category_post_types ) {
+		} elseif ( $query->is_category() && $category_post_types ) { // category archives.
 
 			$this->set_post_types_in_query( $query, $category_post_types, 'dwpb_category_post_types' );
 
-		}
+		} elseif ( $query->is_author() && ! empty( $author_post_types ) ) { // author archives, if supported, have a filter for setting the post types.
 
+			$this->set_post_types_in_query( $query, $author_post_types );
+
+		}
 	}
 
 	/**
@@ -219,15 +211,24 @@ class Disable_Blog_Public {
 		 * If there is a filter name passed, then a filter is applied on the array and query.
 		 *
 		 * Used for 'dwpb_tag_post_types' and 'dwpb_category_post_types' filters.
+		 * Note that the 'dwpb_author_archive_post_types' filter is passed in another function,
+		 * hence the reason $filter can be empty and not passed in this function.
 		 *
 		 * @see Disable_Blog_Public->modify_query
 		 * @since 0.4.0
 		 * @since 0.4.10 fix bug in 0.4.9 causing cpt weirdness, now always using the filter.
-		 * @param array $array
-		 * @param object $query
+		 * @since 0.4.11 made the filter part of this function optional, since the author
+		 *               post type filter is located in the functions class.
+		 * @param array  $post_types An array of post type slugs.
+		 * @param object $query      The query object being modified.
+		 * @return array
 		 */
-		$set_to = apply_filters( $filter, $post_types, $query );
-		if ( ! empty( $set_to ) && method_exists( $query, 'set' ) ) {
+		if ( ! empty( $filter ) ) {
+			$set_to = apply_filters( $filter, $post_types, $query );
+		} else {
+			$set_to = $post_types;
+		}
+		if ( ! empty( $set_to ) && method_exists( $query, 'set' ) && is_array( $set_to ) ) {
 			$query->set( 'post_type', $set_to );
 			return true;
 		}
@@ -313,7 +314,7 @@ class Disable_Blog_Public {
 
 			} else { // Default option: redirect to homepage.
 
-				$this->redirect( $redirect_url );
+				$this->functions->redirect( $redirect_url );
 
 			}
 		}
@@ -486,6 +487,38 @@ class Disable_Blog_Public {
 		}
 
 		return $taxonomies;
+
+	}
+
+	/**
+	 * Remove author sitemaps.
+	 *
+	 * @since 0.4.11
+	 * @link https://developer.wordpress.org/reference/hooks/wp_sitemaps_add_provider/
+	 * @param object $provider Instance of a WP_Sitemaps_Provider.
+	 * @param string $name     Name of the sitemap provider.
+	 * @return object|bool Instance of a WP_Sitemaps_Provider or false.
+	 */
+	public function wp_author_sitemaps( $provider, $name ) {
+
+		// Check if we have any post types supporting author archives.
+		$author_archives_supported = $this->functions->author_archive_post_types();
+
+		// If there are no author archives, then don't show the sitemap.
+		$disable_sitemap = empty( $author_archives_supported );
+
+		/**
+		 * Turn off user/author sitemaps.
+		 *
+		 * @since 0.4.11
+		 * @param bool $bool True to disable, defaults to true.
+		 * @return bool
+		 */
+		if ( 'users' === $name && apply_filters( 'dwpb_disable_user_sitemap', $disable_sitemap ) ) {
+			return false;
+		}
+
+		return $provider;
 
 	}
 
