@@ -312,6 +312,13 @@ class Disable_Blog {
 		// Remove the "view" link from the user options if author archives are not supported.
 		$this->loader->add_filter( 'user_row_actions', $plugin_admin, 'user_row_actions', 10, 2 );
 
+		// Filter post counts on post-related taxonomy edit screens for custom post types.
+		$this->loader->add_filter( 'post_tag_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
+		$this->loader->add_filter( 'category_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
+
+		// Customizer view.
+		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
+
 	}
 
 	/**
