@@ -1394,5 +1394,6 @@ class Disable_Blog_Admin {
 			</style>
 			<?php
 		}
+
 	}
 }

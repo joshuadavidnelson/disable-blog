@@ -316,7 +316,7 @@ class Disable_Blog {
 		$this->loader->add_filter( 'post_tag_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
 		$this->loader->add_filter( 'category_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
 
-		// Customizer view.
+		// Update customizer homepage settings panel to match the Reading settings.
 		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
 
 	}
