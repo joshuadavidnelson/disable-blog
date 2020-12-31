@@ -112,6 +112,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
 - Update the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
 - Update the customizer "Homepage" view to match the Reading options page view, when homepage is set.
+- Update the default posts page admin notice indicating the blog is redirected.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and
@@ -271,6 +272,7 @@ A bunch of stuff:
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
 - Update the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
 - Update the customizer "Homepage" view to match the Reading options page view, when homepage is set.
+- Update the default posts page admin notice indicating the blog is redirected.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and

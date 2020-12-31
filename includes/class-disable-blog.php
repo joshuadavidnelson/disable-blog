@@ -319,6 +319,9 @@ class Disable_Blog {
 		// Update customizer homepage settings panel to match the Reading settings.
 		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
 
+		// Update Blog page notice.
+		$this->loader->add_action( 'post_edit_form_tag', $plugin_admin, 'update_posts_page_notice', 10, 1 );
+
 	}
 
 	/**

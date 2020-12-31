@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "Project-Id-Version: Disable Blog\n"
-"POT-Creation-Date: 2020-12-30 14:06+0000\n"
-"PO-Revision-Date: 2020-12-30 11:14+0000\n"
+"POT-Creation-Date: 2020-12-31 10:39+0000\n"
+"PO-Revision-Date: 2020-12-31 10:38+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -101,12 +101,19 @@ msgid "The REST API did not process the %s query parameter correctly."
 msgstr ""
 
 #. translators: %1$s: Number of pieces of content by this author. %2$s and %3$s are the singular and plural names, respectively, for the content type. For example: "1 page by this author" and "2 pages by this author".
-#: includes/class-disable-blog-admin.php:1257
+#: includes/class-disable-blog-admin.php:1314
 #, php-format
 msgid "%1$s %2$s by this author"
 msgid_plural "%1$s %3$s by this author"
 msgstr[0] ""
 msgstr[1] ""
+
+#. translators: this notice informs the user why the blog page editor is disabled and that it is redirected to the homepage.
+#: includes/class-disable-blog-admin.php:1425
+msgid ""
+"You are currently editing the page that shows your latest posts, which is "
+"redirected to the homepage because the blog is disabled."
+msgstr ""
 
 #. translators: This message appears when the feed is disabled instead of redirect, it should point to the homepage.
 #: includes/class-disable-blog-public.php:295

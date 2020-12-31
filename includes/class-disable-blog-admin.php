@@ -1396,4 +1396,32 @@ class Disable_Blog_Admin {
 		}
 
 	}
+
+	/**
+	 * Remove the default posts page notice and replace it with a new one.
+	 *
+	 * @since 0.5.0
+	 * @return void
+	 */
+	public function update_posts_page_notice() {
+
+		if ( (int) get_option( 'page_for_posts' ) === get_the_ID() ) {
+			remove_action( 'edit_form_after_title', '_wp_posts_page_notice' );
+			add_action( 'edit_form_after_title', array( $this, 'posts_page_notice' ) );
+		}
+
+	}
+
+	/**
+	 * Replaces the default blog page posts notice.
+	 *
+	 * @since 0.5.0
+	 * @return void
+	 */
+	public function posts_page_notice() {
+
+		// translators: this notice informs the user why the blog page editor is disabled and that it is redirected to the homepage.
+		echo '<div class="notice notice-warning inline"><p>' . __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>';
+
+	}
 }
