@@ -1180,7 +1180,7 @@ class Disable_Blog_Admin {
 	 */
 	public function filter_taxonomy_count( $actions, $tag ) {
 
-		if ( isset( $tag->taxonomy )
+		if ( isset( $tag->taxonomy, $tag->count, $tag->term_id )
 			&& ( 'post_tag' === $tag->taxonomy || 'category' === $tag->taxonomy ) ) {
 			$screen     = get_current_screen();
 			$count      = $this->get_term_post_count_by_type( $tag->term_id, $tag->taxonomy, $screen->post_type );
@@ -1202,7 +1202,7 @@ class Disable_Blog_Admin {
 	 */
 	public function get_term_post_count_by_type( $term_id, $taxonomy, $post_type ) {
 
-		$args = array(
+		$args  = array(
 			'fields'                 => 'ids',
 			'posts_per_page'         => 500,
 			'post_type'              => $post_type,
