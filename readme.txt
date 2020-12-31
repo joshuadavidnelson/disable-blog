@@ -48,7 +48,7 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 	- Removes post-related dashboard widgets.
 	- Hides number of posts and comment count on Activity dashboard widget.
 	- Removes Post Related Widgets.
-	- Hide options in Reading Settings page related to posts (shows front page and search engine options).
+	- Hide options in Reading Settings page related to posts (shows front page and search engine options), as well as matching section in Cusomizer > Homepage Settings view.
 	- Removes 'Post' options on 'Menus' admin page.
 	- Filters 'post' post type out of main query.
 	- Disables "Press This" functionality.
@@ -59,6 +59,7 @@ The blog is "disabled" mostly by hiding blog-related admin pages/settings and re
 	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 	- Replaces the "Posts" column in the user table with "Pages," linked to pages by that author.
 	- Remove the "view" link to author archives in the user screen if author archives are not supported.
+	- Updates the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
 
 **Important**: If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. **You need to select a page to act as the home page**. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
@@ -109,6 +110,8 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
+- Update the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
+- Update the customizer "Homepage" view to match the Reading options page view, when homepage is set.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and
@@ -266,6 +269,8 @@ A bunch of stuff:
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
+- Update the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
+- Update the customizer "Homepage" view to match the Reading options page view, when homepage is set.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and

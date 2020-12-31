@@ -7,6 +7,8 @@
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
+- Update the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
+- Update the customizer "Homepage" view to match the Reading options page view, when homepage is set.
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and

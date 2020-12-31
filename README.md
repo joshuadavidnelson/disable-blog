@@ -45,7 +45,7 @@ Does the following:
 	- Removes post-related dashboard widgets.
 	- Hides number of posts and comment count on Activity dashboard widget.
 	- Removes Post Related Widgets.
-	- Hide options in Reading Settings page related to posts (shows front page and search engine options).
+	- Hide options in Reading Settings page related to posts (shows front page and search engine options), as well as matching section in Cusomizer > Homepage Settings view.
 	- Removes 'Post' options on 'Menus' admin page.
 	- Filters 'post' post type out of main query.
 	- Disables "Press This" functionality.
@@ -56,6 +56,7 @@ Does the following:
 	- Replace the REST API availability site health check with a duplicate function that uses the `page` type instead of the `post` type (avoids false positive error in Site Health).
 	- Replaces the "Posts" column in the user table with "Pages," linked to pages by that author.
 	- Remove the "view" link to author archives in the user screen if author archives are not supported.
+	- Updates the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
 
 **Note that this plugin will not delete anything - existing posts, comments, categories and tags will remain in your database.** 
 
