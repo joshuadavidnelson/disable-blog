@@ -1,6 +1,6 @@
 <?php
 /**
- * The plugin bootstrap file
+ * The plugin bootstrap file.
  *
  * This file is read by WordPress to generate the plugin information in the plugin
  * admin area. This file also includes all of the dependencies used by the plugin,
@@ -15,7 +15,7 @@
  * Plugin Name: Disable Blog
  * Plugin URI:  https://wordpress.org/plugins/disable-blog/
  * Description: Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting).
- * Version:     0.4.10
+ * Version:     0.5.0
  * Author:      Joshua Nelson
  * Author URI:  http://joshuadnelson.com
  * License:     GPL-2.0+

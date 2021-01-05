@@ -19,12 +19,14 @@
  *
  * @since 0.1.0
  * @since 0.4.0 pulled out of class, unique function.
+ * @since 0.5.0 added $args parameter for passing specific arguments to get_post_types.
  * @param string $feature the feature in question.
+ * @param array  $args    the arguments passed to get_post_types.
  * @return array|bool A list of post type names that support the featured or false if nothing found.
  */
-function dwpb_post_types_with_feature( $feature ) {
+function dwpb_post_types_with_feature( $feature, $args = array() ) {
 
-	$post_types = get_post_types( array(), 'names' );
+	$post_types = get_post_types( $args, 'names' );
 
 	$post_types_with_feature = array();
 	foreach ( $post_types as $post_type ) {
@@ -45,12 +47,12 @@ function dwpb_post_types_with_feature( $feature ) {
 	 * be disabled and the options-discussion.php admin page redirected.
 	 *
 	 * @since 0.4.0
-	 *
+	 * @since 0.5.0 Added the $args paramenter.
 	 * @param array|bool $post_types_with_feature an array of post types support this feature or false if none.
-	 *
+	 * @param array      $args                    the arguments passed to get_post_types.
 	 * @return array|bool A list of post type names that support the featured or false if nothing found.
 	 */
-	return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature );
+	return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature, $args );
 
 }
 
@@ -63,14 +65,11 @@ function dwpb_post_types_with_feature( $feature ) {
  *
  * @since 0.2.0
  * @since 0.4.0 pulled out of class, unique function.
- *
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @uses get_post_types(), get_object_taxonomies(), apply_filters()
- *
  * @param string|object $taxonomy Required. The taxonomy object or taxonomy slug.
  * @param array|string  $args     Optional. An array of key => value arguments to match against the post type objects. Default empty array.
  * @param string        $output   Optional. The type of output to return. Accepts post type 'names' or 'objects'. Default 'names'.
- *
  * @return array|bool A list of post type names or objects that have the taxonomy or false if nothing found.
  */
 function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
@@ -89,6 +88,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	// setup the finished product.
 	$post_types_with_tax = array();
 	foreach ( $post_types as $post_type ) {
+
 		// If post types are objects.
 		if ( is_object( $post_type ) ) {
 			$type = $post_type->name;
@@ -117,10 +117,12 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	 * off related features if they are not being used by anything other than built-in posts.
 	 *
 	 * @since 0.4.0
-	 *
-	 * @param array|bool $post_types_with_tax an array of post types use this taxonomy or false if none.
-	 *
-	 * @return array|bool A list of post type names that use this taxonomy or false if nothing found.
+	 * @param mixed         $null                Null for no override, otherwise pass an array of post type slugs.
+	 * @param string|object $taxonomy            The curent taxonomy slug.
+	 * @param array|bool    $post_types_with_tax An array of post types use this taxonomy or false if none.
+	 * @param array         $args                An array of key => value arguments to match against the post type objects. Default empty array.
+	 * @param string        $output              The type of output to return, either 'names' or 'objects'.
+	 * @return mixed A list of post type names that use this taxonomy or false if nothing found.
 	 */
 	$override = apply_filters( 'dwpb_taxonomy_support', null, $taxonomy, $post_types, $args, $output );
 	if ( ! is_null( $override ) ) {

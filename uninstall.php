@@ -42,6 +42,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  * @uses  wp_die()
  */
 if ( ! is_user_logged_in() ) {
+	// translators: This error shows up when the uninstall process is run but the user login session is invalid.
 	$message       = __( 'You must be logged in to run this script.', 'disable-blog' );
 	$message_title = __( 'Disable Blog', 'disable-blog' );
 	wp_die(
@@ -52,6 +53,7 @@ if ( ! is_user_logged_in() ) {
 }
 
 if ( ! current_user_can( 'install_plugins' ) ) {
+	// translators: This error shows up if the user does not have permissions to uninstall the plugin.
 	$message       = __( 'You do not have permission to run this script.', 'disable-blog' );
 	$message_title = __( 'Disable Blog', 'disable-blog' );
 	wp_die(
