@@ -125,24 +125,29 @@ class Disable_Blog_Public {
 			} // end if
 		} // end foreach
 
-		/**
-		 * Global public url redirect filter.
-		 *
-		 * @since 0.5.0
-		 * @param string $redirect_url The redirect url.
-		 */
-		$redirect_url = apply_filters( 'dwpb_front_end_redirect_url', $redirect_url );
+		// Only continue if we have a redirect url.
+		if ( ! $redirect_url ) {
+			return;
+		}
 
 		/**
 		 * Filter to toggle the plugin's front-end redirection.
 		 *
 		 * @since 0.2.0
 		 * @since 0.4.0 added the current_url param.
-		 * @since 0.5.0 removed 3rd `$current_url` param.
-		 * @param bool   $bool         True to enable, false to disable.
-		 * @param string $redirect_url The url being used for the redirect.
+		 * @since 0.5.0 removed 'redirect_url' && 'current_url' params.
+		 * @param bool $bool True to enable, false to disable.
 		 */
-		if ( apply_filters( 'dwpb_redirect_front_end', true, $redirect_url ) ) {
+		if ( apply_filters( 'dwpb_redirect_front_end', true ) ) {
+
+			/**
+			 * Global public url redirect filter.
+			 *
+			 * @since 0.5.0
+			 * @param string $redirect_url The redirect url.
+			 */
+			$redirect_url = apply_filters( 'dwpb_front_end_redirect_url', $redirect_url );
+
 			$this->functions->redirect( $redirect_url );
 		}
 
