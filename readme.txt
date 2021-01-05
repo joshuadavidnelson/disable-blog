@@ -119,15 +119,15 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- Hiding the default category & default post format on Writing options page.
 
 **Fixes:**
-- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
-- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
-- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled.
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
 - In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility. Fixes bugs were `options-writing.php` and `options-discussion.php` were conflicting.
 
 **Improvements/Updates:**
 - Update admin filters to a common format and removing redundent filters. Filter changes include:
 	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
-	- `dwpb_redirect_admin` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
+	- `dwpb_redirect_admin` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 	- `dwpb_redirect_admin_edit_post` is now `dwpb_redirect_admin_edit`.
 	- `dwpb_redirect_single_post_edit` is now `dwpb_redirect_admin_post`.
 	- `dwpb_redirect_admin_edit_single_post` is now `dwpb_redirect_admin_edit`.
@@ -142,7 +142,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
-	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
+	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
@@ -186,7 +186,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 = 0.4.7 =
 * Using GitHub actions publish on WP.org from github releases.
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
-* Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
+* Add check for Multisite to avoid network page redirects. Props to @Mactory.
 * Added Contributing and Code of Conduct documentation.
 * Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
@@ -279,15 +279,15 @@ A bunch of stuff:
 	- Hiding the default category & default post format on Writing options page.
 
 **Fixes:**
-- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
-- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
-- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur.
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled.
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link.
 - In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility. Fixes bugs were `options-writing.php` and `options-discussion.php` were conflicting.
 
 **Improvements/Updates:**
 - Update admin filters to a common format and removing redundent filters. Filter changes include:
 	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
-	- `dwpb_redirect_admin` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
+	- `dwpb_redirect_admin` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 	- `dwpb_redirect_admin_edit_post` is now `dwpb_redirect_admin_edit`.
 	- `dwpb_redirect_single_post_edit` is now `dwpb_redirect_admin_post`.
 	- `dwpb_redirect_admin_edit_single_post` is now `dwpb_redirect_admin_edit`.
@@ -302,7 +302,7 @@ A bunch of stuff:
 	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
-	- `dwpb_redirect_front_end` only accepts 2 parameters, the previous version accepted 3 (dropping `$current_url`).
+	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 - Bump minimum PHP to 5.6.
 - Tested up to WP Core version 5.6.
 - Updated minimum WP Core version to 4.0.
@@ -346,7 +346,7 @@ A bunch of stuff:
 = 0.4.7 =
 * Using GitHub actions publish on WP.org from github releases.
 * Cleaned up the Reading settings, adding admin notices if front page is not set.
-* Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
+* Add check for Multisite to avoid network page redirects, props to @Mactory.
 * Added Contributing and Code of Conduct documentation.
 * Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
