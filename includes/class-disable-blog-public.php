@@ -96,7 +96,7 @@ class Disable_Blog_Public {
 			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
 			'blog_page'        => is_home(),
 			'date_archive'     => is_date(),
-			'author_archive'   => ( is_author() && empty( $this->functions->author_archive_post_types() ) ),
+			'author_archive'   => ( is_author() && true === $this->functions->disable_author_archives() ),
 		);
 
 		// cycle through each public page, checking if we need to redirect.
