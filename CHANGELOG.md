@@ -40,8 +40,8 @@
 	- New filter: `dwpb_disable_author_archives` (see above).
 - Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:
 	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
-	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives.
-	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
+	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives, if they are disabled.
+	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass `true` to keep disable the sitmap. Note that if author archives are disabled by the above filter, user sitemps will be as well. 
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
 	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).

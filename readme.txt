@@ -27,14 +27,14 @@ The blog is "disabled" mostly by removing the core 'post' type, hiding blog-rela
 	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
 	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
-	- Disable author archives (redirect to homepage) via `dwpb_disable_author_archives` filter. Add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );` The plugin by default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
+	- Disable author archives (redirect to homepage) via `dwpb_disable_author_archives` filter. Add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );` The plugin by default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here). Change the url being used in the redirect with the `dwpb_redirect_author_archive` filter.
 	- Removes post sitemaps and, if not supported via the `dwpb_disable_author_archive` filter, user sitemaps. User sitemaps can be toggled back on via that filter or directly passing `false` to the `dwpb_disable_user_sitemap` filter.
 	- Redirects (301):
 		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
 		- The blog page to the homepage.
 		- All Tag & Category archives to home page, unless they are supported by a custom post type.
 		- Date archives to the homepage.
-		- As of v0.5.0 redirect author archives to the homepage, unless custom post types are passed via the `dwpb_redirect_author_archive` filter.
+		- Author archives are not redirected by default, but can per the above mentioned `dwpb_disable_author_archives` filter.
 
 - Admin side:
 	- Redirects tag and category pages to dashboard, unless used by a custom post type.
@@ -149,8 +149,8 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- New filter: `dwpb_disable_author_archives` (see above).
 - Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:
 	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
-	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives.
-	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
+	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives, if they are disabled.
+	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass `true` to keep disable the sitmap. Note that if author archives are disabled by the above filter, user sitemps will be as well.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
 	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
@@ -314,8 +314,8 @@ A bunch of stuff:
 	- New filter: `dwpb_disable_author_archives` (see above).
 - Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:
 	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
-	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives.
-	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass "false" to keep the sitemap in place. Using the author archive post type filter will impact the sitemap - if author archives are enabled for custom post types, then the sitemap is on.
+	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives, if they are disabled.
+	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass `true` to keep disable the sitmap. Note that if author archives are disabled by the above filter, user sitemps will be as well.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
 	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
