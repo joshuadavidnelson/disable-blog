@@ -3,7 +3,8 @@
 #### 0.5.0
 
 **New:**
-- Add disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely.
+- Add disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
+- Add `dwpb_xmlrpc_methods_to_remove` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes #50
 - Add `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter and the redirect goes away, author archives support those post types, and the user sitemap stays in place.
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
@@ -42,7 +43,7 @@
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
 	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 - Bump minimum PHP to 5.6.
-- Tested up to WP Core version 5.6.
+- Tested up to WP Core version 5.8.1.
 - Updated minimum WP Core version to 4.0.
 - Updated translation file for all current plugin strings.
 

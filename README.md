@@ -24,8 +24,8 @@ Does the following:
 	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
 	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
-	- Removes post sitemaps and, if not supported via the `dwpb_redirect_author_archive` filter, user sitemaps. User sitemaps can be toggled back on via that filter or directly passing `false` to the `dwpb_disable_user_sitemap` filter.
-	- Disable author archives (redirect to homepage) and author sitemaps by passing `true` to the `dwpb_disable_author_archives` filter.
+	- Disable author archives (redirect to homepage) via `dwpb_disable_author_archives` filter. Add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );` The plugin by default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
+	- Removes post sitemaps and, if not supported via the `dwpb_disable_author_archive` filter, user sitemaps. User sitemaps can be toggled back on via that filter or directly passing `false` to the `dwpb_disable_user_sitemap` filter.
 	- Redirects (301):
 		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
 		- The blog page to the homepage.
