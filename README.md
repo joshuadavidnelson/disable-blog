@@ -25,6 +25,7 @@ Does the following:
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
 	- Disables XMLRPC for posts, as well as tags & categories (if not used by another custom post type).
 	- Removes post sitemaps and, if not supported via the `dwpb_redirect_author_archive` filter, user sitemaps. User sitemaps can be toggled back on via that filter or directly passing `false` to the `dwpb_disable_user_sitemap` filter.
+	- Disable author archives (redirect to homepage) and author sitemaps by passing `true` to the `dwpb_disable_author_archives` filter.
 	- Redirects (301):
 		- All Single Posts & Post Archive urls to the homepage (requires a 'page' as your homepage in Settings > Reading)
 		- The blog page to the homepage.
@@ -72,3 +73,5 @@ All contributions are welcomed and considered, please refer to [contributing.md]
  - This could be done, but other post types (like Pages) may have comment support. If you would like to disable comments, try the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin
 2. I want to delete my posts and comments
  - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
+3. How can I disable author archives?
+ - If you're not using the built-in WP author archives (typically at `example.com/author/joshua` urls) and would like to disable them entirely, add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );`. If author archives are not disabled, the plugin adds functionality to support custom post types on author archives by passing an array of post type slugs to `dwpb_author_archive_post_types` filter - however, theme support is usually needed to disable custom content types correctly.

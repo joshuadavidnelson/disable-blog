@@ -4,7 +4,7 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 4.0
 Requires PHP: 5.6
-Tested up to: 5.6
+Tested up to: 5.8.1
 Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -15,9 +15,9 @@ All the power of WordPress, without a blog.
 
 Free your WordPress site from posts! Maintain a static website, a blog-less WordPress.
 
-Disable Blog is a comprehensive plugin for to disable blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
+Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
 
-The blog is "disabled" mostly by hiding blog-related admin pages/settings and redirecting urls on both the front-end and admin portions of your site. Specifically does the following:
+The blog is "disabled" mostly by removing the core 'post' type, hiding blog-related admin pages/settings, and redirecting urls on both the public and admin portions of your site. Specifically does the following:
 
 - Turns the `post` type into a non-public content type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page or be redirect to the homepage.
 
@@ -96,6 +96,11 @@ This could be done, but other post types (like Pages) may have comment support. 
 = I want to delete my posts and comments. =
 
 Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
+
+= How can I disable author archives? =
+
+If you're not using the built-in WP author archives (typically at `example.com/author/joshua` urls) and would like to disable them entirely, add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );`. If author archives are not disabled, the plugin adds functionality to support custom post types on author archives by passing an array of post type slugs to `dwpb_author_archive_post_types` filter - however, theme support is usually needed to disable custom content types correctly.
+
 
 = How can I change the plugin's behavior? =
 
