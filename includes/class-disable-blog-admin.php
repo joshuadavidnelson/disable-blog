@@ -1243,7 +1243,7 @@ class Disable_Blog_Admin {
 		 */
 		$disable_user_posts_column = apply_filters( 'dpwb_disable_user_post_column', true );
 
-		if ( isset( $column['posts'] ) && true === (bool) $disable_user_posts_column ) {
+		if ( isset( $columns['posts'] ) && true === (bool) $disable_user_posts_column ) {
 			unset( $columns['posts'] );
 		}
 
