@@ -393,6 +393,28 @@ class Disable_Blog_Public {
 	 */
 	public function xmlrpc_methods( $methods ) {
 
+		$methods_to_remove = $this->get_disabled_xmlrpc_methods();
+
+		if ( ! empty( $methods_to_remove ) && is_array( $methods_to_remove ) ) {
+			foreach ( $methods_to_remove as $method ) {
+				if ( isset( $methods[ $method ] ) ) {
+					unset( $methods[ $method ] );
+				}
+			}
+		}
+
+		return $methods;
+
+	}
+
+	/**
+	 * Get the XML-RPC methods to disable.
+	 *
+	 * @since 0.5.0
+	 * @return array|bool
+	 */
+	private function get_disabled_xmlrpc_methods() {
+
 		// The methods to remove.
 		$methods_to_remove = array(
 			'wp.getUsersBlogs',
@@ -442,15 +464,19 @@ class Disable_Blog_Public {
 
 		$methods_to_remove = array_merge( $methods_to_remove, $taxonomy_methods );
 
-		if ( is_array( $methods_to_remove ) ) {
-			foreach ( $methods_to_remove as $method ) {
-				if ( isset( $methods[ $method ] ) ) {
-					unset( $methods[ $method ] );
-				}
-			}
-		}
+		/**
+		 * Filter the methods being disabled by the plugin.
+		 *
+		 * Return false to disable this functionality entirely and keep all methods in place.
+		 *
+		 * @since 0.5.0
+		 * @param array $methods_to_remove an array of all the XMLRPC methods to disable.
+		 * @return array|bool
+		 */
+		$methods_to_remove = apply_filters( 'dwpb_disabled_xmlrpc_methods', $methods_to_remove );
 
-		return $methods;
+		// filter any invalid entries out before returning the array.
+		return array_filter( $methods_to_remove, 'is_string' );
 
 	}
 
