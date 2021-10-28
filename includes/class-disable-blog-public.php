@@ -532,11 +532,21 @@ class Disable_Blog_Public {
 	 */
 	public function wp_author_sitemaps( $provider, $name ) {
 
-		// Check if we have any post types supporting author archives.
-		$author_archives_supported = $this->functions->author_archive_post_types();
-
 		// If there are no author archives, then don't show the sitemap.
-		$disable_sitemap = empty( $author_archives_supported );
+		$disable_author_archives = $this->functions->disable_author_archives();
+		if ( true === $disable_author_archives ) {
+
+			$disable_sitemap = true;
+
+		} else { // Otherwise, we may show it?
+
+			// Check if we have any post types supporting author archives.
+			$author_archives_supported = $this->functions->author_archive_post_types();
+
+			// Only show the sitemap if there are post types support on the archives.
+			$disable_sitemap = empty( $author_archives_supported );
+
+		}
 
 		/**
 		 * Turn off user/author sitemaps.

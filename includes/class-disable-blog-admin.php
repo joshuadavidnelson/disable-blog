@@ -1241,8 +1241,9 @@ class Disable_Blog_Admin {
 		 * @param bool $bool True to remove the column, defaults to true.
 		 * @return bool
 		 */
-		if ( apply_filters( 'dpwb_disable_user_post_column', true )
-			&& isset( $columns['posts'] ) ) {
+		$disable_user_posts_column = apply_filters( 'dpwb_disable_user_post_column', true );
+
+		if ( isset( $column['posts'] ) && true === (bool) $disable_user_posts_column ) {
 			unset( $columns['posts'] );
 		}
 
@@ -1365,9 +1366,9 @@ class Disable_Blog_Admin {
 	 */
 	public function user_row_actions( $actions, $user_object ) {
 
-		$post_types = $this->functions->author_archive_post_types();
-		if ( empty( $post_types ) && isset( $actions['view'] ) ) {
-			unset( $actions['view'] );
+		if ( true === $this->functions->disable_author_archives()
+			&& isset( $actions['view'] ) ) {
+				unset( $actions['view'] );
 		}
 
 		return $actions;

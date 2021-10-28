@@ -74,4 +74,29 @@ class Disable_Blog_Functions {
 
 	}
 
+	/**
+	 * Check if we are disabling author archives.
+	 *
+	 * Will only return true if the filter is actively set to true
+	 * AND there are valid post types to show on the author archives.
+	 *
+	 * @since 0.5.0
+	 * @return bool
+	 */
+	public function disable_author_archives() {
+
+		/**
+		 * Disable the author archives.
+		 *
+		 * Because many plugins and themes use author archives for profile pages,
+		 * the ability to disable the author archive defaults to false.
+		 *
+		 * @since 0.5.0
+		 * @param bool $bool True to disable author archives.
+		 * @return bool
+		 */
+		return (bool) apply_filters( 'dwpb_disable_author_archives', false );
+
+	}
+
 }
