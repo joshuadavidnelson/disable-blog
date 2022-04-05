@@ -856,7 +856,9 @@ class Disable_Blog_Admin {
 	 * Filter the comment counts to remove comments to 'post' post type.
 	 *
 	 * @since 0.4.0
-	 * @since 0.4.3 Moved everything into the post id check and reset the cache.
+	 * @since 0.4.3 Moved everything into the post id check and updated caching functions to match wp_get_comments.
+	 *
+	 * @see wp_get_comments()
 	 * @param object $comments the comment count object.
 	 * @param int    $post_id  the post id.
 	 * @return object
@@ -865,6 +867,14 @@ class Disable_Blog_Admin {
 
 		// if this is grabbing all the comments, filter out the 'post' comments.
 		if ( 0 === $post_id ) {
+
+			// Keep caching in place, note that on activation the plugin clears this cache.
+			// see class-disable-blog-activator.php.
+			$count = wp_cache_get( 'comments-0', 'counts' );
+			if ( false !== $count ) {
+				return $count;
+			}
+
 			$comments = $this->get_comment_counts();
 
 			$comments['moderated'] = $comments['awaiting_moderation'];
