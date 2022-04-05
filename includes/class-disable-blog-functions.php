@@ -45,8 +45,39 @@ class Disable_Blog_Functions {
 			return;
 		}
 
-		wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
+		wp_safe_redirect( esc_url_raw( $redirect_url ), $this->get_redirect_status_code( $current_url, $redirect_url ) );
 		exit;
+
+	}
+
+	/**
+	 * Return the status code used in the main redirect function.
+	 *
+	 * @since 0.5.0
+	 * @param string $current_url the url being redirected FROM.
+	 * @param string $redirect_url the url being redirected TO.
+	 * @return int
+	 */
+	private function get_redirect_status_code( $current_url, $redirect_url ) {
+
+		/**
+		 * Filter the status code, must be a valid number to pass, defaults to 301.
+		 *
+		 * @since 0.5.0
+		 * @param int $status_code the status code returned with the redirect.
+		 * @param string $current_url the url being redirected FROM.
+		 * @param string $redirect_url the url being redirected TO.
+		 * @return int $status_code
+		 */
+		$status_code = apply_filters( 'dwpb_redirect_status_code', 301, $current_url, $redirect_url );
+
+		// Make sure we have a valid redirect status code, if not we set to 301.
+		// helps to stop a wp_die in wp_redirect if the filtered value returns something invalid.
+		if ( ! absint( $status_code ) || 300 > $status_code || 399 < $status_code ) {
+			return 301;
+		}
+
+		return absint( $status_code );
 
 	}
 
