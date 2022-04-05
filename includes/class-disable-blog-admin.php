@@ -998,7 +998,7 @@ class Disable_Blog_Admin {
 			}
 		}
 
-		return $comment_count;
+		return array_map( 'intval', $comment_count );
 
 	}
 
