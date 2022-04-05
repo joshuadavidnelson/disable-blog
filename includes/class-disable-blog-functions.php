@@ -33,6 +33,10 @@ class Disable_Blog_Functions {
 			$current_url = admin_url( add_query_arg( array(), $wp->request ) );
 		} else {
 			$current_url = home_url( add_query_arg( array(), $wp->request ) );
+
+			// Filter the safe redirect to avoid redirectin non-admin urls to the dashboard
+			// if the fallback is used by the core wp_redirect.
+			add_filter( 'wp_safe_redirect_fallback', array( $this, 'wp_safe_redirect_fallback' ), 9, 1 );
 		}
 
 		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
@@ -43,6 +47,25 @@ class Disable_Blog_Functions {
 
 		wp_safe_redirect( esc_url_raw( $redirect_url ), 301 );
 		exit;
+
+	}
+
+	/**
+	 * Filter the safe redirect fallback to prevent front-end users
+	 * in public redirects from being redirected to the admin url
+	 * which is the WP core default for safe redirects.
+	 *
+	 * @since 0.5.0
+	 * @param string $url    the fallback url.
+	 * @return string
+	 */
+	public function wp_safe_redirect_fallback( $url ) {
+
+		if ( ! is_admin() ) {
+			return home_url();
+		}
+
+		return $url;
 
 	}
 
