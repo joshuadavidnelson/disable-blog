@@ -5,6 +5,7 @@
 **New:**
 - New disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
 - New `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter to modify the post types queried on author archives, if not removed by filter above.
+- New `dwpb_pass_query_string_on_redirect` filter, returning `true` enables all valid url query params to be passed during redirects. Use the `dwpb_allowed_query_vars` to limit the vars passed in the redirect by passing an array of keys (e.g. return `array( 'utm' )` to only pass `utm` query variables in the query string). Closes [#52](https://github.com/joshuadavidnelson/disable-blog/issues/52)
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
