@@ -3,8 +3,8 @@
 #### 0.5.0
 
 **New:**
-- Add disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
-- Add `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter to modify the post types queried on author archives, if not removed by filter above.
+- New disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
+- New `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter to modify the post types queried on author archives, if not removed by filter above.
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
@@ -17,10 +17,10 @@
 	- Hiding the default category & default post format on Writing options page.
 
 **Fixes:**
-- Add `dwpb_xmlrpc_methods_to_remove` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes #50
-- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
-- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
-- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
+- Add `dwpb_xmlrpc_methods_to_remove` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes [#50](https://github.com/joshuadavidnelson/disable-blog/issues/50)
+- Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes [#45](https://github.com/joshuadavidnelson/disable-blog/issues/45).
+- Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes [#46](https://github.com/joshuadavidnelson/disable-blog/issues/46)
+- Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes [#47](https://github.com/joshuadavidnelson/disable-blog/issues/47)
 - In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility. Fixes bugs were `options-writing.php` and `options-discussion.php` were conflicting.
 
 **Improvements/Updates:**
@@ -41,12 +41,12 @@
 - Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:
 	- New filter: `dwpb_front_end_redirect_url` filters the final url used in front end redirects.
 	- New filter: `dwpb_redirect_author_archive` to change the redirect used on author archives, if they are disabled.
-	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass `true` to keep disable the sitmap. Note that if author archives are disabled by the above filter, user sitemps will be as well. 
+	- New filter: `dwpb_disable_user_sitemap` to change the user sitemap default, pass `true` to keep disable the sitmap. Note that if author archives are disabled by the above filter, user sitemps will be also be disabled regardless of this filter.
 	- `dwpb_redirect_posts` is now `dwpb_redirect_post`.
 	- `dwpb_redirect_post_{$post->ID}` filter has been removed. Use `dwpb_redirect_post` and check for the post id to target a specific post.
 	- `dwpb_redirect_front_end` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 - Bump minimum PHP to 5.6.
-- Tested up to WP Core version 5.8.1.
+- Tested up to WP Core version 5.9.3.
 - Updated minimum WP Core version to 4.0.
 - Updated translation file for all current plugin strings.
 
