@@ -228,13 +228,16 @@ class Disable_Blog_Admin {
 				// Check the function for redirect clearance, or custom url.
 				$redirect = $this->$function();
 
+				// Set a redirect url variable to check against.
+				$potential_redirect_url = esc_url_raw( $redirect );
+
 				// If it's set to `true` then redirect to the dashboard,
 				// if it's set to a url, redirect to that url.
-				if ( true === $redirect || esc_url_raw( $redirect ) ) {
+				if ( true === $redirect || ! empty( $potential_redirect_url ) ) {
 
 					// Either this is a custom redirect url or 'true', which defaults the url to the dashboard.
-					if ( esc_url_raw( $redirect ) ) {
-						$url = esc_url_raw( $redirect );
+					if ( ! empty( $potential_redirect_url ) ) {
+						$url = $potential_redirect_url;
 					} else {
 						$url = $dashboard_url;
 					}
