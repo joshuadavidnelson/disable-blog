@@ -276,7 +276,7 @@ class Disable_Blog_Admin {
 		 * @param bool   $bool         True to enable, default is true.
 		 * @param string $redirect_url The url to being used in the redirect.
 		 */
-		if ( apply_filters( 'dwpb_redirect_admin', true, $redirect_url ) ) {
+		if ( $redirect_url && apply_filters( 'dwpb_redirect_admin', true, $redirect_url ) ) {
 			$this->functions->redirect( $redirect_url );
 		}
 
