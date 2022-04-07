@@ -5,7 +5,6 @@
 **New:**
 - Add disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
 - Add `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter to modify the post types queried on author archives, if not removed by filter above.
-- Add `dwpb_xmlrpc_methods_to_remove` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes #50
 - Remove user sitemaps unless author archives are supported by custom post types via the filter noted above.
 - Replace the "Posts" column on the user admin screen by a "Pages" column, also adds similar columns for custom post types using the filter noted above.
 - Remove the "view" link to author archives in the user screen if author archives are not supported.
@@ -18,6 +17,7 @@
 	- Hiding the default category & default post format on Writing options page.
 
 **Fixes:**
+- Add `dwpb_xmlrpc_methods_to_remove` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes #50
 - Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
 - Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
