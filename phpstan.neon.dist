@@ -17,4 +17,5 @@ parameters:
         - '#^Else branch is unreachable because ternary operator condition is always true\.$#'
         # Method can return bool via filter.
         - '#^Method Disable_Blog_Public::get_disabled_xmlrpc_methods\(\) never returns bool so it can be removed from the return type\.#'
-        - '#is never read, only  written\.#'
+        - '#^Property Disable_Blog_Public::$plugin_name is never read, only written\.#'
+        - '#^Property Disable_Blog_Public::$version is never read, only written\.#'
