@@ -4,7 +4,7 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
 Requires at least: 4.0
 Requires PHP: 5.6
-Tested up to: 5.8.1
+Tested up to: 5.9.3
 Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
