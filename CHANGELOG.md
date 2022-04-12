@@ -14,6 +14,7 @@
 - Update the post tag and category "count" columns to correctly show the number of posts by post type, for use with custom post types supporting built-in taxonomies.
 - Update the customizer "Homepage" view to match the Reading options page view, when homepage is set.
 - Update the default posts page admin notice indicating the blog is redirected.
+- New `dwpb_pass_query_string_on_redirect` filter, returning `true` enables all valid url query params to be passed during redirects. Default is false. Use the `dwpb_allowed_query_vars` to limit the vars passed in the redirect by passing an array of keys (e.g. return array( 'utm' ) to only pass utm query variables in the query string). Closes #52
 - Add javascript to hide admin screen items not easily selected by CSS, include:
 	- Hiding toggle comment link on welcome screen (if they are not supported by other post types),
 	- Hiding the category and tag permalink base options (if not supported by other post types), and
