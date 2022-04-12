@@ -1043,7 +1043,7 @@ class Disable_Blog_Admin {
 	 */
 	public function page_post_states( $post_states, $post ) {
 
-		if ( $this->has_front_page() && isset( $post->ID ) && absint( get_option( 'page_for_posts' ) ) === $post->ID ) {
+		if ( $this->has_front_page() && absint( get_option( 'page_for_posts' ) ) === $post->ID ) {
 			// translators: This string is used to indicate that the blog page is redirected to the homepage.
 			$post_states['dwpb-redirected'] = __( 'Redirected to the homepage', 'disable-blog' );
 		}
@@ -1231,7 +1231,7 @@ class Disable_Blog_Admin {
 		);
 		$query = new WP_Query( $args );
 
-		if ( isset( $query->posts ) && count( $query->posts ) > 0 ) {
+		if ( count( $query->posts ) > 0 ) {
 			return count( $query->posts );
 		} else {
 			return 0;
