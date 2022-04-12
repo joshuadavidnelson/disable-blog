@@ -274,8 +274,9 @@ class Disable_Blog_Public {
 			 * Filter the feed redirect url.
 			 *
 			 * @since 0.4.0
-			 * @param string $url The redirect url (defaults to homepage)
-			 * @param bool $is_comment_feed True if the feed is a comment feed.
+			 * @param string $url            The redirect url (defaults to homepage)
+			 * @param object $post           The global post object.
+			 * @param bool   $is_comment_feed True if the feed is a comment feed.
 			 */
 			$redirect_url = apply_filters( 'dwpb_redirect_feeds', home_url(), $post, $is_comment_feed );
 
@@ -290,9 +291,9 @@ class Disable_Blog_Public {
 			 *              the order is: bool, $post, $is_comment_feed.
 			 *              Note that if you used this filter before
 			 *              and relied on the $is_comment_feed, you'll need to update.
-			 * @param bool $bool True to use a message, false to redirect.
-			 * @param object $post Global post object.
-			 * @param bool $is_comment_feed True if the feed is a comment feed.
+			 * @param bool   $bool            True to use a message, false to redirect.
+			 * @param object $post            Global post object.
+			 * @param bool   $is_comment_feed True if the feed is a comment feed.
 			 */
 			if ( apply_filters( 'dwpb_feed_message', false, $post, $is_comment_feed ) ) {
 
