@@ -1103,6 +1103,7 @@ class Disable_Blog_Admin {
 			'Cache-Control' => 'no-cache',
 			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
 		);
+
 		/** This filter is documented in wp-includes/class-wp-http-streams.php */
 		$sslverify = apply_filters( 'https_local_ssl_verify', false );
 
@@ -1113,7 +1114,7 @@ class Disable_Blog_Admin {
 		}
 		// @codingStandardsIgnoreEnd
 
-		// -- here's the money, change this ti 'page' from 'post'.
+		// -- here's the money, change this from 'post' to  'page'.
 		$url = rest_url( 'wp/v2/types/page' );
 
 		// The context for this is editing with the new block editor.
