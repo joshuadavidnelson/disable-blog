@@ -4,10 +4,10 @@ parameters:
 # TODO    level: max
     level: 5
     inferPrivatePropertyTypeFromConstructor: true
-    autoload_files:
+    scanFiles:
         - tests/bootstrap.php
         - includes/functions.php
-    autoload_directories:
+    scanDirectories:
         - includes/
     paths:
         - includes/
