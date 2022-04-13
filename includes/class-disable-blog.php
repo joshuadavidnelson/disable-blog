@@ -7,7 +7,6 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- *
  * @package    Disable_Blog
  * @subpackage Disable_Blog/includes
  */
@@ -32,33 +31,27 @@ class Disable_Blog {
 	 * The loader that's responsible for maintaining and registering all hooks that power
 	 * the plugin.
 	 *
-	 * @since    0.4.0
-	 *
-	 * @access   protected
-	 *
-	 * @var      Disable_Blog_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 * @since 0.4.0
+	 * @access protected
+	 * @var Disable_Blog_Loader $loader Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
 
 	/**
 	 * The unique identifier of this plugin.
 	 *
-	 * @since    0.4.0
-	 *
-	 * @access   protected
-	 *
-	 * @var      string    $plugin_name    The string used to uniquely identify this plugin.
+	 * @since 0.4.0
+	 * @access protected
+	 * @var string $plugin_name The string used to uniquely identify this plugin.
 	 */
 	protected $plugin_name;
 
 	/**
 	 * The current version of the plugin.
 	 *
-	 * @since    0.4.0
-	 *
-	 * @access   protected
-	 *
-	 * @var      string    $version    The current version of the plugin.
+	 * @since 0.4.0
+	 * @access protected
+	 * @var string $version The current version of the plugin.
 	 */
 	protected $version;
 
@@ -70,13 +63,12 @@ class Disable_Blog {
 	 * the public-facing side of the site.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @access public
 	 */
 	public function __construct() {
 
 		$this->plugin_name = 'disable-blog';
-		$this->version     = '0.4.10';
+		$this->version     = '0.5.0';
 
 		do_action( 'dwpb_init' );
 
@@ -93,7 +85,6 @@ class Disable_Blog {
 	 * Upgrade check.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @access private
 	 */
 	private static function upgrade_check() {
@@ -125,7 +116,6 @@ class Disable_Blog {
 	 * Define Constants
 	 *
 	 * @since 0.3.0
-	 *
 	 * @access private
 	 */
 	private function setup_constants() {
@@ -164,12 +154,13 @@ class Disable_Blog {
 	 * with WordPress.
 	 *
 	 * @since 0.4.0
-	 *
 	 * @access private
 	 */
 	private function load_dependencies() {
 
+		// Includes directory.
 		$includes_dir = plugin_dir_path( dirname( __FILE__ ) ) . 'includes';
+
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
@@ -188,6 +179,11 @@ class Disable_Blog {
 		require_once $includes_dir . '/functions.php';
 
 		/**
+		 * The class contains all the common functions used by multiple classes.
+		 */
+		require_once $includes_dir . '/class-disable-blog-functions.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once $includes_dir . '/class-disable-blog-admin.php';
@@ -198,6 +194,9 @@ class Disable_Blog {
 		 */
 		require_once $includes_dir . '/class-disable-blog-public.php';
 
+		/**
+		 * Make it so.
+		 */
 		$this->loader = new Disable_Blog_Loader();
 
 	}
@@ -208,9 +207,8 @@ class Disable_Blog {
 	 * Uses the Disable_Blog_I18n class in order to set the domain and to register the hook
 	 * with WordPress.
 	 *
-	 * @since    0.4.0
-	 *
-	 * @access   private
+	 * @since 0.4.0
+	 * @access private
 	 */
 	private function set_locale() {
 
@@ -224,9 +222,8 @@ class Disable_Blog {
 	 * Register all of the hooks related to the admin area functionality
 	 * of the plugin.
 	 *
-	 * @since    0.4.0
-	 *
-	 * @access   private
+	 * @since 0.4.0
+	 * @access private
 	 */
 	private function define_admin_hooks() {
 
@@ -234,6 +231,9 @@ class Disable_Blog {
 
 		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
+
+		// Hide items with JavaScript where CSS doesn't do the job as well.
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts', 100 );
 
 		// Hide Blog Related Admin pages.
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages' );
@@ -299,25 +299,47 @@ class Disable_Blog {
 		// Filter removal of widgets for some checks.
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
 
+		// Custom Post State for the Blog Page redirect.
+		$this->loader->add_filter( 'display_post_states', $plugin_admin, 'page_post_states', 10, 2 );
+
+		// Remove REST API site health check related to posts.
+		$this->loader->add_filter( 'site_status_tests', $plugin_admin, 'site_status_tests', 10, 1 );
+
+		// Replace 'post' column with 'page' column.
+		$this->loader->add_action( 'manage_users_columns', $plugin_admin, 'manage_users_columns', 10, 1 );
+		$this->loader->add_filter( 'manage_users_custom_column', $plugin_admin, 'manage_users_custom_column', 10, 3 );
+
+		// Remove the "view" link from the user options if author archives are not supported.
+		$this->loader->add_filter( 'user_row_actions', $plugin_admin, 'user_row_actions', 10, 2 );
+
+		// Filter post counts on post-related taxonomy edit screens for custom post types.
+		$this->loader->add_filter( 'post_tag_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
+		$this->loader->add_filter( 'category_row_actions', $plugin_admin, 'filter_taxonomy_count', 10, 2 );
+
+		// Update customizer homepage settings panel to match the Reading settings.
+		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
+
+		// Update Blog page notice.
+		$this->loader->add_action( 'post_edit_form_tag', $plugin_admin, 'update_posts_page_notice', 10, 1 );
+
 	}
 
 	/**
 	 * Register all of the hooks related to the public-facing functionality
 	 * of the plugin.
 	 *
-	 * @since    0.4.0
-	 *
-	 * @access   private
+	 * @since 0.4.0
+	 * @access private
 	 */
 	private function define_public_hooks() {
 
 		$plugin_public = new Disable_Blog_Public( $this->get_plugin_name(), $this->get_version() );
 
-		// Redirect Single Posts.
-		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_posts' );
+		// Redirect Public pages (single posts, archives, etc).
+		$this->loader->add_action( 'template_redirect', $plugin_public, 'redirect_public_pages' );
 
-		// Modify Query.
-		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query' );
+		// Modify Query. Setting to priority 9 to allow default filter priority to override.
+		$this->loader->add_action( 'pre_get_posts', $plugin_public, 'modify_query', 9 );
 
 		// Disable Feed.
 		$this->loader->add_action( 'do_feed', $plugin_public, 'disable_feed', 1, 2 );
@@ -342,12 +364,16 @@ class Disable_Blog {
 		// Conditionally remove built-in taxonomies from sitemaps, if they are not being used by a custom post type.
 		$this->loader->add_filter( 'wp_sitemaps_taxonomies', $plugin_public, 'wp_sitemaps_taxonomies', 10, 1 );
 
+		// Conditionally remove author sitemaps, if author archives are not being supported.
+		$this->loader->add_filter( 'wp_sitemaps_add_provider', $plugin_public, 'wp_author_sitemaps', 100, 2 );
+
 	}
 
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
 	 *
-	 * @since    0.4.0
+	 * @since 0.4.0
+	 * @access public
 	 */
 	public function run() {
 		$this->loader->run();
@@ -357,9 +383,9 @@ class Disable_Blog {
 	 * The name of the plugin used to uniquely identify it within the context of
 	 * WordPress and to define internationalization functionality.
 	 *
-	 * @since     0.4.0
-	 *
-	 * @return    string    The name of the plugin.
+	 * @since 0.4.0
+	 * @access public
+	 * @return string The name of the plugin.
 	 */
 	public function get_plugin_name() {
 		return $this->plugin_name;
@@ -368,9 +394,9 @@ class Disable_Blog {
 	/**
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
-	 * @since     0.4.0
-	 *
-	 * @return    Disable_Blog_Loader    Orchestrates the hooks of the plugin.
+	 * @since 0.4.0
+	 * @access public
+	 * @return Disable_Blog_Loader Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader() {
 		return $this->loader;
@@ -379,9 +405,9 @@ class Disable_Blog {
 	/**
 	 * Retrieve the version number of the plugin.
 	 *
-	 * @since     0.4.0
-	 *
-	 * @return    string    The version number of the plugin.
+	 * @since 0.4.0
+	 * @access public
+	 * @return string The version number of the plugin.
 	 */
 	public function get_version() {
 		return $this->version;

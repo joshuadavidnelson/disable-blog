@@ -1,0 +1,9 @@
+/.github
+/.git
+/.wordpress-org
+/vendor/
+/tests/
+.editorconfig
+code-of-conduct.md
+contributing.md
+phpstan.neon.dist

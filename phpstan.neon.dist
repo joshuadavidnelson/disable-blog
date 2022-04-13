@@ -1,18 +1,21 @@
 includes:
     - vendor/szepeviktor/phpstan-wordpress/extension.neon
 parameters:
-# TODO    level: max
     level: 5
     inferPrivatePropertyTypeFromConstructor: true
-    autoload_files:
+    scanFiles:
         - tests/bootstrap.php
         - includes/functions.php
-    autoload_directories:
+    scanDirectories:
         - includes/
     paths:
         - includes/
     ignoreErrors:
         # Uses func_get_args()
         - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
-        # Not including WC stubs for 1 line of code
-        - '#^Function WC not found\.$#'
+        # Filtered value can return a bool, so this error is incorrect.
+        - '#^Else branch is unreachable because ternary operator condition is always true\.$#'
+        # Method can return bool via filter.
+        - '#^Method Disable_Blog_Public::get_disabled_xmlrpc_methods\(\) never returns bool so it can be removed from the return type\.#'
+        - '#^Property Disable_Blog_Public::\$plugin_name is never read, only written\.#'
+        - '#^Property Disable_Blog_Public::\$version is never read, only written\.#'
