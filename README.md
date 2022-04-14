@@ -12,9 +12,27 @@ Disable Blog
 
 ## Description
 
-Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting).
+Free your WordPress site from posts with a blog-less WordPress site.
 
-Does the following:
+Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
+
+**Important**: **You need to select a page to act as the home page**.If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
+
+**Site Content & Data**: This plugin will not delete any of your site's data, however it does by default redirect all posts and post comments to the homepage (refer to the documentation on ways to change this behavior).
+
+If you have any posts, comments, categories, and/or tags, delete them prior to activation (or deactivate this plugin, delete them, and re-active). If you don't delete them, they will remain in your database and become accessible if you deactivate this plugin or modify the plugin behavior to show posts.
+
+**Comments**: Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also support comments by default, so the comments section won't disappear in most cases). If you're looking to disable comments completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
+
+**Categories & Tags**: These are hidden and redirected, unless they are supported by a custom post type.
+
+**Custom Post Types**: This plugin includes extensive support for custom post types and taxonomies. If you are using a custom post type that supports the built-in `category` and/or `post_tag` taxonomies, they will be visible and accessible through that post type.
+
+**Support**: This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [WordPress.org support forums](https://wordpress.org/support/plugin/disable-blog) or create an [issue](https://github.com/joshuadavidnelson/disable-blog/issues) on the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog).
+
+### How does this plugin work?
+
+Activating Disable Blog does the following:
 
 - Turns the `post` type into a non-public content type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page or be redirect to the homepage.
 
