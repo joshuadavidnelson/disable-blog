@@ -826,7 +826,7 @@ class Disable_Blog_Admin {
 	 */
 	public function enqueue_scripts() {
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . '../assets/js/disable-blog-admin.js', array(), $this->version, true );
+		wp_enqueue_script( $this->plugin_name, DWPB_URL . 'assets/js/disable-blog-admin.js', array(), $this->version, true );
 
 		// Localize some information on the page.
 		global $pagenow;

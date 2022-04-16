@@ -65,14 +65,13 @@ class Disable_Blog {
 	 * @since 0.4.0
 	 * @access public
 	 */
-	public function __construct() {
+	public function __construct( $plugin_name, $verison ) {
 
-		$this->plugin_name = 'disable-blog';
-		$this->version     = '0.5.0';
+		$this->plugin_name = $plugin_name;
+		$this->version     = $verison;
 
 		do_action( 'dwpb_init' );
 
-		$this->setup_constants();
 		$this->upgrade_check();
 		$this->load_dependencies();
 		$this->set_locale();
@@ -109,34 +108,6 @@ class Disable_Blog {
 			// Save current version.
 			update_option( 'dwpb_version', DWPB_VERSION, false );
 		}
-
-	}
-
-	/**
-	 * Define Constants
-	 *
-	 * @since 0.3.0
-	 * @access private
-	 */
-	private function setup_constants() {
-
-		// For includes and whatnot.
-		if ( ! defined( 'DWPB_DIR' ) ) {
-			define( 'DWPB_DIR', dirname( __FILE__ ) );
-		}
-
-		// For calling scripts and so forth.
-		if ( ! defined( 'DWPB_URL' ) ) {
-			define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
-		}
-
-		// For admin settings field.
-		if ( ! defined( 'DWPB_SETTINGS_FIELD' ) ) {
-			define( 'DWPB_SETTINGS_FIELD', $this->plugin_name );
-		}
-
-		// To keep track of versions, useful if you need to make updates specific to versions.
-		define( 'DWPB_VERSION', $this->version );
 
 	}
 
