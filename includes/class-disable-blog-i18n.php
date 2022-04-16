@@ -7,9 +7,9 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- *
  * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
+ * @subpackage Disable_Blog\Includes
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -18,10 +18,7 @@
  * Loads and defines the internationalization files for this plugin
  * so that it is ready for translation.
  *
- * @since      0.4.0
- * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.0
  */
 class Disable_Blog_I18n {
 

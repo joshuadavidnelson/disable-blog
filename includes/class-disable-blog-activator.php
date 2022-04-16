@@ -4,9 +4,9 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.3
- *
  * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
+ * @subpackage Disable_Blog\Includes
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -14,10 +14,7 @@
  *
  * This class defines all code necessary to run during the plugin's activation.
  *
- * @since      0.4.3
- * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.3
  */
 class Disable_Blog_Activator {
 

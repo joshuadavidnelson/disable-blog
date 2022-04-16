@@ -13,9 +13,7 @@
  *
  * Defines the plugin name, version, and contains all the public functions.
  *
- * @package    Disable_Blog
- * @subpackage Disable_Blog/public
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.2.0
  */
 class Disable_Blog_Public {
 

@@ -4,9 +4,9 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- *
  * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
+ * @subpackage Disable_Blog\Includes
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -16,9 +16,7 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.0
  */
 class Disable_Blog_Loader {
 

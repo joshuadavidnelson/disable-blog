@@ -4,9 +4,9 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- *
  * @package    Disable_Blog
  * @subpackage Disable_Blog_Admin
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -14,9 +14,7 @@
  *
  * Defines the plugin name, version, and contains all the admin functions.
  *
- * @package    Disable_Blog
- * @subpackage Disable_Blog/admin
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.0
  */
 class Disable_Blog_Admin {
 
