@@ -209,4 +209,25 @@ class Disable_Blog_Functions {
 
 	}
 
+	/**
+	 * Toggle the disable feed via this filter.
+	 *
+	 * @since x.x.x
+	 * @param object $post            Global post object.
+	 * @param bool   $is_comment_feed True if the feed is a comment feed.
+	 */
+	public function disable_feeds( $post, $is_comment_feed = false ) {
+
+		/**
+		 * Toggle the disable feed via this filter.
+		 *
+		 * @since 0.4.0
+		 * @param bool $bool True to cancel the feed, assuming it's a post feed.
+		 * @param object $post Global post object.
+		 * @param bool $is_comment_feed True if the feed is a comment feed.
+		 */
+		return (bool) apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed );
+
+	}
+
 }
