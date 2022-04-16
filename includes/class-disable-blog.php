@@ -293,6 +293,9 @@ class Disable_Blog {
 		// Update Blog page notice.
 		$this->loader->add_action( 'post_edit_form_tag', $plugin_admin, 'update_posts_page_notice', 10, 1 );
 
+		// Filter off post related blocks in editor.
+		$this->loader->add_filter( 'enqueue_block_editor_assets', $plugin_admin, 'editor_scripts', 100, 2 );
+
 	}
 
 	/**

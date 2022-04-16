@@ -841,6 +841,106 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * Editor scripts.
+	 *
+	 * @link https://developer.wordpress.org/block-editor/reference-guides/filters/block-filters/#using-a-deny-list
+	 *
+	 * @since x.x.x
+	 * @return void
+	 */
+	public function editor_scripts() {
+
+		// get a list of disabled blocks.
+		$disabled_blocks = $this->get_disabled_blocks();
+		if ( empty( $disabled_blocks ) ) {
+			return;
+		}
+
+		wp_enqueue_script( $this->plugin_name . '-editor-scripts', DWPB_URL . 'assets/js/disable-blog-editor.js', array( 'wp-blocks', 'wp-dom-ready', 'wp-edit-post' ), $this->version, true );
+
+		// Localize some information on the page.
+		$js_vars = array(
+			'disabledBlocks' => $disabled_blocks,
+		);
+		wp_localize_script( $this->plugin_name . '-editor-scripts', 'dwpbEditor', $js_vars );
+
+	}
+
+	/**
+	 * Get the blocks being removed from the editor.
+	 *
+	 * @since x.x.x
+	 * @return array
+	 */
+	public function get_disabled_blocks() {
+
+		// remove these blocks, they are related to posts.
+		$disabled_blocks = array(
+			'core/archives',
+			'core/calendar',
+			'core/latest-posts',
+			'core/query',
+			'core/post-title',
+			'core/post-excerpt',
+			'core/post-featured-image',
+			'core/post-content',
+			'core/post-author',
+			'core/post-date',
+			'core/post-terms',
+			'core/post-navigation-link',
+			'core/post-comments',
+			'core/post-template',
+			'core/query-pagination',
+			'core/query-pagination-next',
+			'core/query-pagination-numbers',
+			'core/query-pagination-previous',
+		);
+
+		// if we are not supporting tags and categories elsewhere,
+		// then these blocks have to go as well.
+		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
+			$disabled_blocks = array_merge(
+				$disabled_blocks,
+				array(
+					'core/tag-cloud',
+					'core/categories',
+					'core/term-description',
+				)
+			);
+		}
+
+		// If we are not supporting author archives,
+		// then related blocks have to go.
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
+			$disabled_blocks = array_merge(
+				$disabled_blocks,
+				array(
+					'core/latest-comments',
+				)
+			);
+		}
+
+		// If we're disabling feeds, remove this block.
+		global $post;
+		if ( $this->functions->disable_feeds( $post ) ) {
+			$disabled_blocks[] = 'core/rss';
+		}
+
+		/**
+		 * Filter the blocks that are disabled by the plugin.
+		 *
+		 * @since x.x.x
+		 * @param array $disabled_blocks an array of blocks that are removed.
+		 * @param
+		 */
+		$disabled_blocks = (array) apply_filters( 'dwpb_disabled_blocks', $disabled_blocks );
+
+		// you can never be too careful if you have provided a filter.
+		return array_filter( $disabled_blocks, 'esc_attr', ARRAY_FILTER_USE_BOTH );
+
+	}
+
+	/**
 	 * Check that we're on a specific admin page.
 	 *
 	 * @since 0.4.8
