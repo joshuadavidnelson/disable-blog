@@ -345,7 +345,7 @@ if ( ! class_exists( 'WordPressSettingsFramework' ) ) {
 										}
 
 										$link = ( $link_url ) ? sprintf( '<a class="wpsf-link" href="%s"%s>%s</a>', $link_url, $link_target, $link_text ) : '';
-										
+
 										if ( $link && 'tooltip' === $link_type ) {
 											$tooltip = $link;
 										} elseif ( $link ) {
@@ -403,7 +403,7 @@ if ( ! class_exists( 'WordPressSettingsFramework' ) ) {
 
 			$options = get_option( $this->option_group . '_settings' );
 
-			$args['id']    = ( $this->has_tabs() ) ? sprintf( '%s_%s_%s', $section['tab_id'], $section['section_id'], $args['id'] ) : sprintf( '%s_%s', $section['section_id'], $args['id'] );
+			$args['id']    = $args['id'];
 			$args['value'] = ( isset( $options[ $args['id'] ] ) ) ? $options[ $args['id'] ] : ( isset( $args['default'] ) ? $args['default'] : '' );
 			$args['name']  = $this->generate_field_name( $args['id'] );
 
@@ -890,12 +890,12 @@ if ( ! class_exists( 'WordPressSettingsFramework' ) ) {
 					rows="5"
 					cols="60"
 					class="%s"
-				>%s</textarea>', 
+				>%s</textarea>',
 				esc_attr( $args['name'] ),
 				esc_attr( $args['id'] ),
 				esc_attr( $args['placeholder'] ),
 				esc_attr( $args['class'] ),
-				esc_html( $args['value'] ) 
+				esc_html( $args['value'] )
 			);
 
     		$settings = wp_enqueue_code_editor( array( 'type' => esc_attr( $args['mimetype'] ) ) );
@@ -1027,7 +1027,7 @@ endwhile;
 						$field['default'] = array_values( $field['default'] );
 					}
 
-					$setting_key = ( $this->has_tabs() ) ? sprintf( '%s_%s_%s', $section['tab_id'], $section['section_id'], $field['id'] ) : sprintf( '%s_%s', $section['section_id'], $field['id'] );
+					$setting_key = $field['id'];
 
 					if ( isset( $saved_settings[ $setting_key ] ) ) {
 						$settings[ $settings_name ][ $setting_key ] = $saved_settings[ $setting_key ];
@@ -1278,8 +1278,8 @@ if ( ! function_exists( 'wpsf_get_setting' ) ) {
 	 */
 	function wpsf_get_setting( $option_group, $section_id, $field_id ) {
 		$options = get_option( $option_group . '_settings' );
-		if ( isset( $options[ $section_id . '_' . $field_id ] ) ) {
-			return $options[ $section_id . '_' . $field_id ];
+		if ( isset( $options[ $field_id ] ) ) {
+			return $options[ $field_id ];
 		}
 
 		return false;
