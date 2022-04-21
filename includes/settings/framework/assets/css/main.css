@@ -420,21 +420,22 @@ p.submit {
 
 /* $. Toggle */
 
-.wpsf-section label.switch {
+.wpsf-section .switch {
 	position: relative;
 	display: inline-block;
 	width: 52px;
 	height: 26px;
 	margin-top: -3px;
+	text-indent: -9999px;
 }
 
-.wpsf-section label.switch input { 
+.wpsf-section .switch input {
 	opacity: 0;
 	width: 0;
 	height: 0;
 }
 
-.wpsf-section label.switch .slider {
+.wpsf-section .switch .slider {
 	border-radius: 26px;
 	position: absolute;
 	cursor: pointer;
@@ -447,7 +448,7 @@ p.submit {
 	transition: .2s;
 }
 
-.wpsf-section label.switch .slider:before {
+.wpsf-section .switch .slider:before {
 	border-radius: 50%;
 	position: absolute;
 	content: "";
@@ -460,11 +461,11 @@ p.submit {
 	transition: .2s;
 }
 
-.wpsf-section label.switch input:checked + .slider {
+.wpsf-section .switch input:checked + .slider {
 	background-color: #2196F3;
 }
 
-.wpsf-section label.switch input:checked + .slider:before {
+.wpsf-section .switch input:checked + .slider:before {
 	-webkit-transform: translateX(26px);
 	-ms-transform: translateX(26px);
 	transform: translateX(26px);
