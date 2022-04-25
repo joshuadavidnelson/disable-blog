@@ -320,6 +320,9 @@ class Disable_Blog {
 		// Update Blog page notice.
 		$this->loader->add_action( 'post_edit_form_tag', $plugin_admin, 'update_posts_page_notice', 10, 1 );
 
+		// Remove and update available permalink structure tags.
+		$this->loader->add_filter( 'available_permalink_structure_tags', $plugin_admin, 'available_permalink_structure_tags', 10, 1 );
+
 	}
 
 	/**

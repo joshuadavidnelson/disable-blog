@@ -1437,4 +1437,27 @@ class Disable_Blog_Admin {
 		echo '<div class="notice notice-warning inline"><p>' . __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>'; // phpcs:ignore
 
 	}
+
+	/**
+	 * Filter the available tags in the permalink settings.
+	 *
+	 * @since x.x.x
+	 * @param array $available_tags
+	 * @return array
+	 */
+	public function available_permalink_structure_tags( $available_tags ) {
+
+		// Remove the category permalink structure if categories are not supported.
+		if ( isset( $available_tags['category'] ) && ! dwpb_post_types_with_tax( 'category' ) ) {
+			unset( $available_tags['category'] );
+		}
+
+		// Remove the author tag if author archives are disabled.
+		if ( isset( $available_tags['author'] ) && $this->functions->disable_author_archives() ) {
+			unset( $available_tags['author'] );
+		}
+
+		return $available_tags;
+
+	}
 }
