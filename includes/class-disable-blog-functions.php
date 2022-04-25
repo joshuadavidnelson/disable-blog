@@ -11,7 +11,7 @@
 /**
  * Main class for functions used by other classes.
  *
- * @since      0.5.0
+ * @since 0.5.0
  */
 class Disable_Blog_Functions {
 

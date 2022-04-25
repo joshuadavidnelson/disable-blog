@@ -243,8 +243,9 @@ class Disable_Blog_Admin {
 					/**
 					 * The redirect url used for this admin page.
 					 *
-					 * Example: use 'dwpb_redirect_post' to change the redirect url
-					 * used for the post.php page.
+					 * Example: use 'dwpb_redirect_admin_options_tools' to change the redirect url
+					 * used for the options-tools.php page. Note `-` strings are converted to `_`
+					 * in the filter name.
 					 *
 					 * @since 0.4.0
 					 * @since 0.5.0 combine common filters.
