@@ -209,7 +209,7 @@ class Disable_Blog_Functions {
 	/**
 	 * Toggle the disable feed via this filter.
 	 *
-	 * @since x.x.x
+	 * @since 0.5.1
 	 * @param object $post            Global post object.
 	 * @param bool   $is_comment_feed True if the feed is a comment feed.
 	 */

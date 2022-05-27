@@ -612,6 +612,7 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
+
 	}
 
 	/**
@@ -835,6 +836,7 @@ class Disable_Blog_Admin {
 			'tagsSupported'       => (bool) dwpb_post_types_with_tax( 'post_tag' ),
 			'commentsSupported'   => (bool) dwpb_post_types_with_feature( 'comments' ),
 		);
+
 		wp_localize_script( $this->plugin_name, 'dwpb', $js_vars );
 
 	}
@@ -844,7 +846,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @link https://developer.wordpress.org/block-editor/reference-guides/filters/block-filters/#using-a-deny-list
 	 *
-	 * @since x.x.x
+	 * @since 0.5.1
 	 * @return void
 	 */
 	public function editor_scripts() {
@@ -868,7 +870,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Get the blocks being removed from the editor.
 	 *
-	 * @since x.x.x
+	 * @since 0.5.1
 	 * @return array
 	 */
 	public function get_disabled_blocks() {
@@ -938,7 +940,7 @@ class Disable_Blog_Admin {
 		/**
 		 * Filter the blocks that are disabled by the plugin.
 		 *
-		 * @since x.x.x
+		 * @since 0.5.1
 		 * @param array $disabled_blocks an array of blocks that are removed.
 		 * @param
 		 */
@@ -994,6 +996,7 @@ class Disable_Blog_Admin {
 
 			$comments = (object) $comments;
 			wp_cache_set( 'comments-0', $comments, 'counts' );
+
 		}
 
 		return $comments;
@@ -1525,7 +1528,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Customizer scripts.
 	 *
-	 * @since x.x.x
+	 * @since 0.5.1
 	 * @return void
 	 */
 	public function customizer_scripts() {
@@ -1572,7 +1575,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Filter the available tags in the permalink settings.
 	 *
-	 * @since x.x.x
+	 * @since 0.5.1
 	 * @param array $available_tags
 	 * @return array
 	 */
