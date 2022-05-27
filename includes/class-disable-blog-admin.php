@@ -942,7 +942,7 @@ class Disable_Blog_Admin {
 		 *
 		 * @since 0.5.1
 		 * @param array $disabled_blocks an array of blocks that are removed.
-		 * @param
+		 * @return array
 		 */
 		$disabled_blocks = (array) apply_filters( 'dwpb_disabled_blocks', $disabled_blocks );
 
@@ -1576,7 +1576,7 @@ class Disable_Blog_Admin {
 	 * Filter the available tags in the permalink settings.
 	 *
 	 * @since 0.5.1
-	 * @param array $available_tags
+	 * @param array $available_tags The available permalink tags.
 	 * @return array
 	 */
 	public function available_permalink_structure_tags( $available_tags ) {
