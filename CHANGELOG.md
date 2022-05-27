@@ -1,5 +1,16 @@
 ### Changelog
 
+#### 0.5.1
+- Update to documentation, readmes, and doc blocks.
+- Fix `.distignore` to remove itself and .gitignore from WP-dot-org repo.
+- Add WP repo assets and deployment action.
+- Add plugin row links for support, donate, and github repro links.
+- New red and black logo.
+- New wordpress.org banner.
+- Test up to WordPress v6.0.
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
+- Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text. 
+
 #### 0.5.0
 
 **New:**

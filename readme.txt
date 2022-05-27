@@ -1,11 +1,11 @@
 === Disable Blog ===
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
-Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds
+Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
 Requires at least: 4.0
 Requires PHP: 5.6
-Tested up to: 5.9.3
-Stable tag: 0.5.0
+Tested up to: 6.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,17 @@ If you're not using the built-in WP author archives (typically at `example.com/a
 There are numerous filters available to change the way this plugin works. Refer to the [GitHub page](https://github.com/joshuadavidnelson/disable-blog) or reach out on the [support forums](https://wordpress.org/support/plugin/disable-blog) if you have any questions.
 
 == Changelog ==
+
+= 0.5.1 =
+- Update to documentation, readmes, and doc blocks.
+- Fix `.distignore` to remove itself and .gitignore from WP-dot-org repo.
+- Add WP repo assets and deployment action.
+- Add plugin row links for support, donate, and github repro links.
+- New red and black logo.
+- New wordpress.org banner.
+- Test up to WordPress v6.0.
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
+- Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text.
 
 = 0.5.0 =
 
@@ -230,6 +241,17 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.1 =
+- Update to documentation, readmes, and doc blocks.
+- Fix `.distignore` to remove itself and .gitignore from WP-dot-org repo.
+- Add WP repo assets and deployment action.
+- Add plugin row links for support, donate, and github repro links.
+- New red and black logo.
+- New wordpress.org banner.
+- Test up to WordPress v6.0.
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
+- Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text.
 
 = 0.5.0 =
 
