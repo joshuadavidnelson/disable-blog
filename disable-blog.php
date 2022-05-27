@@ -55,9 +55,14 @@ function deactivate_disable_blog() {
 register_activation_hook( __FILE__, 'activate_disable_blog' );
 register_deactivation_hook( __FILE__, 'deactivate_disable_blog' );
 
+// Constants.
+define( 'DWPB_DIR', dirname( __FILE__ ) );
+define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
+define( 'DWPB_PLUGIN_NAME', 'disable-blog' );
+define( 'DWPB_VERSION', '0.5.0' );
+
 /**
- * The core plugin class that is used to define internationalization,
- * admin-specific hooks, and public-facing site hooks.
+ * The core plugin class that is used to define everything.
  */
 require plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog.php';
 
@@ -71,7 +76,7 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-disable-blog.php';
  * @since 0.4.0
  */
 function run_disable_blog() {
-	$plugin = new Disable_Blog();
+	$plugin = new Disable_Blog( DWPB_PLUGIN_NAME, DWPB_VERSION );
 	$plugin->run();
 }
 add_action( 'plugins_loaded', 'run_disable_blog', 10, 0 );

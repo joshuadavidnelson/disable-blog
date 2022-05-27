@@ -258,15 +258,8 @@ class Disable_Blog_Public {
 		// Option to override this via filter and check to confirm post type.
 		global $post;
 
-		/**
-		 * Toggle the disable feed via this filter.
-		 *
-		 * @since 0.4.0
-		 * @param bool $bool True to cancel the feed, assuming it's a post feed.
-		 * @param object $post Global post object.
-		 * @param bool $is_comment_feed True if the feed is a comment feed.
-		 */
-		if ( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
+		// Check that we're disabling feeds and everything is good to go.
+		if ( $this->functions->disable_feeds( $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
 
 			/**
 			 * Filter the feed redirect url.
