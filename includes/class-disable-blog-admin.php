@@ -1502,12 +1502,32 @@ class Disable_Blog_Admin {
 				#customize-theme-controls #customize-control-genesis_trackbacks_posts,
 				#customize-theme-controls #customize-control-genesis_comments_posts,
 				#customize-theme-controls #customize-control-show_on_front,
-				#customize-theme-controls #customize-control-page_for_posts {
+				#customize-theme-controls #customize-control-page_for_posts,
+				#customize-theme-controls #accordion-section-excerpt_settings {
 					display: none !important;
 				}
 			</style>
 			<?php
 		}
+
+	}
+
+	/**
+	 * Customizer scripts.
+	 *
+	 * @since x.x.x
+	 * @return void
+	 */
+	public function customizer_scripts() {
+
+		wp_enqueue_script( $this->plugin_name . '-customizer-scripts', DWPB_URL . 'assets/js/disable-blog-customizer.js', array( 'jquery', 'customize-controls' ), $this->version, true );
+
+		// Localize some information on the page.
+		$js_vars = array(
+			// translators: This text appears in the Customizer > Homepage Settings and provides the context for the homepage select field there.
+			'homepageSettingsText' => __( 'You can choose what\'s displayed on the homepage of your site. To set a static homepage, create or select the page below.', 'disable-blog' ),
+		);
+		wp_localize_script( $this->plugin_name . '-customizer-scripts', 'dwpbCustomizer', $js_vars );
 
 	}
 
