@@ -925,6 +925,16 @@ class Disable_Blog_Admin {
 			$disabled_blocks[] = 'core/rss';
 		}
 
+		// If we're disabling author archives, then remove author related blocks.
+		if ( $this->functions->disable_author_archives() ) {
+			$disabled_blocks = array_merge(
+				$disabled_blocks,
+				array(
+					'core/post-author-biography',
+				)
+			);
+		}
+
 		/**
 		 * Filter the blocks that are disabled by the plugin.
 		 *
