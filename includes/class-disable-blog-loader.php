@@ -51,6 +51,25 @@ class Disable_Blog_Loader {
 	}
 
 	/**
+	 * Simple Autoloader.
+	 *
+	 * @since 0.5.1
+	 * @param string $class The Class to autoload.
+	 */
+	public function autoloader( $class ) {
+
+		$class   = 'class-' . str_replace( '_', '-', strtolower( $class ) ) . '.php';
+		$path    = plugin_dir_path( dirname( __FILE__ ) );
+		$sources = array( 'includes' );
+
+		foreach ( $sources as $source ) {
+			if ( file_exists( $path . $source . '/' . $class ) ) {
+				include $path . $source . '/' . $class;
+			}
+		}
+	}
+
+	/**
 	 * Add a new action to the collection to be registered with WordPress.
 	 *
 	 * @since 0.4.0

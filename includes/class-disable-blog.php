@@ -137,36 +137,24 @@ class Disable_Blog {
 		require_once $includes_dir . '/class-disable-blog-loader.php';
 
 		/**
-		 * The class responsible for defining internationalization functionality
-		 * of the plugin.
-		 */
-		require_once $includes_dir . '/class-disable-blog-i18n.php';
-
-		/**
-		 * The class containing all common functions for use in the plugin
+		 * File with common functions.
 		 */
 		require_once $includes_dir . '/functions.php';
-
-		/**
-		 * The class contains all the common functions used by multiple classes.
-		 */
-		require_once $includes_dir . '/class-disable-blog-functions.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the admin area.
-		 */
-		require_once $includes_dir . '/class-disable-blog-admin.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the public-facing
-		 * side of the site.
-		 */
-		require_once $includes_dir . '/class-disable-blog-public.php';
 
 		/**
 		 * Make it so.
 		 */
 		$this->loader = new Disable_Blog_Loader();
+
+		$classes = array(
+			'Disable_Blog_I18n',
+			'Disable_Blog_Functions',
+			'Disable_Blog_Admin',
+			'Disable_Blog_Public',
+		);
+		foreach ( $classes as $class ) {
+			$this->loader->autoLoader( $class );
+		}
 
 	}
 
