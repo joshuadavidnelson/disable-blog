@@ -7,9 +7,10 @@
 - Add plugin row links for support, donate, and github repro links.
 - New red and black logo.
 - New wordpress.org banner.
-- Test up to WordPress v6.0.
+- Test up to WordPress v6.0.2
 - Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
 - Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text. 
+- Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58)
 
 #### 0.5.0
 
