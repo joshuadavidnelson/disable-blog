@@ -261,7 +261,7 @@ class Disable_Blog {
 			$this->loader->add_filter( $admin_settings->options_group . '_settings_validate', $admin_settings, 'validate_settings' );
 
 			// Toggle functionality in settings via built-in filters.
-			$this->loader->add_action( 'init', $admin_settings, 'initiate_settings' );
+			$admin_settings->initiate_settings();
 
 			/**
 			 * Are we showing the settings page in the admin menu?
