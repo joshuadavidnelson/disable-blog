@@ -104,14 +104,14 @@ class Disable_Blog_Admin_Settings {
 					),
 					array(
 						'id'      => 'front_end_redirect_id',
-						'title'   => __( 'Redirect public blog related urls to', 'disable-blog' ),
-						'desc'    => __( 'Select where to redirect all disabled content urls. The default is to redirect to the homepage, set in Settings > Reading.', 'disable-blog' ),
+						'title'   => __( 'Redirect public urls to', 'disable-blog' ),
+						'desc'    => __( 'Select where to redirect all disabled front-end urls. The default is to redirect to the homepage, set in Settings > Reading.', 'disable-blog' ),
 						'type'    => 'select',
 						'choices' => $redirect_options,
 						'default' => 'home',
 						'show_if' => array(
 							array(
-								'field' => 'disable_blogging',
+								'field' => 'disable_blog',
 								'value' => array( true ),
 							),
 						),
@@ -130,7 +130,7 @@ class Disable_Blog_Admin_Settings {
 						'default' => 'dashboard',
 						'show_if' => array(
 							array(
-								'field' => 'disable_blogging',
+								'field' => 'disable_blog',
 								'value' => array( true ),
 							),
 						),
@@ -146,13 +146,13 @@ class Disable_Blog_Admin_Settings {
 					array(
 						'id'    => 'disable_author_archive',
 						'title' => __( 'Disable Author Archives', 'disable-blog' ),
-						'desc'  => __( 'Disable author archives, user sitemaps, prevent user enumeration, and redirect author archive urls.', 'disable-blog' ),
+						'desc'  => __( 'Disable author archives, user sitemaps, prevents user enumeration, and redirects author archive urls.', 'disable-blog' ),
 						'type'  => 'toggle',
 					),
 					array(
 						'id'      => 'author_redirect_id',
 						'title'   => __( 'Redirect author archives to', 'disable-blog' ),
-						'desc'    => __( 'If disabling author archives, use this option to select where to redirect author archives. The default is to redirect to the homepage, set in Settings > Reading.', 'disable-blog' ),
+						'desc'    => __( 'If disabling author archives, use this option to select where to redirect the author archive urls. The default is to redirect to the homepage, set in Settings > Reading.', 'disable-blog' ),
 						'type'    => 'select',
 						'choices' => $redirect_options,
 						'default' => 'home',
