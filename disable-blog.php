@@ -35,6 +35,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 
+// For admin settings field.
+if ( ! defined( 'DWPB_SETTINGS_FIELD' ) ) {
+	define( 'DWPB_SETTINGS_FIELD', 'disable-blog' );
+}
+
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-disable-blog-activator.php

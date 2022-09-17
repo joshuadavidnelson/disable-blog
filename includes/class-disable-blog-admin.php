@@ -669,46 +669,49 @@ class Disable_Blog_Admin {
 			'plugins',
 			'options-reading',
 			'edit',
+			'settings_page_disable-blog-settings',
 		);
 		if ( ! ( isset( $current_screen->base ) && in_array( $current_screen->base, $screens, true ) ) ) {
 			return;
 		}
 
-		// Throw a notice if the we don't have a front page.
-		if ( ! $this->has_front_page() ) {
+		if ( $this->functions->disable_blog() ) {
 
-			// The second part of the notice depends on which screen we're on.
-			if ( 'options-reading' === $current_screen->base ) {
+			// Throw a notice if the we don't have a front page.
+			if ( ! $this->has_front_page() ) {
 
-				// translators: Direct the user to set a homepage in the current screen.
-				$message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
+				// The second part of the notice depends on which screen we're on.
+				if ( 'options-reading' === $current_screen->base ) {
 
-			} else { // If we're not on the Reading Options page, then direct the user there.
+					// translators: Direct the user to set a homepage in the current screen.
+					$message_link = ' ' . __( 'Select a page for your homepage below.', 'disable-blog' );
 
-				$reading_options_page = get_admin_url( null, 'options-reading.php' );
+				} else { // If we're not on the Reading Options page, then direct the user there.
 
-				// translators: Direct the user to the Reading Settings admin page.
-				$message_link = ' ' . sprintf( __( 'Change in <a href="%s">Reading Settings</a>.', 'disable-blog' ), $reading_options_page );
+					$reading_options_page = get_admin_url( null, 'options-reading.php' );
+
+					// translators: Direct the user to the Reading Settings admin page.
+					$message_link = ' ' . sprintf( __( 'Change in <a href="%s">Reading Settings</a>.', 'disable-blog' ), $reading_options_page );
+
+				}
+
+				// translators: Prompt to configure the site for static homepage and posts page.
+				$message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
+
+				printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', wp_kses_post( $message ) );
+
+				// If we have a front page set, but no posts page or they are the same,.
+				// Then let the user know the expected behavior of these two.
+			} elseif ( 'options-reading' === $current_screen->base
+						&& get_option( 'page_for_posts' ) === get_option( 'page_on_front' ) ) {
+
+				// translators: Warning that the homepage and blog page cannot be the same, the post page is redirected to the homepage.
+				$message = __( 'Disable Blog requires a homepage that is different from the post page. The "posts page" will be redirected to the homepage.', 'disable-blog' );
+
+				printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', esc_attr( $message ) );
 
 			}
-
-			// translators: Prompt to configure the site for static homepage and posts page.
-			$message = __( 'Disable Blog is not fully active until a static page is selected for the site\'s homepage.', 'disable-blog' ) . $message_link;
-
-			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', wp_kses_post( $message ) );
-
-			// If we have a front page set, but no posts page or they are the same,.
-			// Then let the user know the expected behavior of these two.
-		} elseif ( 'options-reading' === $current_screen->base
-					&& get_option( 'page_for_posts' ) === get_option( 'page_on_front' ) ) {
-
-			// translators: Warning that the homepage and blog page cannot be the same, the post page is redirected to the homepage.
-			$message = __( 'Disable Blog requires a homepage that is different from the post page. The "posts page" will be redirected to the homepage.', 'disable-blog' );
-
-			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', esc_attr( $message ) );
-
 		}
-
 	}
 
 	/**
@@ -849,9 +852,15 @@ class Disable_Blog_Admin {
 	 */
 	public function is_admin_page( $page ) {
 
+		if ( empty( $page ) || ! is_string( $page ) ) {
+			return $page;
+		}
+
 		global $pagenow;
 
-		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow;
+		$valid_page = esc_attr( $page ) . '.php';
+
+		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $valid_page === $pagenow;
 
 	}
 

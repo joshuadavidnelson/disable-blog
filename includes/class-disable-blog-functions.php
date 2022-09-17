@@ -157,6 +157,22 @@ class Disable_Blog_Functions {
 	}
 
 	/**
+	 * Check against the current WP version.
+	 *
+	 * @since 0.6.0
+	 * @param string $version the version being compared to WP.
+	 * @param string $compare the method of comparison, e.g. '>', '<', etc.
+	 * @return bool
+	 */
+	public function wp_version_compare( $version, $compare ) {
+
+		global $wp_version;
+
+		return version_compare( $wp_version, $version, $compare );
+
+	}
+
+	/**
 	 * Check what post types are supporting author archives.
 	 *
 	 * @since 0.5.0
@@ -206,6 +222,29 @@ class Disable_Blog_Functions {
 		 * @return bool
 		 */
 		return (bool) apply_filters( 'dwpb_disable_author_archives', false );
+
+	}
+
+	/**
+	 * Check if we are disabling the blog.
+	 *
+	 * Default used to be to disable the blog on activation,
+	 * but with the addition of the settings page it now defaults
+	 * needing to be toggled off.
+	 *
+	 * @since 0.6.0
+	 * @return bool
+	 */
+	public function disable_blog() {
+
+		/**
+		 * Disable the blog.
+		 *
+		 * @since 0.6.0
+		 * @param bool $bool True to disable the blog.
+		 * @return bool
+		 */
+		return (bool) apply_filters( 'dwpb_disable_blog', false );
 
 	}
 

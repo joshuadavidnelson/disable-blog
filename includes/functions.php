@@ -1,13 +1,9 @@
 <?php
 /**
- * A class of common functions.
- *
- * A class definition that includes attributes and functions used across both the
- * public-facing side of the site and the admin area.
+ * Common functions.
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- *
  * @package    Disable_Blog
  * @subpackage Disable_Blog/includes
  */
@@ -135,5 +131,24 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	} else {
 		return $post_types_with_tax;
 	}
+
+}
+
+/**
+ * Get plugin setting field valud.
+ *
+ * @since 0.6.0
+ * @param string $field_id     The field id or key.
+ * @param string $option_group The option group, defaults to 'disable-blog'.
+ * @return mixed
+ */
+function dwpb_get_option( $field_id, $option_group = 'disable-blog' ) {
+
+	$options = get_option( $option_group . '_settings' );
+	if ( isset( $options[ $field_id ] ) ) {
+		return $options[ $field_id ];
+	}
+
+	return false;
 
 }

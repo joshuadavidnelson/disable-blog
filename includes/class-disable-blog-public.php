@@ -88,14 +88,17 @@ class Disable_Blog_Public {
 		$homepage_url = get_permalink( $page_id );
 		$redirect_url = false;
 
+		// Is the blog disabled?
+		$disable_blog = (bool) $this->functions->disable_blog();
+
 		// The public pages to potentially be redirected.
 		global $post;
 		$public_redirects = array(
-			'post'             => ( $post instanceof WP_Post && is_singular( 'post' ) ),
-			'post_tag_archive' => ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
-			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
-			'blog_page'        => is_home(),
-			'date_archive'     => is_date(),
+			'post'             => ( $disable_blog && $post instanceof WP_Post && is_singular( 'post' ) ),
+			'post_tag_archive' => ( $disable_blog && is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
+			'category_archive' => ( $disable_blog && is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
+			'blog_page'        => ( $disable_blog && is_home() ),
+			'date_archive'     => ( $disable_blog && is_date() ),
 			'author_archive'   => ( is_author() && true === $this->functions->disable_author_archives() ),
 		);
 
@@ -183,12 +186,15 @@ class Disable_Blog_Public {
 		$category_post_types = dwpb_post_types_with_tax( 'category' );
 		$author_post_types   = $this->functions->author_archive_post_types();
 
+		// Is the blog disabled?
+		$disable_blog = (bool) $this->functions->disable_blog();
+
 		// Remove existing posts from built-in taxonomy archives, if they are supported by another post type.
-		if ( $query->is_tag() && $tag_post_types ) { // tag archives.
+		if ( $disable_blog && $query->is_tag() && $tag_post_types ) { // tag archives.
 
 			$this->set_post_types_in_query( $query, $tag_post_types, 'dwpb_tag_post_types' );
 
-		} elseif ( $query->is_category() && $category_post_types ) { // category archives.
+		} elseif ( $disable_blog && $query->is_category() && $category_post_types ) { // category archives.
 
 			$this->set_post_types_in_query( $query, $category_post_types, 'dwpb_category_post_types' );
 
