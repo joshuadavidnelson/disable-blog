@@ -297,7 +297,7 @@ class Disable_Blog {
 			// In WP version 6.0 or newer, use the core filter.
 			if ( $this->functions->wp_version_compare( '6.0', '>=' ) ) {
 
-				$this->loader->add_filter( 'register_post_post_type_args', $plugin_admin, 'register_post_type_args', 999, 2 );
+				$this->loader->add_filter( 'register_post_post_type_args', $plugin_admin, 'filter_post_post_type_args', 999, 2 );
 
 			} else { // otherwise modify the global post_types.
 

@@ -65,43 +65,88 @@ class Disable_Blog_Admin {
 	/**
 	 * Disable public arguments of the 'post' post type.
 	 *
+	 * Used for WP version < 6.0.
+	 *
+	 * @uses global $wp_post_types
+	 *
 	 * @since 0.4.2
 	 * @since 0.4.9 removed rest api specific filter and updated function
 	 *              for disabling all public-facing aspects of the 'post' post type.
+	 * @since 0.6.0 Using the core function for WP version > 6.0, this is now for older WP version.
 	 */
 	public function modify_post_type_arguments() {
 
 		global $wp_post_types;
 
 		if ( isset( $wp_post_types['post'] ) ) {
-			$arguments_to_remove = array(
-				'has_archive',
-				'public',
-				'publicaly_queryable',
-				'rewrite',
-				'query_var',
-				'show_ui',
-				'show_in_admin_bar',
-				'show_in_nav_menus',
-				'show_in_menu',
-				'show_in_rest',
-			);
-
-			foreach ( $arguments_to_remove as $arg ) {
-				if ( isset( $wp_post_types['post']->$arg ) ) {
-					// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
-					$wp_post_types['post']->$arg = false;
-					// @codingStandardsIgnoreEnd
-				}
-			}
-
-			// exclude from search.
-			$wp_post_types['post']->exclude_from_search = true;
-
-			// remove supports.
-			$wp_post_types['post']->supports = array();
-
+			// @codingStandardsIgnoreStart - phpcs doesn't like us modifying global variables like this.
+			$wp_post_types['post'] = $this->filter_post_post_type_args( $wp_post_types['post'] );
+			// @codingStandardsIgnoreEnd
 		}
+
+	}
+
+	/**
+	 * Filter the post type arguments.
+	 *
+	 * Only for WP version > 6.0.
+	 *
+	 * @see https://developer.wordpress.org/reference/hooks/register_post_type_post_type_args/
+	 * @see https://developer.wordpress.org/reference/hooks/register_post_type_args/
+	 *
+	 * @since 0.6.0
+	 *
+	 * @param array $args The post type arguments being filtered.
+	 * @return array
+	 */
+	public function filter_post_post_type_args( $args ) {
+
+		$modified_arguments = $this->post_type_arguments();
+
+		foreach ( $modified_arguments as $arg => $value ) {
+			if ( isset( $args[ $arg ] ) ) {
+				$args[ $arg ] = $value;
+			}
+		}
+
+		return $args;
+
+	}
+
+	/**
+	 * The post type arguments used in registering the core post type
+	 * that remove it from use and are removed by this plugin.
+	 *
+	 * @since 0.6.0
+	 *
+	 * @return array
+	 */
+	private function post_type_arguments() {
+
+		// The modified arguments used to disable the blog.
+		$arguments = array(
+			'has_archive'         => false,
+			'public'              => false,
+			'publicaly_queryable' => false,
+			'rewrite'             => false,
+			'query_var'           => false,
+			'show_ui'             => false,
+			'show_in_admin_bar'   => false,
+			'show_in_nav_menus'   => false,
+			'show_in_menu'        => false,
+			'show_in_rest'        => false,
+			'exclude_from_search' => true,
+			'supports'            => array(),
+		);
+
+		/**
+		 * Filter the arguments removed by the code "disable blog" feature.
+		 *
+		 * @since 0.6.0
+		 * @param array $arguments An array of strings, each a post type argument being modified and the new value.
+		 * @return array
+		 */
+		return apply_filters( 'dwpb_post_type_arguments', $arguments );
 
 	}
 
@@ -137,31 +182,55 @@ class Disable_Blog_Admin {
 				if ( ! dwpb_post_types_with_tax( $tax ) ) {
 
 					// public arguments to remove.
-					$arguments_to_remove = array(
-						'has_archive',
-						'public',
-						'publicaly_queryable',
-						'query_var',
-						'show_ui',
-						'show_tagcloud',
-						'show_in_admin_bar',
-						'show_in_quick_edit',
-						'show_in_nav_menus',
-						'show_admin_column',
-						'show_in_menu',
-						'show_in_rest',
-					);
+					$arguments_to_remove = $this->taxonomy_arguments();
 
-					foreach ( $arguments_to_remove as $arg ) {
+					foreach ( $arguments_to_remove as $arg => $value ) {
 						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
 							// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
-							$wp_taxonomies[ $tax ]->$arg = false;
+							$wp_taxonomies[ $tax ]->$arg = $value;
 							// @codingStandardsIgnoreEnd
 						}
 					}
 				}
 			}
 		}
+
+	}
+
+	/**
+	 * The taxonomy arguments used in registering the core post type
+	 * that remove it from use and are removed by this plugin.
+	 *
+	 * @since 0.6.0
+	 *
+	 * @return array
+	 */
+	private function taxonomy_arguments() {
+
+		// The modified arguments used to disable the blog.
+		$arguments = array(
+			'has_archive'         => false,
+			'public'              => false,
+			'publicaly_queryable' => false,
+			'query_var'           => false,
+			'show_ui'             => false,
+			'show_tagcloud'       => false,
+			'show_in_admin_bar'   => false,
+			'show_in_quick_edit'  => false,
+			'show_in_nav_menus'   => false,
+			'show_admin_column'   => false,
+			'show_in_menu'        => false,
+			'show_in_rest'        => false,
+		);
+
+		/**
+		 * Filter the arguments removed by the code "disable blog" feature.
+		 *
+		 * @since 0.6.0
+		 * @param array $arguments An array of strings, each a post type argument being modified and the new value.
+		 * @return array
+		 */
+		return apply_filters( 'dwpb_taxonomy_arguments', $arguments );
 
 	}
 
@@ -959,6 +1028,7 @@ class Disable_Blog_Admin {
 		global $wpdb;
 
 		// Grab the comments that are not associated with 'post' post_type.
+		// @codingStandardsIgnoreStart - doesn't like getting results this way.
 		$totals = (array) $wpdb->get_results(
 			"SELECT comment_approved, COUNT( * ) AS total
 			FROM {$wpdb->comments}
@@ -970,6 +1040,7 @@ class Disable_Blog_Admin {
 			GROUP BY comment_approved",
 			ARRAY_A
 		);
+		// @codingStandardsIgnoreEnd
 
 		$comment_count = array(
 			'moderated'           => 0,
@@ -1218,13 +1289,16 @@ class Disable_Blog_Admin {
 	 * Return the post count for a term based by post type.
 	 *
 	 * @since 0.5.0
+	 * @since 0.6.0 changed to a private function.
+	 *
 	 * @param int    $term_id   the current term id.
 	 * @param string $taxonomy  the taxonomy slug.
 	 * @param string $post_type the post type slug.
 	 * @return int
 	 */
-	public function get_term_post_count_by_type( $term_id, $taxonomy, $post_type ) {
+	private function get_term_post_count_by_type( $term_id, $taxonomy, $post_type ) {
 
+		// @codingStandardsIgnoreStart - High post count and tax_query are discouraged, which is why we cache it in the other function.
 		$args  = array(
 			'fields'                 => 'ids',
 			'posts_per_page'         => 500,
@@ -1239,6 +1313,8 @@ class Disable_Blog_Admin {
 				),
 			),
 		);
+		// @codingStandardsIgnoreEnd
+
 		$query = new WP_Query( $args );
 
 		if ( count( $query->posts ) > 0 ) {
