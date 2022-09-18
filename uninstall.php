@@ -96,10 +96,16 @@ if ( is_multisite() ) {
 
 			// Delete plugin options.
 			delete_option( 'dwpb_version' );
+			delete_option( 'dwpb_previous_version' );
+			delete_option( 'dwpb_defaults_set' );
+			delete_option( 'disable-blog_settings' );
 		}
 		restore_current_blog();
 	}
 } else { // Otherwise, delete options from main options table.
 	// Delete plugin options.
 	delete_option( 'dwpb_version' );
+	delete_option( 'dwpb_previous_version' );
+	delete_option( 'dwpb_defaults_set' );
+	delete_option( 'disable-blog_settings' );
 }
