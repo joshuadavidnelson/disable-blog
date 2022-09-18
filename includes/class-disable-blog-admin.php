@@ -61,6 +61,35 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * Add various links to plugin page
+	 *
+	 * @since 0.5.1
+	 * @param array  $links the array of plugin links.
+	 * @param string $file  the current plugin file.
+	 * @return array
+	 */
+	public function plugin_links( $links, $file ) {
+
+		/** Capability Check */
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			return $links;
+		}
+
+		if ( basename( dirname( $file ) ) === $this->plugin_name ) {
+			$meta  = array(
+				'support'  => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
+				'review'   => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
+				'donate'   => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
+				'github'   => '<a href="https://github.com/joshuadavidnelson/disable-blog/" target="_blank"><span class="dashicons dashicons-randomize"></span> ' . __( 'GitHub', 'disable-blog' ) . '</a>',
+			);
+			$links = array_merge( $links, $meta );
+		}
+
+		return $links;
+
+	}
+
+	/**
 	 * Disable public arguments of the 'post' post type.
 	 *
 	 * @since 0.4.2
