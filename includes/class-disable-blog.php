@@ -62,11 +62,13 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @access public
+	 * @param string $plugin_name The name of this plugin.
+	 * @param string $version     The version of this plugin.
 	 */
-	public function __construct( $plugin_name, $verison ) {
+	public function __construct( $plugin_name, $version ) {
 
 		$this->plugin_name = $plugin_name;
-		$this->version     = $verison;
+		$this->version     = $version;
 
 		do_action( 'dwpb_init' );
 
