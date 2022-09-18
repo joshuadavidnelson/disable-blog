@@ -11,8 +11,6 @@ parameters:
     paths:
         - includes/
     ignoreErrors:
-        # Uses func_get_args()
-        - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
         # Filtered value can return a bool, so this error is incorrect.
         - '#^Else branch is unreachable because ternary operator condition is always true\.$#'
         # Method can return bool via filter.
