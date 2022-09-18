@@ -461,29 +461,6 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Remove the X-Pingback HTTP header.
-	 *
-	 * @since 0.4.0
-	 * @param array $headers the pingback headers.
-	 * @return array
-	 */
-	public function filter_wp_headers( $headers ) {
-
-		/**
-		 * Toggle the disable pinback header feature.
-		 *
-		 * @since 0.4.0
-		 * @param bool $bool True to disable the header, false to keep it.
-		 */
-		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
-			unset( $headers['X-Pingback'] );
-		}
-
-		return $headers;
-
-	}
-
-	/**
 	 * Remove Post Related Menus
 	 *
 	 * @uses dwpb_post_types_with_tax()
