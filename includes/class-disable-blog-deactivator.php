@@ -107,10 +107,9 @@ class Disable_Blog_Deactivator {
 
 				}
 			}
-		} else {
-
-			return false;
 		}
+
+		return false;
 
 	}
 
