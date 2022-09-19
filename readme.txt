@@ -94,9 +94,11 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Add plugin row links for support, donate, and github repro links.
 - New red and black logo.
 - New wordpress.org banner.
-- Test up to WordPress v6.0.
-- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
+- Test up to WordPress v6.0.2
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53). Adds `dwpb_disabled_blocks` passing array of blocks being disabled by the plugin.
 - Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text.
+- Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58).
+- Alter permalink settings based on if categories and author archives are supported.
 
 = 0.5.0 =
 
@@ -271,9 +273,11 @@ A bunch of stuff:
 - Add plugin row links for support, donate, and github repro links.
 - New red and black logo.
 - New wordpress.org banner.
-- Test up to WordPress v6.0.
-- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
+- Test up to WordPress v6.0.2
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53). Adds `dwpb_disabled_blocks` passing array of blocks being disabled by the plugin.
 - Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text.
+- Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58).
+- Alter permalink settings based on if categories and author archives are supported.
 
 = 0.5.0 =
 A ton of updates, improvements, and fixes. Refer to the changelog.

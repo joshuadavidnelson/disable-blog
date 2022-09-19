@@ -8,9 +8,10 @@
 - New red and black logo.
 - New wordpress.org banner.
 - Test up to WordPress v6.0.2
-- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53).
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53). Adds `dwpb_disabled_blocks` passing array of blocks being disabled by the plugin.
 - Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text. 
-- Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58)
+- Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58).
+- Alter permalink settings based on if categories and author archives are supported.
 
 #### 0.5.0
 
