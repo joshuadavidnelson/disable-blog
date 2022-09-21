@@ -34,7 +34,7 @@ jobs:
       with:
         php-version: "7.3"
     - name: "Install PHPCS"
-      run: "composer config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true && composer require --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer"
+      run: "composer require --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer"
     - name: "Run PHPCS"
       run: "vendor/bin/phpcs --standard=WordPress-Core *.php includes/"
 
