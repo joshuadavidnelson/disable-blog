@@ -4,9 +4,9 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- *
  * @package    Disable_Blog
  * @subpackage Disable_Blog_Admin
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -14,9 +14,7 @@
  *
  * Defines the plugin name, version, and contains all the admin functions.
  *
- * @package    Disable_Blog
- * @subpackage Disable_Blog/admin
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.0
  */
 class Disable_Blog_Admin {
 
@@ -59,6 +57,35 @@ class Disable_Blog_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 		$this->functions   = new Disable_Blog_Functions();
+
+	}
+
+	/**
+	 * Add various links to plugin page
+	 *
+	 * @since 0.5.1
+	 * @param array  $links the array of plugin links.
+	 * @param string $file  the current plugin file.
+	 * @return array
+	 */
+	public function plugin_links( $links, $file ) {
+
+		/** Capability Check */
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			return $links;
+		}
+
+		if ( basename( dirname( $file ) ) === $this->plugin_name ) {
+			$meta  = array(
+				'support'  => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
+				'review'   => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
+				'donate'   => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
+				'github'   => '<a href="https://github.com/joshuadavidnelson/disable-blog/" target="_blank"><span class="dashicons dashicons-randomize"></span> ' . __( 'GitHub', 'disable-blog' ) . '</a>',
+			);
+			$links = array_merge( $links, $meta );
+		}
+
+		return $links;
 
 	}
 
@@ -245,8 +272,9 @@ class Disable_Blog_Admin {
 					/**
 					 * The redirect url used for this admin page.
 					 *
-					 * Example: use 'dwpb_redirect_post' to change the redirect url
-					 * used for the post.php page.
+					 * Example: use 'dwpb_redirect_admin_options_tools' to change the redirect url
+					 * used for the options-tools.php page. Note `-` strings are converted to `_`
+					 * in the filter name.
 					 *
 					 * @since 0.4.0
 					 * @since 0.5.0 combine common filters.
@@ -433,29 +461,6 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Remove the X-Pingback HTTP header.
-	 *
-	 * @since 0.4.0
-	 * @param array $headers the pingback headers.
-	 * @return array
-	 */
-	public function filter_wp_headers( $headers ) {
-
-		/**
-		 * Toggle the disable pinback header feature.
-		 *
-		 * @since 0.4.0
-		 * @param bool $bool True to disable the header, false to keep it.
-		 */
-		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
-			unset( $headers['X-Pingback'] );
-		}
-
-		return $headers;
-
-	}
-
-	/**
 	 * Remove Post Related Menus
 	 *
 	 * @uses dwpb_post_types_with_tax()
@@ -613,6 +618,7 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
+
 	}
 
 	/**
@@ -826,7 +832,7 @@ class Disable_Blog_Admin {
 	 */
 	public function enqueue_scripts() {
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . '../assets/js/disable-blog-admin.js', array(), $this->version, true );
+		wp_enqueue_script( $this->plugin_name, DWPB_URL . 'assets/js/disable-blog-admin.js', array(), $this->version, true );
 
 		// Localize some information on the page.
 		global $pagenow;
@@ -836,7 +842,118 @@ class Disable_Blog_Admin {
 			'tagsSupported'       => (bool) dwpb_post_types_with_tax( 'post_tag' ),
 			'commentsSupported'   => (bool) dwpb_post_types_with_feature( 'comments' ),
 		);
+
 		wp_localize_script( $this->plugin_name, 'dwpb', $js_vars );
+
+	}
+
+	/**
+	 * Editor scripts.
+	 *
+	 * @link https://developer.wordpress.org/block-editor/reference-guides/filters/block-filters/#using-a-deny-list
+	 *
+	 * @since 0.5.1
+	 * @return void
+	 */
+	public function editor_scripts() {
+
+		// get a list of disabled blocks.
+		$disabled_blocks = $this->get_disabled_blocks();
+		if ( empty( $disabled_blocks ) ) {
+			return;
+		}
+
+		wp_enqueue_script( $this->plugin_name . '-editor-scripts', DWPB_URL . 'assets/js/disable-blog-editor.js', array( 'wp-blocks', 'wp-dom-ready', 'wp-edit-post' ), $this->version, true );
+
+		// Localize some information on the page.
+		$js_vars = array(
+			'disabledBlocks' => $disabled_blocks,
+		);
+		wp_localize_script( $this->plugin_name . '-editor-scripts', 'dwpbEditor', $js_vars );
+
+	}
+
+	/**
+	 * Get the blocks being removed from the editor.
+	 *
+	 * @since 0.5.1
+	 * @return array
+	 */
+	public function get_disabled_blocks() {
+
+		// remove these blocks, they are related to posts.
+		$disabled_blocks = array(
+			'core/archives',
+			'core/calendar',
+			'core/latest-posts',
+			'core/query',
+			'core/post-title',
+			'core/post-excerpt',
+			'core/post-featured-image',
+			'core/post-content',
+			'core/post-author',
+			'core/post-date',
+			'core/post-terms',
+			'core/post-navigation-link',
+			'core/post-comments',
+			'core/post-template',
+			'core/query-pagination',
+			'core/query-pagination-next',
+			'core/query-pagination-numbers',
+			'core/query-pagination-previous',
+		);
+
+		// if we are not supporting tags and categories elsewhere,
+		// then these blocks have to go as well.
+		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
+			$disabled_blocks = array_merge(
+				$disabled_blocks,
+				array(
+					'core/tag-cloud',
+					'core/categories',
+					'core/term-description',
+				)
+			);
+		}
+
+		// If we are not supporting author archives,
+		// then related blocks have to go.
+		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
+			$disabled_blocks = array_merge(
+				$disabled_blocks,
+				array(
+					'core/latest-comments',
+				)
+			);
+		}
+
+		// If we're disabling feeds, remove this block.
+		global $post;
+		if ( $this->functions->disable_feeds( $post ) ) {
+			$disabled_blocks[] = 'core/rss';
+		}
+
+		// If we're disabling author archives, then remove author related blocks.
+		if ( $this->functions->disable_author_archives() ) {
+			$disabled_blocks = array_merge(
+				$disabled_blocks,
+				array(
+					'core/post-author-biography',
+				)
+			);
+		}
+
+		/**
+		 * Filter the blocks that are disabled by the plugin.
+		 *
+		 * @since 0.5.1
+		 * @param array $disabled_blocks an array of blocks that are removed.
+		 * @return array
+		 */
+		$disabled_blocks = (array) apply_filters( 'dwpb_disabled_blocks', $disabled_blocks );
+
+		// you can never be too careful if you have provided a filter.
+		return array_filter( $disabled_blocks, 'esc_attr', ARRAY_FILTER_USE_BOTH );
 
 	}
 
@@ -885,6 +1002,7 @@ class Disable_Blog_Admin {
 
 			$comments = (object) $comments;
 			wp_cache_set( 'comments-0', $comments, 'counts' );
+
 		}
 
 		return $comments;
@@ -1403,12 +1521,32 @@ class Disable_Blog_Admin {
 				#customize-theme-controls #customize-control-genesis_trackbacks_posts,
 				#customize-theme-controls #customize-control-genesis_comments_posts,
 				#customize-theme-controls #customize-control-show_on_front,
-				#customize-theme-controls #customize-control-page_for_posts {
+				#customize-theme-controls #customize-control-page_for_posts,
+				#customize-theme-controls #accordion-section-excerpt_settings {
 					display: none !important;
 				}
 			</style>
 			<?php
 		}
+
+	}
+
+	/**
+	 * Customizer scripts.
+	 *
+	 * @since 0.5.1
+	 * @return void
+	 */
+	public function customizer_scripts() {
+
+		wp_enqueue_script( $this->plugin_name . '-customizer-scripts', DWPB_URL . 'assets/js/disable-blog-customizer.js', array( 'jquery', 'customize-controls' ), $this->version, true );
+
+		// Localize some information on the page.
+		$js_vars = array(
+			// translators: This text appears in the Customizer > Homepage Settings and provides the context for the homepage select field there.
+			'homepageSettingsText' => __( 'You can choose what\'s displayed on the homepage of your site. To set a static homepage, create or select the page below.', 'disable-blog' ),
+		);
+		wp_localize_script( $this->plugin_name . '-customizer-scripts', 'dwpbCustomizer', $js_vars );
 
 	}
 
@@ -1437,6 +1575,29 @@ class Disable_Blog_Admin {
 
 		// translators: this notice informs the user why the blog page editor is disabled and that it is redirected to the homepage.
 		echo '<div class="notice notice-warning inline"><p>' . __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>'; // phpcs:ignore
+
+	}
+
+	/**
+	 * Filter the available tags in the permalink settings.
+	 *
+	 * @since 0.5.1
+	 * @param array $available_tags The available permalink tags.
+	 * @return array
+	 */
+	public function available_permalink_structure_tags( $available_tags ) {
+
+		// Remove the category permalink structure if categories are not supported.
+		if ( isset( $available_tags['category'] ) && ! dwpb_post_types_with_tax( 'category' ) ) {
+			unset( $available_tags['category'] );
+		}
+
+		// Remove the author tag if author archives are disabled.
+		if ( isset( $available_tags['author'] ) && $this->functions->disable_author_archives() ) {
+			unset( $available_tags['author'] );
+		}
+
+		return $available_tags;
 
 	}
 }

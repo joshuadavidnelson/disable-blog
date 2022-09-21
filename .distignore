@@ -4,6 +4,10 @@
 /vendor/
 /tests/
 .editorconfig
+.gitignore
+.distignore
+composer.json
+composer.lock
 code-of-conduct.md
 contributing.md
 phpstan.neon.dist

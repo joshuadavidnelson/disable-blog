@@ -13,9 +13,7 @@
  *
  * Defines the plugin name, version, and contains all the public functions.
  *
- * @package    Disable_Blog
- * @subpackage Disable_Blog/public
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.2.0
  */
 class Disable_Blog_Public {
 
@@ -102,11 +100,11 @@ class Disable_Blog_Public {
 		// cycle through each public page, checking if we need to redirect.
 		foreach ( $public_redirects as $filtername => $bool ) {
 
-			// Custom function within this class used to check if the page needs to be redirected.
-			$filter = 'dwpb_redirect_' . $filtername;
-
 			// If this is the right page, then setup the redirect url.
 			if ( true === $bool ) {
+
+				// Custom function within this class used to check if the page needs to be redirected.
+				$filter = 'dwpb_redirect_' . $filtername;
 
 				/**
 				 * The redirect url used for this public page.
@@ -260,15 +258,8 @@ class Disable_Blog_Public {
 		// Option to override this via filter and check to confirm post type.
 		global $post;
 
-		/**
-		 * Toggle the disable feed via this filter.
-		 *
-		 * @since 0.4.0
-		 * @param bool $bool True to cancel the feed, assuming it's a post feed.
-		 * @param object $post Global post object.
-		 * @param bool $is_comment_feed True if the feed is a comment feed.
-		 */
-		if ( apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
+		// Check that we're disabling feeds and everything is good to go.
+		if ( $this->functions->disable_feeds( $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
 
 			/**
 			 * Filter the feed redirect url.
@@ -478,6 +469,30 @@ class Disable_Blog_Public {
 
 		// filter any invalid entries out before returning the array.
 		return is_array( $methods_to_remove ) ? array_filter( $methods_to_remove, 'is_string' ) : false; // phpcs:ignore
+
+	}
+
+	/**
+	 * Remove the X-Pingback HTTP header.
+	 *
+	 * @since 0.4.0
+	 * @since 0.5.1 moved to the public class.
+	 * @param array $headers the pingback headers.
+	 * @return array
+	 */
+	public function filter_wp_headers( $headers ) {
+
+		/**
+		 * Toggle the disable pinback header feature.
+		 *
+		 * @since 0.4.0
+		 * @param bool $bool True to disable the header, false to keep it.
+		 */
+		if ( apply_filters( 'dwpb_remove_pingback_header', true ) && isset( $headers['X-Pingback'] ) ) {
+			unset( $headers['X-Pingback'] );
+		}
+
+		return $headers;
 
 	}
 

@@ -3,32 +3,34 @@ Disable Blog
 
 [![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/) ![Downloads](https://img.shields.io/wordpress/plugin/dt/disable-blog.svg) ![Rating](https://img.shields.io/wordpress/plugin/r/disable-blog.svg)
 
-**Requires at least:** 4.0  
-**Tested up to WordPress:** 5.9.3  
-**Stable version:** 0.5.0  
+**Requires at least WordPress:** 4.0  
+**Tested up to WordPress:** 6.0.2  
+**Stable version:** 0.5.1  
 **License:** GPLv2 or later  
 **Requires PHP:** 5.6  
 **Tested up to PHP:** 7.4  
 
-## Description
+All the power of WordPress, without a blog.
 
-Free your WordPress site from posts with a blog-less WordPress site.
+## Description
 
 Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
 
-**Important**: **You need to select a page to act as the home page**.If Settings > Reading > "Front Page Displays" is not set to show on a page, then this plugin will not function correctly. Not doing so will mean that your post page can still be visible on the front-end of the site. Note that it's not required, but recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
+The blog is "disabled" when the plugin is activated, which removes support for the core 'post' type, hides blog-related admin pages/settings, and redirects urls on both the public and admin portions of the site. Refer to [below](#how-does-this-plugin-work) for a detailed functionality list.
 
-**Site Content & Data**: This plugin will not delete any of your site's data, however it does by default redirect all posts and post comments to the homepage (refer to the documentation on ways to change this behavior).
+### Important: Set a front page
 
-If you have any posts, comments, categories, and/or tags, delete them prior to activation (or deactivate this plugin, delete them, and re-active). If you don't delete them, they will remain in your database and become accessible if you deactivate this plugin or modify the plugin behavior to show posts.
+**You need to select a page to act as the home page**. If Settings > Reading > "Front Page Displays" is not set to show a page, then this plugin will not function correctly. Not doing so will mean that your post page can still be visible on the front-end of the site. It's not required, but it is recommended you select a page for the  "posts page" setting, this page will be automatically redirected to the static "home page."
 
-**Comments**: Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also support comments by default, so the comments section won't disappear in most cases). If you're looking to disable comments completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
+### Site Content & Data
 
-**Categories & Tags**: These are hidden and redirected, unless they are supported by a custom post type.
+This plugin will not delete any of your site's data, however existing blog related content will not be accessible while this plugins is active. This includes posts, categories, tags, and related comments.
 
-**Custom Post Types**: This plugin includes extensive support for custom post types and taxonomies. If you are using a custom post type that supports the built-in `category` and/or `post_tag` taxonomies, they will be visible and accessible through that post type.
+If you have content and wish to remove it, either delete that content prior to activation or deactivate this plugin, delete it, and re-active. 
 
-**Support**: This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [WordPress.org support forums](https://wordpress.org/support/plugin/disable-blog) or create an [issue](https://github.com/joshuadavidnelson/disable-blog/issues) on the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog).
+### Comments
+
+Comments remain enabled, unless the 'post' type is the only type supporting comments (pages also support comments by default, so the comments section won't disappear in most cases). If you're looking to disable comments completely, check out the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
 
 ### How does this plugin work?
 
@@ -81,15 +83,19 @@ Activating Disable Blog does the following:
 
 If Settings > Reading > Front Page Displays is not set to show on a page, then some aspects of the plugin won't work, be sure to set your front page to a static page.
 
+#### FAQ
+
+1. Can I Disable Comments?
+ - Other post types (like Pages) may have comment support and other great plugins exist that can disable comments, so this feature was not part of the initial development of this plugin. A future release will include options to disable comments, but until then if you would like to disable comments, try the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
+2. I want to delete my posts and comments
+ - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the Disable Blog to hide everything again.
+3. How can I disable author archives?
+ - If you're not using the built-in WP author archives for other purposes (example url: `example.com/author/author-name`) and would like to disable them entirely, add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );`. If author archives are not disabled, the plugin adds functionality to support custom post types on author archives by passing an array of post type slugs to `dwpb_author_archive_post_types` filter - however, theme support is usually needed to disable custom content types correctly.
+
+#### Support
+
+This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [WordPress.org support forums](https://wordpress.org/support/plugin/disable-blog/) or create an [issue](https://github.com/joshuadavidnelson/disable-blog/issues/) on the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog/).
+
 #### Contributing
 
 All contributions are welcomed and considered, please refer to [contributing.md](contributing.md).
-
-#### FAQ
-
-1. Why Not Disable Comments Entirely?
- - This could be done, but other post types (like Pages) may have comment support. If you would like to disable comments, try the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin
-2. I want to delete my posts and comments
- - Deactivate the plugin, delete your posts (which will delete related comments), and delete any tags or categories you might want to remove as well. Then reactivate the plugin to hide everything.
-3. How can I disable author archives?
- - If you're not using the built-in WP author archives (typically at `example.com/author/joshua` urls) and would like to disable them entirely, add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );`. If author archives are not disabled, the plugin adds functionality to support custom post types on author archives by passing an array of post type slugs to `dwpb_author_archive_post_types` filter - however, theme support is usually needed to disable custom content types correctly.

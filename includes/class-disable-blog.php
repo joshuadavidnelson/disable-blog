@@ -8,7 +8,8 @@
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
  * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
+ * @subpackage Disable_Blog\Includes
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -20,10 +21,7 @@
  * Also maintains the unique identifier of this plugin as well as the current
  * version of the plugin.
  *
- * @since      0.4.0
- * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.0
  */
 class Disable_Blog {
 
@@ -64,15 +62,16 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @access public
+	 * @param string $plugin_name The name of this plugin.
+	 * @param string $version     The version of this plugin.
 	 */
-	public function __construct() {
+	public function __construct( $plugin_name, $version ) {
 
-		$this->plugin_name = 'disable-blog';
-		$this->version     = '0.5.0';
+		$this->plugin_name = $plugin_name;
+		$this->version     = $version;
 
 		do_action( 'dwpb_init' );
 
-		$this->setup_constants();
 		$this->upgrade_check();
 		$this->load_dependencies();
 		$this->set_locale();
@@ -113,34 +112,6 @@ class Disable_Blog {
 	}
 
 	/**
-	 * Define Constants
-	 *
-	 * @since 0.3.0
-	 * @access private
-	 */
-	private function setup_constants() {
-
-		// For includes and whatnot.
-		if ( ! defined( 'DWPB_DIR' ) ) {
-			define( 'DWPB_DIR', dirname( __FILE__ ) );
-		}
-
-		// For calling scripts and so forth.
-		if ( ! defined( 'DWPB_URL' ) ) {
-			define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
-		}
-
-		// For admin settings field.
-		if ( ! defined( 'DWPB_SETTINGS_FIELD' ) ) {
-			define( 'DWPB_SETTINGS_FIELD', $this->plugin_name );
-		}
-
-		// To keep track of versions, useful if you need to make updates specific to versions.
-		define( 'DWPB_VERSION', $this->version );
-
-	}
-
-	/**
 	 * Load the required dependencies for this plugin.
 	 *
 	 * Include the following files that make up the plugin:
@@ -168,36 +139,24 @@ class Disable_Blog {
 		require_once $includes_dir . '/class-disable-blog-loader.php';
 
 		/**
-		 * The class responsible for defining internationalization functionality
-		 * of the plugin.
-		 */
-		require_once $includes_dir . '/class-disable-blog-i18n.php';
-
-		/**
-		 * The class containing all common functions for use in the plugin
+		 * File with common functions.
 		 */
 		require_once $includes_dir . '/functions.php';
-
-		/**
-		 * The class contains all the common functions used by multiple classes.
-		 */
-		require_once $includes_dir . '/class-disable-blog-functions.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the admin area.
-		 */
-		require_once $includes_dir . '/class-disable-blog-admin.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the public-facing
-		 * side of the site.
-		 */
-		require_once $includes_dir . '/class-disable-blog-public.php';
 
 		/**
 		 * Make it so.
 		 */
 		$this->loader = new Disable_Blog_Loader();
+
+		$classes = array(
+			'Disable_Blog_I18n',
+			'Disable_Blog_Functions',
+			'Disable_Blog_Admin',
+			'Disable_Blog_Public',
+		);
+		foreach ( $classes as $class ) {
+			$this->loader->autoLoader( $class );
+		}
 
 	}
 
@@ -228,6 +187,9 @@ class Disable_Blog {
 	private function define_admin_hooks() {
 
 		$plugin_admin = new Disable_Blog_Admin( $this->get_plugin_name(), $this->get_version() );
+
+		// Add Links to Plugin Bar.
+		$this->loader->add_filter( 'plugin_row_meta', $plugin_admin, 'plugin_links', 10, 2 );
 
 		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
@@ -268,9 +230,6 @@ class Disable_Blog {
 
 		// Clear comments from 'post' post type.
 		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
-
-		// Remove the X-Pingback HTTP header.
-		$this->loader->add_filter( 'wp_headers', $plugin_admin, 'filter_wp_headers', 10, 1 );
 
 		// Disable Update Services configruation, no pingbacks.
 		add_filter( 'enable_update_services_configuration', '__return_false' );
@@ -318,9 +277,16 @@ class Disable_Blog {
 
 		// Update customizer homepage settings panel to match the Reading settings.
 		$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
+		$this->loader->add_action( 'customize_controls_enqueue_scripts', $plugin_admin, 'customizer_scripts', 999 );
 
 		// Update Blog page notice.
 		$this->loader->add_action( 'post_edit_form_tag', $plugin_admin, 'update_posts_page_notice', 10, 1 );
+
+		// Remove and update available permalink structure tags.
+		$this->loader->add_filter( 'available_permalink_structure_tags', $plugin_admin, 'available_permalink_structure_tags', 10, 1 );
+
+		// Filter off post related blocks in editor.
+		$this->loader->add_filter( 'enqueue_block_editor_assets', $plugin_admin, 'editor_scripts', 100, 2 );
 
 	}
 
@@ -350,6 +316,9 @@ class Disable_Blog {
 
 		// Remove feed links from the header.
 		$this->loader->add_action( 'wp_loaded', $plugin_public, 'header_feeds', 1, 1 );
+
+		// Remove the X-Pingback HTTP header.
+		$this->loader->add_filter( 'wp_headers', $plugin_public, 'filter_wp_headers', 10, 1 );
 
 		// Hide Feed links.
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
