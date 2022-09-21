@@ -49,7 +49,7 @@ This plugin is maintained for free but **please reach out** and I will assist yo
 
 [View this plugin on GitHub](https://github.com/joshuadavidnelson/disable-blog/) to contribute as well as log any issues (or visit the WP [support forums](https://wordpress.org/support/plugin/disable-blog/)).
 
-Please feel free to contribute! Refer to the [https://github.com/joshuadavidnelson/disable-blog/#contributing](Github repro) for specifics.
+Please feel free to contribute! Refer to the [Github Repo](https://github.com/joshuadavidnelson/disable-blog/#contributing) for specifics.
 
 
 == Installation ==
@@ -82,7 +82,7 @@ If author archives are not disabled, the plugin adds functionality to support cu
 
 = How can I change the plugin's behavior? =
 
-There are numerous filters available to change the way this plugin works. Refer to the [GitHub page](https://github.com/joshuadavidnelson/disable-blog/) for more details, the [wiki](https://disable.blog/docs) for examples, or reach out on the [support forums](https://wordpress.org/support/plugin/disable-blog/) if you have any questions.
+There are numerous filters available to change the way this plugin works. Refer to the [GitHub page](https://github.com/joshuadavidnelson/disable-blog/) for more details or reach out on the [support forums](https://wordpress.org/support/plugin/disable-blog/) if you have any questions.
 
 
 == Changelog ==
