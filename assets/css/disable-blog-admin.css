@@ -25,7 +25,12 @@
 /* Settings page styles.
 --------------------------------------------- */
 .wpsf-section h2 {
-	display: none;
+	/* display: none; */
+	border-bottom: 2px solid grey;
+	width: auto;
+	display: inline-block;
+	margin: 0;
+	padding: 20px 10px 15px 0;
 }
 .wpsf-tab .postbox h2 {
 	background: transparent;
