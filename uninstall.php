@@ -20,16 +20,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * If uninstall not called from WordPress, exit.
+ * If uninstall not called from WordPress,
+ * If no uninstall action,
+ * If not this plugin,
+ * If no caps,
+ * then exit.
  *
  * @since 0.4.0
- *
  * @uses  WP_UNINSTALL_PLUGIN
  */
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	header( 'Status: 403 Forbidden' );
-	header( 'HTTP/1.1 403 Forbidden' );
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' )
+		|| empty( $_REQUEST )
+		|| ! isset( $_REQUEST['plugin'] )
+		|| ! isset( $_REQUEST['action'] )
+		|| 'plugin-name/plugin-name.php' !== $_REQUEST['plugin']
+		|| 'delete-plugin' !== $_REQUEST['action']
+		|| ! check_ajax_referer( 'updates', '_ajax_nonce' )
+		|| ! current_user_can( 'activate_plugins' )
+	) {
+
 	exit();
+
 }
 
 /**
@@ -73,6 +84,7 @@ if ( ! current_user_can( 'install_plugins' ) ) {
  * Note: Respects Multisite setups and single installs.
  *
  * @since 0.4.0
+ * @since 0.6.0 included check for large networks.
  *
  * @uses  switch_to_blog()
  * @uses  restore_current_blog()
@@ -83,25 +95,38 @@ if ( ! current_user_can( 'install_plugins' ) ) {
  * @global $wpdb
  */
 // First, check for Multisite, if yes, delete options on a per site basis.
+// But we only do this if it's ~not~ a large network to avoid performance issue.
 if ( is_multisite() ) {
-	global $wpdb;
 
-	// Get array of Site/Blog IDs from the database.
-	$blogs = $wpdb->get_results( "SELECT blog_id FROM {$wpdb->blogs}", ARRAY_A );
+	// core assumes 10k is large, but 5k is still pretty big.
+	$network_id = get_current_network_id();
+	$count      = get_blog_count( $network_id );
+	if ( $count < 5000 ) {
 
-	if ( $blogs ) {
-		foreach ( $blogs as $blog ) {
-			// Repeat for every Site ID.
-			switch_to_blog( $blog['blog_id'] );
+		global $wpdb;
 
-			// Delete plugin options.
-			delete_option( 'dwpb_version' );
-			delete_option( 'dwpb_previous_version' );
-			delete_option( 'dwpb_defaults_set' );
-			delete_option( 'disable-blog_settings' );
+		// Get array of Site/Blog IDs from the database.
+		$blogs = $wpdb->get_results( "SELECT blog_id FROM {$wpdb->blogs}", ARRAY_A );
+
+		if ( $blogs ) {
+			foreach ( $blogs as $blog ) {
+
+				// Repeat for every Site ID.
+				switch_to_blog( $blog['blog_id'] );
+
+				// Delete plugin options.
+				delete_option( 'dwpb_version' );
+				delete_option( 'dwpb_previous_version' );
+				delete_option( 'dwpb_defaults_set' );
+				delete_option( 'disable-blog_settings' );
+
+			}
+
+			restore_current_blog();
+
 		}
-		restore_current_blog();
 	}
+
 } else { // Otherwise, delete options from main options table.
 	// Delete plugin options.
 	delete_option( 'dwpb_version' );

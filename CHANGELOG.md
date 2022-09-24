@@ -1,5 +1,18 @@
 ### Changelog
 
+#### 0.5.1
+- Update to documentation, readmes, and doc blocks.
+- Fix `.distignore` to remove itself and .gitignore from WP-dot-org repo.
+- Add WP repo assets and deployment action.
+- Add plugin row links for support, donate, and github repro links.
+- New red and black logo.
+- New wordpress.org banner.
+- Test up to WordPress v6.0.2
+- Remove core post-related blocks in editor Closes [#53](https://github.com/joshuadavidnelson/disable-blog/issues/53). Adds `dwpb_disabled_blocks` passing array of blocks being disabled by the plugin.
+- Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text. 
+- Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58).
+- Alter permalink settings based on if categories and author archives are supported.
+
 #### 0.5.0
 
 **New:**
@@ -21,7 +34,7 @@
 	- Hiding the default category & default post format on Writing options page.
 
 **Fixes:**
-- Add `dwpb_xmlrpc_methods_to_remove` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes [#50](https://github.com/joshuadavidnelson/disable-blog/issues/50)
+- Add `dwpb_disabled_xmlpc_methods` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes [#50](https://github.com/joshuadavidnelson/disable-blog/issues/50)
 - Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes [#45](https://github.com/joshuadavidnelson/disable-blog/issues/45).
 - Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes [#46](https://github.com/joshuadavidnelson/disable-blog/issues/46)
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes [#47](https://github.com/joshuadavidnelson/disable-blog/issues/47)
@@ -39,7 +52,7 @@
 	- `dwpb_redirect_options_discussion` has been removed. Use `dwpb_redirect_admin_options_discussion` instead.
 	- The filter `dwpb_redirect_admin_options_writing` that would pass a boolean to toggle off the options writing page has been remaned `dwpb_remove_options_writing` and must be passed with `true` in order to have the page redirect _and_ the admin menu item removed. By default the value filtered is false and the options Writing page does not go away, as numerous other plugins use this page for non-blog related settings. Now `dwpb_redirect_admin_options_writing` is used to filter the redirect url itself, replacing the previously named `dwpb_redirect_options_writing` filter.  
 	- `dwpb_redirect_options_tools` has been removed. Use `dwpb_redirect_admin_options_tools` instead.
-	- New filter: `dwpb_xmlrpc_methods_to_remove` (see above).
+	- New filter: `dwpb_disabled_xmlpc_methods` (see above).
 	- New filter: `dwpb_author_archive_post_types` (see above).
 	- New filter: `dwpb_disable_author_archives` (see above).
 - Update public redirect filters to match the pattern used for the new admin redirects. Filer changes include:

@@ -8,7 +8,8 @@
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
  * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
+ * @subpackage Disable_Blog\Includes
+ * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
 /**
@@ -20,10 +21,7 @@
  * Also maintains the unique identifier of this plugin as well as the current
  * version of the plugin.
  *
- * @since      0.4.0
- * @package    Disable_Blog
- * @subpackage Disable_Blog/includes
- * @author     Joshua Nelson <josh@joshuadnelson.com>
+ * @since 0.4.0
  */
 class Disable_Blog {
 
@@ -64,15 +62,16 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @access public
+	 * @param string $plugin_name The name of this plugin.
+	 * @param string $version     The version of this plugin.
 	 */
-	public function __construct() {
+	public function __construct( $plugin_name, $version ) {
 
-		$this->plugin_name = 'disable-blog';
-		$this->version     = '0.6.0';
+		$this->plugin_name = $plugin_name;
+		$this->version     = $version;
 
 		do_action( 'dwpb_init' );
 
-		$this->setup_constants();
 		$this->upgrade_check();
 		$this->load_dependencies();
 		$this->set_locale();
@@ -174,42 +173,26 @@ class Disable_Blog {
 		require_once $includes_dir . '/class-disable-blog-loader.php';
 
 		/**
-		 * The class responsible for defining internationalization functionality
-		 * of the plugin.
-		 */
-		require_once $includes_dir . '/class-disable-blog-i18n.php';
-
-		/**
-		 * The class containing all common functions for use in the plugin
-		 */
-		require_once $includes_dir . '/functions.php';
-
-		/**
 		 * The class contains all the common functions used by multiple classes.
 		 */
 		require_once $includes_dir . '/class-disable-blog-functions.php';
 		$this->functions = new Disable_Blog_Functions();
 
 		/**
-		 * The class responsible for the admin settings page.
-		 */
-		require_once $includes_dir . '/class-disable-blog-settings.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the admin area.
-		 */
-		require_once $includes_dir . '/class-disable-blog-admin.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the public-facing
-		 * side of the site.
-		 */
-		require_once $includes_dir . '/class-disable-blog-public.php';
-
-		/**
 		 * Make it so.
 		 */
 		$this->loader = new Disable_Blog_Loader();
+
+		$classes = array(
+			'Disable_Blog_Settings',
+			'Disable_Blog_I18n',
+			'Disable_Blog_Functions',
+			'Disable_Blog_Admin',
+			'Disable_Blog_Public',
+		);
+		foreach ( $classes as $class ) {
+			$this->loader->autoLoader( $class );
+		}
 
 	}
 
@@ -271,6 +254,15 @@ class Disable_Blog {
 				$this->loader->add_action( 'admin_menu', $admin_settings, 'add_settings_page', 20 );
 			}
 		}
+
+		// Remove and update available permalink structure tags.
+		$this->loader->add_filter( 'available_permalink_structure_tags', $plugin_admin, 'available_permalink_structure_tags', 10, 1 );
+
+		// Filter off post related blocks in editor.
+		$this->loader->add_filter( 'enqueue_block_editor_assets', $plugin_admin, 'editor_scripts', 100, 2 );
+
+		// Add Links to Plugin Bar.
+		$this->loader->add_filter( 'plugin_row_meta', $plugin_admin, 'plugin_links', 10, 2 );
 
 		// Hide items with CSS.
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
@@ -373,6 +365,7 @@ class Disable_Blog {
 
 			// Update customizer homepage settings panel to match the Reading settings.
 			$this->loader->add_action( 'customize_controls_print_styles', $plugin_admin, 'customizer_styles', 999 );
+			$this->loader->add_action( 'customize_controls_enqueue_scripts', $plugin_admin, 'customizer_scripts', 999 );
 
 			// Update Blog page notice.
 			$this->loader->add_action( 'post_edit_form_tag', $plugin_admin, 'update_posts_page_notice', 10, 1 );
