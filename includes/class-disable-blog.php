@@ -173,6 +173,11 @@ class Disable_Blog {
 		require_once $includes_dir . '/class-disable-blog-loader.php';
 
 		/**
+		 * Common public funcitons.
+		 */
+		require_once $includes_dir . '/functions.php';
+
+		/**
 		 * The class contains all the common functions used by multiple classes.
 		 */
 		require_once $includes_dir . '/class-disable-blog-functions.php';
@@ -186,7 +191,6 @@ class Disable_Blog {
 		$classes = array(
 			'Disable_Blog_Settings',
 			'Disable_Blog_I18n',
-			'Disable_Blog_Functions',
 			'Disable_Blog_Admin',
 			'Disable_Blog_Public',
 		);
