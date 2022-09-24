@@ -135,6 +135,18 @@ class Disable_Blog_Admin_Settings {
 							),
 						),
 					),
+					array(
+						'id'      => 'disable_writing_options',
+						'title'   => __( 'Disable Writing Options', 'disable-blog' ),
+						'desc'    => __( 'Remove the Settings > Writing page from the menu and redirect the link to the dashboard. This page is not disabled by default because other plugins, like Classic Editor, extend this page.', 'disable-blog' ),
+						'type'    => 'toggle',
+						'show_if' => array(
+							array(
+								'field' => 'disable_blog',
+								'value' => array( true ),
+							),
+						),
+					),
 				),
 			),
 			array(
@@ -165,20 +177,7 @@ class Disable_Blog_Admin_Settings {
 					),
 				),
 			),
-			array(
-				'tab_id'        => 'advanced',
-				'section_id'    => 'advanced',
-				'section_title' => __( 'Advanced options', 'disable-blog' ),
-				'section_order' => 10,
-				'fields'        => array(
-					array(
-						'id'    => 'disable_writing_options',
-						'title' => __( 'Disable Writing Options', 'disable-blog' ),
-						'desc'  => __( 'Remove the Settings > Writing page from the menu and redirect the link to the dashboard. This page is not disabled by default because other plugins, like Classic Editor, extend this page.', 'disable-blog' ),
 						'type'  => 'toggle',
-					),
-				),
-			),
 		);
 
 		return $wpsf_settings;
