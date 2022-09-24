@@ -77,6 +77,8 @@ class Disable_Blog_Admin {
 
 		if ( basename( dirname( $file ) ) === $this->plugin_name ) {
 			$meta  = array(
+				'settings' => '<a href="' . admin_url( 'options-general.php?page=' . DWPB_SETTINGS_FIELD . '-settings' ) . '" title="' . __( 'Settings', 'disable-blog' ) . '"><span class="dashicons dashicons-admin-settings"></span> ' . __( 'Settings', 'disable-blog' ) . '</a>',
+				'docs'     => '<a href="https://github.com/joshuadavidnelson/disable-blog/wiki" title="' . __( 'Documentation', 'disable-blog' ) . '" target="_blank"><span class="dashicons dashicons-book"></span> ' . __( 'Documentation', 'disable-blog' ) . '</a>',
 				'support'  => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
 				'review'   => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
 				'donate'   => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
