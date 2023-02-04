@@ -2,12 +2,7 @@
 
 #### 0.5.2
 - Test up to WP 6.1.1
-- Fix some bugs introduced in v0.5.1: Reverts "Remove core post-related blocks in editor" - WP core handles the missing taxonomy endpoints fine but pulling these blocks out causes other issues. Also removes `dwpb_disabled_blocks` filter.
-	
-	The [original issue](https://github.com/joshuadavidnelson/disable-blog/issues/53), was specific to blocks accessing endpoints to disabled taxonomies, whihc doesn't impact user functionality, just throws an error in the console.
-		
-	WordPress core handles this okay without any intervention: The user can use term-specific blocks and they'll present with a "Term items not found" message in the editor without any output for the block on the front-end. This is a reasonable way to handle using a block that has no content to present.
-
+- Fix some bugs introduced in v0.5.1: Reverts "Remove core post-related blocks in editor" - WP core handles the missing taxonomy endpoints noted in #53 fine without any intervention and pulling these blocks out causes other issues. Also removes `dwpb_disabled_blocks` filter.
 - Adds a check to the customizer script to avoid a TypeError. Closes #59
 - Increase specificity in permalinks page to correctly target and remove "optional" section when category and post tags are not supported by any post type (default condition).
 
