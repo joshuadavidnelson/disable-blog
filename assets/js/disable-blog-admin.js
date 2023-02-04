@@ -41,12 +41,12 @@
 					}
 
 					// Remove the "Optional" title and paragraph on this screen if there are no other sub-items
-					var numberOfOptionalRows = document.querySelectorAll('table.form-table[role="presentation"] tbody tr').length;
+					var optionPermalinksTable = document.querySelector("label[for='category_base']").closest('table');
+					var numberOfOptionalRows = optionPermalinksTable.querySelectorAll('tr').length;
 					if ( 2 == numberOfOptionalRows && ! dwpb.tagsSupported && ! dwpb.categoriesSupported ) {
-						var taxonomyBase = document.querySelector('table.form-table[role="presentation"]');
-						taxonomyBase.classList.add("hidden");
-						taxonomyBase.previousElementSibling.classList.add("hidden");
-						taxonomyBase.previousElementSibling.previousElementSibling.classList.add("hidden");
+						optionPermalinksTable.classList.add("hidden");
+						optionPermalinksTable.previousElementSibling.classList.add("hidden");
+						optionPermalinksTable.previousElementSibling.previousElementSibling.classList.add("hidden");
 					}
 
 					break;
