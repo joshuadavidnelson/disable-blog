@@ -285,9 +285,6 @@ class Disable_Blog {
 		// Remove and update available permalink structure tags.
 		$this->loader->add_filter( 'available_permalink_structure_tags', $plugin_admin, 'available_permalink_structure_tags', 10, 1 );
 
-		// Filter off post related blocks in editor.
-		$this->loader->add_filter( 'enqueue_block_editor_assets', $plugin_admin, 'editor_scripts', 100, 2 );
-
 	}
 
 	/**
