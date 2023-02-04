@@ -59,7 +59,7 @@ register_deactivation_hook( __FILE__, 'deactivate_disable_blog' );
 define( 'DWPB_DIR', dirname( __FILE__ ) );
 define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
 define( 'DWPB_PLUGIN_NAME', 'disable-blog' );
-define( 'DWPB_VERSION', '0.5.1' );
+define( 'DWPB_VERSION', '0.5.2' );
 
 /**
  * The core plugin class that is used to define everything.

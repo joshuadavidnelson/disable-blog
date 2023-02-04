@@ -4,8 +4,8 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
 Requires at least: 4.0
 Requires PHP: 5.6
-Tested up to: 6.0.2
-Stable tag: 0.5.1
+Tested up to: 6.1.1
+Stable tag: 0.5.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -87,6 +87,12 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 == Changelog ==
 
+= 0.5.2 =
+- Test up to WP 6.1.1
+- Fix some bugs introduced in v0.5.1: Reverts "Remove core post-related blocks in editor" - WP core handles the missing taxonomy endpoints fine but pulling these blocks out causes other issues. Also removes `dwpb_disabled_blocks` filter.
+- Adds a check to the customizer script to avoid a TypeError. Closes #59
+- Increase specificity in permalinks page to correctly target and remove "optional" section when category and post tags are not supported by any post type (default condition).
+
 = 0.5.1 =
 - Update to documentation, readmes, and doc blocks.
 - Fix `.distignore` to remove itself and .gitignore from WP-dot-org repo.
@@ -99,10 +105,12 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Add scripts and styles to change Customizer view of homepage settings, matching the static homepage settings and updated text.
 - Update loader class to provide a `remove_filter` method. Closes [#58](https://github.com/joshuadavidnelson/disable-blog/issues/58).
 - Alter permalink settings based on if categories and author archives are supported.
+- Move `dwpb_disable_feed` filter into a function in the `Disable_Blog_Functions` class.
 
 = 0.5.0 =
 
-**New:**
+**New**
+
 - Add disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
 - Add `dwpb_author_archive_post_types` filter to provide author archive support for custom post types. Pass an array of post type slugs to this filter to modify the post types queried on author archives, if not removed by filter above.
 - Add `dwpb_disabled_xmlpc_methods` filter to extend the methods being disabled by the plugin. Pass `false` to remove the functionality entirely. Closes #50
@@ -118,13 +126,15 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- Hiding the category and tag permalink base options (if not supported by other post types), and
 	- Hiding the default category & default post format on Writing options page.
 
-**Fixes:**
+**Fixes**
+
 - Bring back some admin page redirects to account for use cases where direct access to `post.php`, `post-new.php`, etc occur. Closes #45.
 - Replace the REST API site health check (which uses the `post` type) with a matching function using the `page` endpoint instead. This was throwing an error with the `post` type REST endpoints are disabled. Closes #46.
 - Fix issue with Reading Settings link in admin notice outputting raw HTML instead of a link. Closes #47.
 - In order to account for multiple subpages of a common parent page being removed the `dwpb_menu_subpages_to_remove` param has been updated to support an array of subpages in the format of `$remove_subpages['parent-page-slug.php'] = array( 'subpage-1.php', 'subpage-2.php' );`, though it still supports subpages as strings for backwards compatibility. Fixes bugs were `options-writing.php` and `options-discussion.php` were conflicting.
 
-**Improvements/Updates:**
+**Improvements/Updates**
+
 - Update admin filters to a common format and removing redundent filters. Filter changes include:
 	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
 	- `dwpb_redirect_admin` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
