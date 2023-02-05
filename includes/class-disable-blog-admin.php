@@ -77,10 +77,10 @@ class Disable_Blog_Admin {
 
 		if ( basename( dirname( $file ) ) === $this->plugin_name ) {
 			$meta  = array(
-				'support'  => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
-				'review'   => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
-				'donate'   => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
-				'github'   => '<a href="https://github.com/joshuadavidnelson/disable-blog/" target="_blank"><span class="dashicons dashicons-randomize"></span> ' . __( 'GitHub', 'disable-blog' ) . '</a>',
+				'support' => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
+				'review'  => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
+				'donate'  => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
+				'github'  => '<a href="https://github.com/joshuadavidnelson/disable-blog/" target="_blank"><span class="dashicons dashicons-randomize"></span> ' . __( 'GitHub', 'disable-blog' ) . '</a>',
 			);
 			$links = array_merge( $links, $meta );
 		}
