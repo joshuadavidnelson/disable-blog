@@ -145,7 +145,7 @@ class Disable_Blog_Loader {
 
 			if ( $filter_priority === $priority ) {
 				foreach ( $filters as $filter ) {
-					if ( $filter['function'][1] == $method_to_remove
+					if ( $filter['function'][1] === $method_to_remove
 						&& is_object( $filter['function'][0] ) // only WP 4.7 and above. This plugin is requiring at least WP 4.9.
 						&& $filter['function'][0] instanceof $class_name ) {
 						$removed = $wp_filter[ $tag ]->remove_filter( $tag, array( $filter['function'][0], $method_to_remove ), $priority );
