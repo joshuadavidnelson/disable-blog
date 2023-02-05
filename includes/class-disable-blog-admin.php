@@ -169,7 +169,7 @@ class Disable_Blog_Admin {
 		);
 
 		/**
-		 * Filter the arguments removed by the code "disable blog" feature.
+		 * Filter the arguments removed by the core "disable blog" feature.
 		 *
 		 * @since 0.6.0
 		 * @param array $arguments An array of strings, each a post type argument being modified and the new value.
