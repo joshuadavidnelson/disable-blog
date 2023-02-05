@@ -65,14 +65,14 @@ class Disable_Blog_Settings_Hooks {
 		/**
 		 * Option mapping 101: each option is a key in this array, with an array of properties: filter, default, and callback.
 		 *
-		 * The filter is the plugin filter used to change the plugin's behavoir.
-		 * The default is the plugin's default option - what the plugin does by default, with no change.
-		 * The callback is the function called when the user settings does ~~not~~ match the default.
+		 * The 'filter' is the plugin filter used to change the plugin's behavoir.
+		 * The 'default' is the plugin's default option - what the plugin does by default, with no change.
+		 * The 'callback' is the function called when the user settings does ~~not~~ match the default.
 		 *
 		 * The idea here is that by default options do not require a filter call because it's how the plugin works *by default*
 		 * but if the setting is different then call the function to change the behavior of the plugin.
 		 *
-		 * Because most settings are checkboxes, we can use the built-in '__return_false' or '__return_true' as callbacks.
+		 * Because most settings are checkboxes, we can use the built-in '__return_false' or '__return_true' as callbacks if not provided.
 		 */
 		$option_map = array(
 			'disable_blog'            => array(
@@ -108,9 +108,10 @@ class Disable_Blog_Settings_Hooks {
 		foreach ( $option_map as $setting_key => $filter_array ) {
 
 			// Make sure all the variables are good to go.
-			// If the setting is the default, then we can bail, not need to call the filter.
-			if ( ! isset( $this->options[ $setting_key ], $this->defaults[ $setting_key ], $filter_array['filter'] ) || $this->defaults[ $setting_key ] === $this->options[ $setting_key ] ) {
-				continue;
+			// If the setting is the default, then we can bail, no need to call the filter.
+			if ( ! isset( $this->options[ $setting_key ], $this->defaults[ $setting_key ], $filter_array['filter'] )
+				|| $this->defaults[ $setting_key ] === $this->options[ $setting_key ] ) {
+					continue;
 			}
 
 			// If there isn't a callback set, then assume this is a bool default,
