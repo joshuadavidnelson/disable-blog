@@ -2,6 +2,9 @@
 
 #### 0.5.2
 - Test up to WP 6.1.1
+- Increase minimum PHP to v7.4
+- Test to PHP 8.1
+- Update Github Actions to current versions.
 - Fix some bugs introduced in v0.5.1: Reverts "Remove core post-related blocks in editor" - WP core handles the missing taxonomy endpoints noted in #53 fine without any intervention and pulling these blocks out causes other issues. Also removes `dwpb_disabled_blocks` filter.
 - Adds a check to the customizer script to avoid a TypeError. Closes #59
 - Increase specificity in permalinks page to correctly target and remove "optional" section when category and post tags are not supported by any post type (default condition).
