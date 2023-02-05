@@ -143,10 +143,8 @@ class Disable_Blog_Loader {
 
 		foreach ( $wp_filter[ $tag ]->callbacks as $filter_priority => $filters ) {
 
-			if ( $filter_priority == $priority ) {
-
+			if ( $filter_priority === $priority ) {
 				foreach ( $filters as $filter ) {
-
 					if ( $filter['function'][1] == $method_to_remove
 						&& is_object( $filter['function'][0] ) // only WP 4.7 and above. This plugin is requiring at least WP 4.9.
 						&& $filter['function'][0] instanceof $class_name ) {
