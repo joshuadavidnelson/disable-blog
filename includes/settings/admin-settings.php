@@ -163,7 +163,7 @@ class Disable_Blog_Admin_Settings {
 					),
 					array(
 						'id'      => 'author_redirect_id',
-						'title'   => __( 'Redirect author archives to', 'disable-blog' ),
+						'title'   => __( 'Redirect author archive urls to', 'disable-blog' ),
 						'desc'    => __( 'If disabling author archives, use this option to select where to redirect the author archive urls. The default is to redirect to the homepage, set in Settings > Reading.', 'disable-blog' ),
 						'type'    => 'select',
 						'choices' => $redirect_options,
