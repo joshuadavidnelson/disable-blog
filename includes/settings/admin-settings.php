@@ -177,7 +177,6 @@ class Disable_Blog_Admin_Settings {
 					),
 				),
 			),
-						'type'  => 'toggle',
 		);
 
 		return $wpsf_settings;
