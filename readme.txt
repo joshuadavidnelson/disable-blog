@@ -92,9 +92,9 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Increase minimum PHP to v7.4
 - Test to PHP 8.1
 - Update Github Actions to current versions.
-- Fix some bugs introduced in v0.5.1: Reverts "Remove core post-related blocks in editor" - WP core handles the missing taxonomy endpoints noted in #53 fine without any intervention and pulling these blocks out causes other issues. Also removes `dwpb_disabled_blocks` filter.
+- Fix some bugs introduced in v0.5.1: Reverts "Remove core post-related blocks in editor" - WP core handles the missing taxonomy endpoints (noted in issue 53) fine without any intervention and pulling these blocks out causes other issues. Also removes `dwpb_disabled_blocks` filter. Closes #60 Closes #53
 - Adds a check to the customizer script to avoid a TypeError. Closes #59
-- Increase specificity in permalinks page to correctly target and remove "optional" section when category and post tags are not supported by any post type (default condition).
+- Increase specificity in permalinks page to correctly target and remove "optional" section when category and post tags are not supported by any post type (default condition). Closes #62
 
 = 0.5.1 =
 - Update to documentation, readmes, and doc blocks.
@@ -278,6 +278,13 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.2 =
+- Tested up to WP 6.1.1
+- Increase minimum PHP to v7.4
+- Test to PHP 8.1
+- Update Github Actions to current versions.
+- Fix some bugs, few plugin changelog for specifics.
 
 = 0.5.1 =
 - Update to documentation, readmes, and doc blocks.
