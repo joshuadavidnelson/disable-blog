@@ -83,16 +83,16 @@ class Disable_Blog_Settings_Hooks {
 			),
 			'front_end_redirect_id'   => array(
 				'filter'   => 'dwpb_front_end_redirect_url',
-				'callback' => 'redirect_url',
+				'callback' => 'front_end_redirect_url',
 			),
 			'author_redirect_id'      => array(
 				'filter'   => 'dwpb_redirect_author_archive',
-				'callback' => 'redirect_url',
+				'callback' => 'author_redirect_url',
 			),
-/*			'admin_redirect_url'      => array(
-				'filter'   => 'dwpb_',
-			//	'callback' => 'admin_redirect_url',
-			),*/
+			'admin_redirect'          => array(
+				'filter'   => 'dwpb_admin_redirect_url',
+				'callback' => 'admin_redirect_url',
+			),
 			'disable_writing_options' => array(
 				'filter' => 'dwpb_remove_options_writing',
 			),
@@ -150,7 +150,7 @@ class Disable_Blog_Settings_Hooks {
 	 * @param string $url the url used for redirects on the front-end.
 	 * @return string
 	 */
-	public function redirect_url( $url ) {
+	public function front_end_redirect_url( $url ) {
 
 		if ( is_author() ) {
 			$page_id = absint( $this->options['author_redirect_id'] );
@@ -188,6 +188,35 @@ class Disable_Blog_Settings_Hooks {
 			&& 'publish' === get_post_status( $page_id ) ) {
 
 			$url = get_permalink( $page_id );
+
+		}
+
+		return $url;
+
+	}
+
+	/**
+	 * Filter the admin redirect url for the author archives.
+	 *
+	 * @since 0.6.0
+	 * @param string $url the url used for redirects on the admin.
+	 * @return string
+	 */
+	public function admin_redirect_url( $url ) {
+
+		$page = absint( $this->options['admin_redirect'] );
+
+		if ( 'dashboard' === $page ) {
+
+			$url = admin_url();
+
+		} elseif ( 'home' === $page ) {
+
+			$url = home_url();
+
+		} elseif ( 'pages' === $page ) {
+
+			$url = admin_url( 'edit.php?post_type=page' );
 
 		}
 
