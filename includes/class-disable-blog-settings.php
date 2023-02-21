@@ -79,10 +79,11 @@ class Disable_Blog_Settings {
 	public function __construct() {
 
 		// Options group slug.
-		$this->option_group = 'disable-blog';
+		$this->option_group         = 'disable-blog';
+		$this->network_option_group = 'disable-blog-network';
 
 		// Set default variable.
-		$this->defaults = array(
+		$this->site_option_defaults = array(
 			'disable_blog'            => 0,
 			'front_end_redirect_id'   => 'home',
 			'disable_author_archive'  => 0,
@@ -99,8 +100,13 @@ class Disable_Blog_Settings {
 		// Include and create a new WordPressSettingsFramework.
 		require_once $this->path . 'settings/framework/wp-settings-framework.php';
 
-		// Setup the settings page.
-		$this->wpsf = new WordPressSettingsFramework( $this->path . 'settings/admin-settings.php', $this->option_group );
+		// Setup the site settings page.
+		$this->site_settings = new WordPressSettingsFramework( $this->path . 'settings/site-settings.php', $this->option_group );
+
+		// Setup the network settings page.
+		if ( is_multisite() ) {
+			$this->network_settings = new WordPressSettingsFramework( $this->path . 'settings/network-settings.php', $this->network_option_group );
+		}
 
 	}
 
@@ -109,7 +115,7 @@ class Disable_Blog_Settings {
 	 */
 	public function add_settings_page() {
 
-		$this->wpsf->add_settings_page(
+		$this->site_settings->add_settings_page(
 			array(
 				'parent_slug' => 'options-general.php',
 				'page_title'  => __( 'Blog Settings', 'disable-blog' ),
@@ -155,7 +161,7 @@ class Disable_Blog_Settings {
 
 		require_once $this->path . 'settings/settings-hooks.php';
 
-		$settings_hooks = new Disable_Blog_Settings_Hooks( $this->options, $this->defaults );
+		$settings_hooks = new Disable_Blog_Settings_Hooks( $this->options, $this->site_option_defaults );
 		$settings_hooks->hooks();
 
 	}
@@ -181,7 +187,7 @@ class Disable_Blog_Settings {
 		$defaults_set = get_option( 'dwpb_defaults_set', false );
 
 		if ( ! $defaults_set || empty( $this->get_options() ) ) {
-			$this->options = $this->defaults;
+			$this->options = $this->site_option_defaults;
 			update_option( $this->option_group . '_settings', $this->options, false );
 			update_option( 'dwpb_defaults_set', true, false );
 		}

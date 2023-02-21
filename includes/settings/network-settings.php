@@ -1,12 +1,14 @@
 <?php
 /**
- * Admin Settings.
+ * Network Settings.
  *
  * @package    Disable_Blog
- * @subpackage Settings/Admin_Settings
+ * @subpackage Settings\Network_Settings
  * @author     Joshua David Nelson <josh@joshuadnelson.com>
  * @license    http://www.opensource.org/licenses/gpl-license.php GPL-2.0+
  **/
+
+namespace Disable_Blog\Settings;
 
 /**
  * Prevent direct access to this file.
@@ -18,11 +20,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Admin settings.
+ * Network settings.
  *
  * @since 0.6.0
  */
-class Disable_Blog_Admin_Settings {
+class Network_Settings {
 
 	/**
 	 * Add the hooks and filters.
@@ -229,5 +231,5 @@ class Disable_Blog_Admin_Settings {
 	}
 }
 
-$_dwpb_admin_settings = new Disable_Blog_Admin_Settings();
-$_dwpb_admin_settings->hooks();
+$_dwpb_network_settings = new Network_Settings();
+$_dwpb_network_settings->hooks();
