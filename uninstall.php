@@ -119,9 +119,7 @@ if ( is_multisite() ) {
 			}
 			restore_current_blog();
 		}
-
 	}
-
 } else { // Otherwise, delete options from main options table.
 	// Delete plugin options.
 	delete_option( 'dwpb_version' );

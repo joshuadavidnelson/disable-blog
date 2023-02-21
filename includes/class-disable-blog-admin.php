@@ -77,10 +77,10 @@ class Disable_Blog_Admin {
 
 		if ( basename( dirname( $file ) ) === $this->plugin_name ) {
 			$meta  = array(
-				'support'  => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
-				'review'   => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
-				'donate'   => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
-				'github'   => '<a href="https://github.com/joshuadavidnelson/disable-blog/" target="_blank"><span class="dashicons dashicons-randomize"></span> ' . __( 'GitHub', 'disable-blog' ) . '</a>',
+				'support' => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
+				'review'  => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
+				'donate'  => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
+				'github'  => '<a href="https://github.com/joshuadavidnelson/disable-blog/" target="_blank"><span class="dashicons dashicons-randomize"></span> ' . __( 'GitHub', 'disable-blog' ) . '</a>',
 			);
 			$links = array_merge( $links, $meta );
 		}
@@ -844,116 +844,6 @@ class Disable_Blog_Admin {
 		);
 
 		wp_localize_script( $this->plugin_name, 'dwpb', $js_vars );
-
-	}
-
-	/**
-	 * Editor scripts.
-	 *
-	 * @link https://developer.wordpress.org/block-editor/reference-guides/filters/block-filters/#using-a-deny-list
-	 *
-	 * @since 0.5.1
-	 * @return void
-	 */
-	public function editor_scripts() {
-
-		// get a list of disabled blocks.
-		$disabled_blocks = $this->get_disabled_blocks();
-		if ( empty( $disabled_blocks ) ) {
-			return;
-		}
-
-		wp_enqueue_script( $this->plugin_name . '-editor-scripts', DWPB_URL . 'assets/js/disable-blog-editor.js', array( 'wp-blocks', 'wp-dom-ready', 'wp-edit-post' ), $this->version, true );
-
-		// Localize some information on the page.
-		$js_vars = array(
-			'disabledBlocks' => $disabled_blocks,
-		);
-		wp_localize_script( $this->plugin_name . '-editor-scripts', 'dwpbEditor', $js_vars );
-
-	}
-
-	/**
-	 * Get the blocks being removed from the editor.
-	 *
-	 * @since 0.5.1
-	 * @return array
-	 */
-	public function get_disabled_blocks() {
-
-		// remove these blocks, they are related to posts.
-		$disabled_blocks = array(
-			'core/archives',
-			'core/calendar',
-			'core/latest-posts',
-			'core/query',
-			'core/post-title',
-			'core/post-excerpt',
-			'core/post-featured-image',
-			'core/post-content',
-			'core/post-author',
-			'core/post-date',
-			'core/post-terms',
-			'core/post-navigation-link',
-			'core/post-comments',
-			'core/post-template',
-			'core/query-pagination',
-			'core/query-pagination-next',
-			'core/query-pagination-numbers',
-			'core/query-pagination-previous',
-		);
-
-		// if we are not supporting tags and categories elsewhere,
-		// then these blocks have to go as well.
-		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
-			$disabled_blocks = array_merge(
-				$disabled_blocks,
-				array(
-					'core/tag-cloud',
-					'core/categories',
-					'core/term-description',
-				)
-			);
-		}
-
-		// If we are not supporting author archives,
-		// then related blocks have to go.
-		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$disabled_blocks = array_merge(
-				$disabled_blocks,
-				array(
-					'core/latest-comments',
-				)
-			);
-		}
-
-		// If we're disabling feeds, remove this block.
-		global $post;
-		if ( $this->functions->disable_feeds( $post ) ) {
-			$disabled_blocks[] = 'core/rss';
-		}
-
-		// If we're disabling author archives, then remove author related blocks.
-		if ( $this->functions->disable_author_archives() ) {
-			$disabled_blocks = array_merge(
-				$disabled_blocks,
-				array(
-					'core/post-author-biography',
-				)
-			);
-		}
-
-		/**
-		 * Filter the blocks that are disabled by the plugin.
-		 *
-		 * @since 0.5.1
-		 * @param array $disabled_blocks an array of blocks that are removed.
-		 * @return array
-		 */
-		$disabled_blocks = (array) apply_filters( 'dwpb_disabled_blocks', $disabled_blocks );
-
-		// you can never be too careful if you have provided a filter.
-		return array_filter( $disabled_blocks, 'esc_attr', ARRAY_FILTER_USE_BOTH );
 
 	}
 
