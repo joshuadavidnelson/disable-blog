@@ -75,6 +75,7 @@ class Disable_Blog {
 		$this->upgrade_check();
 		$this->load_dependencies();
 		$this->set_locale();
+		$this->plugin_integrations();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
@@ -153,6 +154,7 @@ class Disable_Blog {
 			'Disable_Blog_Functions',
 			'Disable_Blog_Admin',
 			'Disable_Blog_Public',
+			'Disable_Blog_Integrations',
 		);
 		foreach ( $classes as $class ) {
 			$this->loader->autoLoader( $class );
@@ -333,6 +335,17 @@ class Disable_Blog {
 
 		// Conditionally remove author sitemaps, if author archives are not being supported.
 		$this->loader->add_filter( 'wp_sitemaps_add_provider', $plugin_public, 'wp_author_sitemaps', 100, 2 );
+
+	}
+
+	/**
+	 * Integrate with other plugins.
+	 *
+	 * @return void
+	 */
+	public function plugin_integrations() {
+
+		$plugin_integrations = new Disable_Blog_Integrations( $this->get_plugin_name(), $this->get_version() );
 
 	}
 
