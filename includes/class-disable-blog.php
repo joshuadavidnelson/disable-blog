@@ -347,6 +347,15 @@ class Disable_Blog {
 
 		$plugin_integrations = new Disable_Blog_Integrations( $this->get_plugin_name(), $this->get_version() );
 
+		// Disable Comments.
+		if ( $plugin_integrations->is_disable_comments_active() ) {
+
+			// If Disabled Comments is active, return false for post types supporting comments,
+			// and functionality in Disable Blog related to comments will be turned off,
+			// the assumption being that the Disable Comments plugin is handling it.
+			add_filter( 'dwpb_post_types_supporting_comments', '__return_false' );
+		}
+
 	}
 
 	/**

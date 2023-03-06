@@ -72,4 +72,20 @@ class Disable_Blog_Integrations {
 
 	}
 
+	/**
+	 * Check if the Disable Comments plugin is active.
+	 *
+	 * @return bool
+	 */
+	public function is_disable_comments_active() {
+
+		// Check if the Disable Comments plugin is active.
+		if ( $this->is_plugin_active( 'disable-comments/disable-comments.php' ) || class_exists( 'Disable_Comments' ) ) {
+			return true;
+		}
+
+		return false;
+
+	}
+
 }
