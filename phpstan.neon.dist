@@ -20,7 +20,6 @@ parameters:
         - '#^Property Disable_Blog_Public::\$version is never read, only written\.#'
         - '#^Property Disable_Blog_Integrations::\$plugin_name is never read, only written\.#'
         - '#^Property Disable_Blog_Integrations::\$version is never read, only written\.#'
-        # Implode is correctly used in get_comments_count, updated in PHP 7.4 to follow 'string, array' order, phpstan throws and error saying it's wrong, but this is correct for supported PHP versions of this plugin.
-        - '#^Parameter \#2 $array of function implode expects array\<string\>,
-         array\<array\|string\> given\.#'
+        # Implode is correctly used in get_comments_count for supported PHP versions of this plugin.
+        - '#^Parameter \#2 $array of function implode expects array\<string\>, array\<array\|string\> given\.#'
         - '#^Constant DWPB_URL not found\.#'
