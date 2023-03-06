@@ -958,7 +958,10 @@ class Disable_Blog_Admin {
 		}
 
 		// Sanitizing the post type strings.
-		$in_post_types = implode( "','", array_map( 'esc_sql', $supported_post_types ) );
+		$sanitized_post_types = (array) array_map( 'esc_sql', $supported_post_types );
+
+		// Implode the post types into a string for the query.
+		$in_post_types = implode( "','", $sanitized_post_types );
 
 		// Grab the comments that are not associated with supported post types only.
 		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
