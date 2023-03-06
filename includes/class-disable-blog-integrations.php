@@ -29,14 +29,6 @@ class Disable_Blog_Integrations {
 	private $version;
 
 	/**
-	 * Object with common utility functions.
-	 *
-	 * @access private
-	 * @var    object
-	 */
-	private $functions;
-
-	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @param string $plugin_name The name of the plugin.
@@ -46,7 +38,6 @@ class Disable_Blog_Integrations {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
-		$this->functions   = new Disable_Blog_Functions();
 
 	}
 
