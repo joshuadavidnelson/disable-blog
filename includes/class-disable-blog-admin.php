@@ -852,7 +852,7 @@ class Disable_Blog_Admin {
 	 *
 	 * @since 0.4.8
 	 * @param string $page the page slug.
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_admin_page( $page ) {
 
