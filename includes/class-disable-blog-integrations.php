@@ -44,7 +44,10 @@ class Disable_Blog_Integrations {
 	/**
 	 * Check if the plugin is active.
 	 *
-	 * @param string $plugin
+	 * A wrapper function of is_plugin_active to call wp-admin/includes/plugin.php as needed.
+	 *
+	 * @see https://developer.wordpress.org/reference/functions/is_plugin_active/
+	 * @param string $plugin the plugin path.
 	 * @return bool
 	 */
 	public function is_plugin_active( $plugin ) {
