@@ -20,6 +20,7 @@
  * @since 0.1.0
  * @since 0.4.0 pulled out of class, unique function.
  * @since 0.5.0 added $args parameter for passing specific arguments to get_post_types.
+ * @since 0.5.3 added caching.
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @param string $feature the feature in question.
  * @param array  $args    the arguments passed to get_post_types.

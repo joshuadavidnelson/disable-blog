@@ -126,6 +126,7 @@ class Disable_Blog {
 	 * with WordPress.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.3 Added Integrations class.
 	 * @access private
 	 */
 	private function load_dependencies() {
@@ -184,6 +185,7 @@ class Disable_Blog {
 	 * of the plugin.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.3 Separated comment functions to run only if comments are supported.
 	 * @access private
 	 */
 	private function define_admin_hooks() {
@@ -341,6 +343,7 @@ class Disable_Blog {
 	/**
 	 * Integrate with other plugins.
 	 *
+	 * @since 0.5.3
 	 * @return void
 	 */
 	public function plugin_integrations() {

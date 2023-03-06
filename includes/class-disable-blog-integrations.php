@@ -3,18 +3,22 @@
  * Integrations with other plugins.
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
+ * @since      0.5.3
  * @package    Disable_Blog
  * @subpackage Disable_Blog_Integrations
  */
 
 /**
  * Integrations with other plugins.
+ *
+ * @since 0.5.3
  */
 class Disable_Blog_Integrations {
 
 	/**
 	 * The ID of this plugin.
 	 *
+	 * @since  0.5.3
 	 * @access private
 	 * @var    string $plugin_name The ID of this plugin.
 	 */
@@ -23,6 +27,7 @@ class Disable_Blog_Integrations {
 	/**
 	 * The version of this plugin.
 	 *
+	 * @since  0.5.3
 	 * @access private
 	 * @var    string $version The current version of this plugin.
 	 */
@@ -31,6 +36,7 @@ class Disable_Blog_Integrations {
 	/**
 	 * Initialize the class and set its properties.
 	 *
+	 * @since 0.5.3
 	 * @param string $plugin_name The name of the plugin.
 	 * @param string $version     The version of this plugin.
 	 */
@@ -46,6 +52,7 @@ class Disable_Blog_Integrations {
 	 *
 	 * A wrapper function of is_plugin_active to call wp-admin/includes/plugin.php as needed.
 	 *
+	 * @since 0.5.3
 	 * @see https://developer.wordpress.org/reference/functions/is_plugin_active/
 	 * @param string $plugin the plugin path.
 	 * @return bool
@@ -69,6 +76,7 @@ class Disable_Blog_Integrations {
 	/**
 	 * Check if the Disable Comments plugin is active.
 	 *
+	 * @since 0.5.3
 	 * @return bool
 	 */
 	public function is_disable_comments_active() {
@@ -85,7 +93,7 @@ class Disable_Blog_Integrations {
 	/**
 	 * Check if WooCommerce is active.
 	 *
-	 * @since x.x.x
+	 * @since 0.5.3
 	 * @return bool
 	 */
 	public function is_woocommerce_active() {
@@ -106,6 +114,7 @@ class Disable_Blog_Integrations {
 	 * to check/convert the $comment object into an array.
 	 *
 	 * @since 0.4.3
+	 * @since 0.5.3 Moved to the Disable_Blog_Integrations class.
 	 * @param object $comments the array of comments.
 	 * @param int    $post_id  the post id.
 	 * @return array
