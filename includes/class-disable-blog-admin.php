@@ -900,27 +900,6 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Turn the comments object back into an array if WooCommerce is active.
-	 *
-	 * This is only necessary for version of WooCommerce prior to 2.6.3, where it failed
-	 * to check/convert the $comment object into an array.
-	 *
-	 * @since 0.4.3
-	 * @param object $comments the array of comments.
-	 * @param int    $post_id  the post id.
-	 * @return array
-	 */
-	public function filter_woocommerce_comment_count( $comments, $post_id ) {
-
-		if ( 0 === $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
-			$comments = (array) $comments;
-		}
-
-		return $comments;
-
-	}
-
-	/**
 	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
 	 *
 	 * @since 0.4.0

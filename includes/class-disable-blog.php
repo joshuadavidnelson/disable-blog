@@ -356,6 +356,13 @@ class Disable_Blog {
 			add_filter( 'dwpb_post_types_supporting_comments', '__return_false' );
 		}
 
+		// WooCommerce.
+		if ( $plugin_integrations->is_woocommerce_active() && dwpb_post_types_with_feature( 'comments' ) ) {
+
+			// Convert the $comments object back into an array if older version of WooCommerce is active.
+			$this->loader->add_filter( 'wp_count_comments', $plugin_integrations, 'filter_woocommerce_comment_count', 15, 2 );
+		}
+
 	}
 
 	/**
