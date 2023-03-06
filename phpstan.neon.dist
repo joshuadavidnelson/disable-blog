@@ -18,4 +18,6 @@ parameters:
         # errors we don't care about.
         - '#^Property Disable_Blog_Public::\$plugin_name is never read, only written\.#'
         - '#^Property Disable_Blog_Public::\$version is never read, only written\.#'
+        - '#^Property Disable_Blog_Integrations::$plugin_name is never read, only written\.#'
+        - '#^Property Disable_Blog_Integrations::$version is never read, only written\.#'
         - '#^Constant DWPB_URL not found\.#'
