@@ -20,23 +20,40 @@
  * @since 0.1.0
  * @since 0.4.0 pulled out of class, unique function.
  * @since 0.5.0 added $args parameter for passing specific arguments to get_post_types.
+ * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @param string $feature the feature in question.
  * @param array  $args    the arguments passed to get_post_types.
  * @return array|bool A list of post type names that support the featured or false if nothing found.
  */
 function dwpb_post_types_with_feature( $feature, $args = array() ) {
 
-	$post_types = get_post_types( $args, 'names' );
-
-	$post_types_with_feature = array();
-	foreach ( $post_types as $post_type ) {
-		if ( post_type_supports( $post_type, $feature ) && 'post' !== $post_type ) {
-			$post_types_with_feature[] = $post_type;
-		}
+	// Bail if no feature is passed.
+	if ( ! $feature || ! is_string( $feature ) ) {
+		return false;
 	}
 
-	// Keep the array if there are any, otherwise make it return false.
-	$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
+	// Check the cache.
+	$cache_name              = 'post-types-supporting-' . esc_attr( $feature );
+	$post_types_with_feature = wp_cache_get( $cache_name, 'post-types-by-feature' );
+
+	// If the cache is empty, then get the post types.
+	if ( false === $post_types_with_feature || ! is_array( $post_types_with_feature ) ) {
+
+		$post_types = get_post_types( $args, 'names' );
+
+		$post_types_with_feature = array();
+		foreach ( $post_types as $post_type ) {
+			if ( post_type_supports( $post_type, $feature ) && 'post' !== $post_type ) {
+				$post_types_with_feature[] = $post_type;
+			}
+		}
+
+		// Keep the array if there are any, otherwise make it return false.
+		$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
+
+		wp_cache_set( $cache_name, $post_types_with_feature, 'post-types-by-feature' );
+
+	}
 
 	/**
 	 * Filter the returned "post types with feature".
