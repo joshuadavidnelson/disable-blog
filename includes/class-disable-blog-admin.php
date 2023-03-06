@@ -963,7 +963,7 @@ class Disable_Blog_Admin {
 		// Implode the post types into a string for the query.
 		$in_post_types = implode( "','", $sanitized_post_types );
 
-		// Grab the comments that are not associated with supported post types only.
+		// Grab the comments that are associated with supported post types only.
 		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
 		$totals = (array) $wpdb->get_results(
 			"SELECT comment_approved, COUNT( * ) AS total
