@@ -951,25 +951,14 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
 	 * @see get_comment_count()
+	 * @see https://developer.wordpress.org/reference/functions/esc_sql/
 	 * @return array
 	 */
 	public function get_comment_counts() {
 
 		global $wpdb;
 
-		// Grab the comments that are not associated with 'post' post_type.
-		$totals = (array) $wpdb->get_results(
-			"SELECT comment_approved, COUNT( * ) AS total
-			FROM {$wpdb->comments}
-			WHERE comment_post_ID in (
-					SELECT ID
-					FROM {$wpdb->posts}
-					WHERE post_type != 'post'
-					AND post_status = 'publish')
-			GROUP BY comment_approved",
-			ARRAY_A
-		);
-
+		// Set up the counts, we'll be adding to this array.
 		$comment_count = array(
 			'moderated'           => 0,
 			'approved'            => 0,
@@ -980,6 +969,32 @@ class Disable_Blog_Admin {
 			'total_comments'      => 0,
 			'all'                 => 0,
 		);
+
+		// Get the post types that support comments.
+		$supported_post_types = dwpb_post_types_with_feature( 'comments' );
+
+		// Return an empty array of counts if there are no post types that support comments.
+		if ( empty( $supported_post_types ) || ! is_array( $supported_post_types ) ) {
+			return $comment_count;
+		}
+
+		// Sanitizing the post type strings.
+		$in_post_types = implode( "','", array_map( 'esc_sql', $supported_post_types ) );
+
+		// Grab the comments that are not associated with supported post types only.
+		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
+		$totals = (array) $wpdb->get_results(
+			"SELECT comment_approved, COUNT( * ) AS total
+			FROM {$wpdb->comments}
+			WHERE comment_post_ID in (
+					SELECT ID
+					FROM {$wpdb->posts}
+					WHERE post_type in ('{$in_post_types}')
+					AND post_status = 'publish')
+			GROUP BY comment_approved",
+			ARRAY_A
+		);
+		// @codingStandardsIgnoreEnd
 
 		foreach ( $totals as $row ) {
 			switch ( $row['comment_approved'] ) {
