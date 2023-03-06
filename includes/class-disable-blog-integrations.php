@@ -109,7 +109,7 @@ class Disable_Blog_Integrations {
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
 
-		if ( 0 === $post_id && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+		if ( 0 === $post_id && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
 			$comments = (array) $comments;
 		}
 
