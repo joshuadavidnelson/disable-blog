@@ -952,7 +952,7 @@ class Disable_Blog_Admin {
 		// Get the post types that support comments.
 		$supported_post_types = dwpb_post_types_with_feature( 'comments' );
 
-		// Return an empty array of counts if there are no post types that support comments.
+		// Return an array of empty counts if there are no post types that support comments.
 		if ( empty( $supported_post_types ) || ! is_array( $supported_post_types ) ) {
 			return $comment_count;
 		}
