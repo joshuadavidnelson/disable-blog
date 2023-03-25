@@ -5,7 +5,7 @@ Tags: remove blog, disable blog, disable settings, disable blogging, disable fee
 Requires at least: 4.0
 Requires PHP: 7.4
 Tested up to: 6.1.1
-Stable tag: 0.5.2
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,6 +86,10 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 
 == Changelog ==
+
+= 0.5.3 =
+- Fix typeof typo in disable-blog-customizer.js from 0.5.2 updates for #59.
+- Fix uninstall error to allow for the plugin to be deleted.
 
 = 0.5.2 =
 - Test up to WP 6.1.1
@@ -279,12 +283,16 @@ A bunch of stuff:
 
 == Upgrade Notice ==
 
+= 0.5.3 =
+- Fix typeof typo in disable-blog-customizer.js from 0.5.2 updates for #59.
+- Fix uninstall error to allow for the plugin to be deleted.
+
 = 0.5.2 =
 - Tested up to WP 6.1.1
 - Increase minimum PHP to v7.4
 - Test to PHP 8.1
 - Update Github Actions to current versions.
-- Fix some bugs, few plugin changelog for specifics.
+- Fix some bugs, view the plugin's `changelog.md` for specifics.
 
 = 0.5.1 =
 - Update to documentation, readmes, and doc blocks.

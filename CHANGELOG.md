@@ -1,5 +1,9 @@
 ### Changelog
 
+#### 0.5.3
+- Fix typeof typo in disable-blog-customizer.js from 0.5.2 updates for #59.
+- Fix uninstall error to allow for the plugin to be deleted.
+
 #### 0.5.2
 - Test up to WP 6.1.1
 - Increase minimum PHP to v7.4
