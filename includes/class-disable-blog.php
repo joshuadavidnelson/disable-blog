@@ -75,6 +75,7 @@ class Disable_Blog {
 		$this->upgrade_check();
 		$this->load_dependencies();
 		$this->set_locale();
+		$this->plugin_integrations();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
@@ -125,6 +126,7 @@ class Disable_Blog {
 	 * with WordPress.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.3 Added Integrations class.
 	 * @access private
 	 */
 	private function load_dependencies() {
@@ -153,6 +155,7 @@ class Disable_Blog {
 			'Disable_Blog_Functions',
 			'Disable_Blog_Admin',
 			'Disable_Blog_Public',
+			'Disable_Blog_Integrations',
 		);
 		foreach ( $classes as $class ) {
 			$this->loader->autoLoader( $class );
@@ -182,6 +185,7 @@ class Disable_Blog {
 	 * of the plugin.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.3 Separated comment functions to run only if comments are supported.
 	 * @access private
 	 */
 	private function define_admin_hooks() {
@@ -209,33 +213,14 @@ class Disable_Blog {
 		// Redirect Blog-related Admin Pages.
 		$this->loader->add_action( 'current_screen', $plugin_admin, 'redirect_admin_pages' );
 
-		// Filter comment counts in admin table.
-		$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1 );
-
-		// Filter post open status for comments and pings.
-		$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
+		// Filter post open status for pings.
 		$this->loader->add_action( 'pings_open', $plugin_admin, 'filter_comment_status', 20, 2 );
-
-		// Filter wp_count_comments, which addresses comments in admin bar.
-		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
-
-		// Convert the $comments object back into an array if older version of WooCommerce is active.
-		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_woocommerce_comment_count', 10, 2 );
 
 		// Remove Admin Bar Links.
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
 
-		// Filter Comments off Admin Page.
-		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
-
-		// Clear comments from 'post' post type.
-		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
-
 		// Disable Update Services configruation, no pingbacks.
 		add_filter( 'enable_update_services_configuration', '__return_false' );
-
-		// Clear comments from 'post' post type.
-		$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
 
 		// Remove Dashboard Widgets.
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'remove_dashboard_widgets' );
@@ -285,6 +270,26 @@ class Disable_Blog {
 		// Remove and update available permalink structure tags.
 		$this->loader->add_filter( 'available_permalink_structure_tags', $plugin_admin, 'available_permalink_structure_tags', 10, 1 );
 
+		// Only run comment related functions if comments are supported.
+		if ( dwpb_post_types_with_feature( 'comments' ) ) {
+
+			// Filter comment counts in admin table.
+			$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1 );
+
+			// Filter post open status for comments.
+			$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
+
+			// Filter wp_count_comments, which addresses comments in admin bar.
+			$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
+
+			// Filter Comments off Admin Page.
+			$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
+
+			// Clear comments from 'post' post type.
+			$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
+
+		}
+
 	}
 
 	/**
@@ -332,6 +337,34 @@ class Disable_Blog {
 
 		// Conditionally remove author sitemaps, if author archives are not being supported.
 		$this->loader->add_filter( 'wp_sitemaps_add_provider', $plugin_public, 'wp_author_sitemaps', 100, 2 );
+
+	}
+
+	/**
+	 * Integrate with other plugins.
+	 *
+	 * @since 0.5.3
+	 * @return void
+	 */
+	public function plugin_integrations() {
+
+		$plugin_integrations = new Disable_Blog_Integrations( $this->get_plugin_name(), $this->get_version() );
+
+		// Disable Comments.
+		if ( $plugin_integrations->is_disable_comments_active() ) {
+
+			// If Disabled Comments is active, return false for post types supporting comments,
+			// and functionality in Disable Blog related to comments will be turned off,
+			// the assumption being that the Disable Comments plugin is handling it.
+			add_filter( 'dwpb_post_types_supporting_comments', '__return_false' );
+		}
+
+		// WooCommerce.
+		if ( $plugin_integrations->is_woocommerce_active() && dwpb_post_types_with_feature( 'comments' ) ) {
+
+			// Convert the $comments object back into an array if older version of WooCommerce is active.
+			$this->loader->add_filter( 'wp_count_comments', $plugin_integrations, 'filter_woocommerce_comment_count', 15, 2 );
+		}
 
 	}
 
