@@ -88,8 +88,13 @@ There are numerous filters available to change the way this plugin works. Refer 
 == Changelog ==
 
 = 0.5.3 =
-- Fix typeof typo in disable-blog-customizer.js from 0.5.2 updates for #59.
-- Fix uninstall error to allow for the plugin to be deleted.
+- Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates.
+- Fix uninstall error to allow for the plugin to be deleted correctly.
+- Only fire comment related admin functions if comments are supported.
+- Limit the `get_comment_count` function to query only post types supporting comments. This allows for the post types to be modified via the `dwpb_post_types_supporting_comments` filter and avoids large queries on post types that aren't relevant (e.g. shop_order in WooCommerce).
+- Add caching to the `dwpb_post_types_with_feature` function.
+- Create a plugin integration framework - simple class with "plugin active" checks and related integration functions, including the preexisting WooCommerce (version <= 2.6.2) comment count integration.
+- Add a Disable Comments integration, utilizing the `dwpb_post_types_supporting_comments` to turn off all Disable Blog comment-related functions if Disable Comments is active.
 
 = 0.5.2 =
 - Test up to WP 6.1.1
@@ -284,11 +289,13 @@ A bunch of stuff:
 == Upgrade Notice ==
 
 = 0.5.3 =
-- Fix typeof typo in disable-blog-customizer.js from 0.5.2 updates for #59.
-- Fix uninstall error to allow for the plugin to be deleted.
+- Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates.
+- Fix uninstall error to allow for the plugin to be deleted correctly.
+- Improve comment functions & caching of comment counts.
+- Create a plugin integration framework for integrations with WooCommerce and Disable Comment plugins.
 
 = 0.5.2 =
-- Tested up to WP 6.1.1
+- Tested up to WordPress v6.1.1
 - Increase minimum PHP to v7.4
 - Test to PHP 8.1
 - Update Github Actions to current versions.
