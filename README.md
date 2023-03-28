@@ -5,7 +5,7 @@ Disable Blog
 
 **Requires at least WordPress:** 4.0  
 **Tested up to WordPress:** 6.1.1  
-**Stable version:** 0.5.2  
+**Stable version:** 0.5.3  
 **License:** GPLv2 or later  
 **Requires PHP:** 7.4  
 **Tested up to PHP:** 8.1  
