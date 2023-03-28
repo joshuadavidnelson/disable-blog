@@ -33,7 +33,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' )
 		|| empty( $_REQUEST )
 		|| ! isset( $_REQUEST['plugin'] )
 		|| ! isset( $_REQUEST['action'] )
-		|| 'plugin-name/plugin-name.php' !== $_REQUEST['plugin']
+		|| strpos( $_REQUEST['plugin'], 'disable-blog.php' ) === false
 		|| 'delete-plugin' !== $_REQUEST['action']
 		|| ! check_ajax_referer( 'updates', '_ajax_nonce' )
 		|| ! current_user_can( 'activate_plugins' )
@@ -126,7 +126,6 @@ if ( is_multisite() ) {
 
 		}
 	}
-
 } else { // Otherwise, delete options from main options table.
 	// Delete plugin options.
 	delete_option( 'dwpb_version' );

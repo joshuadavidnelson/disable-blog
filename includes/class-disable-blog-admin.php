@@ -78,7 +78,7 @@ class Disable_Blog_Admin {
 		if ( basename( dirname( $file ) ) === $this->plugin_name ) {
 			$meta  = array(
 				'settings' => '<a href="' . admin_url( 'options-general.php?page=' . DWPB_SETTINGS_FIELD . '-settings' ) . '" title="' . __( 'Settings', 'disable-blog' ) . '"><span class="dashicons dashicons-admin-settings"></span> ' . __( 'Settings', 'disable-blog' ) . '</a>',
-				'docs'     => '<a href="https://github.com/joshuadavidnelson/disable-blog/wiki" title="' . __( 'Documentation', 'disable-blog' ) . '" target="_blank"><span class="dashicons dashicons-book"></span> ' . __( 'Documentation', 'disable-blog' ) . '</a>',
+			//	'docs'     => '<a href="https://github.com/joshuadavidnelson/disable-blog/wiki" title="' . __( 'Documentation', 'disable-blog' ) . '" target="_blank"><span class="dashicons dashicons-book"></span> ' . __( 'Documentation', 'disable-blog' ) . '</a>',
 				'support'  => '<a href="https://wordpress.org/support/plugin/disable-blog/" target="_blank" title="' . __( 'Support', 'disable-blog' ) . '"><span class="dashicons dashicons-sos"></span> ' . __( 'Support', 'disable-blog' ) . '</a>',
 				'review'   => '<a href="https://wordpress.org/support/plugin/disable-blog/reviews/#new-post" target="_blank"><span class="dashicons dashicons-thumbs-up"></span> ' . __( 'Review', 'disable-blog' ) . '</a>',
 				'donate'   => '<a href="http://joshuadnelson.com/donate/" title="' . __( 'Donate', 'disable-blog' ) . '"><span class="dashicons dashicons-money-alt"></span> ' . __( 'Donate', 'disable-blog' ) . '</a>',
@@ -945,121 +945,11 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Editor scripts.
-	 *
-	 * @link https://developer.wordpress.org/block-editor/reference-guides/filters/block-filters/#using-a-deny-list
-	 *
-	 * @since 0.5.1
-	 * @return void
-	 */
-	public function editor_scripts() {
-
-		// get a list of disabled blocks.
-		$disabled_blocks = $this->get_disabled_blocks();
-		if ( empty( $disabled_blocks ) ) {
-			return;
-		}
-
-		wp_enqueue_script( $this->plugin_name . '-editor-scripts', DWPB_URL . 'assets/js/disable-blog-editor.js', array( 'wp-blocks', 'wp-dom-ready', 'wp-edit-post' ), $this->version, true );
-
-		// Localize some information on the page.
-		$js_vars = array(
-			'disabledBlocks' => $disabled_blocks,
-		);
-		wp_localize_script( $this->plugin_name . '-editor-scripts', 'dwpbEditor', $js_vars );
-
-	}
-
-	/**
-	 * Get the blocks being removed from the editor.
-	 *
-	 * @since 0.5.1
-	 * @return array
-	 */
-	public function get_disabled_blocks() {
-
-		// remove these blocks, they are related to posts.
-		$disabled_blocks = array(
-			'core/archives',
-			'core/calendar',
-			'core/latest-posts',
-			'core/query',
-			'core/post-title',
-			'core/post-excerpt',
-			'core/post-featured-image',
-			'core/post-content',
-			'core/post-author',
-			'core/post-date',
-			'core/post-terms',
-			'core/post-navigation-link',
-			'core/post-comments',
-			'core/post-template',
-			'core/query-pagination',
-			'core/query-pagination-next',
-			'core/query-pagination-numbers',
-			'core/query-pagination-previous',
-		);
-
-		// if we are not supporting tags and categories elsewhere,
-		// then these blocks have to go as well.
-		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
-			$disabled_blocks = array_merge(
-				$disabled_blocks,
-				array(
-					'core/tag-cloud',
-					'core/categories',
-					'core/term-description',
-				)
-			);
-		}
-
-		// If we are not supporting author archives,
-		// then related blocks have to go.
-		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$disabled_blocks = array_merge(
-				$disabled_blocks,
-				array(
-					'core/latest-comments',
-				)
-			);
-		}
-
-		// If we're disabling feeds, remove this block.
-		global $post;
-		if ( $this->functions->disable_feeds( $post ) ) {
-			$disabled_blocks[] = 'core/rss';
-		}
-
-		// If we're disabling author archives, then remove author related blocks.
-		if ( $this->functions->disable_author_archives() ) {
-			$disabled_blocks = array_merge(
-				$disabled_blocks,
-				array(
-					'core/post-author-biography',
-				)
-			);
-		}
-
-		/**
-		 * Filter the blocks that are disabled by the plugin.
-		 *
-		 * @since 0.5.1
-		 * @param array $disabled_blocks an array of blocks that are removed.
-		 * @return array
-		 */
-		$disabled_blocks = (array) apply_filters( 'dwpb_disabled_blocks', $disabled_blocks );
-
-		// you can never be too careful if you have provided a filter.
-		return array_filter( $disabled_blocks, 'esc_attr', ARRAY_FILTER_USE_BOTH );
-
-	}
-
-	/**
 	 * Check that we're on a specific admin page.
 	 *
 	 * @since 0.4.8
 	 * @param string $page the page slug.
-	 * @return boolean
+	 * @return bool
 	 */
 	public function is_admin_page( $page ) {
 
@@ -1113,27 +1003,6 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Turn the comments object back into an array if WooCommerce is active.
-	 *
-	 * This is only necessary for version of WooCommerce prior to 2.6.3, where it failed
-	 * to check/convert the $comment object into an array.
-	 *
-	 * @since 0.4.3
-	 * @param object $comments the array of comments.
-	 * @param int    $post_id  the post id.
-	 * @return array
-	 */
-	public function filter_woocommerce_comment_count( $comments, $post_id ) {
-
-		if ( 0 === $post_id && class_exists( 'WC_Comments' ) && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
-			$comments = (array) $comments;
-		}
-
-		return $comments;
-
-	}
-
-	/**
 	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
 	 *
 	 * @since 0.4.0
@@ -1164,27 +1033,14 @@ class Disable_Blog_Admin {
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
 	 * @see get_comment_count()
+	 * @see https://developer.wordpress.org/reference/functions/esc_sql/
 	 * @return array
 	 */
 	public function get_comment_counts() {
 
 		global $wpdb;
 
-		// Grab the comments that are not associated with 'post' post_type.
-		// @codingStandardsIgnoreStart - doesn't like getting results this way.
-		$totals = (array) $wpdb->get_results(
-			"SELECT comment_approved, COUNT( * ) AS total
-			FROM {$wpdb->comments}
-			WHERE comment_post_ID in (
-					SELECT ID
-					FROM {$wpdb->posts}
-					WHERE post_type != 'post'
-					AND post_status = 'publish')
-			GROUP BY comment_approved",
-			ARRAY_A
-		);
-		// @codingStandardsIgnoreEnd
-
+		// Set up the counts, we'll be adding to this array.
 		$comment_count = array(
 			'moderated'           => 0,
 			'approved'            => 0,
@@ -1195,6 +1051,35 @@ class Disable_Blog_Admin {
 			'total_comments'      => 0,
 			'all'                 => 0,
 		);
+
+		// Get the post types that support comments.
+		$supported_post_types = dwpb_post_types_with_feature( 'comments' );
+
+		// Return an array of empty counts if there are no post types that support comments.
+		if ( empty( $supported_post_types ) || ! is_array( $supported_post_types ) ) {
+			return $comment_count;
+		}
+
+		// Sanitizing the post type strings.
+		$sanitized_post_types = (array) array_map( 'esc_sql', $supported_post_types );
+
+		// Implode the post types into a string for the query.
+		$in_post_types = implode( "','", $sanitized_post_types );
+
+		// Grab the comments that are associated with supported post types only.
+		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
+		$totals = (array) $wpdb->get_results(
+			"SELECT comment_approved, COUNT( * ) AS total
+			FROM {$wpdb->comments}
+			WHERE comment_post_ID in (
+					SELECT ID
+					FROM {$wpdb->posts}
+					WHERE post_type in ('{$in_post_types}')
+					AND post_status = 'publish')
+			GROUP BY comment_approved",
+			ARRAY_A
+		);
+		// @codingStandardsIgnoreEnd
 
 		foreach ( $totals as $row ) {
 			switch ( $row['comment_approved'] ) {

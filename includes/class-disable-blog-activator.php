@@ -133,7 +133,7 @@ class Disable_Blog_Activator {
 
 		} elseif ( isset( self::$request['plugins'] )
 			&& 'activate-selected' === self::$request['action']
-			&& in_array( $plugin, self::$request['plugins'] )
+			&& in_array( $plugin, self::$request['plugins'], true )
 		) {
 			return true;
 		}
