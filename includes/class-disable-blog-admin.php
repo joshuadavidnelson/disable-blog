@@ -514,6 +514,24 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * The admin redirect arguments checked to redirect the options-tools.php screen.
+	 *
+	 * @since 0.5.0
+	 * @return bool
+	 */
+	public function redirect_admin_options_tools() {
+
+		/**
+		 * The isset( $_GET['page'] ) check is to confirm the page
+		 * isn't a 3rd party plugin's option page built into the tools page.
+		 */
+		// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
+		return ! isset( $_GET['page'] );
+		// @codingStandardsIgnoreEnd
+
+	}
+
+	/**
 	 * Remove the X-Pingback HTTP header.
 	 *
 	 * @since 0.4.0
@@ -533,24 +551,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $headers;
-
-	}
-
-	/**
-	 * The admin redirect arguments checked to redirect the options-tools.php screen.
-	 *
-	 * @since 0.5.0
-	 * @return bool
-	 */
-	public function redirect_admin_options_tools() {
-
-		/**
-		 * The isset( $_GET['page'] ) check is to confirm the page
-		 * isn't a 3rd party plugin's option page built into the tools page.
-		 */
-		// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
-		return ! isset( $_GET['page'] );
-		// @codingStandardsIgnoreEnd
 
 	}
 
