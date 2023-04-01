@@ -441,7 +441,7 @@ class Disable_Blog_Admin {
 	 * @since 0.5.0
 	 * @return bool|string
 	 */
-	public function reidrect_admin_term() {
+	public function redirect_admin_term() {
 
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
