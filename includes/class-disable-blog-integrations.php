@@ -121,11 +121,40 @@ class Disable_Blog_Integrations {
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
 
-		if ( 0 === $post_id && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+		if ( 0 === $post_id && $this->woocommerce_version_check( '2.6.2' ) ) {
 			$comments = (array) $comments;
 		}
 
 		return $comments;
+
+	}
+
+	/**
+	 * Check if the WooCommerce version is less than the checked version.
+	 *
+	 * @since x.x.x
+	 * @param string $checked_version
+	 * @param string $check
+	 * @return bool
+	 */
+	private function woocommerce_version_check( $checked_version, $check = '<=' ) {
+
+		// Check if the Disable Comments plugin is active.
+		if ( $this->is_woocommerce_active() ) {
+
+			if ( defined( 'WC_VERSION' ) ) {
+				$woo_version = WC_VERSION;
+			} elseif ( defined( 'WOOCOMMERCE_VERSION' ) ) {
+				$woo_version = WOOCOMMERCE_VERSION;
+			} else {
+				return false;
+			}
+
+			// Check if the WooCommerce version is less than the checked version.
+			return version_compare( $woo_version, $checked_version, $check );
+		}
+
+		return false;
 
 	}
 
