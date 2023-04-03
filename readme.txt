@@ -4,7 +4,7 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
 Requires at least: 4.0
 Requires PHP: 7.4
-Tested up to: 6.1.1
+Tested up to: 6.2
 Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
