@@ -11,9 +11,12 @@ describe("Admin can login, activate the plugin, and set a front page", () => {
 
 	it("Can set front page", () => {
 		cy.visit("/wp-admin/options-reading.php");
+		cy.wait(2000);
 		cy.get("#front-static-pages input[value=page]").first().check();
 		cy.get("select[name=page_on_front]").should("exist");
 		cy.get("#page_on_front").select("Sample Page");
 		cy.get("p.submit input[type=submit]").click();
+		cy.wait(2000);
+		cy.get("#setting-error-settings_updated").should("exist").contains("Settings saved.");
 	});
 });
