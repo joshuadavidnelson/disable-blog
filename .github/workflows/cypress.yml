@@ -36,9 +36,6 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Composer install
-      run: composer install
-
     - name: Set the core version
       run: |
         ./tests/bin/set-core-version.js ${{ matrix.core.version }} ${{ matrix.php.version }}
