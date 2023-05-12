@@ -1,0 +1,34 @@
+{
+	"name": "disable-blog",
+	"version": "0.5.3",
+	"description": "A comprehensive WordPress plugin to disable the blog-related functionality.",
+	"author": "Joshua David Nelson",
+	"license": "GPL-2.0-or-later",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:joshuadavidnelson/disable-blog.git"
+	},
+	"scripts": {
+		"cypress:open": "cypress open --config-file=tests/cypress/config.config.js --e2e --browser chrome",
+		"cypress:run": "cypress run --config-file=tests/cypress/config.config.js",
+		"env": "wp-env",
+		"env:start": "wp-env start",
+		"env:stop": "wp-env stop",
+		"to-multisite": "wp-env run tests-cli \"wp core multisite-convert --title='Disable Blog Multisite'\"",
+		"postenv:start": "./tests/bin/initialize.sh"
+	},
+	"directories": {
+		"test": "tests"
+	},
+	"devDependencies": {
+		"@10up/cypress-wp-utils": "github:10up/cypress-wp-utils#build",
+		"@types/node": "^18.0.0",
+		"@wordpress/env": "^5.0.0",
+		"compare-versions": "^4.1.3",
+		"@wordpress/scripts": "^23.5.0",
+		"cypress": "^12.12.0",
+		"eslint-plugin-cypress": "^2.12.1",
+		"node-wp-i18n": "^1.2.6",
+		"wp-hookdoc": "^0.2.0"
+	}
+}
