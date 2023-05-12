@@ -4,7 +4,9 @@ wp-cli.local.yml
 *.sql
 *.tar.gz
 *.zip
-
+tests/cypress/videos
+tests/cypress/screenshots
+tests/cypress/downloads
 node_modules
 dist
 vendor
