@@ -15,7 +15,6 @@
 		"env": "wp-env",
 		"env:start": "wp-env start",
 		"env:stop": "wp-env stop",
-		"to-multisite": "wp-env run tests-cli \"wp core multisite-convert --title='Disable Blog Multisite'\"",
 		"postenv:start": "./tests/bin/initialize.sh"
 	},
 	"directories": {
