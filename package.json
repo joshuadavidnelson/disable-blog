@@ -4,6 +4,7 @@
 	"description": "A comprehensive WordPress plugin to disable the blog-related functionality.",
 	"author": "Joshua David Nelson",
 	"license": "GPL-2.0-or-later",
+	"homepage": "https://disable.blog/",
 	"repository": {
 		"type": "git",
 		"url": "git@github.com:joshuadavidnelson/disable-blog.git"
