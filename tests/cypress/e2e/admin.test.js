@@ -3,7 +3,7 @@ describe("Admin can login, activate the plugin, and set a front page", () => {
 		cy.login();
 	});
 
-	it("Can activate plugin if it is deactivated", () => {
+	it("Can activate plugin and deactivate plugin", () => {
 		cy.activatePlugin("disable-blog");
 		cy.deactivatePlugin("disable-blog");
 		cy.activatePlugin("disable-blog");
