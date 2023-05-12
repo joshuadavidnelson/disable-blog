@@ -3,6 +3,6 @@
 		"."
 	],
 	"mappings": {
-		"wp-cli.yml": "./tests/bin/wp-cli.yml",
+		"wp-cli.yml": "./tests/bin/wp-cli.yml"
 	}
 }
