@@ -121,7 +121,7 @@ class Site_Settings {
 					array(
 						'id'      => 'admin_redirect',
 						'title'   => __( 'Redirect admin urls to', 'disable-blog' ),
-						'desc'    => __( 'Select where to redirect all disabled admin links. The default is to redirect to the dashboard.', 'disable-blog' ),
+						'desc'    => __( 'Select where to redirect all disabled admin urls.', 'disable-blog' ),
 						'type'    => 'select',
 						'choices' => array(
 							'dashboard' => __( 'Dashboard', 'disable-blog' ),
