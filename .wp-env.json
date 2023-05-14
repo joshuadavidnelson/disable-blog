@@ -3,6 +3,12 @@
 		"."
 	],
 	"mappings": {
-		"wp-cli.yml": "./tests/bin/wp-cli.yml"
+		"wp-cli.yml": "./tests/bin/wp-cli.yml",
+		"wp-content/plugins/author-archive-filter.php": "./tests/cypress/test-plugins/author-archive-filter.php",
+		"wp-content/plugins/remove-options-writing.php": "./tests/cypress/test-plugins/remove-options-writing.php"
+	},
+	"config": {
+		"WP_DEBUG_DISPLAY": true,
+		"WP_DEBUG": true
 	}
 }
