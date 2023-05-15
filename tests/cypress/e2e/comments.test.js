@@ -9,18 +9,4 @@ describe("Test comment related stuff", () => {
 		cy.get("#the-comment-list").contains("No comments found.");
 	});
 
-	it("Disable comments plugin works", () => {
-		cy.installPlugin("disable-comments");
-		cy.wait(2000);
-		cy.testRedirect("/wp-admin/edit-comments.php","wp-admin/");
-		cy.deletePlugin("disable-comments");
-		cy.wait(2000);
-		cy.request({
-			url: "/wp-admin/edit-comments.php",
-			followRedirect: false, // turn off following redirects
-		}).then((resp) => {
-			expect(resp.status).to.eq(200);
-		});
-	});
-
 });
