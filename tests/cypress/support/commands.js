@@ -30,6 +30,18 @@ Cypress.Commands.add('setUpPlugin', () => {
 	cy.activatePlugin('disable-blog');
 });
 
+Cypress.Commands.add('installPlugin', (plugin,activate=true) => {
+	cy.wpCli("plugin install " + plugin, true);
+	if ( activate ) {
+		cy.wpCli("plugin activate " + plugin, true);
+	}
+});
+
+Cypress.Commands.add('deletePlugin', (plugin) => {
+	cy.wpCli("plugin deactivate " + plugin, true);
+	cy.wpCli("plugin delete " + plugin, true);
+});
+
 Cypress.Commands.add('checkUrls', (urls, responseCode = 200) => {
 	urls.forEach((url) => {
 		cy.log(url);
