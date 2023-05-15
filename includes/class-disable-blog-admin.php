@@ -231,7 +231,7 @@ class Disable_Blog_Admin {
 			'edit-comments',
 			'options-discussion',
 			'options-writing',
-			'options-tools',
+			'tools',
 		);
 
 		// cycle through each admin page, checking if we need to redirect.
