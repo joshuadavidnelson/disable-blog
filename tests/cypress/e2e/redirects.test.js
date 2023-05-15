@@ -1,4 +1,3 @@
-
 describe("Front-end redirects work when plugin is active", () => {
 	beforeEach(() => {
 		cy.setUpPlugin();
@@ -59,4 +58,5 @@ describe("Admin redirects work when plugin is active", () => {
 		cy.testRedirect("/wp-admin/options-writing.php","wp-admin/options-general.php");
 		cy.deactivatePlugin('remove-options-writing');
 	});
+
 });

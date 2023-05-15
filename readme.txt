@@ -2,7 +2,7 @@
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
-Requires at least: 4.0
+Requires at least: 5.3
 Requires PHP: 7.4
 Tested up to: 6.2
 Stable tag: 0.5.3
