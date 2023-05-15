@@ -1,11 +1,11 @@
 
 describe("Front-end redirects work when plugin is active", () => {
 	beforeEach(() => {
-
+		cy.setUpPlugin();
 	});
 
 	it("Post redirects to homepage", () => {
-		testRedirect("/hello-world/");
+		cy.testRedirect("/hello-world/");
 	});
 
 	it("Category redirects to homepage", () => {
@@ -18,8 +18,7 @@ describe("Front-end redirects work when plugin is active", () => {
 		cy.testRedirect(dateArchiveSlug);
 	});
 
-	it("Author redirects to homepage", () => {
-		cy.login();
+	it("Author redirects to homepage with filter", () => {
 		cy.activatePlugin('author-archive-filter');
 		cy.testRedirect("/author/admin/");
 		cy.deactivatePlugin('author-archive-filter');
