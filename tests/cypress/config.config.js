@@ -3,10 +3,7 @@ const { readConfig } = require( '@wordpress/env/lib/config' );
 
 module.exports = defineConfig({
 	fixturesFolder: 'tests/cypress/fixtures',
-	screenshotsFolder: 'tests/cypress/screenshots',
-	videosFolder: 'tests/cypress/videos',
-	downloadsFolder: 'tests/cypress/downloads',
-	video: true,
+	video: false,
 	e2e: {
 		// We've imported your old cypress plugins here.
 		// You may want to clean this up later by importing these.
