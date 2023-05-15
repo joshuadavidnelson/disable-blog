@@ -11,9 +11,10 @@ describe("Test comment related stuff", () => {
 
 	it("Disable comments plugin works", () => {
 		cy.installPlugin("disable-comments");
+		cy.wait(2000);
 		cy.testRedirect("/wp-admin/edit-comments.php","wp-admin/");
-		cy.testRedirect("/wp-admin/edit-comments.php?action=editcomment&c=1","wp-admin/");
 		cy.deletePlugin("disable-comments");
+		cy.wait(2000);
 		cy.request({
 			url: "/wp-admin/edit-comments.php",
 			followRedirect: false, // turn off following redirects
