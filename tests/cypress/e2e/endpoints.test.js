@@ -22,6 +22,7 @@ describe("REST Endpoint Tests", () => {
 			expect(resp.status).to.eq(404);
 			expect(resp.body).to.have.property("code", "rest_no_route");
 		});
+		cy.urlReturns('/wp-json/wp/v2/pages');
 	});
 
 });
@@ -44,7 +45,7 @@ describe("XMLRPC Endpoint Tests", () => {
 		cy.get("link[rel=EditURI]").should('have.attr', 'href').and('include', 'xmlrpc.php?rsd');
 	});
 
-	it("XMLRPC link and routes disabled with plugin activated", () => {
+	it("XMLRPC link disabled with plugin activated", () => {
 		cy.activatePlugin('disable-blog');
 		cy.request({
 			url: "xmlrpc.php?rsd",
