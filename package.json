@@ -10,8 +10,8 @@
 		"url": "git@github.com:joshuadavidnelson/disable-blog.git"
 	},
 	"scripts": {
-		"cypress:open": "cypress open --config-file=tests/cypress/config.config.js --e2e --browser chrome",
-		"cypress:run": "cypress run --config-file=tests/cypress/config.config.js",
+		"cypress:open": "./tests/bin/initialize.sh && cypress open --config-file=tests/cypress/config.config.js --e2e --browser chrome",
+		"cypress:run": "./tests/bin/initialize.sh && cypress run --config-file=tests/cypress/config.config.js",
 		"env": "wp-env",
 		"env:start": "wp-env start",
 		"env:stop": "wp-env stop",
