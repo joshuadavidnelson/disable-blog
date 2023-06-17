@@ -4,7 +4,7 @@ parameters:
     level: 5
     inferPrivatePropertyTypeFromConstructor: true
     scanFiles:
-        - tests/bootstrap.php
+        - tests/php/bootstrap.php
         - includes/functions.php
     scanDirectories:
         - includes/
