@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <phpunit
-	bootstrap="tests/bootstrap.php"
+	bootstrap="./tests/php/bootstrap.php"
 	backupGlobals="false"
 	colors="true"
 	convertErrorsToExceptions="true"
@@ -8,9 +8,8 @@
 	convertWarningsToExceptions="true"
 	>
 	<testsuites>
-		<testsuite>
-			<directory prefix="test-" suffix=".php">./tests/</directory>
-			<exclude>./tests/test-sample.php</exclude>
+		<testsuite name="disable-blog-tests">
+			<directory suffix="Test.php">./tests/php/</directory>
 		</testsuite>
 	</testsuites>
 </phpunit>
