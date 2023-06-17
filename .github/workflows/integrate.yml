@@ -1,9 +1,5 @@
 name: "Integrate"
 
-env:
-  COMPOSER_VERSION: "2"
-  COMPOSER_CACHE: "${{ github.workspace }}/.composer-cache"
-
 on:
   pull_request: null
   push:
@@ -22,9 +18,9 @@ jobs:
     - name: "Checkout"
       uses: "actions/checkout@v3"
     - name: "Install PHP"
-      uses: "shivammathur/setup-php@v2.17.0"
+      uses: "shivammathur/setup-php@v2"
       with:
-        php-version: ${{ matrix.php-versions }}
+        php-version: ${{ matrix.php }}
     - name: "PHP lint"
       run: "find *.php includes/ -type f -name '*.php' -print0 | xargs -0 -L1 -P4 -- php -l"
 
@@ -35,7 +31,7 @@ jobs:
     - name: "Checkout"
       uses: "actions/checkout@v3"
     - name: "Install PHP"
-      uses: "shivammathur/setup-php@v2.17.0"
+      uses: "shivammathur/setup-php@v2"
       with:
         php-version: "8.1"
     - name: "Install PHPCS"
@@ -53,10 +49,36 @@ jobs:
     - name: "Checkout"
       uses: "actions/checkout@v3"
     - name: "Install PHP"
-      uses: "shivammathur/setup-php@v2.17.0"
+      uses: "shivammathur/setup-php@v2"
       with:
         php-version: "8.1"
     - name: "Install PHPStan"
       run: "composer require --dev szepeviktor/phpstan-wordpress"
     - name: "Run PHPStan"
       run: "vendor/bin/phpstan analyze"
+
+  phpunit:
+    name: ${{ matrix.php-versions }} PHPUnit Tests
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        php-versions: [ '7.4', '8.0', '8.1' ]
+
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v3"
+
+    - name: "Set PHP version"
+      uses: "shivammathur/setup-php@v2"
+      with:
+        php-version: ${{ matrix.php-versions }}
+        coverage: none
+        tools: phpunit, phpunit-polyfills, composer:v2
+      env:
+        debug: true
+
+    - name: "Install dependencies"
+      run: "composer install"
+
+    - name: "PHPUnit Tests"
+      run: './vendor/bin/phpunit'
