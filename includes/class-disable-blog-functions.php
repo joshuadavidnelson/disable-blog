@@ -45,7 +45,7 @@ class Disable_Blog_Functions {
 		/**
 		 * Should we pass url query string in the redirect?
 		 *
-		 * Deault is false.
+		 * Default is false.
 		 *
 		 * @since 0.5.0
 		 * @param bool $bool true to allow query strings on redirect.

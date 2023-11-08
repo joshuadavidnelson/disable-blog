@@ -219,7 +219,7 @@ class Disable_Blog {
 		// Remove Admin Bar Links.
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
 
-		// Disable Update Services configruation, no pingbacks.
+		// Disable Update Services configuration, no pingbacks.
 		add_filter( 'enable_update_services_configuration', '__return_false' );
 
 		// Remove Dashboard Widgets.
