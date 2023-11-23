@@ -35,7 +35,9 @@ jobs:
       if: "${{ steps.list_diff.outputs.exit_status == '1' }}"
       uses: "peter-evans/create-pull-request@v4"
       with:
-        add-paths: "./"
+        add-paths: |
+          *.php
+          includes/
         branch: "cs-fixer"
         commit-message: "Fix CS"
         title: "Fix Coding Standards violations"
