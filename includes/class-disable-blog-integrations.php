@@ -150,6 +150,5 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 }
