@@ -323,10 +323,10 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 * @param bool $bool true to show the posts feed link.
+	 * @param bool $show true to show the posts feed link.
 	 * @return bool
 	 */
-	public function feed_links_show_posts_feed( $bool ) {
+	public function feed_links_show_posts_feed( $show ) {
 
 		return false;
 

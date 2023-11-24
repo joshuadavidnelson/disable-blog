@@ -16,38 +16,6 @@
 class Disable_Blog_Integrations {
 
 	/**
-	 * The ID of this plugin.
-	 *
-	 * @since  0.5.3
-	 * @access private
-	 * @var    string $plugin_name The ID of this plugin.
-	 */
-	private $plugin_name;
-
-	/**
-	 * The version of this plugin.
-	 *
-	 * @since  0.5.3
-	 * @access private
-	 * @var    string $version The current version of this plugin.
-	 */
-	private $version;
-
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since 0.5.3
-	 * @param string $plugin_name The name of the plugin.
-	 * @param string $version     The version of this plugin.
-	 */
-	public function __construct( $plugin_name, $version ) {
-
-		$this->plugin_name = $plugin_name;
-		$this->version     = $version;
-
-	}
-
-	/**
 	 * Check if the plugin is active.
 	 *
 	 * A wrapper function of is_plugin_active to call wp-admin/includes/plugin.php as needed.
