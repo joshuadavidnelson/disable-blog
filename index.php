@@ -2,4 +2,3 @@
 /**
  * Silence is golden.
  */
-

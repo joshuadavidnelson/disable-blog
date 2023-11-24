@@ -71,7 +71,6 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
 	 * @return array|bool A list of post type names that support the featured or false if nothing found.
 	 */
 	return apply_filters( "dwpb_post_types_supporting_{$feature}", $post_types_with_feature, $args );
-
 }
 
 /**
@@ -153,5 +152,4 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	} else {
 		return $post_types_with_tax;
 	}
-
 }

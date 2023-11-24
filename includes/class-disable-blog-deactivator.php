@@ -70,7 +70,6 @@ class Disable_Blog_Deactivator {
 		wp_cache_delete( 'comments-0', 'counts' );
 		delete_transient( 'wc_count_comments' );
 		flush_rewrite_rules();
-
 	}
 
 	/**
@@ -110,7 +109,6 @@ class Disable_Blog_Deactivator {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -139,7 +137,6 @@ class Disable_Blog_Deactivator {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -157,7 +154,5 @@ class Disable_Blog_Deactivator {
 		}
 
 		return false;
-
 	}
-
 }

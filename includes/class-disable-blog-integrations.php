@@ -44,7 +44,6 @@ class Disable_Blog_Integrations {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
-
 	}
 
 	/**
@@ -70,7 +69,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -87,7 +85,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -104,7 +101,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -126,7 +122,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return $comments;
-
 	}
 
 	/**
@@ -157,5 +152,4 @@ class Disable_Blog_Integrations {
 		return false;
 
 	}
-
 }
