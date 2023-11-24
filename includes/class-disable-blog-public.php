@@ -334,17 +334,17 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 * @param bool $bool true to show the comments feed link.
+	 * @param bool $show true to show the comments feed link.
 	 * @return bool
 	 */
-	public function feed_links_show_comments_feed( $bool ) {
+	public function feed_links_show_comments_feed( $show ) {
 
 		// If 'post' type is the only type supporting comments, then disable the comment feed link.
 		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
-		return $bool;
+		return $show;
 	}
 
 	/**
