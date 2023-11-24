@@ -38,7 +38,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -55,7 +54,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -72,7 +70,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -94,7 +91,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return $comments;
-
 	}
 
 	/**
@@ -123,7 +119,5 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
-
 }

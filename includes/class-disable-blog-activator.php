@@ -70,7 +70,6 @@ class Disable_Blog_Activator {
 		wp_cache_delete( 'comments-0', 'counts' );
 		delete_transient( 'wc_count_comments' );
 		flush_rewrite_rules();
-
 	}
 
 	/**
@@ -110,13 +109,12 @@ class Disable_Blog_Activator {
 		}
 
 		return false;
-
 	}
 
 	/**
 	 * Validate the Request data.
 	 *
-	 * Validates the $_REQUESTed data is matching this plugin and action.
+	 * Validates the data in $_REQUEST is matching this plugin and action.
 	 *
 	 * @since 0.5.1
 	 * @param string $plugin The Plugin folder/name.php.
@@ -139,7 +137,6 @@ class Disable_Blog_Activator {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -157,7 +154,5 @@ class Disable_Blog_Activator {
 		}
 
 		return false;
-
 	}
-
 }

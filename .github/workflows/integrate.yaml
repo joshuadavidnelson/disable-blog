@@ -34,7 +34,10 @@ jobs:
       with:
         php-version: "8.1"
     - name: "Install PHPCS"
-      run: "composer require --dev wp-coding-standards/wpcs && composer config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true && composer require --dev dealerdirect/phpcodesniffer-composer-installer"
+      run: |
+        composer require --no-plugins --dev wp-coding-standards/wpcs
+        composer config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+        composer run post-install-cmd
     - name: "Run PHPCS"
       run: "vendor/bin/phpcs --standard=WordPress-Core *.php includes/"
 

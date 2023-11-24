@@ -47,7 +47,6 @@ class Disable_Blog_Loader {
 
 		$this->actions = array();
 		$this->filters = array();
-
 	}
 
 	/**
@@ -122,7 +121,6 @@ class Disable_Blog_Loader {
 		);
 
 		return $hooks;
-
 	}
 
 	/**
@@ -155,7 +153,6 @@ class Disable_Blog_Loader {
 		}
 
 		return $removed;
-
 	}
 
 	/**
@@ -187,7 +184,5 @@ class Disable_Blog_Loader {
 		foreach ( $this->actions as $hook ) {
 			add_action( $hook['hook'], array( $hook['component'], $hook['callback'] ), $hook['priority'], $hook['accepted_args'] );
 		}
-
 	}
-
 }

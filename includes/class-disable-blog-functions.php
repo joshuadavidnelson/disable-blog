@@ -45,7 +45,7 @@ class Disable_Blog_Functions {
 		/**
 		 * Should we pass url query string in the redirect?
 		 *
-		 * Deault is false.
+		 * Default is false.
 		 *
 		 * @since 0.5.0
 		 * @param bool $bool true to allow query strings on redirect.
@@ -57,7 +57,6 @@ class Disable_Blog_Functions {
 
 		wp_safe_redirect( esc_url_raw( $redirect_url ), $this->get_redirect_status_code( $current_url, $redirect_url ) );
 		exit;
-
 	}
 
 	/**
@@ -100,7 +99,6 @@ class Disable_Blog_Functions {
 		}
 
 		return $url;
-
 	}
 
 	/**
@@ -131,7 +129,6 @@ class Disable_Blog_Functions {
 		}
 
 		return absint( $status_code );
-
 	}
 
 	/**
@@ -150,7 +147,6 @@ class Disable_Blog_Functions {
 		}
 
 		return $url;
-
 	}
 
 	/**
@@ -178,7 +174,6 @@ class Disable_Blog_Functions {
 
 		// Return false if there are no supported post types.
 		return false;
-
 	}
 
 	/**
@@ -203,7 +198,6 @@ class Disable_Blog_Functions {
 		 * @return bool
 		 */
 		return (bool) apply_filters( 'dwpb_disable_author_archives', false );
-
 	}
 
 	/**
@@ -224,7 +218,5 @@ class Disable_Blog_Functions {
 		 * @param bool $is_comment_feed True if the feed is a comment feed.
 		 */
 		return (bool) apply_filters( 'dwpb_disable_feed', true, $post, $is_comment_feed );
-
 	}
-
 }
