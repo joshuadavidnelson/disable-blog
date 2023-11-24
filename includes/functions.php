@@ -65,7 +65,7 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
 	 * be disabled and the options-discussion.php admin page redirected.
 	 *
 	 * @since 0.4.0
-	 * @since 0.5.0 Added the $args paramenter.
+	 * @since 0.5.0 Added the $args parameter.
 	 * @param array|bool $post_types_with_feature an array of post types support this feature or false if none.
 	 * @param array      $args                    the arguments passed to get_post_types.
 	 * @return array|bool A list of post type names that support the featured or false if nothing found.
@@ -135,7 +135,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	 *
 	 * @since 0.4.0
 	 * @param mixed         $null                Null for no override, otherwise pass an array of post type slugs.
-	 * @param string|object $taxonomy            The curent taxonomy slug.
+	 * @param string|object $taxonomy            The current taxonomy slug.
 	 * @param array|bool    $post_types_with_tax An array of post types use this taxonomy or false if none.
 	 * @param array         $args                An array of key => value arguments to match against the post type objects. Default empty array.
 	 * @param string        $output              The type of output to return, either 'names' or 'objects'.

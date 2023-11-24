@@ -1,6 +1,6 @@
 <?php
 /**
- * Bootsrap file for tests.
+ * Bootstrap file for tests.
  *
  * @since 0.4.9
  * @package Disable_Blog

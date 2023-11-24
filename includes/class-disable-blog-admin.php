@@ -102,7 +102,7 @@ class Disable_Blog_Admin {
 			$arguments_to_remove = array(
 				'has_archive',
 				'public',
-				'publicaly_queryable',
+				'publicly_queryable',
 				'rewrite',
 				'query_var',
 				'show_ui',
@@ -164,7 +164,7 @@ class Disable_Blog_Admin {
 					$arguments_to_remove = array(
 						'has_archive',
 						'public',
-						'publicaly_queryable',
+						'publicly_queryable',
 						'query_var',
 						'show_ui',
 						'show_tagcloud',
@@ -497,7 +497,7 @@ class Disable_Blog_Admin {
 		 * Admin subpages to be removed.
 		 *
 		 * @since 0.4.0
-		 * @since 0.5.0 in order to account for mulitple subpages with a common parent
+		 * @since 0.5.0 in order to account for multiple subpages with a common parent
 		 *               the `subpages` are now in arrays
 		 * @param array $remove_subpages Array of page => subpages where subpages is an array of strings.
 		 */
@@ -625,7 +625,7 @@ class Disable_Blog_Admin {
 			/**
 			 * Filter to change the dashboard widgets beinre removed.
 			 *
-			 * Filter name baed on the name of the widget above,
+			 * Filter name based on the name of the widget above,
 			 * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
 			 *
 			 * @since 0.4.1
@@ -742,7 +742,7 @@ class Disable_Blog_Admin {
 		foreach ( $widgets as $widget ) {
 
 			/**
-			 * The ability to stop the widget unregsiter.
+			 * The ability to stop the widget unregister.
 			 *
 			 * @since 0.4.0
 			 *
@@ -895,7 +895,7 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Retreive the comment counts without the 'post' comments.
+	 * Retrieve the comment counts without the 'post' comments.
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
@@ -1237,7 +1237,7 @@ class Disable_Blog_Admin {
 		$post_types = $this->user_column_post_types();
 		foreach ( $post_types as $post_type ) {
 			/**
-			 * Create a new column for 'pages' similar to the orginal 'post' column.
+			 * Create a new column for 'pages' similar to the original 'post' column.
 			 *
 			 * @since 0.5.0
 			 * @param bool $bool True to remove the column, defaults to true.
@@ -1318,7 +1318,7 @@ class Disable_Blog_Admin {
 		// Include any post types using author archives.
 		$post_types = $this->functions->author_archive_post_types();
 
-		// The author_archive_post_type function returns false if empy, but we need an array.
+		// The author_archive_post_type function returns false if empty, but we need an array.
 		$post_types = empty( $post_types ) ? array() : $post_types;
 
 		// Also include pages, which is not in the author archive by default,
