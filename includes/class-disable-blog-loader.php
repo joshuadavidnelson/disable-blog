@@ -54,17 +54,17 @@ class Disable_Blog_Loader {
 	 * Simple Autoloader.
 	 *
 	 * @since 0.5.1
-	 * @param string $class The Class to autoload.
+	 * @param string $requested_class The Class to autoload.
 	 */
-	public function autoloader( $class ) {
+	public function autoloader( $requested_class ) {
 
-		$class   = 'class-' . str_replace( '_', '-', strtolower( $class ) ) . '.php';
-		$path    = plugin_dir_path( dirname( __FILE__ ) );
-		$sources = array( 'includes' );
+		$requested_class = 'class-' . str_replace( '_', '-', strtolower( $requested_class ) ) . '.php';
+		$path            = plugin_dir_path( dirname( __FILE__ ) );
+		$sources         = array( 'includes' );
 
 		foreach ( $sources as $source ) {
-			if ( file_exists( $path . $source . '/' . $class ) ) {
-				include $path . $source . '/' . $class;
+			if ( file_exists( $path . $source . '/' . $requested_class ) ) {
+				include $path . $source . '/' . $requested_class;
 			}
 		}
 	}

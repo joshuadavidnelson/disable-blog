@@ -348,7 +348,7 @@ class Disable_Blog {
 	 */
 	public function plugin_integrations() {
 
-		$plugin_integrations = new Disable_Blog_Integrations( $this->get_plugin_name(), $this->get_version() );
+		$plugin_integrations = new Disable_Blog_Integrations();
 
 		// Disable Comments.
 		if ( $plugin_integrations->is_disable_comments_active() ) {
