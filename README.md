@@ -39,7 +39,7 @@ Activating Disable Blog does the following:
 - Turns the `post` type into a non-public content type, with support for zero post type features. Any attempts to edit or view posts within the admin screen will be met with a WordPress error page or be redirect to the homepage.
 
 - Front-end:
-	- Disables the post feed and remoives the feed links from the header (for WP >= 4.4.0) and disables the comment feed/removes comment feed link if 'post' is the only post type supporting comments (note that the default condition pages and attachments support comments).
+	- Disables the post feed and removes the feed links from the header (for WP >= 4.4.0) and disables the comment feed/removes comment feed link if 'post' is the only post type supporting comments (note that the default condition pages and attachments support comments).
 	- Removes posts from all archive pages.
 	- Remove 'post' post type from XML sitemaps and categories/tags from XML sitemaps, if not being used by a custom post type (WP Version 5.5).
 	- Disables the REST API for 'post' post type, as well as tags & categories (if not used by another custom post type).
@@ -59,7 +59,7 @@ Activating Disable Blog does the following:
 	- If comments are not supported by other post types (by default comments are supported by pages and attachments), it will hide the menu links for and redirect discussion options page and 'Comments' admin page to the dashboard.
 	- Filters out the 'post' post type from 'Comments' admin page.
 	- Alters the comment count to remove any comments associated with 'post' post type.
-	- Optionally remove/redirect the Settings > Writting page via `dwpb_remove_options_writing` filter (default is false).
+	- Optionally remove/redirect the Settings > Writing page via `dwpb_remove_options_writing` filter (default is false).
 	- Removes Available Tools from admin menu and redirects page to the dashboard (this admin page contains Press This and Category/Tag converter, both are no longer neededd without a blog).
 	- Removes Post from '+New' admin bar menu.
 	- Removes 'Posts' Admin Menu.
