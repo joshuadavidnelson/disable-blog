@@ -56,7 +56,7 @@ register_activation_hook( __FILE__, 'activate_disable_blog' );
 register_deactivation_hook( __FILE__, 'deactivate_disable_blog' );
 
 // Constants.
-define( 'DWPB_DIR', dirname( __FILE__ ) );
+define( 'DWPB_DIR', __DIR__ );
 define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
 define( 'DWPB_PLUGIN_NAME', 'disable-blog' );
 define( 'DWPB_VERSION', '0.5.3' );

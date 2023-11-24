@@ -56,7 +56,6 @@ class Disable_Blog_Public {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 		$this->functions   = new Disable_Blog_Functions();
-
 	}
 
 	/**
@@ -148,7 +147,6 @@ class Disable_Blog_Public {
 
 			$this->functions->redirect( $redirect_url );
 		}
-
 	}
 
 	/**
@@ -237,7 +235,6 @@ class Disable_Blog_Public {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -329,7 +326,6 @@ class Disable_Blog_Public {
 	public function feed_links_show_posts_feed( $bool ) {
 
 		return false;
-
 	}
 
 	/**
@@ -349,7 +345,6 @@ class Disable_Blog_Public {
 		}
 
 		return $bool;
-
 	}
 
 	/**
@@ -372,7 +367,6 @@ class Disable_Blog_Public {
 		foreach ( $feed as $function => $priority ) {
 			remove_action( 'wp_head', $function, $priority );
 		}
-
 	}
 
 	/**
@@ -396,7 +390,6 @@ class Disable_Blog_Public {
 		}
 
 		return $methods;
-
 	}
 
 	/**
@@ -469,7 +462,6 @@ class Disable_Blog_Public {
 
 		// filter any invalid entries out before returning the array.
 		return is_array( $methods_to_remove ) ? array_filter( $methods_to_remove, 'is_string' ) : false; // phpcs:ignore
-
 	}
 
 	/**
@@ -493,7 +485,6 @@ class Disable_Blog_Public {
 		}
 
 		return $headers;
-
 	}
 
 	/**
@@ -510,7 +501,6 @@ class Disable_Blog_Public {
 		}
 
 		return $post_types;
-
 	}
 
 	/**
@@ -534,7 +524,6 @@ class Disable_Blog_Public {
 		}
 
 		return $taxonomies;
-
 	}
 
 	/**
@@ -576,7 +565,5 @@ class Disable_Blog_Public {
 		}
 
 		return $provider;
-
 	}
-
 }
