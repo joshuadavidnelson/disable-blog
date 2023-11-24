@@ -58,7 +58,7 @@ class Disable_Blog_Loader {
 	public function autoloader( $requested_class ) {
 
 		$requested_class = 'class-' . str_replace( '_', '-', strtolower( $requested_class ) ) . '.php';
-		$path            = plugin_dir_path( dirname( __FILE__ ) );
+		$path            = plugin_dir_path( __DIR__ );
 		$sources         = array( 'includes' );
 
 		foreach ( $sources as $source ) {

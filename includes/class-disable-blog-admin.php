@@ -785,7 +785,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $show;
-
 	}
 
 	/**
