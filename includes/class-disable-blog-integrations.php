@@ -96,16 +96,17 @@ class Disable_Blog_Integrations {
 	/**
 	 * Check if the WooCommerce version is less than the checked version.
 	 *
-	 * @since x.x.x
-	 * @param string $checked_version
-	 * @param string $check
+	 * @since 0.5.4
+	 * @param string $checked_version The version to check against.
+	 * @param string $check           The comparison operator.
 	 * @return bool
 	 */
 	private function woocommerce_version_check( $checked_version, $check = '<=' ) {
 
-		// Check if the Disable Comments plugin is active.
+		// Check if WooCommerce is active.
 		if ( $this->is_woocommerce_active() ) {
 
+			// Figure out the version of WooCommerce.
 			if ( defined( 'WC_VERSION' ) ) {
 				$woo_version = WC_VERSION;
 			} elseif ( defined( 'WOOCOMMERCE_VERSION' ) ) {
