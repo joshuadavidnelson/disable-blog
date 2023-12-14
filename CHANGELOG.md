@@ -1,6 +1,16 @@
-### Changelog
+# Changelog
 
-#### 0.5.3
+## 0.5.4
+- Tested up to WordPress 6.4.2.
+- Bump minim WordPress version to 5.3, aligning with minimum PHP support.
+- Test to PHP 8.2.
+- Update Github actions.
+- Add Code Standard fixer Github Action, h/t @szepeviktor 
+- Fix coding standards and a bunch of typos, h/t @szepeviktor 
+- Increase accuracy of CSS selector used to hide blog related items in Settings > Reading, closes [#69](https://github.com/joshuadavidnelson/disable-blog/issues/69)
+- Add `.wp-env.json` for local development.
+
+## 0.5.3
 - Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates for #59.
 - Fix uninstall error to allow for the plugin to be deleted correctly.
 - Only fire comment related admin functions if comments are supported.
@@ -9,7 +19,7 @@
 - Create a plugin integration framework - simple class with "plugin active" checks and related integration functions, including the preexisting WooCommerce (version <= 2.6.2) comment count integration.
 - Add a Disable Comments integration, utilizing the `dwpb_post_types_supporting_comments` to turn off all Disable Blog comment-related functions if Disable Comments is active.
 
-#### 0.5.2
+## 0.5.2
 - Test up to WP 6.1.1
 - Increase minimum PHP to v7.4
 - Test to PHP 8.1
@@ -18,7 +28,7 @@
 - Adds a check to the customizer script to avoid a TypeError. Closes #59
 - Increase specificity in permalinks page to correctly target and remove "optional" section when category and post tags are not supported by any post type (default condition). Closes #62
 
-#### 0.5.1
+## 0.5.1
 - Update to documentation, readmes, and doc blocks.
 - Fix `.distignore` to remove itself and .gitignore from WP-dot-org repo.
 - Add WP repo assets and deployment action.
@@ -32,7 +42,7 @@
 - Alter permalink settings based on if categories and author archives are supported.
 - Move `dwpb_disable_feed` filter into a function in the `Disable_Blog_Functions` class.
 
-#### 0.5.0
+## 0.5.0
 
 **New**
 - New disable author archive functionality via new `dwpb_disable_author_archives` filter. Pass `true` to disable author archives entirely. Default does not disable author archives because numerous other plugins use author archives for other purposes. (A future settings page will provide more flexibility here).
@@ -86,10 +96,10 @@
 - Updated minimum WP Core version to 4.0.
 - Updated translation file for all current plugin strings.
 
-#### 0.4.10
+## 0.4.10
 - Fix a bug from v0.4.9 that caused redirects on custom post type archives, correcting the `modify_query` function to only remove posts from built-in taxonomy archives, as that was the original intent.
 
-#### 0.4.9
+## 0.4.9
 - **Notice:** We've added the minimum PHP version requirement of 5.3, which was not explicitly set before now.
 - **Big change:** the plugin now changes the `post_type` arguments for posts so they are no longer public and removes all post_type support parameters. This disables the post-related admin redirects, as WordPress will now show users an error page stating "Sorry, you are not allowed to edit posts in this post type." It also pulls posts out of a lot of other locations (menus, etc) and is a much more efficient method of "disabling" the post type. This method is also used on built-in taxonomies, unless another post type supports them. **This change may impact other plugins or themes, be sure to back up your site and, if you can, test these changes prior to updating the plugin on a production site.**
 - Disable pingbacks entirely.
@@ -111,45 +121,45 @@
 	- The `dwpb_author_post_types` filter is now `dwpb_archive_post_types`, as the query modification now includes all pages passing `is_archive`.
 	- Removed filters: `dwpb_disable_rest_api`, `dwpb_remove_post_comment_support`, `dwpb_remove_post_trackback_support`, `dwpb_redirect_admin_edit_single_post`, `dwpb_redirect_single_post_edit`, `dwpb_redirect_admin_edit_post`, `dwpb_redirect_edit`, `dwpb_redirect_admin_post_new`, `dwpb_redirect_post_new` as these are rendered obsolete by above changes.
 
-#### 0.4.8.1
+## 0.4.8.1
 - Do'h! Forgot to update the version number in the main plugin file. Bump.
 
-#### 0.4.8
+## 0.4.8
 - Fixed typo in variable name for current vs redirect url check. (h/t @chesio, PR #30)
 - Update function names from template to `disable_blog`. (h/t @szepeviktor, PR #31)
 - Add WP.org Badge to readme.md.  (h/t @szepeviktor, PR #32)
 - Change the name of the CI workflow to be specific to deployment. (h/t @szepeviktor, PR #33)
 - Some code tidying and inline documentation.
 
-#### 0.4.7
+## 0.4.7
 - Using GitHub actions publish on WP.org from github releases.
 - Cleaned up the Reading settings, adding admin notices if front page is not set.
 - Add check for Multisite to avoid network page redirects. Closes #17, props to @Mactory.
 - Added Contributing and Code of Conduct documentation.
 - Check that `is_singular` works prior to running redirects to avoid non-object errors in feeds.
 
-#### 0.4.6
+## 0.4.6
 - Added check on disable feed functionality to confirm post type prior to disabling feed.
 
-#### 0.4.5
+## 0.4.5
 - Remove the functionality hiding the Settings > Writing admin page, allow this option to be re-enabled via the older filter. This page used to be entirely related to posts, but is also used to select the editor type (Gutenberg vs Classic).
 - Correct misspelled dwpb_redirect_options_tools filter.
 
-#### 0.4.4
+## 0.4.4
 - Hide the Settings > Writing menu item, which shows up with Disable Comments enabled everywhere. Thanks to @dater for identifying.
 
-#### 0.4.3
+## 0.4.3
 - Fix fatal error conflict with WooCommerce versions older than 2.6.3 (props to @Mahjouba91 for the heads up), no returns an array of comments in the filter for those older WooCommerce versions.
 - Add de/activation hooks to clear comment caches
 - Cleanup comment count functions.
 
-#### 0.4.2
+## 0.4.2
 - Disable the REST API for 'post' post type. Props to @shawnhooper.
 
-#### 0.4.1
+## 0.4.1
 - Fix unintended redirect for custom admin pages under tools.php. Props to @greatislander for the catch.
 
-#### 0.4.0
+## 0.4.0
 - Refactor code to match WP Plugin Boilerplate structure, including:
  - Move hooks and filters into loader class.
  - Separate Admin and Public hooks.
@@ -165,22 +175,22 @@
 - Fix show_on_front pages - now, if it's set to 'posts' it will set the blog page to value 0 (not a valid option) and set the front page to value 1.
 - Add uninstall.php to remove plugin version saved in options table on uninstall.
 
-#### 0.3.3
+## 0.3.3
 - Weird issue with svn, same as version 0.3.2.
 
-#### 0.3.2
+## 0.3.2
 - Fix potential loop issue with `home_url` in redirection function.
 - Fix custom taxonomy save redirect (used to redirect to dashboard, now it saves correctly).
 
-#### 0.3.1
+## 0.3.1
 - Add/update readme.txt.
 
-#### 0.3.0
+## 0.3.0
 - Singleton Class.
 - Clean up documentation.
 - Add filters.
  	
-#### 0.2.0
+## 0.2.0
 More improvements:
 
 - Remove 'post' post type from most queries.
@@ -199,5 +209,5 @@ More improvements:
 - Force Reading Settings: show_on_front, pages_for_posts, and posts_on_front, if they are not already set.
 - Hide other post-related reading options, except Search Engine Visibility.
 
-#### 0.1.0
+## 0.1.0
 Initial beta release.

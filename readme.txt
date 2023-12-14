@@ -2,10 +2,10 @@
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
-Requires at least: 4.0
+Requires at least: 5.3
 Requires PHP: 7.4
-Tested up to: 6.2
-Stable tag: 0.5.3
+Tested up to: 6.4.2
+Stable tag: 0.5.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ All the power of WordPress, without a blog.
 
 Build a blog-less WordPress site.
 
-Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
+Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without a blog.
 
 The blog is "disabled" when the plugin is activated, which removes support for the core 'post' type, hides blog-related admin pages/settings, and redirects urls on both the public and admin portions of the site. Refer to the [GitHub readme file](https://github.com/joshuadavidnelson/disable-blog/#how-does-this-plugin-work) for a detailed functionality list.
 
@@ -86,6 +86,16 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 
 == Changelog ==
+
+= 0.5.4 =
+- Tested up to WordPress 6.4.2.
+- Bump minim WordPress version to 5.3, aligning with minimum PHP support.
+- Test to PHP 8.2.
+- Update Github actions.
+- Add Code Standard fixer Github Action, h/t @szepeviktor
+- Fix coding standards and a bunch of typos, h/t @szepeviktor
+- Increase accuracy of CSS selector used to hide blog related items in Settings > Reading, closes [#69](https://github.com/joshuadavidnelson/disable-blog/issues/69)
+- Add `.wp-env.json` for local development.
 
 = 0.5.3 =
 - Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates.
@@ -287,6 +297,16 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.4 =
+- Tested up to WordPress 6.4.2.
+- Bump minim WordPress version to 5.3, aligning with minimum PHP support.
+- Test to PHP 8.2.
+- Update Github actions.
+- Add Code Standard fixer Github Action, h/t @szepeviktor
+- Fix coding standards and a bunch of typos, h/t @szepeviktor
+- Increase accuracy of CSS selector used to hide blog related items in Settings > Reading, closes [#69](https://github.com/joshuadavidnelson/disable-blog/issues/69)
+- Add `.wp-env.json` for local development.
 
 = 0.5.3 =
 - Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates.
