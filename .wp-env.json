@@ -1,4 +1,9 @@
 {
+	"config": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true
+	},
+	"phpVersion": "8.2",
 	"plugins": [
 		"."
 	]
