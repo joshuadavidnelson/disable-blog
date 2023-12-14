@@ -11,3 +11,6 @@ composer.lock
 code-of-conduct.md
 contributing.md
 phpstan.neon.dist
+package.json
+package-lock.json
+.wp-env.json
