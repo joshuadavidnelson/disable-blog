@@ -83,7 +83,7 @@ Activating Disable Blog does the following:
 
 If Settings > Reading > Front Page Displays is not set to show on a page, then some aspects of the plugin won't work, be sure to set your front page to a static page.
 
-#### FAQ
+## FAQ
 
 1. Can I Disable Comments?
  - Other post types (like Pages) may have comment support and other great plugins exist that can disable comments, so this feature was not part of the initial development of this plugin. A future release will include options to disable comments, but until then if you would like to disable comments, try the [Disable Comments](https://wordpress.org/plugins/disable-comments/) plugin.
@@ -92,10 +92,33 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then s
 3. How can I disable author archives?
  - If you're not using the built-in WP author archives for other purposes (example url: `example.com/author/author-name`) and would like to disable them entirely, add the following to your theme functions.php file or a custom plugin file: `add_filter( 'dwpb_disable_author_archives', '__return_true' );`. If author archives are not disabled, the plugin adds functionality to support custom post types on author archives by passing an array of post type slugs to `dwpb_author_archive_post_types` filter - however, theme support is usually needed to disable custom content types correctly.
 
-#### Support
+## Support
 
 This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [WordPress.org support forums](https://wordpress.org/support/plugin/disable-blog/) or create an [issue](https://github.com/joshuadavidnelson/disable-blog/issues/) on the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog/).
 
-#### Contributing
+## Contributing
 
 All contributions are welcomed and considered, please refer to [contributing.md](contributing.md).
+
+### Pull requests
+All pull requests should be directed at the `develop` branch, and will be reviewed prior to merging. No pull requests will be merged with failing tests, but it's okay if you don't initially pass tests. Please create a draft pull request for proof of concept code or changes you'd like to have input on prior to review.
+
+Please make on a branch specific to a single issue or feature. For instance, if you are suggest a solution to an issue, please create fork with a branch like `issue-894`. Or if you are proposing a new feature, create a fork with the branch name indicating the feature like `feature-example-bananas`
+
+All improvements are merged into `develop` and then queued up for release before being merged into `stable`. Releases are deployed via github actions to wordpress.org on tagging a new release.
+
+### Main Branches
+
+The `stable` branch is reserved for releases and intended to be a mirror of the official current release, or `trunk` on wordpress.org.
+
+The `develop` branch is the most current working branch. _Please direct all pull requests to the `develop` branch_
+
+### Developing Disable Blog Locally
+
+**Requirements:**
+- Docker
+- Node Package Manager (npm)
+
+This repo contains the files needed to boot up a local development environment using [wp-env](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/).
+
+Run `npm install` and the `npm run env:start` to boot up a local environment. 
