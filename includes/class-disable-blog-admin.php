@@ -763,28 +763,28 @@ class Disable_Blog_Admin {
 	 *
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.4.0
-	 * @param bool   $bool   true to show.
+	 * @param bool   $show   true to show.
 	 * @param string $widget the widget name.
 	 * @return bool
 	 */
-	public function filter_widget_removal( $bool, $widget ) {
+	public function filter_widget_removal( $show, $widget ) {
 
 		// Remove Categories Widget.
 		if ( 'WP_Widget_Categories' === $widget && dwpb_post_types_with_tax( 'category' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
 		// Remove Recent Comments Widget if posts are the only type with comments.
 		if ( 'WP_Widget_Recent_Comments' === $widget && dwpb_post_types_with_feature( 'comments' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
 		// Remove Tag Cloud.
 		if ( 'WP_Widget_Tag_Cloud' === $widget && dwpb_post_types_with_tax( 'post_tag' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
-		return $bool;
+		return $show;
 	}
 
 	/**
