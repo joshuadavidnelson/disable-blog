@@ -2,7 +2,7 @@
 
 ## 0.5.4
 - Tested up to WordPress 6.4.2.
-- Bump minim WordPress version to 5.3, aligning with minimum PHP support.
+- Bump minimum WordPress version to 5.3, aligning with minimum PHP support.
 - Test to PHP 8.2.
 - Update Github actions.
 - Add Code Standard fixer Github Action, h/t @szepeviktor 
