@@ -7,8 +7,7 @@
  *
  * @link       https://github.com/joshuadavidnelson/disable-blog
  * @since      0.4.0
- * @package    Disable_Blog
- * @subpackage Disable_Blog\Includes
+ * @package    DisableBlog
  * @author     Joshua Nelson <josh@joshuadnelson.com>
  */
 
