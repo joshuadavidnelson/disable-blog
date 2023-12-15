@@ -16,38 +16,6 @@
 class Disable_Blog_Integrations {
 
 	/**
-	 * The ID of this plugin.
-	 *
-	 * @since  0.5.3
-	 * @access private
-	 * @var    string $plugin_name The ID of this plugin.
-	 */
-	private $plugin_name;
-
-	/**
-	 * The version of this plugin.
-	 *
-	 * @since  0.5.3
-	 * @access private
-	 * @var    string $version The current version of this plugin.
-	 */
-	private $version;
-
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since 0.5.3
-	 * @param string $plugin_name The name of the plugin.
-	 * @param string $version     The version of this plugin.
-	 */
-	public function __construct( $plugin_name, $version ) {
-
-		$this->plugin_name = $plugin_name;
-		$this->version     = $version;
-
-	}
-
-	/**
 	 * Check if the plugin is active.
 	 *
 	 * A wrapper function of is_plugin_active to call wp-admin/includes/plugin.php as needed.
@@ -70,7 +38,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -87,7 +54,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -104,7 +70,6 @@ class Disable_Blog_Integrations {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -121,12 +86,39 @@ class Disable_Blog_Integrations {
 	 */
 	public function filter_woocommerce_comment_count( $comments, $post_id ) {
 
-		if ( 0 === $post_id && function_exists( 'WC' ) && version_compare( WC()->version, '2.6.2', '<=' ) ) {
+		if ( 0 === $post_id && $this->woocommerce_version_check( '2.6.2' ) ) {
 			$comments = (array) $comments;
 		}
 
 		return $comments;
-
 	}
 
+	/**
+	 * Check if the WooCommerce version is less than the checked version.
+	 *
+	 * @since 0.5.4
+	 * @param string $checked_version The version to check against.
+	 * @param string $check           The comparison operator.
+	 * @return bool
+	 */
+	private function woocommerce_version_check( $checked_version, $check = '<=' ) {
+
+		// Check if WooCommerce is active.
+		if ( $this->is_woocommerce_active() ) {
+
+			// Figure out the version of WooCommerce.
+			if ( defined( 'WC_VERSION' ) ) {
+				$woo_version = WC_VERSION;
+			} elseif ( defined( 'WOOCOMMERCE_VERSION' ) ) {
+				$woo_version = WOOCOMMERCE_VERSION;
+			} else {
+				return false;
+			}
+
+			// Check if the WooCommerce version is less than the checked version.
+			return version_compare( $woo_version, $checked_version, $check );
+		}
+
+		return false;
+	}
 }

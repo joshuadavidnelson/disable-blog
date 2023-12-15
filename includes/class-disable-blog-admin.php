@@ -57,7 +57,6 @@ class Disable_Blog_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 		$this->functions   = new Disable_Blog_Functions();
-
 	}
 
 	/**
@@ -86,7 +85,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $links;
-
 	}
 
 	/**
@@ -104,7 +102,7 @@ class Disable_Blog_Admin {
 			$arguments_to_remove = array(
 				'has_archive',
 				'public',
-				'publicaly_queryable',
+				'publicly_queryable',
 				'rewrite',
 				'query_var',
 				'show_ui',
@@ -129,7 +127,6 @@ class Disable_Blog_Admin {
 			$wp_post_types['post']->supports = array();
 
 		}
-
 	}
 
 	/**
@@ -167,7 +164,7 @@ class Disable_Blog_Admin {
 					$arguments_to_remove = array(
 						'has_archive',
 						'public',
-						'publicaly_queryable',
+						'publicly_queryable',
 						'query_var',
 						'show_ui',
 						'show_tagcloud',
@@ -189,7 +186,6 @@ class Disable_Blog_Admin {
 				}
 			}
 		}
-
 	}
 
 	/**
@@ -231,7 +227,7 @@ class Disable_Blog_Admin {
 			'edit-comments',
 			'options-discussion',
 			'options-writing',
-			'options-tools',
+			'tools',
 		);
 
 		// cycle through each admin page, checking if we need to redirect.
@@ -307,7 +303,6 @@ class Disable_Blog_Admin {
 		if ( $redirect_url && apply_filters( 'dwpb_redirect_admin', true, $redirect_url ) ) {
 			$this->functions->redirect( $redirect_url );
 		}
-
 	}
 
 	/**
@@ -321,7 +316,6 @@ class Disable_Blog_Admin {
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) );
 		// @codingStandardsIgnoreEnd
-
 	}
 
 	/**
@@ -341,7 +335,6 @@ class Disable_Blog_Admin {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -361,7 +354,6 @@ class Disable_Blog_Admin {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -375,7 +367,6 @@ class Disable_Blog_Admin {
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
 		// @codingStandardsIgnoreEnd
-
 	}
 
 	/**
@@ -389,7 +380,6 @@ class Disable_Blog_Admin {
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
 		// @codingStandardsIgnoreEnd
-
 	}
 
 	/**
@@ -406,7 +396,6 @@ class Disable_Blog_Admin {
 		 * note that pages and attachments support comments by default.
 		 */
 		return ! dwpb_post_types_with_feature( 'comments' );
-
 	}
 
 	/**
@@ -420,7 +409,6 @@ class Disable_Blog_Admin {
 	public function redirect_admin_options_discussion() {
 
 		return $this->redirect_admin_edit_comments();
-
 	}
 
 	/**
@@ -439,7 +427,6 @@ class Disable_Blog_Admin {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -457,7 +444,6 @@ class Disable_Blog_Admin {
 		// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
 		return ! isset( $_GET['page'] );
 		// @codingStandardsIgnoreEnd
-
 	}
 
 	/**
@@ -511,7 +497,7 @@ class Disable_Blog_Admin {
 		 * Admin subpages to be removed.
 		 *
 		 * @since 0.4.0
-		 * @since 0.5.0 in order to account for mulitple subpages with a common parent
+		 * @since 0.5.0 in order to account for multiple subpages with a common parent
 		 *               the `subpages` are now in arrays
 		 * @param array $remove_subpages Array of page => subpages where subpages is an array of strings.
 		 */
@@ -525,7 +511,6 @@ class Disable_Blog_Admin {
 				remove_submenu_page( $page, $subpages );
 			}
 		}
-
 	}
 
 	/**
@@ -542,7 +527,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $classes;
-
 	}
 
 	/**
@@ -570,7 +554,6 @@ class Disable_Blog_Admin {
 		 * @param bool $bool Defaults to false, keeping the writing page visible.
 		 */
 		return apply_filters( 'dwpb_remove_options_writing', false );
-
 	}
 
 	/**
@@ -592,7 +575,6 @@ class Disable_Blog_Admin {
 
 		// Remove New Post from Content.
 		$wp_admin_bar->remove_node( 'new-post' );
-
 	}
 
 	/**
@@ -618,7 +600,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
-
 	}
 
 	/**
@@ -644,7 +625,7 @@ class Disable_Blog_Admin {
 			/**
 			 * Filter to change the dashboard widgets beinre removed.
 			 *
-			 * Filter name baed on the name of the widget above,
+			 * Filter name based on the name of the widget above,
 			 * For instance: `dwpb_disable_dashboard_quick_press` for the Quick Press widget.
 			 *
 			 * @since 0.4.1
@@ -654,7 +635,6 @@ class Disable_Blog_Admin {
 				remove_meta_box( $metabox_id, 'dashboard', $context );
 			}
 		}
-
 	}
 
 	/**
@@ -714,7 +694,6 @@ class Disable_Blog_Admin {
 			printf( '<div class="%s"><p>%s</p></div>', 'notice notice-error', esc_attr( $message ) );
 
 		}
-
 	}
 
 	/**
@@ -726,7 +705,6 @@ class Disable_Blog_Admin {
 	public function has_front_page() {
 
 		return 'page' === get_option( 'show_on_front' ) && absint( get_option( 'page_on_front' ) );
-
 	}
 
 	/**
@@ -738,7 +716,6 @@ class Disable_Blog_Admin {
 	public function disable_press_this() {
 
 		wp_die( '"Press This" functionality has been disabled.' );
-
 	}
 
 	/**
@@ -765,7 +742,7 @@ class Disable_Blog_Admin {
 		foreach ( $widgets as $widget ) {
 
 			/**
-			 * The ability to stop the widget unregsiter.
+			 * The ability to stop the widget unregister.
 			 *
 			 * @since 0.4.0
 			 *
@@ -776,7 +753,6 @@ class Disable_Blog_Admin {
 				unregister_widget( $widget );
 			}
 		}
-
 	}
 
 	/**
@@ -787,29 +763,28 @@ class Disable_Blog_Admin {
 	 *
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.4.0
-	 * @param bool   $bool   true to show.
+	 * @param bool   $show   true to show.
 	 * @param string $widget the widget name.
 	 * @return bool
 	 */
-	public function filter_widget_removal( $bool, $widget ) {
+	public function filter_widget_removal( $show, $widget ) {
 
 		// Remove Categories Widget.
 		if ( 'WP_Widget_Categories' === $widget && dwpb_post_types_with_tax( 'category' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
 		// Remove Recent Comments Widget if posts are the only type with comments.
 		if ( 'WP_Widget_Recent_Comments' === $widget && dwpb_post_types_with_feature( 'comments' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
 		// Remove Tag Cloud.
 		if ( 'WP_Widget_Tag_Cloud' === $widget && dwpb_post_types_with_tax( 'post_tag' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
-		return $bool;
-
+		return $show;
 	}
 
 	/**
@@ -821,7 +796,6 @@ class Disable_Blog_Admin {
 	public function enqueue_styles() {
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . '../assets/css/disable-blog-admin.css', array(), $this->version, 'all' );
-
 	}
 
 	/**
@@ -844,7 +818,6 @@ class Disable_Blog_Admin {
 		);
 
 		wp_localize_script( $this->plugin_name, 'dwpb', $js_vars );
-
 	}
 
 	/**
@@ -859,7 +832,6 @@ class Disable_Blog_Admin {
 		global $pagenow;
 
 		return is_admin() && isset( $pagenow ) && is_string( $pagenow ) && $page . '.php' === $pagenow;
-
 	}
 
 	/**
@@ -896,7 +868,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $comments;
-
 	}
 
 	/**
@@ -921,11 +892,10 @@ class Disable_Blog_Admin {
 		}
 
 		return $views;
-
 	}
 
 	/**
-	 * Retreive the comment counts without the 'post' comments.
+	 * Retrieve the comment counts without the 'post' comments.
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
@@ -1007,7 +977,6 @@ class Disable_Blog_Admin {
 		}
 
 		return array_map( 'intval', $comment_count );
-
 	}
 
 	/**
@@ -1021,7 +990,6 @@ class Disable_Blog_Admin {
 	public function filter_comment_status( $open, $post_id ) {
 
 		return ( 'post' === get_post_type( $post_id ) ) ? false : $open;
-
 	}
 
 	/**
@@ -1035,7 +1003,6 @@ class Disable_Blog_Admin {
 	public function filter_existing_comments( $comments, $post_id ) {
 
 		return ( 'post' === get_post_type( $post_id ) ) ? array() : $comments;
-
 	}
 
 	/**
@@ -1071,7 +1038,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $tests;
-
 	}
 
 	/**
@@ -1184,7 +1150,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $result;
-
 	}
 
 	/**
@@ -1207,7 +1172,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $actions;
-
 	}
 
 	/**
@@ -1273,7 +1237,7 @@ class Disable_Blog_Admin {
 		$post_types = $this->user_column_post_types();
 		foreach ( $post_types as $post_type ) {
 			/**
-			 * Create a new column for 'pages' similar to the orginal 'post' column.
+			 * Create a new column for 'pages' similar to the original 'post' column.
 			 *
 			 * @since 0.5.0
 			 * @param bool $bool True to remove the column, defaults to true.
@@ -1292,7 +1256,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $columns;
-
 	}
 
 	/**
@@ -1342,7 +1305,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $output;
-
 	}
 
 	/**
@@ -1356,7 +1318,7 @@ class Disable_Blog_Admin {
 		// Include any post types using author archives.
 		$post_types = $this->functions->author_archive_post_types();
 
-		// The author_archive_post_type function returns false if empy, but we need an array.
+		// The author_archive_post_type function returns false if empty, but we need an array.
 		$post_types = empty( $post_types ) ? array() : $post_types;
 
 		// Also include pages, which is not in the author archive by default,
@@ -1372,7 +1334,6 @@ class Disable_Blog_Admin {
 		 * @return array
 		 */
 		return apply_filters( 'dwpb_admin_user_post_types', $post_types );
-
 	}
 
 	/**
@@ -1391,7 +1352,6 @@ class Disable_Blog_Admin {
 		}
 
 		return $actions;
-
 	}
 
 	/**
@@ -1415,7 +1375,6 @@ class Disable_Blog_Admin {
 			</style>
 			<?php
 		}
-
 	}
 
 	/**
@@ -1434,7 +1393,6 @@ class Disable_Blog_Admin {
 			'homepageSettingsText' => __( 'You can choose what\'s displayed on the homepage of your site. To set a static homepage, create or select the page below.', 'disable-blog' ),
 		);
 		wp_localize_script( $this->plugin_name . '-customizer-scripts', 'dwpbCustomizer', $js_vars );
-
 	}
 
 	/**
@@ -1449,7 +1407,6 @@ class Disable_Blog_Admin {
 			remove_action( 'edit_form_after_title', '_wp_posts_page_notice' );
 			add_action( 'edit_form_after_title', array( $this, 'posts_page_notice' ) );
 		}
-
 	}
 
 	/**
@@ -1462,7 +1419,6 @@ class Disable_Blog_Admin {
 
 		// translators: this notice informs the user why the blog page editor is disabled and that it is redirected to the homepage.
 		echo '<div class="notice notice-warning inline"><p>' . __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>'; // phpcs:ignore
-
 	}
 
 	/**
@@ -1485,6 +1441,5 @@ class Disable_Blog_Admin {
 		}
 
 		return $available_tags;
-
 	}
 }

@@ -2,10 +2,10 @@
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
-Requires at least: 4.0
+Requires at least: 5.3
 Requires PHP: 7.4
-Tested up to: 6.2
-Stable tag: 0.5.3
+Tested up to: 6.4.2
+Stable tag: 0.5.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ All the power of WordPress, without a blog.
 
 Build a blog-less WordPress site.
 
-Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without the burden of a blog.
+Disable Blog is a comprehensive plugin to disable the built-in blogging functionality on your site. You'll be free to use pages and custom post types without a blog.
 
 The blog is "disabled" when the plugin is activated, which removes support for the core 'post' type, hides blog-related admin pages/settings, and redirects urls on both the public and admin portions of the site. Refer to the [GitHub readme file](https://github.com/joshuadavidnelson/disable-blog/#how-does-this-plugin-work) for a detailed functionality list.
 
@@ -87,6 +87,16 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 == Changelog ==
 
+= 0.5.4 =
+- Tested up to WordPress 6.4.2.
+- Bump minimum WordPress version to 5.3, aligning with minimum PHP support.
+- Test to PHP 8.2.
+- Update Github actions.
+- Add Code Standard fixer Github Action, h/t @szepeviktor
+- Fix coding standards and a bunch of typos, h/t @szepeviktor
+- Increase accuracy of CSS selector used to hide blog related items in Settings > Reading, closes [#69](https://github.com/joshuadavidnelson/disable-blog/issues/69)
+- Add `.wp-env.json` for local development.
+
 = 0.5.3 =
 - Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates.
 - Fix uninstall error to allow for the plugin to be deleted correctly.
@@ -147,7 +157,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 **Improvements/Updates**
 
-- Update admin filters to a common format and removing redundent filters. Filter changes include:
+- Update admin filters to a common format and removing redundant filters. Filter changes include:
 	- New filter: `dwpb_redirect_admin_url` filters the final url used in admin redirects.
 	- `dwpb_redirect_admin` only accepts 1 parameter, the previous version accepted 3 (dropping `$redirect_url` & `$current_url`).
 	- `dwpb_redirect_admin_edit_post` is now `dwpb_redirect_admin_edit`.
@@ -156,7 +166,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 	- `dwpb_redirect_edit_tax` has been removed. Use `dwpb_redirect_admin_edit_tags` or `dwpb_redirect_admin_term` instead, depending on the context.
 	- `dwpb_redirect_edit_comments` has been removed. use `dwpb_redirect_admin_edit_comments` instead.
 	- `dwpb_redirect_options_discussion` has been removed. Use `dwpb_redirect_admin_options_discussion` instead.
-	- The filter `dwpb_redirect_admin_options_writing` that would pass a boolean to toggle off the options writing page has been remaned `dwpb_remove_options_writing` and must be passed with `true` in order to have the page redirect _and_ the admin menu item removed. By default the value filtered is false and the options Writing page does not go away, as numerous other plugins use this page for non-blog related settings. Now `dwpb_redirect_admin_options_writing` is used to filter the redirect url itself, replacing the previously named `dwpb_redirect_options_writing` filter.
+	- The filter `dwpb_redirect_admin_options_writing` that would pass a boolean to toggle off the options writing page has been remained `dwpb_remove_options_writing` and must be passed with `true` in order to have the page redirect _and_ the admin menu item removed. By default the value filtered is false and the options Writing page does not go away, as numerous other plugins use this page for non-blog related settings. Now `dwpb_redirect_admin_options_writing` is used to filter the redirect url itself, replacing the previously named `dwpb_redirect_options_writing` filter.
 	- `dwpb_redirect_options_tools` has been removed. Use `dwpb_redirect_admin_options_tools` instead.
 	- New filter: `dwpb_disabled_xmlpc_methods` (see above).
 	- New filter: `dwpb_author_archive_post_types` (see above).
@@ -287,6 +297,16 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.4 =
+- Tested up to WordPress 6.4.2.
+- Bump minimum WordPress version to 5.3, aligning with minimum PHP support.
+- Test to PHP 8.2.
+- Update Github actions.
+- Add Code Standard fixer Github Action, h/t @szepeviktor
+- Fix coding standards and a bunch of typos, h/t @szepeviktor
+- Increase accuracy of CSS selector used to hide blog related items in Settings > Reading, closes [#69](https://github.com/joshuadavidnelson/disable-blog/issues/69)
+- Add `.wp-env.json` for local development.
 
 = 0.5.3 =
 - Fix `typeof` typo in `disable-blog-customizer.js` from 0.5.2 updates.

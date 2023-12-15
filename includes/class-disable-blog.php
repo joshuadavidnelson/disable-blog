@@ -78,7 +78,6 @@ class Disable_Blog {
 		$this->plugin_integrations();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
-
 	}
 
 	/**
@@ -109,7 +108,6 @@ class Disable_Blog {
 			// Save current version.
 			update_option( 'dwpb_version', DWPB_VERSION, false );
 		}
-
 	}
 
 	/**
@@ -132,7 +130,7 @@ class Disable_Blog {
 	private function load_dependencies() {
 
 		// Includes directory.
-		$includes_dir = plugin_dir_path( dirname( __FILE__ ) ) . 'includes';
+		$includes_dir = plugin_dir_path( __DIR__ ) . 'includes';
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
@@ -160,7 +158,6 @@ class Disable_Blog {
 		foreach ( $classes as $class ) {
 			$this->loader->autoLoader( $class );
 		}
-
 	}
 
 	/**
@@ -177,7 +174,6 @@ class Disable_Blog {
 		$plugin_i18n = new Disable_Blog_I18n();
 
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
-
 	}
 
 	/**
@@ -219,7 +215,7 @@ class Disable_Blog {
 		// Remove Admin Bar Links.
 		$this->loader->add_action( 'wp_before_admin_bar_render', $plugin_admin, 'remove_admin_bar_links' );
 
-		// Disable Update Services configruation, no pingbacks.
+		// Disable Update Services configuration, no pingbacks.
 		add_filter( 'enable_update_services_configuration', '__return_false' );
 
 		// Remove Dashboard Widgets.
@@ -289,7 +285,6 @@ class Disable_Blog {
 			$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
 
 		}
-
 	}
 
 	/**
@@ -337,7 +332,6 @@ class Disable_Blog {
 
 		// Conditionally remove author sitemaps, if author archives are not being supported.
 		$this->loader->add_filter( 'wp_sitemaps_add_provider', $plugin_public, 'wp_author_sitemaps', 100, 2 );
-
 	}
 
 	/**
@@ -348,7 +342,7 @@ class Disable_Blog {
 	 */
 	public function plugin_integrations() {
 
-		$plugin_integrations = new Disable_Blog_Integrations( $this->get_plugin_name(), $this->get_version() );
+		$plugin_integrations = new Disable_Blog_Integrations();
 
 		// Disable Comments.
 		if ( $plugin_integrations->is_disable_comments_active() ) {
@@ -365,7 +359,6 @@ class Disable_Blog {
 			// Convert the $comments object back into an array if older version of WooCommerce is active.
 			$this->loader->add_filter( 'wp_count_comments', $plugin_integrations, 'filter_woocommerce_comment_count', 15, 2 );
 		}
-
 	}
 
 	/**

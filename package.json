@@ -1,0 +1,21 @@
+{
+	"name": "disable-blog",
+	"version": "0.5.4",
+	"description": "A comprehensive WordPress plugin to disable the blog-related functionality.",
+	"author": "Joshua David Nelson",
+	"license": "GPL-2.0-or-later",
+	"homepage": "https://disable.blog/",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:joshuadavidnelson/disable-blog.git"
+	},
+	"scripts": {
+		"env": "wp-env",
+		"env:start": "wp-env start",
+		"env:stop": "wp-env stop"
+	},
+	"devDependencies": {
+		"@types/node": "^18.0.0",
+		"@wordpress/env": "^5.0.0"
+	}
+}

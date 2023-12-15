@@ -56,7 +56,6 @@ class Disable_Blog_Public {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 		$this->functions   = new Disable_Blog_Functions();
-
 	}
 
 	/**
@@ -148,7 +147,6 @@ class Disable_Blog_Public {
 
 			$this->functions->redirect( $redirect_url );
 		}
-
 	}
 
 	/**
@@ -237,7 +235,6 @@ class Disable_Blog_Public {
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -323,13 +320,12 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 * @param bool $bool true to show the posts feed link.
+	 * @param bool $show true to show the posts feed link.
 	 * @return bool
 	 */
-	public function feed_links_show_posts_feed( $bool ) {
+	public function feed_links_show_posts_feed( $show ) {
 
 		return false;
-
 	}
 
 	/**
@@ -338,18 +334,17 @@ class Disable_Blog_Public {
 	 * Only works for WordPress >= 4.4.0.
 	 *
 	 * @since 0.4.0
-	 * @param bool $bool true to show the comments feed link.
+	 * @param bool $show true to show the comments feed link.
 	 * @return bool
 	 */
-	public function feed_links_show_comments_feed( $bool ) {
+	public function feed_links_show_comments_feed( $show ) {
 
 		// If 'post' type is the only type supporting comments, then disable the comment feed link.
 		if ( ! dwpb_post_types_with_feature( 'comments' ) ) {
-			$bool = false;
+			$show = false;
 		}
 
-		return $bool;
-
+		return $show;
 	}
 
 	/**
@@ -372,7 +367,6 @@ class Disable_Blog_Public {
 		foreach ( $feed as $function => $priority ) {
 			remove_action( 'wp_head', $function, $priority );
 		}
-
 	}
 
 	/**
@@ -396,7 +390,6 @@ class Disable_Blog_Public {
 		}
 
 		return $methods;
-
 	}
 
 	/**
@@ -469,7 +462,6 @@ class Disable_Blog_Public {
 
 		// filter any invalid entries out before returning the array.
 		return is_array( $methods_to_remove ) ? array_filter( $methods_to_remove, 'is_string' ) : false; // phpcs:ignore
-
 	}
 
 	/**
@@ -493,7 +485,6 @@ class Disable_Blog_Public {
 		}
 
 		return $headers;
-
 	}
 
 	/**
@@ -510,7 +501,6 @@ class Disable_Blog_Public {
 		}
 
 		return $post_types;
-
 	}
 
 	/**
@@ -534,7 +524,6 @@ class Disable_Blog_Public {
 		}
 
 		return $taxonomies;
-
 	}
 
 	/**
@@ -576,7 +565,5 @@ class Disable_Blog_Public {
 		}
 
 		return $provider;
-
 	}
-
 }

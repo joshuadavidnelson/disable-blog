@@ -15,7 +15,7 @@
  * Plugin Name: Disable Blog
  * Plugin URI:  https://wordpress.org/plugins/disable-blog/
  * Description: Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting).
- * Version:     0.5.3
+ * Version:     0.5.4
  * Author:      Joshua David Nelson
  * Author URI:  http://joshuadnelson.com
  * License:     GPL-2.0+
@@ -56,10 +56,10 @@ register_activation_hook( __FILE__, 'activate_disable_blog' );
 register_deactivation_hook( __FILE__, 'deactivate_disable_blog' );
 
 // Constants.
-define( 'DWPB_DIR', dirname( __FILE__ ) );
+define( 'DWPB_DIR', __DIR__ );
 define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
 define( 'DWPB_PLUGIN_NAME', 'disable-blog' );
-define( 'DWPB_VERSION', '0.5.3' );
+define( 'DWPB_VERSION', '0.5.4' );
 
 /**
  * The core plugin class that is used to define everything.

@@ -10,13 +10,12 @@
 .welcome-icon.welcome-write-blog,
 .users-php .column-posts,
 .disabled-blog.options-reading-php #front-static-pages legend + p,
-.disabled-blog.options-reading-php .form-table tr:nth-child(2),
-.disabled-blog.options-reading-php .form-table tr:nth-child(3),
-.disabled-blog.options-reading-php .form-table tr:nth-child(4),
+.disabled-blog.options-reading-php .form-table:first-of-type tr:nth-child(2),
+.disabled-blog.options-reading-php .form-table:first-of-type tr:nth-child(3),
+.disabled-blog.options-reading-php .form-table:first-of-type tr:nth-child(4),
 .disabled-blog.options-discussion-php label[for="default_pingback_flag"],
 .disabled-blog.options-discussion-php label[for="default_pingback_flag"] + br,
 .disabled-blog.options-discussion-php label[for="default_ping_status"],
 .disabled-blog.options-discussion-php label[for="default_ping_status"] + br {
 	display: none;
 }
-
