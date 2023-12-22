@@ -4,7 +4,7 @@ parameters:
     level: 5
     inferPrivatePropertyTypeFromConstructor: true
     scanFiles:
-        - tests/bootstrap.php
+        - tests/php/bootstrap.php
         - includes/functions.php
     scanDirectories:
         - includes/
@@ -21,3 +21,4 @@ parameters:
         # Implode is correctly used in get_comments_count for supported PHP versions of this plugin.
         - '#^Parameter \#2 \$array of function implode expects array\<string\>, array\<array\|string\> given\.#'
         - '#^Constant DWPB_URL not found\.#'
+        - '#^Constant DWPB_VERSION not found\.#'

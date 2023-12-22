@@ -1,4 +1,9 @@
-/vendor/
-/node_modules/
 .DS_Store
-*.lock
+Thumbs.db
+*.sql
+*.tar.gz
+*.zip
+node_modules
+dist
+vendor
+*.cache
