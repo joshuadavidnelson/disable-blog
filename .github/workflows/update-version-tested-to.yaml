@@ -1,0 +1,52 @@
+name: Update Tested Up To WP Version
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Set to run daily
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Get current WordPress version
+        id: get_wordpress_version
+        run: |
+          latest_tag=$(curl -s https://api.github.com/repos/wordpress/wordpress/tags | jq -r '.[0].name')
+          echo "::set-output name=version::$(echo $latest_tag | sed -E 's/v([0-9]+\.[0-9]+\.[0-9]+)/\1/')"
+
+      - name: Update readme.txt
+        run: |
+          current_wordpress_version=${{ steps.get_wordpress_version.outputs.version }}
+          readme_txt_path="readme.txt"
+          readme_txt_content=$(cat "$readme_txt_path")
+          updated_readme_txt_content=$(echo "$readme_txt_content" | sed -E "s/(Tested up to:[[:space:]]*)[0-9]+\.[0-9]+\.[0-9]+/\1$current_wordpress_version/")
+          echo "$updated_readme_txt_content" > "$readme_txt_path"
+
+      - name: Update readme.md
+        run: |
+          current_wordpress_version=${{ steps.get_wordpress_version.outputs.version }}
+          readme_md_path="readme.md"
+          readme_md_content=$(cat "$readme_md_path")
+          updated_readme_md_content=$(echo "$readme_md_content" | sed -E "s/\*\*Tested up to WordPress:\*\*[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+/\*\*Tested up to WordPress:\*\* $current_wordpress_version/")
+          echo "$updated_readme_md_content" > "$readme_md_path"
+
+      - name: Commit changes
+        run: |
+          current_wordpress_version=${{ steps.get_wordpress_version.outputs.version }}
+          git add .
+          git commit -m "Update Tested up to version to $current_wordpress_version"
+          git push origin update-version-$current_wordpress_version
+
+      - name: Create pull request
+        run: |
+          current_wordpress_version=${{ steps.get_wordpress_version.outputs.version }}
+          gh pr create --base stable --head update-tested-to-version-$current_wordpress_version --title "Update Tested up to version to $current_wordpress_version" --body "Auto-generated PR to update 'Tested up to' version."
