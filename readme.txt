@@ -72,9 +72,9 @@ Deactivate the plugin, delete your posts (which will delete related comments), a
 
 = How can I disable author archives? =
 
-Author archives are automatically created by WordPress for every user (example url: `example.com/author/author-name`. Typically these archives show posts by that user and possibly they biographical information. So many plugins and themes use author archives for other purposes - account page, profile page, etc. For that reason disabling author archives is currently only available with this plugin via a filter.
+Author archives are automatically created by WordPress for every user (example url: `example.com/author/author-name`). Typically these archives show posts by that user and possibly some biographical information. So many plugins and themes use author archives for other purposes - account page, profile page, etc. For that reason disabling author archives is currently only available with this plugin via a filter.
 
-If you're not using the built-in WP author archives for other purposes and would like to disable them entirely, add the following to your theme functions.php file or a custom plugin file:
+If you're not using the built-in WP author archives for other purposes and would like to disable them entirely, add the following to your theme `functions.php` file or a custom plugin file:
 
 `add_filter( 'dwpb_disable_author_archives', '__return_true' );`.
 
