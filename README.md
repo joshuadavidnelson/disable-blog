@@ -105,7 +105,7 @@ All contributions are welcomed and considered, please refer to [contributing.md]
 ### Pull requests
 All pull requests should be directed at the `develop` branch, and will be reviewed prior to merging. No pull requests will be merged with failing tests, but it's okay if you don't initially pass tests. Please create a draft pull request for proof of concept code or changes you'd like to have input on prior to review.
 
-Please make on a branch specific to a single issue or feature. For instance, to suggest a solution to an issue please create fork with a branch like `issue-894`. Or, it proposing a new feature, create a fork with the branch name indicating the feature like `feature-example-bananas`
+For instance, to suggest a solution to an issue please create fork with a branch like `issue-42`. Or, if you're proposing a new feature, create a fork with the branch name indicating the feature like `feature-example-bananas`
 
 All improvements are merged into `develop` and then queued up for release before being merged into `stable`. Releases are deployed via github actions to wordpress.org on tagging a new release.
 
