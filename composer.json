@@ -1,0 +1,30 @@
+{
+  "name": "joshuadavidnelson/disable-blog",
+  "description": "A comprehensive WordPress plugin disabling blog-related functionality.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0+",
+  "homepage": "https://disable.blog",
+  "authors": [
+    {
+      "name": "Joshua Nelson",
+      "email": "josh@joshuadnelson.com",
+      "homepage": "https://joshuadnelson.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "support": {
+    "issues": "https://github.com/joshuadavidnelson/disable-blog/issues/",
+    "forum": "https://wordpress.org/support/plugin/disable-blog/",
+    "source": "https://github.com/joshuadavidnelson/disable-blog/"
+  },
+  "require": {
+    "php": ">=8.3",
+    "composer/installers": "^2.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true,
+    }
+  }
+}
