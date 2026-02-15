@@ -77,7 +77,7 @@ class Disable_Blog_Functions {
 		wp_parse_str( $_SERVER['QUERY_STRING'], $query_vars ); // phpcs:ignore
 
 		/**
-		 * Filter for allowed queary string variables.
+		 * Filter for allowed query string variables.
 		 *
 		 * @since 0.5.0
 		 * @param array $allowed_query_vars an array of the allowed query variable keys.
@@ -137,7 +137,7 @@ class Disable_Blog_Functions {
 	 * which is the WP core default for safe redirects.
 	 *
 	 * @since 0.5.0
-	 * @param string $url    the fallback url.
+	 * @param string $url the fallback url.
 	 * @return string
 	 */
 	public function wp_safe_redirect_fallback( $url ) {

@@ -92,6 +92,7 @@ class Disable_Blog_Admin {
 	 * @since 0.4.2
 	 * @since 0.4.9 removed rest api specific filter and updated function
 	 *              for disabling all public-facing aspects of the 'post' post type.
+	 * @return void
 	 */
 	public function modify_post_type_arguments() {
 
