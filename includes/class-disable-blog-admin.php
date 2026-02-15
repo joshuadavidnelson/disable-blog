@@ -549,7 +549,7 @@ class Disable_Blog_Admin {
 		 *               the redirect url used for this page.
 		 * @param bool $bool Defaults to false, keeping the writing page visible.
 		 */
-		return apply_filters( 'dwpb_remove_options_writing', false );
+		return (bool) apply_filters( 'dwpb_remove_options_writing', false );
 	}
 
 	/**
