@@ -28,7 +28,6 @@ class Disable_Blog_I18n {
 	 * @since 0.4.0
 	 */
 	public function load_plugin_textdomain() {
-
 		load_plugin_textdomain(
 			'disable-blog',
 			false,

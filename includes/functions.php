@@ -52,7 +52,6 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
 		$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
 
 		wp_cache_set( $cache_name, $post_types_with_feature, 'post-types-by-feature' );
-
 	}
 
 	/**

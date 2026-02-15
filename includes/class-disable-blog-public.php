@@ -52,7 +52,6 @@ class Disable_Blog_Public {
 	 * @param string $version     The version of this plugin.
 	 */
 	public function __construct( $plugin_name, $version ) {
-
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 		$this->functions   = new Disable_Blog_Functions();
@@ -324,7 +323,6 @@ class Disable_Blog_Public {
 	 * @return bool
 	 */
 	public function feed_links_show_posts_feed( $show ) {
-
 		return false;
 	}
 
@@ -550,7 +548,6 @@ class Disable_Blog_Public {
 
 			// Only show the sitemap if there are post types support on the archives.
 			$disable_sitemap = empty( $author_archives_supported );
-
 		}
 
 		/**
