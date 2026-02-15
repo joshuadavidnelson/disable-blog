@@ -1,8 +1,7 @@
-includes:
-    - vendor/szepeviktor/phpstan-wordpress/extension.neon
 parameters:
     level: 5
     inferPrivatePropertyTypeFromConstructor: true
+    treatPhpDocTypesAsCertain: false
     scanFiles:
         - tests/bootstrap.php
         - includes/functions.php
@@ -11,8 +10,6 @@ parameters:
     paths:
         - includes/
     ignoreErrors:
-        # Filtered value can return a bool, so this error is incorrect.
-        - '#^Else branch is unreachable because ternary operator condition is always true\.$#'
         # Method can return bool via filter.
         - '#^Method Disable_Blog_Public::get_disabled_xmlrpc_methods\(\) never returns bool so it can be removed from the return type\.#'
         # errors we don't care about.
