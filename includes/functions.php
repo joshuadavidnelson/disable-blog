@@ -28,7 +28,7 @@
 function dwpb_post_types_with_feature( $feature, $args = array() ) {
 
 	// Bail if no feature is passed.
-	if ( ! $feature && ! is_string( $feature ) ) {
+	if ( ! $feature || ! is_string( $feature ) ) {
 		return false;
 	}
 
