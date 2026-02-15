@@ -94,7 +94,7 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	}
 
 	// We just need the taxonomy name.
-	if ( is_object( $taxonomy ) ) {
+	if ( is_object( $taxonomy ) ) { // @phpstan-ignore function.alreadyNarrowedType
 		$taxonomy = $taxonomy->name;
 	}
 
