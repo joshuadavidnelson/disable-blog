@@ -28,7 +28,7 @@
 function dwpb_post_types_with_feature( $feature, $args = array() ) {
 
 	// Bail if no feature is passed.
-	if ( ! $feature ) {
+	if ( ! $feature && ! is_string( $feature ) ) {
 		return false;
 	}
 
@@ -89,12 +89,12 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
  */
 function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 
-	if ( ! $taxonomy || ! is_object( $taxonomy ) ) {
+	if ( ! $taxonomy || ( ! is_object( $taxonomy ) && ! is_string( $taxonomy ) ) ) {
 		return false;
 	}
 
 	// We just need the taxonomy name.
-	if ( is_object( $taxonomy ) ) { // @phpstan-ignore function.alreadyNarrowedType
+	if ( is_object( $taxonomy ) ) {
 		$taxonomy = $taxonomy->name;
 	}
 
