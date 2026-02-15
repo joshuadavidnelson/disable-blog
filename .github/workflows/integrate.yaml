@@ -12,10 +12,10 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        php-versions: ['7.4', '8.0', '8.1', '8.2.']
+        php-versions: ['7.4', '8.1', '8.2', '8.3', '8.4']
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v3"
+      uses: "actions/checkout@v4"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
@@ -28,11 +28,11 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v3"
+      uses: "actions/checkout@v4"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: "8.1"
+        php-version: "8.4"
     - name: "Install PHPCS"
       run: |
         composer require --no-plugins --dev wp-coding-standards/wpcs
@@ -46,11 +46,11 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v3"
+      uses: "actions/checkout@v4"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: "8.1"
+        php-version: "8.4"
     - name: "Install PHPStan"
       run: "composer require --dev szepeviktor/phpstan-wordpress"
     - name: "Run PHPStan"
