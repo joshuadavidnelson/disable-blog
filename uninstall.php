@@ -33,7 +33,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' )
 		|| empty( $_REQUEST )
 		|| ! isset( $_REQUEST['plugin'] )
 		|| ! isset( $_REQUEST['action'] )
-		|| strpos( $_REQUEST['plugin'], 'disable-blog.php' ) === false
+		|| strpos( $_REQUEST['plugin'], 'disable-blog.php' ) === false // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		|| 'delete-plugin' !== $_REQUEST['action']
 		|| ! check_ajax_referer( 'updates', '_ajax_nonce' )
 		|| ! current_user_can( 'activate_plugins' )
@@ -106,7 +106,7 @@ if ( is_multisite() ) {
 		global $wpdb;
 
 		// Get array of Site/Blog IDs from the database.
-		$blogs = $wpdb->get_results( "SELECT blog_id FROM {$wpdb->blogs}", ARRAY_A );
+		$blogs = $wpdb->get_results( "SELECT blog_id FROM {$wpdb->blogs}", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( $blogs ) {
 			foreach ( $blogs as $blog ) {

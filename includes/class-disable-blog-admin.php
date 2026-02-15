@@ -1023,7 +1023,7 @@ class Disable_Blog_Admin {
 	 */
 	public function site_status_tests( $tests ) {
 
-		if ( isset( $tests['direct']['rest_availability'] ) && is_callable( array( $this, 'get_test_rest_availability' ) ) ) {
+		if ( isset( $tests['direct']['rest_availability'] ) ) {
 			$tests['direct']['rest_availability']['test'] = array( $this, 'get_test_rest_availability' );
 		}
 
@@ -1044,21 +1044,21 @@ class Disable_Blog_Admin {
 	public function get_test_rest_availability() {
 
 		$result = array(
-			'label'       => __( 'The REST API is available' ),
+			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			'status'      => 'good',
 			'badge'       => array(
-				'label' => __( 'Performance' ),
+				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'color' => 'blue',
 			),
 			'description' => sprintf(
 				'<p>%s</p>',
-				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' )
+				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			),
 			'actions'     => '',
 			'test'        => 'rest_availability',
 		);
 
-		$cookies = wp_unslash( $_COOKIE );
+		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
 		$timeout = 10;
 		$headers = array(
 			'Cache-Control' => 'no-cache',
@@ -1086,21 +1086,21 @@ class Disable_Blog_Admin {
 			$url
 		);
 
-		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) );
+		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
 
 		if ( is_wp_error( $r ) ) {
 			$result['status'] = 'critical';
 
-			$result['label'] = __( 'The REST API encountered an error' );
+			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 
 			$result['description'] .= sprintf(
 				'<p>%s</p>',
 				sprintf(
 					'%s<br>%s',
-					__( 'The REST API request failed due to an error.' ),
+					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					sprintf(
 						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
-						__( 'Error: %1$s (%2$s)' ),
+						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 						$r->get_error_message(),
 						$r->get_error_code()
 					)
@@ -1109,13 +1109,13 @@ class Disable_Blog_Admin {
 		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
 			$result['status'] = 'recommended';
 
-			$result['label'] = __( 'The REST API encountered an unexpected result' );
+			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 
 			$result['description'] .= sprintf(
 				'<p>%s</p>',
 				sprintf(
 					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
-					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ),
+					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					wp_remote_retrieve_response_code( $r ),
 					esc_html( wp_remote_retrieve_body( $r ) )
 				)
@@ -1126,13 +1126,13 @@ class Disable_Blog_Admin {
 			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
 				$result['status'] = 'recommended';
 
-				$result['label'] = __( 'The REST API did not behave correctly' );
+				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 
 				$result['description'] .= sprintf(
 					'<p>%s</p>',
 					sprintf(
 						/* translators: %s: The name of the query parameter being tested. */
-						__( 'The REST API did not process the %s query parameter correctly.' ),
+						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 						'<code>context</code>'
 					)
 				);
@@ -1177,11 +1177,11 @@ class Disable_Blog_Admin {
 
 		$args  = array(
 			'fields'                 => 'ids',
-			'posts_per_page'         => 500,
+			'posts_per_page'         => 100,
 			'post_type'              => $post_type,
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
-			'tax_query'              => array(
+			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 				array(
 					'taxonomy' => $taxonomy,
 					'field'    => 'id',
