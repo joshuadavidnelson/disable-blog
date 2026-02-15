@@ -33,11 +33,7 @@ class Disable_Blog_Integrations {
 		}
 
 		// Check if the the plugin is active.
-		if ( is_plugin_active( $plugin ) ) {
-			return true;
-		}
-
-		return false;
+		return is_plugin_active( $plugin );
 	}
 
 	/**
@@ -47,13 +43,7 @@ class Disable_Blog_Integrations {
 	 * @return bool
 	 */
 	public function is_disable_comments_active() {
-
-		// Check if the Disable Comments plugin is active.
-		if ( $this->is_plugin_active( 'disable-comments/disable-comments.php' ) || class_exists( 'Disable_Comments' ) ) {
-			return true;
-		}
-
-		return false;
+		return ( $this->is_plugin_active( 'disable-comments/disable-comments.php' ) || class_exists( 'Disable_Comments' ) );
 	}
 
 	/**
@@ -63,13 +53,7 @@ class Disable_Blog_Integrations {
 	 * @return bool
 	 */
 	public function is_woocommerce_active() {
-
-		// Check if the Disable Comments plugin is active.
-		if ( $this->is_plugin_active( 'woocommerce/woocommerce.php' ) || function_exists( 'WC' ) ) {
-			return true;
-		}
-
-		return false;
+		return ( $this->is_plugin_active( 'woocommerce/woocommerce.php' ) || function_exists( 'WC' ) );
 	}
 
 	/**
