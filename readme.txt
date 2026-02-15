@@ -2,10 +2,10 @@
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
 Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
-Requires at least: 5.3
+Requires at least: 5.9
 Requires PHP: 7.4
-Tested up to: 6.4.2
-Stable tag: 0.5.4
+Tested up to: 6.9
+Stable tag: 0.5.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,6 +86,16 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 
 == Changelog ==
+
+= 0.5.5 =
+- Tested up to WordPress 6.9.1
+- Tested up to PHP 8.4
+- Bump minimum WordPress version to 5.9
+- Add composer support.
+- Upgrade Github actions to `actions/checkout@v4`
+- Fix issue with Query Loop block, now defaults to `page` type.
+- Filter queries to replace 'post' with 'page' so other queries fail gracefully
+- Remove `latest post` and `archive` block
 
 = 0.5.4 =
 - Tested up to WordPress 6.4.2.
@@ -297,6 +307,16 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.5 =
+- Tested up to WordPress 6.9.1
+- Tested up to PHP 8.4
+- Bump minimum WordPress version to 5.9
+- Add composer support.
+- Upgrade Github actions to `actions/checkout@v4`
+- Fix issue with Query Loop block, now defaults to `page` type.
+- Filter queries to replace 'post' with 'page' so other queries fail gracefully
+- Remove `latest post` and `archive` block
 
 = 0.5.4 =
 - Tested up to WordPress 6.4.2.
