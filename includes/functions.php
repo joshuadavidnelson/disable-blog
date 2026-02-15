@@ -28,7 +28,7 @@
 function dwpb_post_types_with_feature( $feature, $args = array() ) {
 
 	// Bail if no feature is passed.
-	if ( ! $feature || ! is_string( $feature ) ) {
+	if ( ! $feature ) {
 		return false;
 	}
 
@@ -89,16 +89,17 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
  */
 function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names' ) {
 
-	$post_types = get_post_types( $args, $output );
+	if ( ! $taxonomy || ! is_object( $taxonomy ) ) {
+		return false;
+	}
 
 	// We just need the taxonomy name.
 	if ( is_object( $taxonomy ) ) {
 		$taxonomy = $taxonomy->name;
-
-		// If it's not an object or a string, it won't work, so send it back.
-	} elseif ( ! is_string( $taxonomy ) ) {
-		return false;
 	}
+
+	// Get all the post types.
+	$post_types = get_post_types( $args, $output );
 
 	// setup the finished product.
 	$post_types_with_tax = array();
@@ -108,10 +109,8 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		if ( is_object( $post_type ) ) {
 			$type = $post_type->name;
 			// If post types are strings.
-		} elseif ( is_string( $post_type ) ) {
-			$type = $post_type;
 		} else {
-			$type = '';
+			$type = (string) $post_type;
 		}
 
 		// is the post included in this post type, but not 'post' type.
