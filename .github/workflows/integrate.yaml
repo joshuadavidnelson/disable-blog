@@ -20,8 +20,10 @@ jobs:
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: ${{ matrix.php-versions }}
+    - name: "Install dependencies"
+      run: "composer install --ignore-platform-reqs"
     - name: "PHP lint"
-      run: "find *.php includes/ -type f -name '*.php' -print0 | xargs -0 -L1 -P4 -- php -l"
+      run: "composer lint"
 
   coding-standard:
     name: "Check coding standard"
