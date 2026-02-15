@@ -35,11 +35,9 @@ jobs:
         php-version: "8.4"
     - name: "Install PHPCS"
       run: |
-        composer require --no-plugins --dev wp-coding-standards/wpcs
-        composer config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
-        composer run post-install-cmd
+        composer install
     - name: "Run PHPCS"
-      run: "vendor/bin/phpcs --standard=WordPress-Core *.php includes/"
+      run: "composer phpcs"
 
   static-analysis:
     name: "Run static analysis"

@@ -15,6 +15,9 @@
     "phpstan": [
       "./vendor/bin/phpstan analyse --memory-limit=2048M"
     ],
+    "phpcs": [
+      "./vendor/bin/phpcs"
+    ],
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
