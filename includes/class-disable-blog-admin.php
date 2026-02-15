@@ -1432,4 +1432,25 @@ class Disable_Blog_Admin {
 
 		return $available_tags;
 	}
+
+	/**
+	 * Filter the block settings to change the post type from 'post' to 'page'.
+	 *
+	 * @param array $metadata The block metadata.
+	 * @return array
+	 */
+	public function filter_block_type_metadata( $metadata ) {
+
+		// Bail if the metadata is not configured as expected.
+		if ( ! isset( $metadata['name'] ) || ! is_string( $metadata['name'] ) ) {
+			return $metadata;
+		}
+
+		// If the block is the query block, change the post type to 'page'.
+		if ( 'core/query' === $metadata['name'] && isset( $metadata['attributes']['query']['default'] ) ) {
+			$metadata['attributes']['query']['default']['postType'] = 'page';
+		}
+
+		return $metadata;
+	}
 }
