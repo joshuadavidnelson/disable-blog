@@ -24,7 +24,7 @@
     "source": "https://github.com/joshuadavidnelson/disable-blog/"
   },
   "require": {
-    "php": ">=8.3",
+    "php": ">=7.4",
     "composer/installers": "^2.0"
   },
   "config": {
