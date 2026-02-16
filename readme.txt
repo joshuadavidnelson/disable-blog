@@ -1,7 +1,7 @@
 === Disable Blog ===
 Contributors: joshuadnelson
 Donate link: https://joshuadnelson.com/donate/
-Tags: remove blog, disable blog, disable settings, disable blogging, disable feeds, posts, feeds, disable rest api, disable xml-rpc, disable author archives
+Tags: disable blog, disable posts, disable blogging, disable settings, remove blog
 Requires at least: 5.9
 Requires PHP: 7.4
 Tested up to: 6.9
