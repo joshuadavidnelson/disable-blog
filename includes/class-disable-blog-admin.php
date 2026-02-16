@@ -1436,6 +1436,7 @@ class Disable_Blog_Admin {
 	/**
 	 * Filter the block settings to change the post type from 'post' to 'page'.
 	 *
+	 * @since 0.5.5
 	 * @param array $metadata The block metadata.
 	 * @return array
 	 */
