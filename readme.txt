@@ -91,11 +91,9 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Tested up to WordPress 6.9.1
 - Tested up to PHP 8.4
 - Bump minimum WordPress version to 5.9
-- Add composer support.
-- Upgrade Github actions to `actions/checkout@v4`
-- Fix issue with Query Loop block, now defaults to `page` type.
-- Filter queries to replace 'post' with 'page' so other queries fail gracefully
-- Remove `latest post` and `archive` block
+- Add composer support, move over to composer for phpcs, phpstan, and linting checks
+- Upgrade Github actions to `actions/checkout@v4` running on php `8.4`
+- Fix issue with Query Loop block, now defaults to `page` type instead of 'post' when 'post' is disabled.
 
 = 0.5.4 =
 - Tested up to WordPress 6.4.2.
@@ -312,11 +310,9 @@ A bunch of stuff:
 - Tested up to WordPress 6.9.1
 - Tested up to PHP 8.4
 - Bump minimum WordPress version to 5.9
-- Add composer support.
-- Upgrade Github actions to `actions/checkout@v4`
-- Fix issue with Query Loop block, now defaults to `page` type.
-- Filter queries to replace 'post' with 'page' so other queries fail gracefully
-- Remove `latest post` and `archive` block
+- Add composer support, move over to composer for phpcs, phpstan, and linting checks
+- Upgrade Github actions to `actions/checkout@v4` running on php `8.4`
+- Fix issue with Query Loop block, now defaults to `page` type instead of 'post' when 'post' is disabled.
 
 = 0.5.4 =
 - Tested up to WordPress 6.4.2.
