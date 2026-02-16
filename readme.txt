@@ -56,7 +56,7 @@ Please feel free to contribute! Refer to the [Github Repo](https://github.com/jo
 
 This section describes how to install the plugin and get it working.
 
-1. Add the plugin viw Plugins > Add New, or manually upload the `disable-blog` plugin folder to the `/wp-content/plugins/` directory.
+1. Add the plugin via Plugins > Add New, or manually upload the `disable-blog` plugin folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress
 
 
