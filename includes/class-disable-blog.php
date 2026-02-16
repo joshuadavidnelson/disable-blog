@@ -266,6 +266,9 @@ class Disable_Blog {
 		// Remove and update available permalink structure tags.
 		$this->loader->add_filter( 'available_permalink_structure_tags', $plugin_admin, 'available_permalink_structure_tags', 10, 1 );
 
+		// Remove the "post" post type from the query block in the metadata settings.
+		$this->loader->add_filter( 'block_type_metadata', $plugin_admin, 'filter_block_type_metadata', 10, 1 );
+
 		// Only run comment related functions if comments are supported.
 		if ( dwpb_post_types_with_feature( 'comments' ) ) {
 

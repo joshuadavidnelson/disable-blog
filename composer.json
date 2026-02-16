@@ -1,0 +1,53 @@
+{
+  "name": "joshuadavidnelson/disable-blog",
+  "description": "A comprehensive WordPress plugin disabling blog-related functionality.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0+",
+  "homepage": "https://disable.blog",
+  "authors": [
+    {
+      "name": "Joshua Nelson",
+      "email": "josh@joshuadnelson.com",
+      "homepage": "https://joshuadnelson.com"
+    }
+  ],
+  "scripts": {
+    "phpstan": [
+      "./vendor/bin/phpstan analyse --memory-limit=2048M"
+    ],
+    "phpcs": [
+      "./vendor/bin/phpcs"
+    ],
+    "lint": [
+      "find *.php includes/ -type f -name '*.php' -print0 | xargs -0 -L1 -P4 -- php -l"
+    ]
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "support": {
+    "issues": "https://github.com/joshuadavidnelson/disable-blog/issues/",
+    "forum": "https://wordpress.org/support/plugin/disable-blog/",
+    "source": "https://github.com/joshuadavidnelson/disable-blog/"
+  },
+  "require": {
+    "php": ">=7.4",
+    "composer/installers": "^2.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": true
+    }
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "^3.11",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/extension-installer": "^1.4",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7",
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
+    "szepeviktor/phpstan-wordpress": "^2.0",
+    "sirbrillig/phpcs-variable-analysis": "^2.12",
+    "automattic/vipwpcs": "^3.0"
+  }
+}

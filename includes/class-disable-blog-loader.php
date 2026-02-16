@@ -44,7 +44,6 @@ class Disable_Blog_Loader {
 	 * @since 0.4.0
 	 */
 	public function __construct() {
-
 		$this->actions = array();
 		$this->filters = array();
 	}
