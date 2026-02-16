@@ -81,11 +81,10 @@ class Disable_Blog_Functions {
 		if ( ! empty( $allowed_query_vars ) ) {
 
 			// Only keep the allowed query vars, if there are any.
-			$query_vars = array_intersect_key( $query_vars, array_flip( $allowed_query_vars ) );
-
 			// Sanitizing the keys and filtering out any empty values.
 			// Let add_query_arg handle the sanitization of the values.
-			$query_vars = array_filter( array_map( 'sanitize_key', $query_vars ) );
+			$valid_query_var_keys = array_flip( $allowed_query_vars );
+			$query_vars           = array_filter( array_intersect_key( $query_vars, $valid_query_var_keys ) );
 
 			// if we have any query variables, add it to the url.
 			if ( ! empty( $query_vars ) ) {
