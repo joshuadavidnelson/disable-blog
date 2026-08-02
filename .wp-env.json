@@ -7,5 +7,10 @@
 	"testsEnvironment": false,
 	"plugins": [
 		"."
-	]
+	],
+	"port": 8888,
+	"testsPort": 8889,
+	"mappings": {
+		"wp-content/mu-plugins": "./tests/e2e/fixtures"
+	}
 }
