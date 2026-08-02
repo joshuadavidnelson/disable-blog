@@ -12,10 +12,18 @@
   "scripts": {
     "env": "wp-env",
     "env:start": "wp-env start",
-    "env:stop": "wp-env stop"
+    "env:stop": "wp-env stop",
+    "env:shell": "wp-env run tests-cli /bin/bash",
+    "env:debuglog": "wp-env run tests-cli tail -f /var/www/html/wp-content/debug.log",
+    "test:e2e": "wp-scripts test-e2e --config playwright.config.ts",
+    "test:e2e:ui": "wp-scripts test-e2e --config playwright.config.ts --ui",
+    "test:e2e:core-version": "node ./tests/bin/set-core-version.js"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "@wordpress/env": "^10.39.0"
+    "@playwright/test": "^1.62.0",
+    "@types/node": "^20.17.10",
+    "@wordpress/e2e-test-utils-playwright": "^1.51.0",
+    "@wordpress/env": "^11.11.0",
+    "@wordpress/scripts": "^33.0.0"
   }
 }
