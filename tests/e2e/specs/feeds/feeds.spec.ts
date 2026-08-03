@@ -4,28 +4,29 @@
  * COVERAGE: `Disable_Blog_Public::disable_feed()`, hooked at priority 1 onto
  * `do_feed`, `do_feed_rdf`, `do_feed_rss`, `do_feed_rss2`, and `do_feed_atom`
  * (see `Disable_Blog::define_public_hooks()`), with two accepted args so it
- * receives the `$is_comment_feed` flag core passes. It only acts when
- * `isset( $post->post_type ) && 'post' === $post->post_type` — i.e. when the
- * global `$post` WordPress resolved for the current feed query is itself a
- * 'post'. This spec exercises that function with every plugin filter left at
- * its shipped default (no `dwpb_disable_feed`, `dwpb_redirect_feeds`, or
- * `dwpb_feed_message` override), so the behaviour proven here is exactly what
- * a fresh install does out of the box.
+ * receives the `$is_comment_feed` flag core passes. As of 0.5.6 it no longer
+ * decides whether to act by inspecting the global `$post`; it delegates to
+ * the private `is_post_feed_request()`, which reads `$wp->query_vars` (the
+ * raw, request-derived query vars populated once in `WP::parse_request()`)
+ * to determine whether the current request is for the site's 'post' feed,
+ * as opposed to a feed scoped to a specific singular object or another post
+ * type — see that method's own docblock for why it deliberately avoids
+ * `$post` and `$wp_query`. This spec exercises `disable_feed()` with every
+ * plugin filter left at its shipped default (no `dwpb_disable_feed`,
+ * `dwpb_redirect_feeds`, or `dwpb_feed_message` override), so the behaviour
+ * proven here is exactly what a fresh install does out of the box.
  *
- * WHY `$post` IS POPULATED FOR A NON-SINGULAR FEED QUERY: this is the one
- * piece of core behaviour every test below leans on, so it is worth stating
- * once here instead of in every test. `WP_Query::get_posts()` sets
- * `$this->post = reset( $this->posts )` whenever the query returns any posts
- * at all — not only for singular queries — and `WP::register_globals()`
- * copies that onto the global `$post`. So a request for the site's main feed
- * (a list query, not a singular one) still populates `$post` with the most
- * recent published post, and `disable_feed()`'s `'post' === $post->post_type`
- * check sees it. That is why this file's `beforeAll` seeds at least one
- * published post: without one, `$post` is null and the main-feed tests below
- * would silently degenerate into the empty-feed edge case covered by
- * `feeds-empty-site.spec.ts` instead of proving the redirect. Do not delete
- * that seeded post as "unused" — every test in the first block depends on it
- * existing, even the ones that never reference it by variable name.
+ * WHY THIS FILE SEEDS A POST: `is_post_feed_request()` decides purely from
+ * the request's own query vars, so the main-feed redirect tests below don't
+ * actually need a post to exist for the redirect logic itself — see
+ * `feeds-empty-site.spec.ts`, which proves `/feed/` still redirects on a
+ * site with zero posts. The seeded post here instead serves two narrower,
+ * unrelated purposes: "a post's own feed redirects" needs a real permalink
+ * to request, and the leak-specific assertion in the query-string block
+ * needs a known title to confirm the response body does *not* contain. Do
+ * not delete that seeded post as "unused" — those two tests depend on it,
+ * even though most of the other tests in this block never reference it by
+ * variable name.
  *
  * REQUEST LAYER, NOT NAVIGATION: redirect assertions go through
  * `expectRedirect()` from `config/redirects.ts`, for the same reason
@@ -38,18 +39,21 @@
  * fixture stays admin-authenticated regardless, so `beforeAll`/`afterAll` can
  * still seed and tear down content.
  *
- * DEFECT N1 (includes/class-disable-blog-public.php:258): query-string feed
- * URLs (`/?feed=rss2` and friends) ARE covered below, but only for the
- * CORRECTED behaviour, and those assertions are expected to FAIL until N1 is
- * fixed. `disable_feed()` guards on
+ * REGRESSION GUARD, N1 (includes/class-disable-blog-public.php, see
+ * `is_post_feed_request()`): query-string feed URLs (`/?feed=rss2` and
+ * friends) are covered below, alongside the pretty-permalink forms. Before
+ * the fix landed in this same PR, `disable_feed()` guarded on
  * `isset( $post->post_type ) && 'post' === $post->post_type`. With a static
  * front page, the global `$post` WordPress resolves for a query-string feed
- * request is the Home *page*, not a post, so the guard bails and core renders
- * the feed today — leaking real post content (a `200` with an `<item>`
- * containing the post title) instead of redirecting. The tests below assert
- * the fixed target behaviour: a `301` to `homeUrl`, same as the
- * pretty-permalink forms, plus a leak-specific assertion that the response
- * body never contains a seeded post's title, independent of status code.
+ * request is the Home *page*, not a post, so that guard bailed and core
+ * rendered the feed — leaking real post content (a `200` with an `<item>`
+ * containing the post title) instead of redirecting. The fix replaced that
+ * guard with `is_post_feed_request()`, which decides from the request's own
+ * query vars instead of the global `$post`. The tests below now guard
+ * against a regression back to the old behaviour: a `301` to `homeUrl`,
+ * same as the pretty-permalink forms, plus a leak-specific assertion that
+ * the response body never contains a seeded post's title, independent of
+ * status code.
  */
 
 /**
@@ -81,9 +85,10 @@ test.describe( 'feeds: default state', () => {
 		homeUrl = config.homeUrl;
 		frontPageUrl = config.frontPageUrl;
 
-		// Load-bearing — see the file docblock's "WHY $post IS POPULATED"
-		// section. Every main-feed test below depends on $post resolving to
-		// a 'post', which requires at least one published post to exist.
+		// See the file docblock's "WHY THIS FILE SEEDS A POST" section — this
+		// is load-bearing for "a post's own feed redirects" (needs a real
+		// permalink) and the query-string leak assertion below (needs a
+		// known title), not for the redirect logic itself.
 		seededPost = await seedPost( requestUtils, {
 			title: uniqueTitle( 'feeds post' ),
 		} );
@@ -131,8 +136,8 @@ test.describe( 'feeds: default state', () => {
 
 	test( 'feed format variants all redirect', async ( { request } ) => {
 		// Pretty-permalink forms only — the `/?feed=...` query-string form has
-		// its own coverage in the "Defects (currently failing)" block below,
-		// see the file docblock's "DEFECT N1" note.
+		// its own coverage in the "query-string feed URLs" block below, see
+		// the file docblock's "REGRESSION GUARD, N1" note.
 		const feedPaths = [ '/feed/', '/feed/rss2/', '/feed/atom/', '/feed/rdf/' ];
 
 		for ( const feedPath of feedPaths ) {
@@ -165,21 +170,22 @@ test.describe( 'feeds: default state', () => {
 	} );
 
 	/* -------------------------------------------------------------------
-	 * Defects (currently failing): corrected behaviour for N1
+	 * Query-string feed URLs — regression guard for N1
 	 * ---------------------------------------------------------------- */
 
-	test( 'DEFECT N1: a query-string feed URL redirects to the home URL', async ( {
+	test( 'a query-string feed URL redirects to the home URL', async ( {
 		request,
 	} ) => {
-		// DEFECT N1: includes/class-disable-blog-public.php:258 — with a
-		// static front page, $post resolves to the Home Page for a
-		// query-string feed request, so disable_feed()'s
-		// 'post' === $post->post_type guard bails and this 200s with real
-		// feed content today instead of redirecting.
+		// Regression guard for N1 — see the file docblock. Before the fix
+		// landed in this PR, disable_feed() guarded on
+		// 'post' === $post->post_type, and with a static front page $post
+		// resolves to the Home page (not a post) for a query-string feed
+		// request, so that guard bailed and this 200'd with real feed
+		// content instead of redirecting.
 		await expectRedirect( request, '/?feed=rss2', homeUrl );
 	} );
 
-	test( 'DEFECT N1: every query-string feed format redirects to the home URL', async ( {
+	test( 'every query-string feed format redirects to the home URL', async ( {
 		request,
 	} ) => {
 		const feedFormats = [ 'feed', 'rdf', 'rss2', 'atom' ];
@@ -189,13 +195,13 @@ test.describe( 'feeds: default state', () => {
 		}
 	} );
 
-	test( 'DEFECT N1: a query-string feed URL never leaks post content', async ( {
+	test( 'a query-string feed URL never leaks post content', async ( {
 		request,
 	} ) => {
-		// DEFECT N1: the assertion that actually encodes "no content leak",
-		// independent of status code — a fix that redirected but somehow
-		// still emitted a body containing the post would still be a leak,
-		// which the two tests above (Location-header only) would not catch.
+		// The assertion that actually encodes "no content leak", independent
+		// of status code — a redirect response that somehow still emitted a
+		// body containing the post would still be a leak, which the two
+		// tests above (Location-header only) would not catch.
 		const response = await request.get( '/?feed=rss2', { maxRedirects: 0 } );
 		const body = await response.text();
 

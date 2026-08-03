@@ -271,7 +271,7 @@ class Disable_Blog_Admin {
 				 *
 				 * @since 0.4.0
 				 * @since 0.5.0 combine common filters.
-				 * @param string $url the url to redirct to, defaults to dashboard.
+				 * @param string $url the url to redirect to, defaults to dashboard.
 				 */
 				$redirect_url = apply_filters( $filter, $url );
 
