@@ -5,22 +5,33 @@
  * docblock for why 'page'/'attachment' supporting comments by default keeps
  * this branch dead code from this suite's point of view.
  *
- * COVERAGE: `assets/js/disable-blog-admin.js`'s Dashboard (`'index'`) case
- * does `document.querySelector( '.welcome-icon.welcome-comments' ).parentNode`
+ * REGRESSION GUARD: `assets/js/disable-blog-admin.js`'s Dashboard (`'index'`)
+ * case used to do
+ * `document.querySelector( '.welcome-icon.welcome-comments' ).parentNode`
  * (:14) whenever `dwpb.commentsSupported` is false. WordPress 6.1+ no longer
  * renders those classes on the Dashboard welcome panel, so the selector
- * returns `null` and `.parentNode` throws a `TypeError` — an uncaught
- * exception inside the `DOMContentLoaded` handler, which silently kills
+ * returned `null` and `.parentNode` threw a `TypeError` — an uncaught
+ * exception inside the `DOMContentLoaded` handler, which silently killed
  * every later `case` in that same handler for the rest of the page load
- * (DEFECT D6).
+ * (DEFECT D6, now fixed).
  *
- * DEFECT D6: both tests below assert the CORRECTED behaviour and are
- * expected to FAIL until D6 is fixed:
+ * Both tests below guard against that regression:
  *  - no uncaught `TypeError` on `index.php` with the toggle on;
  *  - a positive control (`options-writing.php`) proving the script itself
  *    still runs to completion in this same toggle state, so the first
- *    assertion is proven to be about this one broken `case`, not a broken
- *    script file/build/enqueue that would fail everything indiscriminately.
+ *    assertion is proven to be about this one previously-broken `case`, not
+ *    a broken script file/build/enqueue that would fail everything
+ *    indiscriminately.
+ *
+ * OVERLAP WITH `filters/comments-unsupported.spec.ts`: that file's final
+ * test also asserts a clean (error-free) dashboard in this same
+ * `commentsSupported === false` state. The two are deliberately kept
+ * separate rather than merged: this file is scoped to the JS regression
+ * itself (the broken selector, proven with a `pageerror` collector and the
+ * `options-writing.php` control above), while the other file's test is
+ * scoped to the comments-unsupported fixture branch as a whole, of which a
+ * clean dashboard is one of several assertions. Losing either would leave a
+ * gap in what it independently documents.
  *
  * PAGEERROR, NOT CONSOLE: an uncaught exception is delivered to Playwright as
  * a `pageerror` event, not a `console` event — the DevTools protocol keeps
@@ -82,14 +93,15 @@ test.describe( 'admin: dashboard console (commentsSupported === false)', () => {
 		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.commentsUnsupported ] );
 	} );
 
-	test( 'DEFECT D6: the dashboard throws no TypeError when comments are unsupported', async ( {
+	test( 'regression guard (D6): the dashboard throws no TypeError when comments are unsupported', async ( {
 		page,
 		admin,
 	} ) => {
-		// DEFECT D6: assets/js/disable-blog-admin.js:14 —
+		// D6 (fixed): assets/js/disable-blog-admin.js:14 —
 		// document.querySelector( '.welcome-icon.welcome-comments' ) returns
-		// null on modern WordPress, so .parentNode throws a TypeError that
-		// currently kills the rest of the DOMContentLoaded handler.
+		// null on modern WordPress, so .parentNode used to throw a TypeError
+		// that killed the rest of the DOMContentLoaded handler. This guards
+		// against that regression recurring.
 		// PAGEERROR, NOT CONSOLE: an uncaught exception is delivered to
 		// Playwright via the 'pageerror' event, not 'console' -- the DevTools
 		// protocol keeps Runtime.exceptionThrown (uncaught errors) and
@@ -128,15 +140,15 @@ test.describe( 'admin: dashboard console (commentsSupported === false)', () => {
 		).toEqual( [] );
 	} );
 
-	test( 'DEFECT D6 control: the writing screen still hides the post format row in this state', async ( {
+	test( 'regression guard (D6) control: the writing screen still hides the post format row in this state', async ( {
 		page,
 		admin,
 	} ) => {
 		// Proves disable-blog-admin.js as a whole still runs to completion
 		// with the toggle on -- the 'options-writing' case never touches the
-		// Dashboard's broken selector, so this passing is what proves the D6
-		// failure above is specific to the 'index' case, not a broken script
-		// file/enqueue that would fail indiscriminately.
+		// Dashboard's (formerly broken) selector, so this passing is what
+		// proves the assertion above is specific to the 'index' case, not a
+		// broken script file/enqueue that would fail indiscriminately.
 		await admin.visitAdminPage( 'options-writing.php' );
 
 		await expect( formTableRow( page, 'default_post_format' ) ).toBeHidden();
