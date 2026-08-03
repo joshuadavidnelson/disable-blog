@@ -1,0 +1,125 @@
+name: "E2E Tests"
+
+on:
+  pull_request:
+    branches:
+    - stable
+    - develop
+  workflow_dispatch: null
+
+permissions:
+  contents: "read"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: "WP ${{ matrix.wp }} / PHP ${{ matrix.php }} E2E"
+    runs-on: "ubuntu-latest"
+    # A cold wp-env start (image pull + core download) dominates the wall clock;
+    # the suite itself is fast. 60 leaves room for CI retries.
+    timeout-minutes: 60
+    # Development WordPress (master) is upstream code this repo does not
+    # control: it reports, it does not block a merge. Everything else is a
+    # hard gate.
+    continue-on-error: ${{ matrix.wp == 'master' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Explicit combinations rather than a cross product: the support
+        # surface is "current WP on every supported PHP" plus one older WP and
+        # one newer WP on the version we develop against.
+        include:
+        # Lower end of the PHP range that current WordPress runs on. The
+        # declared floor is PHP 7.4 (readme.txt "Requires PHP"), which is
+        # exercised on the older-core leg below rather than against latest.
+        - wp: "latest"
+          php: "8.1"
+        # .wp-env.json phpVersion - parity with local development.
+        - wp: "latest"
+          php: "8.3"
+        # Top of the supported PHP range.
+        - wp: "latest"
+          php: "8.4"
+        # Oldest core the suite runs green on, paired with the declared PHP
+        # floor from readme.txt ("Requires PHP: 7.4") so one leg covers both.
+        # Verified: WP 6.5 / PHP 7.4 passes all tests on a clean install.
+        # WP 6.2 was measured at 15 failures - its admin markup and block
+        # editor differ enough that supporting it would mean version-forking
+        # assertions across several specs. The plugin still declares
+        # "Requires at least: 5.9"; this is the floor the *e2e suite* covers,
+        # not a change to the plugin's supported range.
+        - wp: "6.5"
+          php: "7.4"
+        # Development WordPress, for early warning on upstream core changes.
+        # "master", not "trunk": the WordPress/WordPress mirror has no `trunk`
+        # ref, despite the example in the @wordpress/env README.
+        - wp: "master"
+          php: "8.3"
+
+    env:
+      # wp-env reads this on every invocation (start, run, stop), so it is set
+      # for the whole job rather than written into .wp-env.override.json - the
+      # override file is owned by tests/bin/set-core-version.js.
+      WP_ENV_PHP_VERSION: "${{ matrix.php }}"
+
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v4"
+
+    - name: "Setup Node.js"
+      uses: "actions/setup-node@v4"
+      with:
+        node-version: "22"
+        cache: "npm"
+
+    - name: "Install npm dependencies"
+      run: "npm ci"
+
+    # Only chromium: playwright.config.ts defines a single browser project.
+    - name: "Install the Playwright browser"
+      run: "npx playwright install --with-deps chromium"
+
+    # Writes .wp-env.override.json for a pinned version; "latest" deletes it.
+    - name: "Pin the WordPress core version"
+      env:
+        DWPB_WP_VERSION: "${{ matrix.wp }}"
+      run: |
+        npm run test:e2e:core-version -- "${DWPB_WP_VERSION}"
+        cat .wp-env.override.json || echo "No override written: latest stable."
+
+    # First run on a fresh runner pulls the Docker images and downloads core.
+    - name: "Start wp-env"
+      id: wp-env
+      timeout-minutes: 30
+      run: "npm run env:start"
+
+    # Cheap, and it puts the versions actually under test in the job log.
+    - name: "Report the environment under test"
+      run: |
+        npx wp-env run tests-cli -- wp core version
+        npx wp-env run tests-cli -- php -r 'echo PHP_VERSION, PHP_EOL;'
+
+    - name: "Browser suite"
+      run: "npm run test:e2e"
+
+    - name: "Collect the WordPress debug log"
+      if: failure()
+      continue-on-error: true
+      run: |
+        mkdir -p artifacts
+        npx wp-env run tests-cli -- cat /var/www/html/wp-content/debug.log > artifacts/debug.log
+
+    # WP_ARTIFACTS_PATH (playwright.config.ts) is <repo>/artifacts, and
+    # outputDir is artifacts/test-results - traces, screenshots and videos.
+    # Authentication state lives in playwright/.auth/ and is deliberately not
+    # uploaded: it holds live session cookies.
+    - name: "Upload failure artifacts"
+      if: failure()
+      uses: "actions/upload-artifact@v4"
+      with:
+        name: "e2e-wp${{ matrix.wp }}-php${{ matrix.php }}-${{ github.run_id }}"
+        path: "artifacts/"
+        retention-days: 7
