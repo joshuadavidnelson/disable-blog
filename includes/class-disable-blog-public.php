@@ -550,6 +550,67 @@ class Disable_Blog_Public {
 	}
 
 	/**
+	 * Fallback removal of the X-Pingback HTTP header for WordPress versions
+	 * that send it via a direct header() call rather than the 'wp_headers'
+	 * filter.
+	 *
+	 * On WordPress core versions prior to 6.2, `WP::handle_404()` sends the
+	 * header itself:
+	 *
+	 *     header( 'X-Pingback: ' . get_bloginfo( 'pingback_url', 'display' ) );
+	 *
+	 * (wp-includes/class-wp.php, around line 695 on WP 5.9) and that call
+	 * happens AFTER the 'wp_headers' filter has already run, back in
+	 * `WP::send_headers()`:
+	 *
+	 *     $headers = apply_filters( 'wp_headers', $headers, $this ); // line 503.
+	 *
+	 * so filter_wp_headers() above -- which can only remove the header if it
+	 * shows up in the $headers array passed through that filter -- never gets
+	 * the chance on that core version, and the header ships regardless of the
+	 * 'dwpb_remove_pingback_header' setting. Modern WordPress (6.2+) instead
+	 * populates $headers['X-Pingback'] itself before firing 'wp_headers', so
+	 * filter_wp_headers() alone is sufficient there.
+	 *
+	 * This method is hooked on the 'wp' action, which fires after
+	 * `handle_404()` has already sent its direct header() call, so it can
+	 * strip the header after the fact via header_remove(). On modern core,
+	 * where filter_wp_headers() already removed the header (or it was never
+	 * added to begin with), this is a harmless no-op. Do not remove either
+	 * hook: filter_wp_headers() is required so the 'wp_headers' array (used
+	 * by e.g. REST responses) never contains the header in the first place,
+	 * and this method is required so directly-header()'d output on older
+	 * core is also caught.
+	 *
+	 * Both hooks are gated on the same 'dwpb_remove_pingback_header' filter
+	 * as filter_wp_headers(), so the feature is still controlled by a single
+	 * toggle.
+	 *
+	 * @since 0.5.6
+	 * @see Disable_Blog_Public::filter_wp_headers()
+	 * @link https://core.trac.wordpress.org/browser/tags/5.9/src/wp-includes/class-wp.php
+	 * @return void
+	 */
+	public function remove_pingback_header_fallback() {
+
+		/**
+		 * Toggle the disable pingback header feature.
+		 *
+		 * Same filter used in filter_wp_headers(); see that method's docblock.
+		 *
+		 * @since 0.4.0
+		 * @param bool $bool True to disable the header, false to keep it.
+		 */
+		if ( ! apply_filters( 'dwpb_remove_pingback_header', true ) ) {
+			return;
+		}
+
+		if ( ! headers_sent() ) {
+			header_remove( 'X-Pingback' );
+		}
+	}
+
+	/**
 	 * Remove 'post' post type from sitemaps.
 	 *
 	 * @since 0.4.9

@@ -34,6 +34,7 @@
  *   POST   dwpb-test/v1/create-term           -> wp_insert_term(), optionally assigned to a post
  *   GET    dwpb-test/v1/post-state/<id>       -> status, comment/ping state, permalink for a post
  *   POST   dwpb-test/v1/flush-rewrites        -> flush_rewrite_rules()
+ *   POST   dwpb-test/v1/reading-settings      -> set show_on_front/page_on_front/page_for_posts, returns previous + current
  *   GET    dwpb-test/v1/strings               -> user-facing strings asserted by specs (see note on that function)
  *
  * @package Disable_Blog\TestFixtures
@@ -191,6 +192,58 @@ function dwpb_test_api_setup() {
 		'front_page_url'      => get_permalink( $home_id ),
 		'home_url'            => home_url(),
 		'permalink_structure' => get_option( 'permalink_structure' ),
+	);
+}
+
+/**
+ * Set reading settings (show_on_front, page_on_front, page_for_posts) directly
+ * via update_option(), capturing their previous values first so a spec can
+ * restore exactly what it changed.
+ *
+ * WHY THIS ROUTE EXISTS: WordPress 5.9's core `/wp/v2/settings` REST endpoint
+ * does not expose `show_on_front`, `page_on_front`, or `page_for_posts` -- a
+ * read of that route on 5.9 simply omits those keys, and a write through it
+ * silently no-ops rather than erroring. Specs that set reading settings through
+ * core REST therefore never actually change anything on 5.9, so this route
+ * updates the options directly, the same way the Reading admin screen would.
+ *
+ * Only the args actually provided are applied; any arg left out of the request
+ * is untouched. Returning `previous` alongside `current` is the point of this
+ * route -- it lets a spec restore exactly what it changed in a `finally` block
+ * without having to assume or hardcode defaults.
+ *
+ * @param WP_REST_Request $request Full request object.
+ * @return array<string, array<string, mixed>>
+ */
+function dwpb_test_api_set_reading_settings( WP_REST_Request $request ) {
+
+	$previous = array(
+		'show_on_front'  => get_option( 'show_on_front' ),
+		'page_on_front'  => (int) get_option( 'page_on_front' ),
+		'page_for_posts' => (int) get_option( 'page_for_posts' ),
+	);
+
+	if ( null !== $request->get_param( 'show_on_front' ) ) {
+		update_option( 'show_on_front', (string) $request->get_param( 'show_on_front' ) );
+	}
+
+	if ( null !== $request->get_param( 'page_on_front' ) ) {
+		update_option( 'page_on_front', (int) $request->get_param( 'page_on_front' ) );
+	}
+
+	if ( null !== $request->get_param( 'page_for_posts' ) ) {
+		update_option( 'page_for_posts', (int) $request->get_param( 'page_for_posts' ) );
+	}
+
+	$current = array(
+		'show_on_front'  => get_option( 'show_on_front' ),
+		'page_on_front'  => (int) get_option( 'page_on_front' ),
+		'page_for_posts' => (int) get_option( 'page_for_posts' ),
+	);
+
+	return array(
+		'previous' => $previous,
+		'current'  => $current,
 	);
 }
 
@@ -815,6 +868,31 @@ function dwpb_test_api_register_routes() {
 				flush_rewrite_rules( false );
 
 				return rest_ensure_response( array( 'flushed' => true ) );
+			},
+		)
+	);
+
+	// Set reading settings directly via update_option(), since core REST's
+	// /wp/v2/settings route doesn't expose these keys on WordPress 5.9.
+	register_rest_route(
+		'dwpb-test/v1',
+		'/reading-settings',
+		array(
+			'methods'             => 'POST',
+			'permission_callback' => 'dwpb_test_api_can_manage',
+			'args'                => array(
+				'show_on_front'  => array(
+					'type' => 'string',
+				),
+				'page_on_front'  => array(
+					'type' => 'integer',
+				),
+				'page_for_posts' => array(
+					'type' => 'integer',
+				),
+			),
+			'callback'            => static function ( WP_REST_Request $request ) {
+				return rest_ensure_response( dwpb_test_api_set_reading_settings( $request ) );
 			},
 		)
 	);

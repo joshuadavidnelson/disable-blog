@@ -97,6 +97,7 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Remove dead `system.*` XML-RPC entries that core re-registers regardless, so they were never actually removable this way (no behavior change).
 - Fix redirects being silently cancelled on query-string-only requests to the homepage.
 - Fix a JS TypeError on the Dashboard screen (WordPress 6.1+) that silently broke other admin screen behaviors on that page load.
+- Fix the `X-Pingback` header still being sent on older WordPress despite the "remove pingback header" feature being enabled, caused by core (pre-6.2) sending that header directly rather than through the filter this plugin relies on.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1

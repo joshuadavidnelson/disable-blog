@@ -154,21 +154,21 @@ The suite is chromium-only and runs serially (`workers: 1` in `playwright.config
 **Testing against another WordPress version:**
 
 ```bash
-npm run test:e2e:core-version -- 6.2
-npm run env:start
+npm run test:e2e:core-version -- 5.9
+npx wp-env start --update
 npx wp-env clean all
-npm run env:start
+npx wp-env start
 ```
 
 This pins `wp-env` to that core version by writing `.wp-env.override.json`. Run `npm run test:e2e:core-version -- latest` to remove the override and go back to the latest stable release.
 
-⚠️ The `clean all` step matters, and the **order** matters. Your existing database still holds the previous version's active theme and schema. Downgrading core without resetting the database leaves WordPress running an incompatible theme — on an older core that is a fatal error during `wp-env start`, not a graceful failure, so it looks like the WordPress version is unsupported when it is not. Start once so `wp-env` downloads the pinned core, *then* clean, so the database is reinstalled against the version you are actually testing.
+⚠️ The `--update` flag and the `clean all` **order** both matter. Your existing database still holds the previous version's active theme and schema. Downgrading core without resetting the database leaves WordPress running an incompatible theme — on an older core that is a fatal error during `wp-env start`, not a graceful failure, so it looks like the WordPress version is unsupported when it is not. `wp-env start` alone will not re-download core when only the pinned version changed, so without `--update` you silently keep testing the version you already had. Start with `--update` so the pinned core is fetched, *then* clean, so the database is reinstalled against the version you are actually testing.
 
 CI is unaffected: every job starts on a fresh runner with no database to carry over.
 
-**Versions the suite is verified against:** WordPress 6.5 through current, on PHP 7.4 through 8.4. CI runs current WordPress on PHP 8.1/8.3/8.4, WordPress 6.5 on PHP 7.4 (the declared floor from `readme.txt`), and WordPress `master` as a non-blocking early warning.
+**Versions the suite is verified against:** WordPress 5.9 through current, on PHP 7.4 through 8.4 — the plugin's full declared support range. CI runs current WordPress on PHP 8.1/8.3/8.4, WordPress 5.9 on PHP 7.4 (the declared floor from `readme.txt`), and WordPress `master` as a non-blocking early warning.
 
-WordPress 6.2 and older are **not** covered by the e2e suite — their admin markup and block editor differ enough that several specs would need version-forked assertions. That is a limit of the test suite, not a change to the plugin's supported range; `readme.txt` still declares `Requires at least: 5.9`, and the PHP-compatibility and coding-standards checks in `integrate.yaml` continue to cover the full declared range.
+A couple of specs have to accommodate older core, and both are commented where they occur: the block editor's canvas is only iframed on newer WordPress, so the editor-ready wait accepts either shape; and WordPress 5.9's core `/wp/v2/settings` endpoint does not expose `show_on_front`, `page_on_front` or `page_for_posts`, so reading settings are set through the `dwpb-test/v1` API rather than core REST.
 
 **How the test fixtures work:**
 
