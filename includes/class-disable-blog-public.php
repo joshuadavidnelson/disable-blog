@@ -241,6 +241,8 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
+	 * @since 0.5.6 replaced the `isset( $post->post_type ) && 'post' === $post->post_type`
+	 *              guard with a query-based check, see is_post_feed_request() (DEFECT N1).
 	 * @param bool $is_comment_feed true if a comment feed.
 	 * @return void
 	 */
@@ -255,7 +257,7 @@ class Disable_Blog_Public {
 		global $post;
 
 		// Check that we're disabling feeds and everything is good to go.
-		if ( $this->functions->disable_feeds( $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
+		if ( $this->functions->disable_feeds( $post, $is_comment_feed ) && $this->is_post_feed_request() ) {
 
 			/**
 			 * Filter the feed redirect url.
@@ -311,6 +313,60 @@ class Disable_Blog_Public {
 
 			}
 		}
+	}
+
+	/**
+	 * Determine if the current feed request is for the site's 'post' content
+	 * (e.g. the main feed at `/feed/` or `/?feed=rss2`), as opposed to a feed
+	 * scoped to a specific singular object (a single post, page, or
+	 * attachment) or another post type.
+	 *
+	 * DEFECT N1: this deliberately inspects the raw, request-derived query
+	 * vars on the global $wp object (`WP::$query_vars`, populated once in
+	 * `WP::parse_request()`) rather than the global $post, or $wp_query
+	 * (whose `query_vars` is a separate copy WP_Query goes on to mutate).
+	 * `WP_Query::parse_query()` silently substitutes the site's static front
+	 * page into the query whenever nothing else in the query identifies a
+	 * specific object -- including for a query-string feed request like
+	 * `/?feed=rss2`, which never actually named that page in the URL.
+	 * Checking `$post` (populated from that substituted query) would misread
+	 * the default fallback as an explicit request for the front page's own
+	 * feed, and bail out -- exactly the bug this replaces. `$wp->query_vars`
+	 * is handed to `WP_Query::query()` by value (via `wp_parse_args()`), so
+	 * it is never mutated by WP_Query's later corrections and still
+	 * reflects what the URL actually asked for.
+	 *
+	 * @since 0.5.6
+	 * @global WP $wp The WordPress environment instance for the current request.
+	 * @return bool True if this is a 'post' feed for the site's main/archive feed.
+	 */
+	private function is_post_feed_request() {
+
+		global $wp;
+
+		if ( empty( $wp->query_vars ) || ! is_array( $wp->query_vars ) ) {
+			return false;
+		}
+
+		// If any of these are present, the request explicitly names a
+		// specific singular object (or an attachment), so this isn't the
+		// general 'post' listing feed.
+		$singular_query_vars = array( 'p', 'name', 'pagename', 'page_id', 'attachment', 'attachment_id' );
+
+		foreach ( $singular_query_vars as $var ) {
+			if ( ! empty( $wp->query_vars[ $var ] ) ) {
+				return false;
+			}
+		}
+
+		// No post type specified in the request means WP_Query defaults to 'post'.
+		$queried_post_type = isset( $wp->query_vars['post_type'] ) ? $wp->query_vars['post_type'] : '';
+
+		if ( empty( $queried_post_type ) ) {
+			return true;
+		}
+
+		return is_array( $queried_post_type ) ? in_array( 'post', $queried_post_type, true ) : 'post' === $queried_post_type;
 	}
 
 	/**
@@ -394,11 +450,22 @@ class Disable_Blog_Public {
 	 * Get the XML-RPC methods to disable.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.6 fixed the 'wp.deleteCategory' typo (DEFECT D4) and removed the
+	 *              'system.*' introspection methods, which cannot actually be
+	 *              disabled this way (N3, see the note below).
 	 * @return array|bool
 	 */
 	private function get_disabled_xmlrpc_methods() {
 
 		// The methods to remove.
+		//
+		// N3: 'system.listMethods', 'system.multicall', and 'system.getCapabilities'
+		// are deliberately NOT listed here. wp-includes/IXR/class-IXR-server.php's
+		// IXR_Server::setCallbacks() re-registers every 'system.*' method AFTER the
+		// 'xmlrpc_methods' filter runs (see IXR_Server::__construct()), so unset()ting
+		// them from this array has no effect whatsoever -- they remain callable no
+		// matter what this filter does. Listing them here was dead code; do not
+		// re-add them without a different removal mechanism than this filter.
 		$methods_to_remove = array(
 			'wp.getUsersBlogs',
 			'wp.newPost',
@@ -421,9 +488,6 @@ class Disable_Blog_Public {
 			'mt.publishPost',
 			'pingback.ping',
 			'pingback.extensions.getPingbacks',
-			'system.multicall',
-			'system.listMethods',
-			'system.getCapabilities',
 			'demo.sayHello',
 			'demo.addTwoNumbers',
 		);
@@ -433,7 +497,7 @@ class Disable_Blog_Public {
 		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
 			$taxonomy_methods = array(
 				'wp.newCategory',
-				'wp.deleteeCategory',
+				'wp.deleteCategory',
 				'mt.getCategoryList',
 				'wp.suggestCategories',
 				'mt.getPostCategories',
@@ -562,5 +626,88 @@ class Disable_Blog_Public {
 		}
 
 		return $provider;
+	}
+
+	/**
+	 * 404 sitemap sub-file requests for providers this plugin has removed entirely.
+	 *
+	 * DEFECT D5: removing a whole sitemap provider (e.g. wp_author_sitemaps()
+	 * above, which removes the 'users' provider via the `wp_sitemaps_add_provider`
+	 * filter) is a different code path than removing a post type/taxonomy
+	 * subtype from a still-registered provider (wp_sitemaps_post_types() and
+	 * wp_sitemaps_taxonomies() both unset() entries from arrays those
+	 * providers still walk internally). `WP_Sitemaps::render_sitemaps()`
+	 * 404s correctly for the latter, since the provider itself is still
+	 * registered and simply reports no URLs for the removed subtype. For the
+	 * former, `$this->registry->get_provider( $sitemap )` returns null and
+	 * `render_sitemaps()` just `return`s without ever calling
+	 * `$wp_query->set_404()` -- the request falls through to the normal
+	 * template and serves the blog index as HTML, leaking post content.
+	 * This plugin's own `redirect_public_pages()` deliberately skips
+	 * sitemap requests too (see its `$sitemap` check), so nothing else
+	 * catches it.
+	 *
+	 * Hooked on `template_redirect` at priority 9 -- ahead of both core's
+	 * `WP_Sitemaps::render_sitemaps()` (priority 10) and this plugin's own
+	 * `redirect_public_pages()` (also priority 10) -- see
+	 * `Disable_Blog::define_public_hooks()`. Resolves the requested sitemap
+	 * against the LIVE provider registry rather than a hardcoded list, so
+	 * this keeps working correctly if a provider this plugin removes today
+	 * is ever re-registered later (e.g. a custom post type re-enabling
+	 * author archives).
+	 *
+	 * Mirrors core's own `WP_Sitemaps::render_sitemaps()` 404 handling
+	 * (`$wp_query->set_404(); status_header( 404 );`, no `exit`) so the
+	 * request continues on to render a normal 404 template, rather than
+	 * dying here.
+	 *
+	 * @since 0.5.6
+	 * @link https://developer.wordpress.org/reference/classes/wp_sitemaps_registry/get_providers/
+	 * @return void
+	 */
+	public function disable_removed_sitemaps() {
+
+		$sitemap = get_query_var( 'sitemap', '' );
+
+		// Bail if this isn't a provider sub-file request. 'index' is core's
+		// own sitemap-index route (`/wp-sitemap.xml`), not a provider name,
+		// and is handled entirely by core -- it would never be found in the
+		// registry below, so it must be excluded here or every sitemap
+		// index request would incorrectly 404.
+		if ( empty( $sitemap ) || 'index' === $sitemap ) {
+			return;
+		}
+
+		/**
+		 * Toggle 404-ing sitemap sub-files for providers this plugin has removed.
+		 *
+		 * @since 0.5.6
+		 * @param bool $bool True to 404 removed sitemap providers, defaults to true.
+		 */
+		if ( ! apply_filters( 'dwpb_disable_removed_sitemaps', true ) ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wp_sitemaps_get_server' ) ) {
+			return;
+		}
+
+		$server = wp_sitemaps_get_server();
+		if ( ! $server instanceof WP_Sitemaps || ! $server->registry instanceof WP_Sitemaps_Registry ) {
+			return;
+		}
+
+		$providers = $server->registry->get_providers();
+
+		// The provider is still registered (e.g. 'posts', 'taxonomies'), so
+		// let core handle it -- it already 404s an unknown subtype on its own.
+		if ( isset( $providers[ $sitemap ] ) ) {
+			return;
+		}
+
+		global $wp_query;
+		$wp_query->set_404();
+		status_header( 404 );
+		nocache_headers();
 	}
 }

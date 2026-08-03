@@ -1,16 +1,21 @@
 /**
  * Main feed behaviour on a site with zero 'post' content.
  *
- * COVERAGE: the guard clause in `Disable_Blog_Public::disable_feed()` —
- * `isset( $post->post_type ) && 'post' === $post->post_type` — for the one
- * state every other feed spec deliberately avoids: no posts at all. With
- * zero posts, `WP_Query::get_posts()` never sets `$this->post`, so the
- * global `$post` `WP::register_globals()` copies onto the request is `null`.
- * `isset( $post->post_type )` on `null` is false, the guard fails, and core's
- * own feed template runs untouched — it renders a normal, valid, empty feed
- * instead of `disable_feed()` redirecting it. That is a genuine edge case in
- * how the plugin's post-type check degrades, not a bug: there is no post to
- * inspect, so the plugin correctly declines to act on one.
+ * COVERAGE: `Disable_Blog_Public::disable_feed()` now gates on
+ * `is_post_feed_request()`, a query-based check of `$wp->query_vars` (see
+ * that method's docblock, DEFECT N1) rather than on the global `$post`. That
+ * replaced an older `isset( $post->post_type ) && 'post' === $post->post_type`
+ * guard which depended on `WP_Query::get_posts()` having actually populated
+ * `$this->post` — something it never does when a query returns zero results.
+ * With no posts at all, the old guard silently failed and let core's own feed
+ * template render a normal, valid, empty feed instead of being redirected.
+ * That was an accident of checking post *content* to decide whether to
+ * disable a *request* — this file now proves the corrected behaviour: the
+ * disable decision is based on what the request asked for, not on how many
+ * posts happen to exist, so `/feed/` is disabled (redirected) regardless of
+ * post count, including on a genuinely empty site. For a plugin whose whole
+ * purpose is disabling the blog, an empty 200 feed was never the intended
+ * outcome — a 301 to the home URL is.
  *
  * ⚠️ ISOLATION BY DESIGN, AND WHY THAT IS SAFE: `beforeAll` calls
  * `POST /dwpb-test/v1/delete-all-posts` to wipe every 'post' in any status,
@@ -20,10 +25,10 @@
  * it down again in its own `afterAll`/`afterEach` (see `redirects.spec.ts`
  * and `feeds.spec.ts`), so no other spec's fixtures are left behind for this
  * wipe to disturb, and this file leaves the site exactly as it found it
- * (test 2 below re-seeds and proves the redirect is restored). Removing the
- * wipe would make test 1 vacuous — it would pass or fail depending on
- * whatever content some other spec happened to leave behind, rather than
- * proving the actual zero-posts code path.
+ * (test 2 below re-seeds and proves the redirect still holds with a post
+ * present). Removing the wipe would make test 1 vacuous — it would pass or
+ * fail depending on whatever content some other spec happened to leave
+ * behind, rather than proving the actual zero-posts code path.
  *
  * REQUEST LAYER, NOT NAVIGATION: see the docblock in `config/redirects.ts`.
  *
@@ -36,7 +41,7 @@
 /**
  * WordPress dependencies
  */
-import { test, expect } from '@wordpress/e2e-test-utils-playwright';
+import { test } from '@wordpress/e2e-test-utils-playwright';
 
 /**
  * Internal dependencies
@@ -69,25 +74,25 @@ test.describe( 'feeds: empty site', () => {
 		await deletePosts( requestUtils, seededIds );
 	} );
 
-	test( 'with no posts the main feed renders empty instead of redirecting', async ( {
+	test( 'with zero posts the main feed still redirects to the home URL', async ( {
 		request,
 	} ) => {
-		const response = await request.get( '/feed/', { maxRedirects: 0 } );
-
-		expect( response.status() ).toBe( 200 );
-		expect( response.headers()[ 'content-type' ] ).toContain( 'xml' );
-
-		const body = await response.text();
-
-		expect( body ).not.toContain( '<item>' );
+		// Regression guard: proves the fix keys off the request (via
+		// is_post_feed_request()'s query-based check), not off post count.
+		// The old $post-based guard degraded exactly here — zero posts meant
+		// $post was never populated, so it silently let core's feed template
+		// render a normal empty 200 feed instead of redirecting. If a future
+		// change reintroduces a content-based check, this is the test that
+		// would catch it going back to that accidental behaviour.
+		await expectRedirect( request, '/feed/', homeUrl );
 	} );
 
-	test( 'seeding a post restores the redirect', async ( { requestUtils, request } ) => {
+	test( 'seeding a post does not disturb the redirect', async ( { requestUtils, request } ) => {
 		// Doubles as proof this file cleaned up after itself: if the earlier
 		// wipe had left some stray post behind, or this test's own teardown
 		// failed to run, a later spec's own "at least one post" assumption
 		// (see feeds.spec.ts's docblock) would break silently. Asserting the
-		// redirect comes back here catches that regression directly instead
+		// redirect still holds here catches that regression directly instead
 		// of leaving it for whatever spec happens to run next.
 		const seededPost = await seedPost( requestUtils, {
 			title: uniqueTitle( 'empty-site restore post' ),

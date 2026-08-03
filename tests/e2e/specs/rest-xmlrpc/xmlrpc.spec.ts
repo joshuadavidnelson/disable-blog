@@ -30,21 +30,27 @@
  * `admin` / `password` (see `RequestUtils`'s defaults, also relied on by
  * `auth.setup.ts`).
  *
- * 🚫 `wp.deleteCategory` is deliberately NOT covered here — see
+ * DEFECT D4 (includes/class-disable-blog-public.php:436): `wp.deleteCategory`
+ * IS covered below, but only for the CORRECTED behaviour, and that
+ * assertion is expected to FAIL until D4 is fixed.
  * `get_disabled_xmlrpc_methods()`'s literal entry `'wp.deleteeCategory'`
- * (note the typo: three e's), which does not match the real
- * `wp.deleteCategory` method name at all. That mismatch is a live bug this
- * suite is choosing not to assert on yet; it is deferred to a later phase,
- * not an oversight here.
+ * (note the typo: three e's) does not match the real `wp.deleteCategory`
+ * method name at all, so today a call to the real method still succeeds
+ * instead of faulting -32601.
  *
- * 🚫 `system.listMethods`, `system.multicall`, and `system.getCapabilities`
- * are ALSO deliberately NOT covered here, for a different reason: they are
- * present in the plugin's removal list, but `IXR_Server::setCallbacks()`
+ * N3 (not a defect — a documented constraint, includes/class-disable-blog-public.php:424-426):
+ * `system.listMethods`, `system.multicall`, and `system.getCapabilities` ARE
+ * covered below too, but the assertion is that they remain callable, not
+ * that they fault. They are present in the plugin's removal list, but
+ * `IXR_Server::setCallbacks()` (wp-includes/IXR/class-IXR-server.php)
  * re-registers every `system.*` method AFTER the `xmlrpc_methods` filter
  * runs, so `unset()`ting them there has no effect — verified by direct
- * XML-RPC calls, all three remain callable. The plugin's entries for them are
- * dead code, being cleaned up in a later phase; do not add fault assertions
- * for them back until that fix lands.
+ * XML-RPC calls, all three remain callable no matter what the plugin does.
+ * The N3 fix deletes those three dead entries from the plugin's removal list
+ * and documents why, rather than pretending they can be removed — so the
+ * "still callable" test below intentionally PASSES both before and after
+ * the fix. See its inline comment; do not mistake it for one of the failing
+ * defect tests in this file.
  *
  * ANONYMOUS-CAPABLE: XML-RPC has no browser session/cookie concept the way
  * the rest of this suite's public specs do, so this file uses the plain
@@ -176,9 +182,9 @@ test.describe( 'XML-RPC: default state', () => {
 		// meaningful params, so a fault on it can only mean the method
 		// itself is gone, not a credentials/argument problem.
 		//
-		// system.multicall is deliberately NOT included here — see the file
-		// docblock's "system.listMethods, system.multicall, and
-		// system.getCapabilities" note.
+		// system.multicall is deliberately NOT included here — it can never
+		// fault -32601 regardless of what this plugin does, see the N3 test
+		// below and the file docblock's "N3" note.
 		const removedMethods = [ 'pingback.ping', 'demo.sayHello' ];
 
 		for ( const methodName of removedMethods ) {
@@ -212,5 +218,40 @@ test.describe( 'XML-RPC: default state', () => {
 		expect( body ).toContain( '<methodResponse>' );
 		expect( body ).not.toContain( '<name>faultCode</name>' );
 		expect( body ).not.toContain( '-32601' );
+	} );
+
+	test( 'DEFECT D4: wp.deleteCategory is removed', async ( { request } ) => {
+		// DEFECT D4: includes/class-disable-blog-public.php:436 —
+		// get_disabled_xmlrpc_methods() lists the misspelled
+		// 'wp.deleteeCategory' (three e's), which never matches core's real
+		// wp.deleteCategory method name, so today a call to the real method
+		// still succeeds instead of faulting -32601.
+		const body = await callXmlRpc( request, 'wp.deleteCategory' );
+
+		expectXmlRpcFault( body, -32601 );
+	} );
+
+	test( 'N3: system.* introspection methods remain callable (documented constraint, not a defect)', async ( {
+		request,
+	} ) => {
+		// ⚠️ NOT A DEFECT TEST — this passes both before and after the N3 fix
+		// and is meant to keep passing forever, see the file docblock's "N3"
+		// note. includes/class-disable-blog-public.php:424-426 lists these
+		// three methods for removal, but wp-includes/IXR/class-IXR-server.php's
+		// setCallbacks() re-registers them after the xmlrpc_methods filter
+		// runs, so no filter this plugin applies can ever remove them; the
+		// fix documents that constraint rather than pretending otherwise.
+		const systemMethods = [
+			'system.listMethods',
+			'system.multicall',
+			'system.getCapabilities',
+		];
+
+		for ( const methodName of systemMethods ) {
+			const body = await callXmlRpc( request, methodName );
+
+			expect( body ).not.toContain( '<name>faultCode</name>' );
+			expect( body ).not.toContain( '-32601' );
+		}
 	} );
 } );

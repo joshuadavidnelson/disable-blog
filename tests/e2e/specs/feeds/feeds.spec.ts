@@ -38,17 +38,18 @@
  * fixture stays admin-authenticated regardless, so `beforeAll`/`afterAll` can
  * still seed and tear down content.
  *
- * 🚫 QUERY-STRING FEED URLS (`/?feed=rss2` and friends) ARE DELIBERATELY NOT
- * COVERED HERE: `disable_feed()` guards on
+ * DEFECT N1 (includes/class-disable-blog-public.php:258): query-string feed
+ * URLs (`/?feed=rss2` and friends) ARE covered below, but only for the
+ * CORRECTED behaviour, and those assertions are expected to FAIL until N1 is
+ * fixed. `disable_feed()` guards on
  * `isset( $post->post_type ) && 'post' === $post->post_type`. With a static
  * front page, the global `$post` WordPress resolves for a query-string feed
  * request is the Home *page*, not a post, so the guard bails and core renders
- * the feed — leaking real post content (a `200` with an `<item>` containing
- * the post title) instead of redirecting. That is a real, verified content-
- * leak defect, scheduled to be fixed in a later phase. Only the
- * pretty-permalink feed forms (`/feed/`, `/feed/rss2/`, ...) are asserted
- * below, which redirect correctly today. Do not add query-string feed
- * coverage back until that defect is fixed — it will fail.
+ * the feed today — leaking real post content (a `200` with an `<item>`
+ * containing the post title) instead of redirecting. The tests below assert
+ * the fixed target behaviour: a `301` to `homeUrl`, same as the
+ * pretty-permalink forms, plus a leak-specific assertion that the response
+ * body never contains a seeded post's title, independent of status code.
  */
 
 /**
@@ -129,10 +130,9 @@ test.describe( 'feeds: default state', () => {
 	} );
 
 	test( 'feed format variants all redirect', async ( { request } ) => {
-		// Pretty-permalink forms only — see the file docblock's "QUERY-STRING
-		// FEED URLS" note for why the `/?feed=...` query-string form is
-		// deliberately excluded (a known, separately-tracked content-leak
-		// defect, not an oversight here).
+		// Pretty-permalink forms only — the `/?feed=...` query-string form has
+		// its own coverage in the "Defects (currently failing)" block below,
+		// see the file docblock's "DEFECT N1" note.
 		const feedPaths = [ '/feed/', '/feed/rss2/', '/feed/atom/', '/feed/rdf/' ];
 
 		for ( const feedPath of feedPaths ) {
@@ -162,5 +162,43 @@ test.describe( 'feeds: default state', () => {
 
 		expect( response.status() ).toBe( 200 );
 		expect( response.headers()[ 'content-type' ] ).toContain( 'xml' );
+	} );
+
+	/* -------------------------------------------------------------------
+	 * Defects (currently failing): corrected behaviour for N1
+	 * ---------------------------------------------------------------- */
+
+	test( 'DEFECT N1: a query-string feed URL redirects to the home URL', async ( {
+		request,
+	} ) => {
+		// DEFECT N1: includes/class-disable-blog-public.php:258 — with a
+		// static front page, $post resolves to the Home Page for a
+		// query-string feed request, so disable_feed()'s
+		// 'post' === $post->post_type guard bails and this 200s with real
+		// feed content today instead of redirecting.
+		await expectRedirect( request, '/?feed=rss2', homeUrl );
+	} );
+
+	test( 'DEFECT N1: every query-string feed format redirects to the home URL', async ( {
+		request,
+	} ) => {
+		const feedFormats = [ 'feed', 'rdf', 'rss2', 'atom' ];
+
+		for ( const format of feedFormats ) {
+			await expectRedirect( request, `/?feed=${ format }`, homeUrl );
+		}
+	} );
+
+	test( 'DEFECT N1: a query-string feed URL never leaks post content', async ( {
+		request,
+	} ) => {
+		// DEFECT N1: the assertion that actually encodes "no content leak",
+		// independent of status code — a fix that redirected but somehow
+		// still emitted a body containing the post would still be a leak,
+		// which the two tests above (Location-header only) would not catch.
+		const response = await request.get( '/?feed=rss2', { maxRedirects: 0 } );
+		const body = await response.text();
+
+		expect( body ).not.toContain( seededPost.title );
 	} );
 } );

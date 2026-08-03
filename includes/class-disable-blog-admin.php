@@ -250,36 +250,40 @@ class Disable_Blog_Admin {
 				// Check the function for redirect clearance, or custom url.
 				$redirect = $this->$function();
 
-				// Set a redirect url variable to check against.
-				$potential_redirect_url = esc_url_raw( $redirect );
-
-				// If it's set to `true` then redirect to the dashboard,
-				// if it's set to a url, redirect to that url.
-				if ( true === $redirect || ! empty( $potential_redirect_url ) ) {
-
-					// Either this is a custom redirect url or 'true', which defaults the url to the dashboard.
-					if ( ! empty( $potential_redirect_url ) ) {
-						$url = $potential_redirect_url;
-					} else {
-						$url = $dashboard_url;
-					}
-
-					/**
-					 * The redirect url used for this admin page.
-					 *
-					 * Example: use 'dwpb_redirect_admin_options_tools' to change the redirect url
-					 * used for the options-tools.php page. Note `-` strings are converted to `_`
-					 * in the filter name.
-					 *
-					 * @since 0.4.0
-					 * @since 0.5.0 combine common filters.
-					 * @param string $url the url to redirct to, defaults to dashboard.
-					 */
-					$redirect_url = apply_filters( $filter, $url );
-
-					break; // no need to keep looping.
-
+				// The boolean check MUST happen before esc_url_raw() runs on $redirect:
+				// esc_url_raw( true ) casts `true` to "http://1" (a non-empty string),
+				// which would otherwise be mistaken for a custom redirect url below and
+				// send users to that bogus address instead of the intended dashboard url.
+				if ( true === $redirect ) {
+					$url = $dashboard_url;
+				} elseif ( is_string( $redirect ) && ! empty( $redirect ) ) {
+					$url = esc_url_raw( $redirect );
+				} else {
+					continue;
 				}
+
+				/**
+				 * The redirect url used for this admin page.
+				 *
+				 * Example: use 'dwpb_redirect_admin_tools' to change the redirect url
+				 * used for the tools.php page. Note `-` strings are converted to `_`
+				 * in the filter name.
+				 *
+				 * @since 0.4.0
+				 * @since 0.5.0 combine common filters.
+				 * @param string $url the url to redirct to, defaults to dashboard.
+				 */
+				$redirect_url = apply_filters( $filter, $url );
+
+				// The tools.php redirect url used to be filterable under a different
+				// name. Honor that name too, so anyone who followed the docs and
+				// filtered it to disable/change the redirect isn't surprised now
+				// that the redirect actually fires (see D2 fix note above).
+				if ( 'tools' === $pagename ) {
+					$redirect_url = apply_filters_deprecated( 'dwpb_redirect_admin_options_tools', array( $redirect_url ), '0.5.6', 'dwpb_redirect_admin_tools' );
+				}
+
+				break; // no need to keep looping.
 			}
 		}
 
@@ -359,9 +363,11 @@ class Disable_Blog_Admin {
 	 * The admin redirect arguments checked to redirect the term.php screen.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.6 fixed method name typo (was `reidrect_admin_term()`), which
+	 *              had silently prevented term.php from ever being redirected.
 	 * @return bool|string
 	 */
-	public function reidrect_admin_term() {
+	public function redirect_admin_term() {
 
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
@@ -426,12 +432,16 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * The admin redirect arguments checked to redirect the options-tools.php screen.
+	 * The admin redirect arguments checked to redirect the tools.php screen.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.6 renamed from `redirect_admin_options_tools()` to
+	 *              `redirect_admin_tools()` so it matches the method name the
+	 *              `redirect_admin_pages()` loop actually looks for (built from
+	 *              the 'tools' page slug); the old name was never called.
 	 * @return bool
 	 */
-	public function redirect_admin_options_tools() {
+	public function redirect_admin_tools() {
 
 		/**
 		 * The isset( $_GET['page'] ) check is to confirm the page

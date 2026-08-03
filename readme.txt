@@ -87,6 +87,17 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 == Changelog ==
 
+= 0.5.6 =
+- **Security fix:** RSS/Atom feeds requested via query string (e.g. `/?feed=rss2`) were not disabled and leaked live post content; now correctly blocked like `/feed/` already was.
+- **Security fix:** Removed user sitemaps (e.g. `/wp-sitemap-users-1.xml`) served page content instead of a 404; now correctly return 404. New `dwpb_disable_removed_sitemaps` filter (default `true`).
+- Fix `term.php` and `tools.php` (Available Tools) admin redirects, which never fired due to method name typos.
+- **Filter renamed:** `dwpb_redirect_admin_options_tools` is now `dwpb_redirect_admin_tools` (old name still honored, but deprecated).
+- Fix admin redirects to the dashboard landing on a bare `/wp-admin/` instead of the intended dashboard page.
+- Fix `wp.deleteCategory` never being removed from XML-RPC due to a misspelled method name.
+- Remove dead `system.*` XML-RPC entries that core re-registers regardless, so they were never actually removable this way (no behavior change).
+- Fix redirects being silently cancelled on query-string-only requests to the homepage.
+- Fix a JS TypeError on the Dashboard screen (WordPress 6.1+) that silently broke other admin screen behaviors on that page load.
+
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
 - Tested up to PHP 8.4
@@ -305,6 +316,11 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.6 =
+- Security fixes: query-string feed requests (e.g. `/?feed=rss2`) and removed user sitemaps could leak post content; both are now correctly blocked.
+- Fixes `term.php` and `tools.php` admin redirects, which never worked. Renames the `dwpb_redirect_admin_options_tools` filter to `dwpb_redirect_admin_tools` (old name still works).
+- Several other bugfixes, view the plugin's `changelog.md` for specifics.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
