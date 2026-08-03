@@ -30,15 +30,16 @@
  * `admin` / `password` (see `RequestUtils`'s defaults, also relied on by
  * `auth.setup.ts`).
  *
- * DEFECT D4 (includes/class-disable-blog-public.php:436): `wp.deleteCategory`
- * IS covered below, but only for the CORRECTED behaviour, and that
- * assertion is expected to FAIL until D4 is fixed.
- * `get_disabled_xmlrpc_methods()`'s literal entry `'wp.deleteeCategory'`
- * (note the typo: three e's) does not match the real `wp.deleteCategory`
- * method name at all, so today a call to the real method still succeeds
- * instead of faulting -32601.
+ * D4 FIX (`Disable_Blog_Public::get_disabled_xmlrpc_methods()`):
+ * `wp.deleteCategory` IS covered below, exercising the CORRECTED behaviour —
+ * that assertion is now a regression guard. The removal list's entry used to
+ * be the misspelled literal `'wp.deleteeCategory'` (note the typo: three
+ * e's), which didn't match the real `wp.deleteCategory` method name at all,
+ * so a call to the real method succeeded instead of faulting -32601. Fixed
+ * by correcting the spelling.
  *
- * N3 (not a defect — a documented constraint, includes/class-disable-blog-public.php:424-426):
+ * N3 (not a defect — a documented constraint, see
+ * `Disable_Blog_Public::get_disabled_xmlrpc_methods()`):
  * `system.listMethods`, `system.multicall`, and `system.getCapabilities` ARE
  * covered below too, but the assertion is that they remain callable, not
  * that they fault. They are present in the plugin's removal list, but
@@ -49,8 +50,9 @@
  * The N3 fix deletes those three dead entries from the plugin's removal list
  * and documents why, rather than pretending they can be removed — so the
  * "still callable" test below intentionally PASSES both before and after
- * the fix. See its inline comment; do not mistake it for one of the failing
- * defect tests in this file.
+ * the fix, unlike the regression guards above, which would have failed
+ * before their fix landed. See its inline comment; do not mistake it for a
+ * regression guard.
  *
  * ANONYMOUS-CAPABLE: XML-RPC has no browser session/cookie concept the way
  * the rest of this suite's public specs do, so this file uses the plain
@@ -220,12 +222,12 @@ test.describe( 'XML-RPC: default state', () => {
 		expect( body ).not.toContain( '-32601' );
 	} );
 
-	test( 'DEFECT D4: wp.deleteCategory is removed', async ( { request } ) => {
-		// DEFECT D4: includes/class-disable-blog-public.php:436 —
-		// get_disabled_xmlrpc_methods() lists the misspelled
-		// 'wp.deleteeCategory' (three e's), which never matches core's real
-		// wp.deleteCategory method name, so today a call to the real method
-		// still succeeds instead of faulting -32601.
+	test( 'regression guard: wp.deleteCategory is removed', async ( { request } ) => {
+		// D4: get_disabled_xmlrpc_methods() used to list the misspelled
+		// 'wp.deleteeCategory' (three e's), which never matched core's real
+		// wp.deleteCategory method name, so a call to the real method
+		// succeeded instead of faulting -32601. Fixed by correcting the
+		// spelling.
 		const body = await callXmlRpc( request, 'wp.deleteCategory' );
 
 		expectXmlRpcFault( body, -32601 );
@@ -236,11 +238,13 @@ test.describe( 'XML-RPC: default state', () => {
 	} ) => {
 		// ⚠️ NOT A DEFECT TEST — this passes both before and after the N3 fix
 		// and is meant to keep passing forever, see the file docblock's "N3"
-		// note. includes/class-disable-blog-public.php:424-426 lists these
-		// three methods for removal, but wp-includes/IXR/class-IXR-server.php's
-		// setCallbacks() re-registers them after the xmlrpc_methods filter
-		// runs, so no filter this plugin applies can ever remove them; the
-		// fix documents that constraint rather than pretending otherwise.
+		// note. Disable_Blog_Public::get_disabled_xmlrpc_methods() no longer
+		// lists these three methods at all (the N3 fix deleted them), but
+		// wp-includes/IXR/class-IXR-server.php's setCallbacks() re-registers
+		// every system.* method after the xmlrpc_methods filter runs
+		// regardless, so no filter this plugin applies could ever remove
+		// them; the fix documents that constraint rather than pretending
+		// otherwise.
 		const systemMethods = [
 			'system.listMethods',
 			'system.multicall',

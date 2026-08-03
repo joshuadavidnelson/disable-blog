@@ -53,7 +53,7 @@ class Disable_Blog_Functions {
 			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 			$current_url = home_url( $request_uri );
 
-			// Filter the safe redirect to avoid redirectin non-admin urls to the dashboard
+			// Filter the safe redirect to avoid redirecting non-admin urls to the dashboard
 			// if the fallback is used by the core wp_redirect.
 			add_filter( 'wp_safe_redirect_fallback', array( $this, 'wp_safe_redirect_fallback' ), 9, 1 );
 		}

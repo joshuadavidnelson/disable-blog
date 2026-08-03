@@ -9,9 +9,9 @@
  * (and where) to redirect. This spec exercises `edit.php` and `post-new.php`
  * for the plugin's correctly-working default behaviour, the
  * `edit-comments.php` / `options-discussion.php` pair (proven to NOT
- * redirect under this plugin's default state), and — see the DEFECT
- * COVERAGE section below — `post.php`, `edit-tags.php`, `term.php`, and
- * `tools.php` for three confirmed, not-yet-fixed defects.
+ * redirect under this plugin's default state), and — see the FIXED
+ * DEFECTS section below — `post.php`, `edit-tags.php`, `term.php`, and
+ * `tools.php` as regression guards for three confirmed-and-fixed defects.
  *
  * `redirect_admin_edit()` and `redirect_admin_post_new()` both redirect
  * whenever `$_GET['post_type']` is absent OR equals `'post'`, always to the
@@ -20,29 +20,31 @@
  * issues that redirect via `wp_safe_redirect()` at `301` by default (see
  * `get_redirect_status_code()`), which is what every assertion below checks.
  *
- * DEFECT COVERAGE (D1-D3): `post.php`, `edit-tags.php`, `term.php`, and
- * `tools.php` are also covered below, but ONLY for the CORRECTED behaviour
- * three confirmed defects are supposed to have once fixed — every assertion
- * in the "Defects (currently failing)" block is expected to FAIL against
- * today's code, not just pass vacuously:
- *  - D1 (includes/class-disable-blog-admin.php:364): `reidrect_admin_term()`
- *    is misspelled, so the `is_callable()` check at :248 never finds it and
- *    term.php is silently never redirected today.
- *  - D2 (includes/class-disable-blog-admin.php:229, :434): the loop's
- *    `'tools'` entry builds the function name `redirect_admin_tools`, but
- *    the only method defined is `redirect_admin_options_tools()` — the same
- *    `is_callable()` failure, so tools.php is never redirected today either.
- *  - D3 (includes/class-disable-blog-admin.php:254): `esc_url_raw( $redirect )`
- *    runs unconditionally, even when `$redirect` is the boolean `true`
- *    rather than a URL string. `esc_url_raw( true )` returns the non-empty
- *    string `"http://1"`, which wins the `! empty( $potential_redirect_url )`
- *    branch over the intended `$dashboard_url` fallback (:264).
- *    `wp_safe_redirect()` then rejects that bogus host and falls back to
- *    bare `admin_url()` (`/wp-admin/`) instead of `admin_url( 'index.php' )`.
- *    Both `redirect_admin_post()` and `redirect_admin_edit_tags()` return
- *    plain booleans, so both post.php (editing a `post`) and edit-tags.php
- *    are affected — and so is term.php once D1's typo is fixed, since
- *    `reidrect_admin_term()` returns the identical boolean expression.
+ * FIXED DEFECTS (D1-D3): `post.php`, `edit-tags.php`, `term.php`, and
+ * `tools.php` are also covered below, exercising the CORRECTED behaviour for
+ * three confirmed-and-fixed defects — every assertion in the "Regression
+ * guards" block below now passes and must keep passing:
+ *  - D1: `reidrect_admin_term()` was misspelled, so the loop's
+ *    `is_callable()` check never found it and term.php was silently never
+ *    redirected. Renamed to `redirect_admin_term()`.
+ *  - D2: the loop's `'tools'` entry builds the function name
+ *    `redirect_admin_tools`, but the only method defined was
+ *    `redirect_admin_options_tools()` — the same `is_callable()` failure, so
+ *    tools.php was never redirected either. Renamed to `redirect_admin_tools()`;
+ *    the old `dwpb_redirect_admin_options_tools` filter name is still
+ *    honored via `apply_filters_deprecated()`.
+ *  - D3: `esc_url_raw( $redirect )` ran unconditionally, even when
+ *    `$redirect` was the boolean `true` rather than a URL string.
+ *    `esc_url_raw( true )` returns the non-empty string `"http://1"`, which
+ *    won the `! empty( $potential_redirect_url )` branch over the intended
+ *    `$dashboard_url` fallback. `wp_safe_redirect()` then rejected that
+ *    bogus host and fell back to bare `admin_url()` (`/wp-admin/`) instead
+ *    of `admin_url( 'index.php' )`. Fixed by testing `true === $redirect`
+ *    before ever calling `esc_url_raw()`. Both `redirect_admin_post()` and
+ *    `redirect_admin_edit_tags()` return plain booleans, so both post.php
+ *    (editing a `post`) and edit-tags.php were affected — and so was
+ *    term.php once D1's typo was fixed, since `redirect_admin_term()`
+ *    returns the identical boolean expression.
  *
  * GATING CONDITION: `redirect_admin_edit_comments()` (and its
  * `redirect_admin_options_discussion()` wrapper) return
@@ -104,12 +106,12 @@ test.describe( 'admin: redirects (default state)', () => {
 		editPageTarget = `${ config.homeUrl }${ adminUrl( 'edit.php?post_type=page' ) }`;
 		postNewPageTarget = `${ config.homeUrl }${ adminUrl( 'post-new.php?post_type=page' ) }`;
 		// D1/D2/D3 all redirect to the bare dashboard, not a post-type list —
-		// see the file docblock's "DEFECT COVERAGE" section.
+		// see the file docblock's "FIXED DEFECTS" section.
 		dashboardTarget = `${ config.homeUrl }${ adminUrl( 'index.php' ) }`;
 
-		// Content for the D1/D3 defect tests below: a real post (post.php),
-		// a real page (D3's "not redirected" control), and a real category
-		// term (term.php).
+		// Content for the D1/D3 regression guards below: a real post
+		// (post.php), a real page (D3's "not redirected" control), and a
+		// real category term (term.php).
 		seededPost = await seedPost( requestUtils, {
 			title: uniqueTitle( 'admin redirects post' ),
 		} );
@@ -194,14 +196,14 @@ test.describe( 'admin: redirects (default state)', () => {
 	} );
 
 	/* -------------------------------------------------------------------
-	 * Defects (currently failing): corrected behaviour for D1, D2, D3
+	 * Regression guards: corrected behaviour for D1, D2, D3
 	 * ---------------------------------------------------------------- */
 
-	test( 'DEFECT D1: term.php redirects to the dashboard', async ( { request } ) => {
-		// DEFECT D1: includes/class-disable-blog-admin.php:364 —
-		// reidrect_admin_term() is misspelled, so is_callable() never finds
-		// it and term.php silently falls through with no redirect at all
-		// (200, not 301) today.
+	test( 'regression guard: term.php redirects to the dashboard', async ( { request } ) => {
+		// D1: reidrect_admin_term() was misspelled, so the redirect loop's
+		// is_callable() check never found it and term.php silently fell
+		// through with no redirect at all (200, not 301). Fixed by renaming
+		// it to redirect_admin_term().
 		await expectRedirect(
 			request,
 			termPhp( 'category', categoryTerm.termId ),
@@ -209,32 +211,30 @@ test.describe( 'admin: redirects (default state)', () => {
 		);
 	} );
 
-	test( 'DEFECT D2: tools.php redirects to the dashboard', async ( { request } ) => {
-		// DEFECT D2: includes/class-disable-blog-admin.php:229 builds the
-		// function name `redirect_admin_tools`, but only
-		// `redirect_admin_options_tools()` (:434) exists — is_callable()
-		// fails and tools.php is never redirected today.
+	test( 'regression guard: tools.php redirects to the dashboard', async ( { request } ) => {
+		// D2: the redirect loop's 'tools' entry builds the function name
+		// redirect_admin_tools, but the only method defined was
+		// redirect_admin_options_tools() — the same is_callable() failure, so
+		// tools.php was never redirected. Fixed by renaming the method to
+		// redirect_admin_tools().
 		await expectRedirect( request, adminUrl( 'tools.php' ), dashboardTarget );
 	} );
 
-	test( 'DEFECT D2 control: a third-party tools.php subpage is not redirected by the plugin', async ( {
+	test( 'regression guard control: a third-party tools.php subpage is not redirected by the plugin', async ( {
 		request,
 	} ) => {
-		// redirect_admin_options_tools() (includes/class-disable-blog-admin.php:441)
-		// returns ! isset( $_GET['page'] ) specifically so third-party option
-		// pages hosted under Tools keep working — this must stay untouched by
-		// the plugin once the D2 fix makes tools.php reachable at all,
-		// proving the fix targets the bare tools.php screen, not every
-		// tools.php request.
+		// redirect_admin_tools() returns ! isset( $_GET['page'] ) specifically
+		// so third-party option pages hosted under Tools keep working — this
+		// must stay untouched by the plugin now that the D2 fix makes
+		// tools.php reachable at all, proving the fix targets the bare
+		// tools.php screen, not every tools.php request.
 		//
 		// NOT A BARE 200/301 CHECK: verified live, core itself returns a 302
 		// for `tools.php?page=some-plugin-page` — an unregistered admin page
 		// slug redirects on its own in stock WordPress, entirely unrelated to
-		// this plugin, and that 302 happens today even though the plugin
-		// currently redirects nothing at all under tools.php (D2). So this
-		// assertion does not check for a bare status code; it checks
-		// specifically that the response is NOT the plugin's own 301-to-
-		// dashboard, which is the only thing redirect_admin_options_tools()
+		// this plugin. So this assertion does not check for a bare status
+		// code; it checks specifically that the response is NOT the plugin's
+		// own 301-to-dashboard, which is the only thing redirect_admin_tools()
 		// could be responsible for.
 		const response = await request.get(
 			adminUrl( 'tools.php?page=some-plugin-page' ),
@@ -252,19 +252,19 @@ test.describe( 'admin: redirects (default state)', () => {
 		).toBe( false );
 	} );
 
-	test( 'DEFECT D3: editing a post redirects to the dashboard, not bare /wp-admin/', async ( {
+	test( 'regression guard: editing a post redirects to the dashboard, not bare /wp-admin/', async ( {
 		request,
 	} ) => {
-		// DEFECT D3: includes/class-disable-blog-admin.php:254 —
-		// redirect_admin_post() returns a plain boolean true for a real
+		// D3: redirect_admin_post() returns a plain boolean true for a real
 		// 'post' id, not a URL string. esc_url_raw( true ) resolving to the
-		// non-empty "http://1" is what currently sends this to bare
-		// /wp-admin/ (wp_safe_redirect()'s host-rejection fallback) instead
-		// of admin_url( 'index.php' ).
+		// non-empty "http://1" used to send this to bare /wp-admin/
+		// (wp_safe_redirect()'s host-rejection fallback) instead of
+		// admin_url( 'index.php' ). Fixed by testing true === $redirect
+		// before ever calling esc_url_raw().
 		await expectRedirect( request, postPhp( seededPost.id ), dashboardTarget );
 	} );
 
-	test( 'DEFECT D3 control: editing a page is still not redirected', async ( {
+	test( 'regression guard control: editing a page is still not redirected', async ( {
 		request,
 	} ) => {
 		// redirect_admin_post() only matches 'post' == get_post_type(...); a
@@ -273,16 +273,16 @@ test.describe( 'admin: redirects (default state)', () => {
 		await expectStatus( request, postPhp( seededPage.id ), 200 );
 	} );
 
-	test( 'DEFECT D3: a category edit-tags.php screen redirects to the dashboard, not bare /wp-admin/', async ( {
+	test( 'regression guard: a category edit-tags.php screen redirects to the dashboard, not bare /wp-admin/', async ( {
 		request,
 	} ) => {
-		// DEFECT D3: includes/class-disable-blog-admin.php:254 — same
-		// esc_url_raw( true ) => "http://1" bug as the post.php case above,
-		// since redirect_admin_edit_tags() also returns a plain boolean.
+		// D3: same esc_url_raw( true ) => "http://1" bug as the post.php case
+		// above, since redirect_admin_edit_tags() also returns a plain
+		// boolean.
 		await expectRedirect( request, editTagsPhp( 'category' ), dashboardTarget );
 	} );
 
-	test( 'DEFECT D3: a post_tag edit-tags.php screen redirects to the dashboard, not bare /wp-admin/', async ( {
+	test( 'regression guard: a post_tag edit-tags.php screen redirects to the dashboard, not bare /wp-admin/', async ( {
 		request,
 	} ) => {
 		await expectRedirect( request, editTagsPhp( 'post_tag' ), dashboardTarget );
