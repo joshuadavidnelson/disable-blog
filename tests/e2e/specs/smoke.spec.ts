@@ -1,12 +1,13 @@
 /**
  * Harness smoke test.
  *
- * Proves the four things every later spec assumes without re-checking: the
- * plugin under test is active in the running wp-env site, `dwpb-test/v1`
- * (the mu-plugin fixture) is reachable and returns real data — not empty
+ * Proves the five things every later spec assumes without re-checking: the
+ * plugin under test is active in the running wp-env site, the pinned theme
+ * (see `global-setup.ts`) is the one actually active, `dwpb-test/v1` (the
+ * mu-plugin fixture) is reachable and returns real data — not empty
  * placeholders — and the per-role storage-state mechanism `test.use(
  * { storageState: storageStatePath( role ) } )` actually signs in as that
- * role. If this file fails, the cause is one of those four things, not a
+ * role. If this file fails, the cause is one of those five things, not a
  * bug in a real feature spec — fix the harness before trusting any other
  * spec's result.
  *
@@ -28,7 +29,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { PLUGIN_FILE, ROLE_USERS, storageStatePath } from '../config/roles';
+import { PLUGIN_FILE, ROLE_USERS, THEME_SLUG, storageStatePath } from '../config/roles';
 import { setupSite } from '../config/seed';
 import { pluginStrings, type PluginStrings } from '../config/strings';
 import { expectStatus } from '../config/redirects';
@@ -79,6 +80,23 @@ test.describe( 'e2e harness smoke', () => {
 		expect( config.frontPageUrl ).toBe( `${ config.homeUrl }/` );
 
 		await expectStatus( request, '/', 200 );
+	} );
+
+	test( 'the expected theme is active', async ( { requestUtils } ) => {
+		// global-setup.ts pins THEME_SLUG so every spec's DOM assertions run
+		// against the same markup regardless of which theme the running
+		// WordPress version ships by default. If that pinning ever silently
+		// stops working — a failed activation call that got swallowed, a
+		// theme that fails to install — this is the one test that should
+		// fail, instead of a scattering of confusing DOM assertions across
+		// the rest of the suite.
+		const activeThemes = await requestUtils.rest< Array< { stylesheet: string } > >( {
+			path: '/wp/v2/themes',
+			params: { status: 'active' },
+		} );
+
+		expect( activeThemes ).toHaveLength( 1 );
+		expect( activeThemes[ 0 ].stylesheet ).toBe( THEME_SLUG );
 	} );
 
 	test( 'the test API exposes plugin copy', async ( { requestUtils } ) => {

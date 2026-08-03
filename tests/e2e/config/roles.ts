@@ -83,6 +83,19 @@ export const PLUGIN_SLUG = 'disable-blog';
 export const PLUGIN_FILE = 'disable-blog/disable-blog.php';
 
 /**
+ * Stylesheet slug of the theme the suite pins, as `RequestUtils.activateTheme()`
+ * and `/wp/v2/themes` key it.
+ *
+ * The suite never inherits whatever theme a WordPress version ships by
+ * default — see the `activateTheme()` call in `global-setup.ts` for why.
+ * Twenty Twenty-Two is chosen because it only requires WordPress 5.9+, so it
+ * is installable across the plugin's whole supported version range (Twenty
+ * Twenty-Four, the theme the suite was originally written against, needs
+ * 6.4+).
+ */
+export const THEME_SLUG = 'twentytwentytwo';
+
+/**
  * Namespace of the mu-plugin test API that backs seeding/inspection routes
  * REST cannot reach directly (the plugin under test disables `/wp/v2/posts`).
  *

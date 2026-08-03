@@ -8,6 +8,9 @@
 	"plugins": [
 		"."
 	],
+	"themes": [
+		"https://downloads.wordpress.org/theme/twentytwentytwo.zip"
+	],
 	"port": 8888,
 	"testsPort": 8889,
 	"mappings": {
