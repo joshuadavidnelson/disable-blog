@@ -40,11 +40,15 @@
  *    button stays (test 8, the control).
  *
  * MUTATING TESTS: tests 3 and 4 change `page_for_posts` / `show_on_front` via
- * core REST to provoke the two admin_notices() branches. Each reads the prior
- * value first and restores it in a `finally` INSIDE the test — not a shared
- * `afterAll` — so one test's failure can never strand the reading settings
- * for every test that runs after it in this file (or any later spec file,
- * since the whole suite shares one wp-env site and `workers: 1`).
+ * `setReadingSettings()` (the `dwpb-test/v1/reading-settings` route) to
+ * provoke the two admin_notices() branches -- NOT core REST's
+ * `/wp/v2/settings`, which doesn't expose either key on WordPress 5.9 (see
+ * that helper's docblock in `config/seed.ts`). Each captures the `previous`
+ * value the route hands back and restores it in a `finally` INSIDE the test —
+ * not a shared `afterAll` — so one test's failure can never strand the
+ * reading settings for every test that runs after it in this file (or any
+ * later spec file, since the whole suite shares one wp-env site and
+ * `workers: 1`).
  *
  * AUTHENTICATED BY DEFAULT: no `storageState` override — every screen here
  * requires `manage_options`, which only the project default (administrator)
@@ -65,6 +69,8 @@ import type { Page } from '@playwright/test';
  * Internal dependencies
  */
 import { noticeWith } from '../../config/admin';
+import { setReadingSettings, siteConfig } from '../../config/seed';
+import type { ReadingSettings } from '../../config/seed';
 import { pluginStrings } from '../../config/strings';
 
 /**
@@ -121,19 +127,18 @@ test.describe( 'admin: settings screens (default state)', () => {
 		page,
 		requestUtils,
 	} ) => {
-		const settings = await requestUtils.rest< {
-			page_on_front: number;
-			page_for_posts: number;
-		} >( { path: '/wp/v2/settings' } );
+		// page_on_front never drifts within a run except by a spec that
+		// deliberately changes and then restores it, so the memoized
+		// siteConfig() value (== the Home page id) is a safe stand-in for
+		// "read page_on_front" without a second round trip.
+		const config = await siteConfig( requestUtils );
 
-		const originalPageForPosts = settings.page_for_posts;
+		let previous: ReadingSettings | undefined;
 
 		try {
-			await requestUtils.rest( {
-				method: 'PUT',
-				path: '/wp/v2/settings',
-				data: { page_for_posts: settings.page_on_front },
-			} );
+			( { previous } = await setReadingSettings( requestUtils, {
+				pageForPosts: config.homeId,
+			} ) );
 
 			await admin.visitAdminPage( 'options-reading.php' );
 
@@ -143,11 +148,11 @@ test.describe( 'admin: settings screens (default state)', () => {
 			// Restore the exact prior value rather than re-running setupSite():
 			// a surgical restore can't accidentally mask a real regression in
 			// setupSite() itself with a different one of its own side effects.
-			await requestUtils.rest( {
-				method: 'PUT',
-				path: '/wp/v2/settings',
-				data: { page_for_posts: originalPageForPosts },
-			} );
+			if ( previous ) {
+				await setReadingSettings( requestUtils, {
+					pageForPosts: previous.pageForPosts,
+				} );
+			}
 		}
 	} );
 
@@ -156,29 +161,23 @@ test.describe( 'admin: settings screens (default state)', () => {
 		page,
 		requestUtils,
 	} ) => {
-		const settings = await requestUtils.rest< { show_on_front: string } >( {
-			path: '/wp/v2/settings',
-		} );
-
-		const originalShowOnFront = settings.show_on_front;
+		let previous: ReadingSettings | undefined;
 
 		try {
-			await requestUtils.rest( {
-				method: 'PUT',
-				path: '/wp/v2/settings',
-				data: { show_on_front: 'posts' },
-			} );
+			( { previous } = await setReadingSettings( requestUtils, {
+				showOnFront: 'posts',
+			} ) );
 
 			await admin.visitAdminPage( 'plugins.php' );
 
 			const strings = await pluginStrings( requestUtils );
 			await expect( noticeWith( page, strings.no_front_page_notice ) ).toBeVisible();
 		} finally {
-			await requestUtils.rest( {
-				method: 'PUT',
-				path: '/wp/v2/settings',
-				data: { show_on_front: originalShowOnFront },
-			} );
+			if ( previous ) {
+				await setReadingSettings( requestUtils, {
+					showOnFront: previous.showOnFront,
+				} );
+			}
 		}
 	} );
 

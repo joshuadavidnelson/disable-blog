@@ -43,15 +43,9 @@ jobs:
         # Top of the supported PHP range.
         - wp: "latest"
           php: "8.4"
-        # Oldest core the suite runs green on, paired with the declared PHP
-        # floor from readme.txt ("Requires PHP: 7.4") so one leg covers both.
-        # Verified: WP 6.5 / PHP 7.4 passes all tests on a clean install.
-        # WP 6.2 was measured at 15 failures - its admin markup and block
-        # editor differ enough that supporting it would mean version-forking
-        # assertions across several specs. The plugin still declares
-        # "Requires at least: 5.9"; this is the floor the *e2e suite* covers,
-        # not a change to the plugin's supported range.
-        - wp: "6.5"
+        # The plugin's declared floor, from readme.txt: "Requires at least:
+        # 5.9" and "Requires PHP: 7.4". One leg covers both.
+        - wp: "5.9"
           php: "7.4"
         # Development WordPress, for early warning on upstream core changes.
         # "master", not "trunk": the WordPress/WordPress mirror has no `trunk`

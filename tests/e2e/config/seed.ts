@@ -142,6 +142,74 @@ export async function siteConfig( requestUtils: RequestUtils ): Promise< SiteCon
 }
 
 /**
+ * Reading-settings values the `dwpb-test/v1/reading-settings` route reads
+ * and writes.
+ */
+export interface ReadingSettings {
+	showOnFront: string;
+	pageOnFront: number;
+	pageForPosts: number;
+}
+
+/**
+ * The subset of {@link ReadingSettings} a spec wants to change. Omitted keys
+ * are left untouched by the route.
+ */
+export interface SetReadingSettingsArgs {
+	showOnFront?: string;
+	pageOnFront?: number;
+	pageForPosts?: number;
+}
+
+/**
+ * Set `show_on_front` / `page_on_front` / `page_for_posts` directly via
+ * `dwpb-test/v1/reading-settings`, bypassing core REST.
+ *
+ * WordPress 5.9's core `/wp/v2/settings` endpoint does not expose these three
+ * keys at all -- they are simply absent from both the schema and the
+ * response, so a `PUT` against them silently no-ops instead of erroring. A
+ * spec relying on core REST here would never actually establish its
+ * precondition on that version, even though the notice it's testing for is a
+ * real, reachable branch of `admin_notices()`. This route calls
+ * `update_option()` directly instead, the same way WP-CLI or a direct
+ * database actor would, and hands back the values it overwrote so a caller
+ * can restore exactly what it changed rather than assuming defaults.
+ *
+ * @param requestUtils Admin request utils.
+ * @param args         Settings to change. Omitted keys are left untouched.
+ */
+export async function setReadingSettings(
+	requestUtils: RequestUtils,
+	args: SetReadingSettingsArgs
+): Promise< { previous: ReadingSettings; current: ReadingSettings } > {
+	const response = await requestUtils.rest< {
+		previous: { show_on_front: string; page_on_front: number; page_for_posts: number };
+		current: { show_on_front: string; page_on_front: number; page_for_posts: number };
+	} >( {
+		method: 'POST',
+		path: `/${ TEST_API }/reading-settings`,
+		data: {
+			...( undefined !== args.showOnFront && { show_on_front: args.showOnFront } ),
+			...( undefined !== args.pageOnFront && { page_on_front: args.pageOnFront } ),
+			...( undefined !== args.pageForPosts && { page_for_posts: args.pageForPosts } ),
+		},
+	} );
+
+	return {
+		previous: {
+			showOnFront: response.previous.show_on_front,
+			pageOnFront: response.previous.page_on_front,
+			pageForPosts: response.previous.page_for_posts,
+		},
+		current: {
+			showOnFront: response.current.show_on_front,
+			pageOnFront: response.current.page_on_front,
+			pageForPosts: response.current.page_for_posts,
+		},
+	};
+}
+
+/**
  * Wipe every post, non-Home/Blog page, comment, and non-default
  * category/post_tag term, via `dwpb-test/v1/reset-content`.
  *

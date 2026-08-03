@@ -296,6 +296,7 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @since 0.5.6 added disable_removed_sitemaps() on template_redirect (DEFECT D5).
+	 * @since 0.5.6 added remove_pingback_header_fallback() on the 'wp' action, for older WP.
 	 * @access private
 	 */
 	private function define_public_hooks() {
@@ -320,6 +321,12 @@ class Disable_Blog {
 
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_public, 'filter_wp_headers', 10, 1 );
+
+		// Fallback removal of the X-Pingback header for WordPress < 6.2, where core sends
+		// it via a direct header() call in WP::handle_404() that runs after the
+		// 'wp_headers' filter above has already fired. See the docblock on
+		// Disable_Blog_Public::remove_pingback_header_fallback() for the full explanation.
+		$this->loader->add_action( 'wp', $plugin_public, 'remove_pingback_header_fallback' );
 
 		// Hide Feed links.
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );

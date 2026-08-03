@@ -23,7 +23,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { rowLocator } from '../../config/admin';
+import { adminUrl, rowLocator } from '../../config/admin';
 import { siteConfig } from '../../config/seed';
 import { pluginStrings } from '../../config/strings';
 
@@ -60,27 +60,36 @@ test.describe( 'admin: pages list table (default state)', () => {
 	} );
 
 	test( 'editing the posts page shows the plugin notice', async ( {
-		admin,
-		editor,
-		page,
+		request,
 		requestUtils,
 	} ) => {
-		// The block editor is slow to boot (full editor bundle, block
-		// registration, ...), so this one test gets a generous timeout rather
-		// than the suite default.
-		test.setTimeout( 90_000 );
-
 		const config = await siteConfig( requestUtils );
 		const strings = await pluginStrings( requestUtils );
 
-		await admin.visitAdminPage( 'post.php', `post=${ config.blogId }&action=edit` );
+		// Asserted at the REQUEST layer, not through the browser, and that is
+		// deliberate. The notice under test is printed server-side by
+		// `edit_form_after_title`, so if it rendered at all it would be in this
+		// initial HTML response -- booting the block editor proves nothing extra.
+		//
+		// Driving this through the browser also made the test version-fragile:
+		// WordPress only moved the block-editor canvas into an iframe
+		// (`[name="editor-canvas"]`) partway through this plugin's supported
+		// range, and on 5.9 neither the iframed nor the top-level "Add title"
+		// locator resolves, so any DOM-readiness wait just burns its full
+		// timeout. The HTML response is identical to reason about on every
+		// supported version.
+		const response = await request.get(
+			adminUrl( `post.php?post=${ config.blogId }&action=edit` )
+		);
 
-		// Wait for the block editor to settle: the title field inside the
-		// canvas iframe is a reliable signal it has finished booting, rather
-		// than racing the assertion below against a still-loading editor.
-		await expect(
-			editor.canvas.getByRole( 'textbox', { name: 'Add title' } )
-		).toBeVisible( { timeout: 60_000 } );
+		expect( response.status() ).toBe( 200 );
+
+		const body = await response.text();
+
+		// Positive control: prove we actually loaded the editor screen for the
+		// Blog page, so the absence assertion below cannot pass vacuously
+		// against a redirect, a permissions error, or an empty response.
+		expect( body ).toContain( `post=${ config.blogId }` );
 
 		// NOT a positive assertion, deliberately -- and this contradicts the
 		// task brief's expectation that this notice is reachable here. Verified
@@ -98,8 +107,8 @@ test.describe( 'admin: pages list table (default state)', () => {
 		//    instead whenever use_block_editor_for_post() is true, and never
 		//    requires edit-form-advanced.php in that branch. 'page' is
 		//    REST-enabled and supports the 'editor' feature, no plugin in this
-		//    environment disables the block editor for it, and Twenty
-		//    Twenty-Four is a block theme, so every page edit here uses the
+		//    environment disables the block editor for it, and the active theme
+		//    is a block theme, so every page edit here uses the
 		//    block editor.
 		//
 		// Net effect: neither core's default notice nor the plugin's
@@ -109,6 +118,6 @@ test.describe( 'admin: pages list table (default state)', () => {
 		// is the redirected posts page), not a flaky assertion -- flagged for
 		// the coordinator, and reported per the brief's explicit allowance to
 		// report unreachability rather than force a presence assertion.
-		await expect( page.getByText( strings.posts_page_edit_notice ) ).toHaveCount( 0 );
+		expect( body ).not.toContain( strings.posts_page_edit_notice );
 	} );
 } );
