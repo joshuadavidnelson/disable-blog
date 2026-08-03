@@ -25,13 +25,31 @@
  * hardcoding the exact charset string, so a WordPress core version bump that
  * reorders or re-cases that header can't break this suite for no reason.
  *
- * 🚫 NOT COVERED HERE, ON PURPOSE: requesting a sitemap sub-file directly
- * (e.g. `/wp-sitemap-posts-post-1.xml`, which core still serves live content
- * for despite `post` being excluded from the *index*). That mismatch is a
- * known, tracked defect slated for a later phase's fix — asserting today's
- * (wrong) behaviour here would bake the bug into the suite as if it were a
- * spec. This file only asserts what the *index* document at `/wp-sitemap.xml`
- * lists and omits.
+ * DEFECT D5 (class-disable-blog-public.php, the plugin's sitemap guard):
+ * requesting a removed provider's sitemap sub-file directly was originally
+ * audited as a blanket leak across posts, taxonomies, AND users. Verified
+ * live against a real site with a published post seeded, that assumption was
+ * too broad:
+ *  - `/wp-sitemap-posts-post-1.xml`, `/wp-sitemap-taxonomies-category-1.xml`,
+ *    and `/wp-sitemap-taxonomies-post_tag-1.xml` already `404` correctly
+ *    TODAY, with no plugin fix required. `wp_sitemaps_post_types()` /
+ *    `wp_sitemaps_taxonomies()` both `unset()` their entries from the arrays
+ *    `WP_Sitemaps_Registry` walks, so `WP_Sitemaps::render_sitemaps()` has no
+ *    registered provider left for that sub-file and 404s on its own. These
+ *    three are covered below as regression guards (they pass today and must
+ *    keep passing), not defect tests.
+ *  - `/wp-sitemap-users-1.xml` is the one genuine D5 defect. `wp_author_sitemaps()`
+ *    removes the `'users'` provider via a different code path — the
+ *    `wp_sitemaps_add_provider` filter, rather than unset()-ing an array
+ *    entry — and core does not turn that into a `404`. The request instead
+ *    falls through to the normal template and serves the blog index as HTML
+ *    at `200`, leaking the seeded post's title into the response body. Both
+ *    assertions covering `/wp-sitemap-users-1.xml` below (the `404` and the
+ *    no-leak check) are for the CORRECTED behaviour and are expected to FAIL
+ *    until D5 is fixed. A `/wp-sitemap-posts-page-1.xml` control (a sub-file
+ *    for a provider the plugin does NOT remove) is asserted to stay `200`
+ *    alongside them — without it, a blanket "404 everything" over-fix would
+ *    pass this file just as easily as a targeted one.
  *
  * REQUEST LAYER: plain `request.get()` calls, same as every other spec in
  * this phase — see the docblock in `config/redirects.ts` for why navigation
@@ -53,6 +71,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  */
 import { seedPost, deletePosts, uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { expectStatus } from '../../config/redirects';
 
 test.describe( 'sitemap: default state', () => {
 	// Public-facing behaviour — every request in this block is anonymous. The
@@ -105,5 +124,82 @@ test.describe( 'sitemap: default state', () => {
 		const body = await response.text();
 
 		expect( body ).not.toContain( 'wp-sitemap-users-1.xml' );
+	} );
+
+	/* -------------------------------------------------------------------
+	 * Regression guards (currently passing): already-correct 404s
+	 *
+	 * Verified live: these three sub-files already 404 today with no plugin
+	 * fix involved — wp_sitemaps_post_types()/wp_sitemaps_taxonomies() both
+	 * unset() their entries, leaving WP_Sitemaps::render_sitemaps() with no
+	 * registered provider to fall back on. Not D5 defects; kept here so a
+	 * future regression re-introducing them gets caught.
+	 * ---------------------------------------------------------------- */
+
+	test( 'regression guard: a removed posts sitemap sub-file still 404s', async ( {
+		request,
+	} ) => {
+		await expectStatus( request, '/wp-sitemap-posts-post-1.xml', 404 );
+	} );
+
+	test( 'regression guard: a removed category taxonomy sitemap sub-file still 404s', async ( {
+		request,
+	} ) => {
+		await expectStatus( request, '/wp-sitemap-taxonomies-category-1.xml', 404 );
+	} );
+
+	test( 'regression guard: a removed post_tag taxonomy sitemap sub-file still 404s', async ( {
+		request,
+	} ) => {
+		await expectStatus( request, '/wp-sitemap-taxonomies-post_tag-1.xml', 404 );
+	} );
+
+	/* -------------------------------------------------------------------
+	 * Defect (currently failing): corrected behaviour for D5
+	 *
+	 * The users sitemap is the one genuine D5 defect (see the file
+	 * docblock): removing the 'users' provider goes through
+	 * wp_sitemaps_add_provider rather than unset()-ing an array entry, so
+	 * core doesn't 404 it — the request falls through to the normal template
+	 * and leaks the seeded post's title into the HTML response.
+	 * ---------------------------------------------------------------- */
+
+	test( 'DEFECT D5: a removed users sitemap sub-file 404s', async ( { request } ) => {
+		// DEFECT D5: class-disable-blog-public.php's sitemap guard skips
+		// redirecting sitemap requests, and wp_author_sitemaps() removes the
+		// 'users' provider via wp_sitemaps_add_provider rather than unset()-ing
+		// an array entry the way the post types/taxonomies filters do — core
+		// has nothing registered to 404 against, so this falls through to the
+		// blog index template and 200s today.
+		await expectStatus( request, '/wp-sitemap-users-1.xml', 404 );
+	} );
+
+	test( 'DEFECT D5 control: the still-supported pages sitemap sub-file still renders', async ( {
+		request,
+	} ) => {
+		// Proves the D5 fix is targeted at the removed users provider
+		// specifically, not a blanket 404 of every sitemap sub-file — a fix
+		// that 404s everything would pass the test above just as easily as a
+		// correct, targeted one, but would fail this one.
+		const response = await request.get( '/wp-sitemap-posts-page-1.xml', {
+			maxRedirects: 0,
+		} );
+
+		expect( response.status() ).toBe( 200 );
+		expect( response.headers()[ 'content-type' ] ).toContain( 'xml' );
+	} );
+
+	test( 'DEFECT D5: a removed users sitemap sub-file never leaks post content', async ( {
+		request,
+	} ) => {
+		// The leak genuinely happens here, not on posts-post-1: that sub-file
+		// already 404s today (see the regression guard above) with no body
+		// to leak from, so a leak assertion attached to it would pass
+		// vacuously. /wp-sitemap-users-1.xml is where the fallback-to-template
+		// HTML actually contains the seeded post's title today.
+		const response = await request.get( '/wp-sitemap-users-1.xml' );
+		const body = await response.text();
+
+		expect( body ).not.toContain( seededPost.title );
 	} );
 } );
