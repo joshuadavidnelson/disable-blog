@@ -103,7 +103,20 @@ export function menuLink( page: Page, href: string ): Locator {
 export const ADMIN_BAR_NEW_POST = '#wp-admin-bar-new-post';
 export const ADMIN_BAR_NEW_PAGE = '#wp-admin-bar-new-page';
 export const ADMIN_BAR_COMMENTS = '#wp-admin-bar-comments';
-export const ADMIN_BAR_COMMENTS_COUNT = '#wp-admin-bar-comments .count';
+
+/**
+ * The comment bubble's label.
+ *
+ * NOT `.count` -- core's `wp_admin_bar_comments_menu()` renders
+ * `<span class="ab-label awaiting-mod pending-count count-{n}">`, so there is
+ * no bare `count` class to match. A `.count` selector silently matches nothing,
+ * which would make `toHaveCount( 0 )` pass whether or not the bubble is there.
+ *
+ * Note the bubble reports `wp_count_comments()->moderated` -- comments awaiting
+ * moderation -- so an *approved* comment never moves this number. Seed pending
+ * comments when asserting against it.
+ */
+export const ADMIN_BAR_COMMENTS_LABEL = '#wp-admin-bar-comments .ab-label';
 
 /* -------------------------------------------------------------------------
  * Dashboard (index.php)
