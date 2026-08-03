@@ -6,8 +6,8 @@ Disable Blog
 [![WP compatibility](https://plugintests.com/plugins/wporg/disable-blog/wp-badge.svg)](https://plugintests.com/plugins/wporg/disable-blog/latest) [![PHP compatibility](https://plugintests.com/plugins/wporg/disable-blog/php-badge.svg)](https://plugintests.com/plugins/wporg/disable-blog/latest)
 
 **Requires at least WordPress:** 5.9  
-**Tested up to WordPress:** 6.9  
-**Stable version:** 0.5.5  
+**Tested up to WordPress:** 7.0  
+**Stable version:** 0.5.6  
 **License:** GPLv2 or later  
 **Requires PHP:** 7.4  
 **Tested up to PHP:** 8.4  

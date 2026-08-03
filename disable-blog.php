@@ -14,7 +14,10 @@
  * Plugin Name: Disable Blog
  * Plugin URI:  https://wordpress.org/plugins/disable-blog/
  * Description: Go blog-less with WordPress. This plugin disables all blog-related functionality (by hiding, removing, and redirecting).
- * Version:     0.5.5
+ * Version:     0.5.6
+ * Requires at least: 5.9
+ * Tested up to: 7.0
+ * Requires PHP: 7.4
  * Author:      Joshua David Nelson
  * Author URI:  http://joshuadnelson.com
  * License:     GPL-2.0+
