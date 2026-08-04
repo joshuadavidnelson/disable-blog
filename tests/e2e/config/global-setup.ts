@@ -9,6 +9,7 @@ import { RequestUtils } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { resetFixtures } from './fixtures';
+import { resetFilterOverrides } from './filter-overrides';
 import { ADMIN_STORAGE_STATE, PLUGIN_SLUG, THEME_SLUG } from './roles';
 import { resetContent, setupSite } from './seed';
 
@@ -60,6 +61,7 @@ async function globalSetup( config: FullConfig ): Promise< void > {
 	// Start from a clean content set and stock fixture behaviour.
 	await resetContent( requestUtils );
 	await resetFixtures( requestUtils );
+	await resetFilterOverrides( requestUtils );
 
 	await requestContext.dispose();
 }
