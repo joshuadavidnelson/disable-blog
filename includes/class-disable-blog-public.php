@@ -498,6 +498,9 @@ class Disable_Blog_Public {
 		 *
 		 * Return false to disable this functionality entirely and keep all methods in place.
 		 *
+		 * Note that WordPress 7.1 removes `pingback.ping` itself on any non-production
+		 * environment, so that one method stays gone there regardless of this filter.
+		 *
 		 * @since 0.5.0
 		 * @param array $methods_to_remove an array of all the XMLRPC methods to disable.
 		 * @return array|bool

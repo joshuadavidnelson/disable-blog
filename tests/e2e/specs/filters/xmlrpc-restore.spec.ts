@@ -6,8 +6,8 @@
  * taxonomy-conditional subset `filters/cpt-branches.spec.ts` exercises.
  *
  * `demo.sayHello` is used instead of `pingback.ping` to prove the restore:
- * WordPress trunk removes `pingback.ping` itself on non-production
- * environments, independent of any plugin filter.
+ * WordPress 7.1 removes `pingback.ping` itself on any non-production
+ * environment, so no plugin filter can restore it there.
  *
  * No browser session concept applies to XML-RPC, so this file uses the plain
  * `request` fixture throughout.

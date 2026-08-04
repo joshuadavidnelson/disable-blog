@@ -100,7 +100,9 @@ test.describe( 'XML-RPC: default state', () => {
 
 	test( 'pingback.ping and demo.sayHello are removed', async ( { request } ) => {
 		// demo.sayHello needs no auth/params, so a fault here can only mean
-		// the method itself is gone.
+		// the method itself is gone. It also carries the plugin-specific
+		// signal: WordPress 7.1 removes pingback.ping itself on non-production
+		// environments, so that one faults there whatever the plugin does.
 		const removedMethods = [ 'pingback.ping', 'demo.sayHello' ];
 
 		for ( const methodName of removedMethods ) {
