@@ -73,6 +73,7 @@ export function termPhp( taxonomy: string, termId: number ): string {
 
 export const MENU_POSTS = '#menu-posts';
 export const MENU_PAGES = '#menu-pages';
+export const MENU_MEDIA = '#menu-media';
 export const MENU_COMMENTS = '#menu-comments';
 export const MENU_TOOLS = '#menu-tools';
 export const MENU_SETTINGS = '#menu-settings';

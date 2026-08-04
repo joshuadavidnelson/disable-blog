@@ -2,13 +2,21 @@
  * The wp-admin Dashboard (`index.php`), default plugin state.
  *
  * COVERAGE: `Disable_Blog_Admin::remove_dashboard_widgets()`, hooked on
- * `admin_init`, removes `dashboard_quick_press`, `dashboard_activity`,
- * `dashboard_recent_drafts`, and `dashboard_incoming_links` unconditionally
- * (each via its own `dwpb_disable_{$metabox_id}` filter, all defaulting to
- * true) — only the first two are asserted here. Separately,
- * `disable-blog-admin.css` unconditionally hides `#dashboard_right_now`'s
- * post/comment counts (not the page count) regardless of the
- * `.disabled-blog` body class.
+ * `admin_init`, calls `remove_meta_box()` for `dashboard_quick_press`,
+ * `dashboard_activity`, `dashboard_recent_drafts`, and
+ * `dashboard_incoming_links` unconditionally (each via its own
+ * `dwpb_disable_{$metabox_id}` filter, all defaulting to true) — only the
+ * first two are asserted here. The other two target metabox ids core never
+ * registers as their own postboxes: "Recent Drafts" renders inline inside
+ * the Quick Draft widget's own callback (`wp_dashboard_recent_drafts()`,
+ * called from `wp_dashboard_quick_press()`), and "Incoming Links" was
+ * removed from core entirely (its callbacks are empty stubs in
+ * wp-admin/includes/deprecated.php). `remove_meta_box()` for either id is
+ * therefore always a no-op with no `#dashboard_recent_drafts` /
+ * `#dashboard_incoming_links` element ever in the DOM to assert against, in
+ * this state or any other. Separately, `disable-blog-admin.css`
+ * unconditionally hides `#dashboard_right_now`'s post/comment counts (not
+ * the page count) regardless of the `.disabled-blog` body class.
  */
 
 /**
