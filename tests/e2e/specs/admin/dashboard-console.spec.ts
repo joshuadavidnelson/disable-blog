@@ -1,56 +1,21 @@
 /**
  * The wp-admin Dashboard (`index.php`) console behaviour when
- * `dwpb.commentsSupported` is `false`, a state otherwise unreachable in this
- * environment — see `tests/e2e/fixtures/dwpb-test-comments-unsupported.php`'s
- * docblock for why 'page'/'attachment' supporting comments by default keeps
- * this branch dead code from this suite's point of view.
+ * `dwpb.commentsSupported` is `false` — unreachable via the plugin's normal
+ * default state, so exercised here via a test fixture toggle.
  *
- * REGRESSION GUARD: `assets/js/disable-blog-admin.js`'s Dashboard (`'index'`)
- * case used to do
- * `document.querySelector( '.welcome-icon.welcome-comments' ).parentNode`
- * (:14) whenever `dwpb.commentsSupported` is false. WordPress 6.1+ no longer
- * renders those classes on the Dashboard welcome panel, so the selector
- * returned `null` and `.parentNode` threw a `TypeError` — an uncaught
- * exception inside the `DOMContentLoaded` handler, which silently killed
- * every later `case` in that same handler for the rest of the page load
- * (DEFECT D6, now fixed).
+ * Regression guard (fixed since v0.5.5): `disable-blog-admin.js`'s Dashboard
+ * case used to call `.parentNode` on `document.querySelector(
+ * '.welcome-icon.welcome-comments' )`, which is `null` on WordPress 6.1+ —
+ * an uncaught `TypeError` inside the `DOMContentLoaded` handler that killed
+ * every later `case` in that handler for the rest of the page load. An
+ * uncaught exception surfaces to Playwright as a `pageerror` event, not
+ * `console` — the assertion below binds to `pageerror` specifically; the
+ * `console` collector is kept only to enrich the failure message.
  *
- * Both tests below guard against that regression:
- *  - no uncaught `TypeError` on `index.php` with the toggle on;
- *  - a positive control (`options-writing.php`) proving the script itself
- *    still runs to completion in this same toggle state, so the first
- *    assertion is proven to be about this one previously-broken `case`, not
- *    a broken script file/build/enqueue that would fail everything
- *    indiscriminately.
- *
- * OVERLAP WITH `filters/comments-unsupported.spec.ts`: that file's final
- * test also asserts a clean (error-free) dashboard in this same
- * `commentsSupported === false` state. The two are deliberately kept
- * separate rather than merged: this file is scoped to the JS regression
- * itself (the broken selector, proven with a `pageerror` collector and the
- * `options-writing.php` control above), while the other file's test is
- * scoped to the comments-unsupported fixture branch as a whole, of which a
- * clean dashboard is one of several assertions. Losing either would leave a
- * gap in what it independently documents.
- *
- * PAGEERROR, NOT CONSOLE: an uncaught exception is delivered to Playwright as
- * a `pageerror` event, not a `console` event — the DevTools protocol keeps
- * `Runtime.exceptionThrown` (uncaught errors) and `Runtime.consoleAPICalled`
- * (`console.*()` calls) as two distinct events, and Playwright maps only the
- * latter onto `page.on( 'console', ... )`. That means
- * `@wordpress/e2e-test-utils-playwright`'s own built-in listener
- * (`observeConsoleLogging` in its `test` fixture, which only listens on
- * `'console'`) does not, by itself, reliably surface this specific defect —
- * and neither would an assertion in this file that bound to a `'console'`
- * collector. The D6 test below binds its assertion to the `'pageerror'`
- * collector specifically; a `'console'` collector is also kept, folded into
- * the failure message as a belt-and-braces signal, but it is never what the
- * `expect()` call itself checks. The failure message includes the captured
- * error text, so a red run names the actual `TypeError` instead of a bare
- * count mismatch.
- *
- * AUTHENTICATED BY DEFAULT: no `storageState` override — both screens here
- * require an authenticated admin, which the project default already is.
+ * This overlaps with `filters/comments-unsupported.spec.ts`'s final test
+ * (also asserts a clean dashboard in this state) but is kept separate: that
+ * file covers the fixture branch as a whole, this one is scoped to the JS
+ * regression itself.
  */
 
 /**
@@ -70,10 +35,7 @@ import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtur
 
 /**
  * Row-of-a-`.form-table` locator, matched by the `<label for="...">` inside
- * it. Mirrors `formTableRow()` in `settings-screens.spec.ts` -- kept local
- * rather than shared, since this is the only options-writing.php assertion
- * in this file and does not warrant promoting to `config/admin.ts` on its
- * own.
+ * it. Mirrors `formTableRow()` in `settings-screens.spec.ts`, kept local here.
  *
  * @param page     Page under test.
  * @param labelFor The `for` attribute of a `<label>` inside the target row.
@@ -97,21 +59,6 @@ test.describe( 'admin: dashboard console (commentsSupported === false)', () => {
 		page,
 		admin,
 	} ) => {
-		// D6 (fixed): assets/js/disable-blog-admin.js:14 —
-		// document.querySelector( '.welcome-icon.welcome-comments' ) returns
-		// null on modern WordPress, so .parentNode used to throw a TypeError
-		// that killed the rest of the DOMContentLoaded handler. This guards
-		// against that regression recurring.
-		// PAGEERROR, NOT CONSOLE: an uncaught exception is delivered to
-		// Playwright via the 'pageerror' event, not 'console' -- the DevTools
-		// protocol keeps Runtime.exceptionThrown (uncaught errors) and
-		// Runtime.consoleAPICalled (console.*() calls) as two distinct
-		// events, and Playwright's 'console' event only ever surfaces the
-		// latter. So `pageErrors` is what this assertion binds to; the
-		// console collector is kept only as a belt-and-braces signal folded
-		// into the failure message, and is deliberately NOT part of the
-		// assertion itself -- otherwise this test would go back to passing
-		// vacuously exactly as it did before.
 		const consoleErrors: string[] = [];
 		const pageErrors: string[] = [];
 
@@ -144,11 +91,8 @@ test.describe( 'admin: dashboard console (commentsSupported === false)', () => {
 		page,
 		admin,
 	} ) => {
-		// Proves disable-blog-admin.js as a whole still runs to completion
-		// with the toggle on -- the 'options-writing' case never touches the
-		// Dashboard's (formerly broken) selector, so this passing is what
-		// proves the assertion above is specific to the 'index' case, not a
-		// broken script file/enqueue that would fail indiscriminately.
+		// Proves the script as a whole still runs with the toggle on, so the
+		// guard above is specific to the 'index' case, not a broken enqueue.
 		await admin.visitAdminPage( 'options-writing.php' );
 
 		await expect( formTableRow( page, 'default_post_format' ) ).toBeHidden();

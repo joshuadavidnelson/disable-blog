@@ -33,13 +33,11 @@ function isExistingUserError( error: unknown ): boolean {
 /**
  * Create the non-admin role users and persist a signed-in browser state for each.
  *
- * Runs as a Playwright setup project that every browser project depends on, so
- * a spec can switch identity with
- * `test.use( { storageState: storageStatePath( 'editor' ) } )` without doing its
- * own login. The admin state is written earlier, by `global-setup.ts`.
- *
- * Idempotent: users left behind by a previous run are reused, and their storage
- * state is refreshed on every run so the cookies are never stale.
+ * Runs as a Playwright setup project every browser project depends on, so a
+ * spec can switch identity via
+ * `test.use( { storageState: storageStatePath( 'editor' ) } )` without its own
+ * login. Idempotent: existing users are reused, but storage state is always
+ * refreshed so cookies are never stale.
  */
 setup( 'create role users and store their authenticated state', async ( {
 	baseURL,

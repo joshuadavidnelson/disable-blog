@@ -1,23 +1,16 @@
 /**
  * Toggles for the mu-plugin fixtures mapped into `wp-content/mu-plugins/`.
  *
- * Each fixture in `tests/e2e/fixtures/` registers its hooks unconditionally
- * and stays inert until its option is switched on, gated via
- * `register_setting( 'options', <name>, [ 'show_in_rest' => true ] )`. That
- * means a spec can flip one with a single `PUT /wp/v2/settings` instead of a
- * ~1.2s WP-CLI round trip.
+ * Each fixture registers its hooks unconditionally and stays inert until its
+ * option is switched on, so a spec can flip one with a single
+ * `PUT /wp/v2/settings` instead of a WP-CLI round trip.
  *
- * ⚠️ `tests/e2e/fixtures/` is mapped into BOTH the :8888 dev site and the
- * :8889 test site (see `.wp-env.json`). A toggle left on after a spec finishes
- * does not just affect the next test run — it pollutes local development on
- * :8888 until someone notices and flips it back manually. Calling
- * `resetFixtures()` in `afterEach`/`afterAll` is not optional.
+ * `tests/e2e/fixtures/` is mapped into both the :8888 dev site and the :8889
+ * test site (see `.wp-env.json`), so a toggle left on pollutes local
+ * development, not just the next test run. Calling `resetFixtures()` in
+ * `afterEach`/`afterAll` is not optional.
  *
  * @see tests/e2e/fixtures/
- */
-
-/**
- * External dependencies
  */
 import type { RequestUtils } from '@wordpress/e2e-test-utils-playwright';
 

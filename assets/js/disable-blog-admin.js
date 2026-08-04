@@ -5,14 +5,9 @@
 	 * Find an element by selector and walk up a number of parentNode levels,
 	 * adding the 'hidden' class to whatever is found.
 	 *
-	 * Returns null instead of throwing when the selector doesn't match, or a
-	 * parentNode walk runs out of ancestors, so a missing element on one
-	 * admin screen can't kill every later case in the calling switch
-	 * statement (DEFECT D6: WordPress 6.1+ removed the Dashboard welcome
-	 * panel's '.welcome-icon.welcome-comments' markup entirely, so that one
-	 * selector never matches on modern WordPress; before this guard, that
-	 * turned into an uncaught TypeError that silently stopped the rest of
-	 * this handler from ever running).
+	 * Returns null instead of throwing when the selector or an ancestor is
+	 * missing, so one absent element can't kill the rest of the calling
+	 * switch statement (previously an uncaught TypeError here would).
 	 *
 	 * @param {string} selector CSS selector to look up.
 	 * @param {number} [levels] Number of parentNode levels to walk up before hiding. Default 0.
@@ -46,14 +41,8 @@
 					// If we don't support comments, the dashboard welcome panel
 					// shouldn't show the comment toggle.
 					//
-					// DEAD CODE AS OF WP 6.1+: WordPress 6.1 removed the
-					// '.welcome-icon.welcome-comments' classes from the Dashboard
-					// welcome panel markup entirely, so this selector never
-					// matches on current WordPress and hideRow() is a harmless
-					// no-op here. Whether to retarget this at whatever markup (if
-					// any) replaced it, or remove it outright, is a separate
-					// decision -- this guard only makes the miss harmless instead
-					// of fatal (DEFECT D6).
+					// Dead on WP 6.1+: core removed this welcome-panel markup, so the
+					// selector never matches there; hideRow() no-ops instead of throwing.
 					if ( typeof dwpb.commentsSupported !== 'undefined' && ! dwpb.commentsSupported ) {
 						hideRow( '.welcome-icon.welcome-comments', 1 );
 					}

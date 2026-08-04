@@ -5,15 +5,8 @@
  * COVERAGE: `Disable_Blog_Admin::filter_block_type_metadata()`, hooked on
  * `block_type_metadata` unconditionally, rewrites `core/query`'s
  * `attributes.query.default.postType` from `'post'` to `'page'` at
- * block-registration time -- so every consumer of the block's metadata, the
- * REST block-types endpoint included, sees `'page'` as the default.
- *
- * RESPONSE SHAPE, VERIFIED NOT ASSUMED: confirmed directly against the
- * wp-env core install backing this suite (`wp eval` calling
- * `rest_do_request()` for this exact route as an administrator) that
- * `GET /wp/v2/block-types/core/query?context=edit` returns
- * `data.attributes.query.default.postType === 'page'`, matching the brief's
- * expected path exactly -- no shape mismatch to report here.
+ * block-registration time, so every consumer — including the REST
+ * block-types endpoint asserted here — sees `'page'` as the default.
  */
 
 /**

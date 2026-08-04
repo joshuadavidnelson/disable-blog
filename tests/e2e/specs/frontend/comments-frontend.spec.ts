@@ -1,44 +1,14 @@
 /**
- * Front-end comment status behaviour on posts vs. pages, default plugin state.
+ * Front-end comment status on posts vs. pages, default plugin state.
+ * `filter_comment_status()` forces `comments_open`/`pings_open` to `false`
+ * for 'post' only, and is registered whenever any non-post public type (page,
+ * attachment by default) declares comments support — true out of the box.
  *
- * COVERAGE: `Disable_Blog_Admin::filter_comment_status()`, hooked on both the
- * `comments_open` and `pings_open` filters, forces both to `false` whenever
- * `'post' === get_post_type( $post_id )` and passes the incoming value
- * through untouched for every other post type.
- *
- * GATING CONDITION: the above is only registered when
- * `dwpb_post_types_with_feature( 'comments' )` is truthy
- * (`includes/class-disable-blog.php`, `define_admin_hooks()`). That function
- * returns every public post type OTHER than `post` that declares
- * `'comments'` support, and `page` and `attachment` both declare it by
- * default in stock WordPress — so on a fresh install this is truthy and the
- * hook IS active, which is exactly the state this spec exercises. The
- * `dwpb_test_comments_unsupported` fixture toggle exists to flip that gating
- * condition off and is deliberately out of scope here — see the Phase 3
- * backlog.
- *
- * 🚫 FRONT-END COMMENT *RENDERING* IS DELIBERATELY NOT ASSERTED HERE: this
- * file used to also cover `Disable_Blog_Admin::filter_existing_comments()`
- * (hooked on `comments_array`) and the presence/absence of `#commentform` on
- * a rendered post/page. Both were verified empirically to be untestable
- * against the current site: the active theme is Twenty Twenty-Four, a block
- * theme, whose Comments block queries comments via `WP_Comment_Query`
- * directly and never applies the `comments_array` filter at all — that
- * filter only fires through the classic `comments_template()` path. So
- * `filter_existing_comments()` has no effect under this theme and existing
- * comments keep rendering regardless of post type; separately, the theme's
- * page template renders no comment UI at all, so `#commentform` never exists
- * on either a post or a page. This is a real, confirmed defect
- * (`comments_array` registered, `wp_is_block_theme()` true), but it is being
- * filed as an issue rather than fixed here, and it is theme-dependent rather
- * than a plugin contract — so this file asserts only the theme-independent
- * comment-status data layer (`comments_open()`/`pings_open()` via
- * `postState()`), not DOM rendering. Do not add rendering assertions back
- * without re-verifying against whatever theme is active at the time.
- *
- * ANONYMOUS CONTEXT: same convention as `redirects.spec.ts` — the describe
- * block runs with an empty `storageState`; the worker-scoped `requestUtils`
- * fixture stays admin-authenticated for seeding.
+ * Only the comment-status data layer (comments_open()/pings_open() via
+ * postState()) is asserted, not DOM rendering: the active theme (a block
+ * theme) queries comments via WP_Comment_Query directly and never applies
+ * the comments_array filter, and its page template renders no #commentform,
+ * so rendering assertions would be theme artifacts, not plugin behaviour.
  */
 
 /**
@@ -59,13 +29,6 @@ import {
 import type { SeededPost } from '../../config/seed';
 
 test.describe( 'frontend: comment status on posts vs. pages (default state)', () => {
-	// Public-facing behaviour — every request in this block is anonymous.
-	// The worker-scoped `requestUtils` fixture stays admin-authenticated
-	// regardless (see the file docblock), so seeding still works. Nothing in
-	// this file navigates a rendered page (see the file docblock's "FRONT-END
-	// COMMENT RENDERING" note), so there is no need for the
-	// `frontEndRedirectsOff` fixture toggle that a DOM-navigating version of
-	// this file would require.
 	test.use( { storageState: { cookies: [], origins: [] } } );
 
 	let seededPost: SeededPost;
@@ -74,10 +37,8 @@ test.describe( 'frontend: comment status on posts vs. pages (default state)', ()
 	const seededIds: number[] = [];
 
 	test.beforeAll( async ( { requestUtils } ) => {
-		// comment_status/ping_status are explicitly set to 'open' on both —
-		// not left at whatever the site default happens to be — so that
-		// "closed" observed on the post below is proof the plugin forced it,
-		// not a coincidence of the raw column already being closed.
+		// Explicitly seeded 'open' so an observed 'closed' proves the plugin
+		// forced it, not a coincidence of the default already being closed.
 		seededPost = await seedPost( requestUtils, {
 			title: uniqueTitle( 'comments post' ),
 			commentStatus: 'open',
@@ -94,7 +55,6 @@ test.describe( 'frontend: comment status on posts vs. pages (default state)', ()
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		// Best-effort — deletePosts() never throws, see its docblock.
 		await deletePosts( requestUtils, seededIds );
 	} );
 
@@ -106,10 +66,6 @@ test.describe( 'frontend: comment status on posts vs. pages (default state)', ()
 	} );
 
 	test( 'comments and pings stay open on pages', async ( { requestUtils } ) => {
-		// Control for the test above: the page was seeded with the exact same
-		// open comment/ping status as the post, so an unchanged `true` here
-		// proves filter_comment_status() is targeting 'post' specifically
-		// rather than closing comments/pings site-wide.
 		const pageCommentState = await postState( requestUtils, seededPage.id );
 
 		expect( pageCommentState.commentsOpen ).toBe( true );

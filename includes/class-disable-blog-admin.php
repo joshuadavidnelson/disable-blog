@@ -250,10 +250,8 @@ class Disable_Blog_Admin {
 				// Check the function for redirect clearance, or custom url.
 				$redirect = $this->$function();
 
-				// The boolean check MUST happen before esc_url_raw() runs on $redirect:
-				// esc_url_raw( true ) casts `true` to "http://1" (a non-empty string),
-				// which would otherwise be mistaken for a custom redirect url below and
-				// send users to that bogus address instead of the intended dashboard url.
+				// Boolean check must precede esc_url_raw(): esc_url_raw( true ) returns
+				// "http://1", which would wrongly be treated as a custom redirect url.
 				if ( true === $redirect ) {
 					$url = $dashboard_url;
 				} elseif ( is_string( $redirect ) && ! empty( $redirect ) ) {
@@ -275,10 +273,8 @@ class Disable_Blog_Admin {
 				 */
 				$redirect_url = apply_filters( $filter, $url );
 
-				// The tools.php redirect url used to be filterable under a different
-				// name. Honor that name too, so anyone who followed the docs and
-				// filtered it to disable/change the redirect isn't surprised now
-				// that the redirect actually fires (see D2 fix note above).
+				// Back-compat: honor the old filter name too, since the redirect it
+				// belonged to never actually fired before this fix.
 				if ( 'tools' === $pagename ) {
 					$redirect_url = apply_filters_deprecated( 'dwpb_redirect_admin_options_tools', array( $redirect_url ), '0.5.6', 'dwpb_redirect_admin_tools' );
 				}
@@ -435,10 +431,9 @@ class Disable_Blog_Admin {
 	 * The admin redirect arguments checked to redirect the tools.php screen.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 renamed from `redirect_admin_options_tools()` to
-	 *              `redirect_admin_tools()` so it matches the method name the
-	 *              `redirect_admin_pages()` loop actually looks for (built from
-	 *              the 'tools' page slug); the old name was never called.
+	 * @since 0.5.6 renamed from `redirect_admin_options_tools()` to match the
+	 *              method name `redirect_admin_pages()` actually looks for; the
+	 *              old name was never called.
 	 * @return bool
 	 */
 	public function redirect_admin_tools() {
