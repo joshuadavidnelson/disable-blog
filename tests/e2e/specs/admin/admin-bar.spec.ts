@@ -36,6 +36,7 @@ import {
 	deletePosts,
 	uniqueTitle,
 } from '../../config/seed';
+import type { SeededPost } from '../../config/seed';
 import { ADMIN_BAR_NEW_POST, ADMIN_BAR_NEW_PAGE } from '../../config/admin';
 import { storageStatePath } from '../../config/roles';
 
@@ -85,53 +86,65 @@ test.describe( 'admin: admin bar — New Post (editor)', () => {
 } );
 
 test.describe( 'admin: admin bar — comments bubble (administrator)', () => {
-	test( 'the comments bubble excludes pending comments on posts', async ( {
-		admin,
-		page,
-		requestUtils,
-	} ) => {
-		await admin.visitAdminPage( 'index.php' );
+	test.describe( 'pending comment on a post (unsupported type)', () => {
+		let seededPost: SeededPost;
+		let before: number;
 
-		await expect( page.locator( '#wp-admin-bar-comments' ) ).toBeVisible();
+		test.beforeEach( async ( { admin, page, requestUtils } ) => {
+			await admin.visitAdminPage( 'index.php' );
 
-		const before = await readCommentsBubbleCount( page );
+			await expect( page.locator( '#wp-admin-bar-comments' ) ).toBeVisible();
 
-		const seededPost = await seedPost( requestUtils, {
-			title: uniqueTitle( 'admin bar comments post' ),
+			before = await readCommentsBubbleCount( page );
+
+			seededPost = await seedPost( requestUtils, {
+				title: uniqueTitle( 'admin bar comments post' ),
+			} );
+			await seedComment( requestUtils, { postId: seededPost.id, approved: false } );
 		} );
 
-		try {
-			await seedComment( requestUtils, { postId: seededPost.id, approved: false } );
+		test.afterEach( async ( { requestUtils } ) => {
+			await deletePosts( requestUtils, [ seededPost.id ] );
+		} );
 
+		test( 'the comments bubble excludes pending comments on posts', async ( {
+			admin,
+			page,
+		} ) => {
 			await admin.visitAdminPage( 'index.php' );
 			const after = await readCommentsBubbleCount( page );
 
 			expect( after ).toBe( before );
-		} finally {
-			await deletePosts( requestUtils, [ seededPost.id ] );
-		}
+		} );
 	} );
 
-	test( 'page comments are counted in the bubble', async ( { admin, page, requestUtils } ) => {
-		// Control for the test above: proves the bubble isn't simply frozen.
-		await admin.visitAdminPage( 'index.php' );
+	test.describe( 'pending comment on a page (supported type)', () => {
+		let seededPage: SeededPost;
+		let before: number;
 
-		const before = await readCommentsBubbleCount( page );
+		test.beforeEach( async ( { admin, page, requestUtils } ) => {
+			await admin.visitAdminPage( 'index.php' );
 
-		const seededPage = await seedPage( requestUtils, {
-			title: uniqueTitle( 'admin bar comments page' ),
+			before = await readCommentsBubbleCount( page );
+
+			seededPage = await seedPage( requestUtils, {
+				title: uniqueTitle( 'admin bar comments page' ),
+			} );
+			await seedComment( requestUtils, { postId: seededPage.id, approved: false } );
 		} );
 
-		try {
-			await seedComment( requestUtils, { postId: seededPage.id, approved: false } );
+		test.afterEach( async ( { requestUtils } ) => {
+			// Force-deleting the post/page also deletes its comments.
+			await deletePosts( requestUtils, [ seededPage.id ] );
+		} );
 
+		test( 'page comments are counted in the bubble', async ( { admin, page } ) => {
+			// Control for the sibling describe above: proves the bubble isn't
+			// simply frozen.
 			await admin.visitAdminPage( 'index.php' );
 			const after = await readCommentsBubbleCount( page );
 
 			expect( after ).toBe( before + 1 );
-		} finally {
-			// Force-deleting the post/page also deletes its comments.
-			await deletePosts( requestUtils, [ seededPage.id ] );
-		}
+		} );
 	} );
 } );

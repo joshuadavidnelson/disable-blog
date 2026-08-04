@@ -5,9 +5,8 @@
  * `options-writing.php` to `options-general.php` and drops it from the
  * Settings submenu. Uses the default authenticated admin session.
  *
- * Test 3 turns the fixture back off mid-file (not just afterAll) to prove
- * resetFixtures() itself restores stock behaviour; it must run after tests
- * 1-2, which rely on the fixture still being on — this suite runs single-worker.
+ * Test 3 turns the fixture off mid-test, to prove `resetFixtures()` itself
+ * restores stock behaviour.
  */
 
 /**
@@ -29,13 +28,15 @@ test.describe( 'filters: remove options-writing (dwpb_remove_options_writing)', 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		generalSettingsTarget = `${ config.homeUrl }${ adminUrl( 'options-general.php' ) }`;
+	} );
 
+	test.beforeEach( async ( { requestUtils } ) => {
 		await setFixtures( requestUtils, {
 			[ FIXTURE_TOGGLES.removeOptionsWriting ]: true,
 		} );
 	} );
 
-	test.afterAll( async ( { requestUtils } ) => {
+	test.afterEach( async ( { requestUtils } ) => {
 		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.removeOptionsWriting ] );
 	} );
 
