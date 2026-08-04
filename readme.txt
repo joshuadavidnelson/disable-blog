@@ -98,6 +98,8 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Fix redirects being silently cancelled on query-string-only requests to the homepage.
 - Fix a JS TypeError on the Dashboard screen (WordPress 6.1+) that silently broke other admin screen behaviors on that page load.
 - Fix the `X-Pingback` header still being sent on older WordPress despite the "remove pingback header" feature being enabled, caused by core (pre-6.2) sending that header directly rather than through the filter this plugin relies on.
+- **Filters renamed:** `dpwb_disable_user_post_column` is now `dwpb_disable_user_post_column`, and `dpwb_create_user_{$post_type}_column` is now `dwpb_create_user_{$post_type}_column` (old names still honored, but deprecated).
+- Fix `WP_Widget_Tag_Cloud` being listed twice in the widget removal list, which fired the `dwpb_unregister_widgets` filter twice for that widget.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1

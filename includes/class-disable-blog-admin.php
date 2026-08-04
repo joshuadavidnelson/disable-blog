@@ -736,7 +736,6 @@ class Disable_Blog_Admin {
 			'WP_Widget_Links', // Links.
 			'WP_Widget_Recent_Posts', // Recent Posts.
 			'WP_Widget_RSS', // RSS.
-			'WP_Widget_Tag_Cloud', // Tag Cloud.
 		);
 		foreach ( $widgets as $widget ) {
 
@@ -1216,10 +1215,20 @@ class Disable_Blog_Admin {
 		 * Disable the user post column.
 		 *
 		 * @since 0.5.0
+		 * @since 0.5.6 Corrected the filter name to match the plugin's `dwpb_` prefix.
 		 * @param bool $bool True to remove the column, defaults to true.
 		 * @return bool
 		 */
-		$disable_user_posts_column = apply_filters( 'dpwb_disable_user_post_column', true );
+		$disable_user_posts_column = apply_filters( 'dwpb_disable_user_post_column', true );
+
+		/**
+		 * Disable the user post column.
+		 *
+		 * @deprecated 0.5.6 Use `dwpb_disable_user_post_column` instead.
+		 * @param bool $bool True to remove the column, defaults to true.
+		 * @return bool
+		 */
+		$disable_user_posts_column = apply_filters_deprecated( 'dpwb_disable_user_post_column', array( $disable_user_posts_column ), '0.5.6', 'dwpb_disable_user_post_column' );
 
 		if ( isset( $columns['posts'] ) && true === (bool) $disable_user_posts_column ) {
 			unset( $columns['posts'] );
@@ -1235,10 +1244,22 @@ class Disable_Blog_Admin {
 			 * Create a new column for 'pages' similar to the original 'post' column.
 			 *
 			 * @since 0.5.0
+			 * @since 0.5.6 Corrected the filter name to match the plugin's `dwpb_` prefix.
 			 * @param bool $bool True to remove the column, defaults to true.
 			 * @return bool
 			 */
-			if ( apply_filters( "dpwb_create_user_{$post_type}_column", true )
+			$create_user_post_type_column = apply_filters( "dwpb_create_user_{$post_type}_column", true );
+
+			/**
+			 * Create a new column for 'pages' similar to the original 'post' column.
+			 *
+			 * @deprecated 0.5.6 Use `dwpb_create_user_{$post_type}_column` instead.
+			 * @param bool $bool True to remove the column, defaults to true.
+			 * @return bool
+			 */
+			$create_user_post_type_column = apply_filters_deprecated( "dpwb_create_user_{$post_type}_column", array( $create_user_post_type_column ), '0.5.6', "dwpb_create_user_{$post_type}_column" );
+
+			if ( $create_user_post_type_column
 				// Taken from core functions for users page, don't display the posts column on site-users-network core page.
 				// see wp-admin/includes/class-wp-users-list-table.php.
 				&& isset( $screen->id ) && 'site-users-network' !== $screen->id ) {

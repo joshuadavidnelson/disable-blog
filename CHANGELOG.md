@@ -13,6 +13,8 @@
 - Fix redirects being silently cancelled on requests that only differed from their target by a query string (e.g. a root request carrying query vars and targeting `home_url()`). The loop-avoidance guard compared the request path, which never contains a query string, against the full redirect target; it now compares against the actual request URI. Genuine loop protection is unchanged.
 - Fix a TypeError in `disable-blog-admin.js` on the Dashboard screen when comment support was unavailable, caused by a selector (`.welcome-icon.welcome-comments`) that WordPress 6.1 removed from the welcome panel markup. The uncaught error silently stopped every later behavior in the script from running for that page load (e.g. hidden rows on the Writing and Permalinks screens). All DOM lookups in the file are now null-guarded.
 - Fix the `X-Pingback` header still being sent on older WordPress even with the "remove pingback header" feature enabled, caused by core (pre-6.2) sending that header via a direct `header()` call that runs after the `wp_headers` filter this plugin relies on has already fired. The header is now also removed on `send_headers`, which catches it on older core; the existing `dwpb_remove_pingback_header` filter still controls both.
+- Fix two misspelled filters on the Users list table (`dpwb_` instead of `dwpb_`): `dwpb_disable_user_post_column` and `dwpb_create_user_{$post_type}_column`. The misspelled names are still honored via `apply_filters_deprecated()`.
+- Fix `WP_Widget_Tag_Cloud` being listed twice in `remove_widgets()`, which caused the `dwpb_unregister_widgets` filter to fire twice for that widget.
 
 ## 0.5.5
 
