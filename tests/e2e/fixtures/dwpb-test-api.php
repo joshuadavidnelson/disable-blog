@@ -1,55 +1,21 @@
 <?php
 /**
- * E2E mu-plugin fixture: seeding + inspection endpoints for the Playwright suite.
+ * E2E mu-plugin fixture: REST routes for seeding/inspecting content in the
+ * Playwright suite.
  *
- * NAMESPACE: `dwpb-test/v1`. Every route declares
- * `permission_callback => current_user_can( 'manage_options' )`, so the surface is
- * unreachable to anonymous or low-privileged requests.
- *
- * WHY THIS FILE EXISTS: Disable Blog strips the 'post' post type down to almost
- * nothing. `Disable_Blog_Admin::modify_post_type_arguments()`, hooked on `init` at
- * priority 25, sets `show_in_rest`, `public`, `show_ui`, etc. to `false` on the
- * 'post' post type. That means `POST /wp/v2/posts` returns `rest_no_route` for the
- * entire life of the test environment, so the standard REST-based seeding helper
- * (`RequestUtils.createPost()`) simply cannot create a post — there is no core
- * route left to call. Pages are untouched by the plugin and seed fine through core
- * REST; posts, comments, and category/tag terms attached to posts do not, so this
- * fixture provides an authenticated back door that calls the same underlying
- * WordPress APIs (`wp_insert_post()`, `wp_insert_comment()`, `wp_insert_term()`,
- * `get_posts()`, ...) directly, bypassing the plugin's REST restrictions the same
- * way WP-CLI or a direct database actor would.
- *
- * This mu-plugin is mapped into `wp-content/mu-plugins` by `.wp-env.json`, so it
- * loads on every request in the test environment. It registers nothing on the
- * plugin's own hooks and performs no work until an authenticated administrator
- * calls one of these routes, so it is safe to leave active for the whole suite.
- *
- * Routes:
- *   POST   dwpb-test/v1/setup                 -> idempotently seed Home/Blog pages + reading settings
- *   POST   dwpb-test/v1/reset-content         -> wipe posts/comments/terms seeded by specs
- *   POST   dwpb-test/v1/delete-all-posts      -> wipe 'post' type content only
- *   DELETE dwpb-test/v1/post/<id>             -> force-delete a single post/page by id (idempotent)
- *   POST   dwpb-test/v1/create-post           -> wp_insert_post() (the route core REST won't allow)
- *   POST   dwpb-test/v1/create-comment        -> wp_insert_comment()
- *   POST   dwpb-test/v1/create-term           -> wp_insert_term(), optionally assigned to a post
- *   GET    dwpb-test/v1/post-state/<id>       -> status, comment/ping state, permalink for a post
- *   POST   dwpb-test/v1/flush-rewrites        -> flush_rewrite_rules()
- *   POST   dwpb-test/v1/reading-settings      -> set show_on_front/page_on_front/page_for_posts, returns previous + current
- *   GET    dwpb-test/v1/strings               -> user-facing strings asserted by specs (see note on that function)
+ * Namespace `dwpb-test/v1`; every route requires `manage_options`. The plugin
+ * sets `show_in_rest => false` on the 'post' post type, so `POST /wp/v2/posts`
+ * 404s and posts can't be seeded through core REST — these routes call
+ * `wp_insert_post()` etc. directly instead.
  *
  * @package Disable_Blog\TestFixtures
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// NOTE: do not add a `function_exists()` early-return guard at the top of this
-// file. PHP hoists unconditional top-level function declarations at compile
-// time, so every `dwpb_test_*` function below is already declared before the
-// first line of this file executes -- such a guard is therefore always true and
-// returns before `add_action( 'rest_api_init', ... )` at the bottom ever runs,
-// leaving the functions defined but the routes silently unregistered (every
-// request 404s with `rest_no_route`). WordPress includes each mu-plugin exactly
-// once via `include_once`, so no guard is needed.
+// No function_exists() guard here: PHP hoists these top-level function
+// declarations, so the guard would always be true and skip the
+// add_action( 'rest_api_init', ... ) below, silently unregistering every route.
 
 /**
  * Shared permission callback: administrators only.
@@ -63,8 +29,7 @@ function dwpb_test_api_can_manage() {
 /**
  * The term_id of the taxonomy's "default" term that must survive a reset.
  *
- * Only 'category' has a WordPress-recognised default term (Uncategorized);
- * 'post_tag' has no equivalent, so this only ever protects a category term.
+ * Only 'category' has a WordPress-recognised default term (Uncategorized).
  *
  * @return int
  */
@@ -97,15 +62,15 @@ function dwpb_test_api_describe_post_state( $post_id ) {
 }
 
 /**
- * Idempotently seed the Home/Blog pages and the reading settings that point at
- * them. Called once by global setup and safely callable again mid-run by any
- * spec that needs to self-heal a reading-settings change made by another spec.
+ * Idempotently seed the Home/Blog pages and the reading settings that point
+ * at them. Safe to call again mid-run to self-heal a reading-settings change
+ * made by another spec.
  *
  * @return array<string, mixed>|WP_Error
  */
 function dwpb_test_api_setup() {
 
-	// Ensure the 'home' page exists, is published, and is titled 'Home'.
+	// Home page: create or fix status/title.
 	$home_page = get_page_by_path( 'home', OBJECT, 'page' );
 
 	if ( ! $home_page ) {
@@ -141,7 +106,7 @@ function dwpb_test_api_setup() {
 		}
 	}
 
-	// Ensure the 'blog' page exists, is published, and is titled 'Blog'.
+	// Blog page: create or fix status/title.
 	$blog_page = get_page_by_path( 'blog', OBJECT, 'page' );
 
 	if ( ! $blog_page ) {
@@ -183,9 +148,8 @@ function dwpb_test_api_setup() {
 	update_option( 'permalink_structure', '/%postname%/' );
 	flush_rewrite_rules( false );
 
-	// Deliberately NOT normalized: home_url() has no trailing slash while
-	// get_permalink() does, and the test suite asserts against both
-	// redirect targets verbatim, so both are returned as-is.
+	// Not normalized on purpose: home_url() has no trailing slash while
+	// get_permalink() does, and specs assert against both verbatim.
 	return array(
 		'home_id'             => (int) $home_id,
 		'blog_id'             => (int) $blog_id,
@@ -196,21 +160,12 @@ function dwpb_test_api_setup() {
 }
 
 /**
- * Set reading settings (show_on_front, page_on_front, page_for_posts) directly
- * via update_option(), capturing their previous values first so a spec can
- * restore exactly what it changed.
+ * Set reading settings (show_on_front, page_on_front, page_for_posts)
+ * directly via update_option(), returning previous + current values.
  *
- * WHY THIS ROUTE EXISTS: WordPress 5.9's core `/wp/v2/settings` REST endpoint
- * does not expose `show_on_front`, `page_on_front`, or `page_for_posts` -- a
- * read of that route on 5.9 simply omits those keys, and a write through it
- * silently no-ops rather than erroring. Specs that set reading settings through
- * core REST therefore never actually change anything on 5.9, so this route
- * updates the options directly, the same way the Reading admin screen would.
- *
- * Only the args actually provided are applied; any arg left out of the request
- * is untouched. Returning `previous` alongside `current` is the point of this
- * route -- it lets a spec restore exactly what it changed in a `finally` block
- * without having to assume or hardcode defaults.
+ * WordPress 5.9's core `/wp/v2/settings` route doesn't expose these keys, so
+ * a spec can't set them through core REST. Only args present in the request
+ * are applied; `previous` lets a spec restore what it changed.
  *
  * @param WP_REST_Request $request Full request object.
  * @return array<string, array<string, mixed>>
@@ -248,13 +203,11 @@ function dwpb_test_api_set_reading_settings( WP_REST_Request $request ) {
 }
 
 /**
- * Delete all spec-seeded content: every 'post' in any status, every 'page'
- * except the Home/Blog pages set up by /setup, every comment, and every
- * non-default category/post_tag term.
+ * Delete all spec-seeded content: every 'post', every 'page' except
+ * Home/Blog, every comment, and every non-default category/post_tag term.
  *
  * Uses get_posts()/get_comments()/get_terms() directly rather than the REST
- * controllers, because the 'post' post type's REST route is disabled by the
- * plugin under test and would not see this content at all.
+ * controllers, since the 'post' type's REST route is disabled by the plugin.
  *
  * @return array<string, int>|WP_Error
  */
@@ -263,7 +216,6 @@ function dwpb_test_api_reset_content() {
 	$home_id = (int) get_option( 'page_on_front' );
 	$blog_id = (int) get_option( 'page_for_posts' );
 
-	// Delete every 'post' in any status.
 	$deleted_posts = 0;
 	$post_ids      = get_posts(
 		array(
@@ -280,7 +232,7 @@ function dwpb_test_api_reset_content() {
 		}
 	}
 
-	// Delete every 'page' in any status, except the Home/Blog pages.
+	// Pages, excluding Home/Blog.
 	$deleted_pages = 0;
 	$page_ids      = get_posts(
 		array(
@@ -298,7 +250,6 @@ function dwpb_test_api_reset_content() {
 		}
 	}
 
-	// Delete every comment, regardless of status.
 	$deleted_comments = 0;
 	$comment_ids      = get_comments( array( 'fields' => 'ids' ) );
 
@@ -308,7 +259,7 @@ function dwpb_test_api_reset_content() {
 		}
 	}
 
-	// Delete every category/post_tag term except the default "Uncategorized" category.
+	// Category/post_tag terms, excluding the default "Uncategorized" category.
 	$deleted_terms    = 0;
 	$default_category = dwpb_test_api_default_category_id();
 	$reset_taxonomies = array( 'category', 'post_tag' );
@@ -354,8 +305,7 @@ function dwpb_test_api_reset_content() {
 /**
  * Delete every 'post' in any status, leaving pages/comments/terms alone.
  *
- * A narrower sibling of /reset-content for specs that only seeded posts and
- * want a cheaper cleanup than the full reset.
+ * Cheaper alternative to /reset-content for specs that only seeded posts.
  *
  * @return array<string, int>
  */
@@ -384,12 +334,9 @@ function dwpb_test_api_delete_all_posts() {
 /**
  * Force-delete a single post (any post type) by id, via wp_delete_post().
  *
- * Idempotent and tolerant on purpose: this backs the per-spec `afterEach`
- * teardown helper on the TypeScript side, and a spec's own assertions may
- * already have deleted the id it is now tearing down. Treating a missing id
- * as an error would turn a passing test's teardown into a failure, so a
- * missing/already-deleted id is not a 404 or a WP_Error — it simply reports
- * `deleted => false` with HTTP 200.
+ * Backs the TypeScript suite's per-spec afterEach teardown. A missing/
+ * already-deleted id is not an error — it reports `deleted => false` with
+ * HTTP 200, so a spec's own cleanup can't fail this route's teardown.
  *
  * @param int $post_id Post ID.
  * @return array<string, mixed>
@@ -588,29 +535,16 @@ function dwpb_test_api_create_term( WP_REST_Request $request ) {
  * User-facing strings asserted by specs, kept in one place so no spec ever
  * hardcodes plugin copy inline.
  *
- * IMPORTANT — these are NOT all read dynamically from the plugin. Only
- * `users_pages_column_label` is genuinely derived at runtime (from the 'page'
- * post type's own label object, mirroring what the plugin does). The other
- * five are hand-copied literals that must be kept in sync by hand, because
- * the plugin echoes or `wp_die()`s that copy inline rather than exposing it
- * through a retrievable accessor. If a PR reworks that wording without also
- * updating this file, the affected spec fails on the stale text rather than
- * self-correcting. Exposing those labels from the plugin (so this route could
- * read them) would remove the duplication -- see the Phase 3 backlog.
- *
- * Unlike the mutating routes above, this route does not itself verify the
- * strings are non-empty before responding — following the precedent set by
- * the sibling Archived Post Status fixture (`aps-test-api.php`), that check
- * is the responsibility of the TypeScript test client, which asserts every
- * value it reads from this route is a non-empty string.
+ * Only `users_pages_column_label` is derived at runtime; the other five are
+ * hand-copied literals that must be kept in sync manually, since the plugin
+ * echoes/wp_die()s that copy inline rather than exposing an accessor.
  *
  * @return array<string, string>
  */
 function dwpb_test_api_strings() {
 
-	// users_pages_column_label mirrors Disable_Blog_Admin::manage_users_columns(),
-	// which sets the column header to the 'page' post type's own label object
-	// rather than a plugin-owned string.
+	// Mirrors Disable_Blog_Admin::manage_users_columns(), which sets the
+	// column header to the 'page' post type's own label object.
 	$page_type_object         = get_post_type_object( 'page' );
 	$users_pages_column_label = isset( $page_type_object->labels->name ) ? $page_type_object->labels->name : '';
 
@@ -621,8 +555,8 @@ function dwpb_test_api_strings() {
 		'front_equals_posts_notice' => __( 'Disable Blog requires a homepage that is different from the post page. The "posts page" will be redirected to the homepage.', 'disable-blog' ),
 		// Disable_Blog_Admin::posts_page_notice().
 		'posts_page_edit_notice'    => __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ),
-		// Disable_Blog_Admin::disable_press_this(). Not passed through __() in the
-		// plugin itself, so it is reproduced here verbatim rather than translated.
+		// Disable_Blog_Admin::disable_press_this(). Not passed through __() in
+		// the plugin, so reproduced verbatim rather than translated.
 		'press_this_disabled'       => '"Press This" functionality has been disabled.',
 		// Disable_Blog_Admin::page_post_states().
 		'page_post_state'           => __( 'Redirected to the homepage', 'disable-blog' ),
@@ -634,15 +568,11 @@ function dwpb_test_api_strings() {
 /**
  * Register every dwpb-test/v1 route.
  *
- * A named function (rather than an anonymous closure) so WordPress's own
- * `add_action()` de-duplication protects against double registration if
- * this file were ever required more than once in a request.
- *
  * @return void
  */
 function dwpb_test_api_register_routes() {
 
-	// Idempotent environment seed: Home/Blog pages + reading settings.
+	// Idempotently seed Home/Blog pages + reading settings.
 	register_rest_route(
 		'dwpb-test/v1',
 		'/setup',
@@ -693,9 +623,7 @@ function dwpb_test_api_register_routes() {
 		)
 	);
 
-	// Force-delete a single post/page by id, idempotently. Backs the
-	// TypeScript suite's per-spec afterEach teardown; a missing id is not an
-	// error, see dwpb_test_api_delete_post()'s docblock.
+	// Force-delete a single post/page by id; idempotent, see function docblock.
 	register_rest_route(
 		'dwpb-test/v1',
 		'/post/(?P<id>\d+)',
@@ -708,8 +636,7 @@ function dwpb_test_api_register_routes() {
 		)
 	);
 
-	// Create a 'post' (or other post type) via wp_insert_post() directly,
-	// since core REST's /wp/v2/posts route is disabled by the plugin.
+	// Create a post via wp_insert_post(); core REST's /wp/v2/posts is disabled by the plugin.
 	register_rest_route(
 		'dwpb-test/v1',
 		'/create-post',
@@ -872,8 +799,7 @@ function dwpb_test_api_register_routes() {
 		)
 	);
 
-	// Set reading settings directly via update_option(), since core REST's
-	// /wp/v2/settings route doesn't expose these keys on WordPress 5.9.
+	// Set reading settings directly; core REST's /wp/v2/settings doesn't expose these keys on WP 5.9.
 	register_rest_route(
 		'dwpb-test/v1',
 		'/reading-settings',

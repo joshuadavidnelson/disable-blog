@@ -2,27 +2,13 @@
  * The Users list table (`users.php`), default plugin state.
  *
  * COVERAGE:
- *  - `Disable_Blog_Admin::manage_users_columns()`, hooked on
- *    `manage_users_columns`, unsets core's `posts` column and adds one keyed
- *    `page` (plus any post type from `author_archive_post_types()`, none by
- *    default), labelled with the `page` post type's own
- *    `labels->name` -- not a plugin-owned string, mirrored in
- *    `dwpb-test-api.php`'s `users_pages_column_label`.
- *  - `Disable_Blog_Admin::manage_users_custom_column()`, hooked on
- *    `manage_users_custom_column`, renders that column's cell as a link to
- *    `edit.php?post_type=page&author=<user_id>`, mirroring core's own
- *    Posts-column link.
- *  - `Disable_Blog_Admin::user_row_actions()`, hooked on `user_row_actions`,
- *    unsets the `view` row action only when
- *    `Disable_Blog_Functions::disable_author_archives()`
- *    (`dwpb_disable_author_archives`) is true.
- *
- * GATING CONDITION: `dwpb_disable_author_archives` defaults to `false`, so
- * `user_row_actions()` never removes `view` in this environment's default
- * state (test 3).
- *
- * AUTHENTICATED BY DEFAULT: no `storageState` override -- the project default
- * (administrator) has `list_users`, required for this screen.
+ *  - `manage_users_columns()` unsets core's `posts` column and adds a `page`
+ *    column labelled with the `page` post type's own `labels->name`.
+ *  - `manage_users_custom_column()` renders that column's cell as a link to
+ *    `edit.php?post_type=page&author=<user_id>`, mirroring core's Posts link.
+ *  - `user_row_actions()` unsets the `view` row action only when
+ *    `dwpb_disable_author_archives` is true — false by default, so `view`
+ *    stays (test 3).
  */
 
 /**
@@ -43,12 +29,8 @@ import { pluginStrings } from '../../config/strings';
 /**
  * A `users.php` list-table row, by user id.
  *
- * Not `rowLocator()` from `config/admin.ts` -- that helper is `#post-<id>`,
- * which is what every post-type list table (edit.php, edit-comments.php, ...)
- * renders regardless of post type, but `WP_Users_List_Table::single_row()`
- * renders `<tr id='user-<id>'>` instead. Defined locally here instead of
- * extending the config export -- flagged for the coordinator; `config/admin.ts`
- * is not edited per the task constraints.
+ * Not `rowLocator()` from `config/admin.ts` -- that helper is `#post-<id>`;
+ * `WP_Users_List_Table::single_row()` renders `<tr id='user-<id>'>` instead.
  *
  * @param page   Page under test.
  * @param userId User id.
@@ -69,8 +51,7 @@ test.describe( 'admin: users screen (default state)', () => {
 
 		await expect( page.locator( '#posts' ) ).toHaveCount( 0 );
 
-		// The new column's header id is the post type slug itself ('page') --
-		// see WP_List_Table::print_column_headers()'s `id="$column_key"`.
+		// The new column's header id is the post type slug itself ('page').
 		await expect( page.locator( 'th#page' ) ).toHaveText( strings.users_pages_column_label );
 	} );
 
@@ -96,9 +77,7 @@ test.describe( 'admin: users screen (default state)', () => {
 
 		await admin.visitAdminPage( 'users.php' );
 
-		// Row actions are visually hidden until hover (same house rule as
-		// admin-bar.spec.ts's dropdown children) -- assert DOM presence via
-		// toHaveCount(), not toBeVisible().
+		// Row actions are hidden until hover, so assert presence, not visibility.
 		const viewAction = userRowLocator( page, me.id ).locator( '.row-actions .view a' );
 
 		await expect( viewAction ).toHaveCount( 1 );

@@ -13,40 +13,15 @@ import { ADMIN_STORAGE_STATE, PLUGIN_SLUG, THEME_SLUG } from './roles';
 import { resetContent, setupSite } from './seed';
 
 /**
- * Prepare the wp-env test site once, before any project runs.
+ * Prepare the wp-env test site once, before any project runs: authenticate,
+ * pin the theme, activate the plugin, seed the Home/Blog pages the redirect
+ * behaviour depends on, and clear content/fixtures left by a previous run.
  *
- * Signs in as the wp-env admin and persists the authenticated state so the
- * `auth` setup project and every spec have a session to start from, pins the
- * theme the suite was written against, makes sure the plugin under test is
- * active, seeds the Home/Blog pages and reading settings the redirect
- * behaviour depends on, and clears content and fixture toggles left over
- * from a previous run.
- *
- * Order matters:
- *  1. Authenticate — every later step needs a session.
- *  2. Activate the pinned theme — every step after this renders markup, and
- *     the suite asserts against that markup, so the theme has to be settled
- *     before anything else runs.
- *  3. Activate the plugin — the behaviour under test (post type visibility,
- *     admin notices, front-end redirects) only exists while Disable Blog is
- *     running, so nothing that inspects content or settings should run
- *     before this.
- *  4. `setupSite()` (POST `dwpb-test/v1/setup`) creates the Home/Blog pages
- *     and sets `show_on_front` / `page_on_front` / `page_for_posts` /
- *     `permalink_structure`, then flushes rewrites. This is what makes
- *     redirects testable at all: the plugin's entire front-end redirect
- *     block is gated on `get_option( 'page_on_front' )` being non-zero, so
- *     without this step every redirect spec would run against a site that
- *     never triggers the code path it is trying to exercise.
- *  5. `resetContent()` (POST `dwpb-test/v1/reset-content`) clears posts,
- *     non-Home/Blog pages, comments and terms stranded by a previous run
- *     that died before its own teardown — a run that dies mid-test leaves
- *     content in the database that silently changes the starting state (and
- *     therefore the assertions) of the *next* run.
- *  6. `resetFixtures()` switches every mu-plugin fixture toggle back off, for
- *     the same reason: a toggle left on by a run that died mid-test would
- *     otherwise leave a fixture filter hooked for specs that never opted
- *     into it.
+ * Order matters — auth before anything, theme before any markup-asserting
+ * step, plugin active before content/settings are touched, `setupSite()`
+ * before redirects are testable (the plugin's redirect logic is gated on
+ * `page_on_front` being set), then reset content and fixtures last so a run
+ * that died mid-test doesn't leave state for the next run to trip over.
  *
  * @param config Resolved Playwright config.
  */
@@ -59,27 +34,10 @@ async function globalSetup( config: FullConfig ): Promise< void > {
 		storageStatePath: ADMIN_STORAGE_STATE,
 	} );
 
-	// Authenticate and write the admin storage state to disk.
 	await requestUtils.setupRest();
 
-	// Pin the theme instead of inheriting whatever the running WordPress
-	// version happens to ship as its default: on the long-lived local dev
-	// volume that's Twenty Twenty-Four, on a clean install of current
-	// WordPress it's Twenty Twenty-Five, and on WordPress 6.2 it's Twenty
-	// Twenty-Three. Each of those has different markup, so specs asserting
-	// against the DOM would silently start failing (or passing for the
-	// wrong reason) depending purely on which WordPress version CI happened
-	// to spin up — turning a version-matrix job red and flaky instead of a
-	// clean pass/fail. Twenty Twenty-Two is pinned because it only requires
-	// WordPress 5.9+, so — unlike Twenty Twenty-Four, which needs 6.4+ — it
-	// installs and activates cleanly across the plugin's whole supported
-	// version range. `.wp-env.json` installs it explicitly via `themes` so
-	// it exists regardless of which themes a given core tarball bundles.
-	//
-	// Activation failure throws rather than being swallowed: continuing
-	// against whatever theme happened to already be active would produce
-	// confusing DOM-assertion failures scattered across the suite instead
-	// of one clear error here.
+	// Pinned rather than inherited: the default theme varies by WordPress
+	// version, which would silently change the markup specs assert against.
 	try {
 		await requestUtils.activateTheme( THEME_SLUG );
 	} catch ( error ) {

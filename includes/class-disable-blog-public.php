@@ -241,8 +241,9 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
-	 * @since 0.5.6 replaced the `isset( $post->post_type ) && 'post' === $post->post_type`
-	 *              guard with a query-based check, see is_post_feed_request() (DEFECT N1).
+	 * @since 0.5.6 use is_post_feed_request() instead of checking $post->post_type; with a
+	 *              static front page, $post resolves to the Home page and the old check let
+	 *              query-string feed URLs through.
 	 * @param bool $is_comment_feed true if a comment feed.
 	 * @return void
 	 */
@@ -321,22 +322,9 @@ class Disable_Blog_Public {
 	 * scoped to a specific singular object (a single post, page, or
 	 * attachment) or another post type.
 	 *
-	 * DEFECT N1: this deliberately inspects the raw, request-derived query
-	 * vars on the global $wp object (`WP::$query_vars`, populated once in
-	 * `WP::parse_request()`) rather than the global $post, or $wp_query
-	 * (whose `query_vars` is a separate copy WP_Query goes on to mutate).
-	 * `WP_Query::parse_query()` silently substitutes the site's static front
-	 * page into the query whenever nothing else in the query identifies a
-	 * specific object -- including for a query-string feed request like
-	 * `/?feed=rss2`, which never actually named that page in the URL.
-	 * Checking `$post` (populated from that substituted query) would misread
-	 * the default fallback as an explicit request for the front page's own
-	 * feed, and bail out -- exactly the bug this replaces. `$wp->query_vars`
-	 * is handed to `WP_Query::query()` by value (via `wp_parse_args()`), so
-	 * it is never mutated by WP_Query's later corrections and still
-	 * reflects what the URL actually asked for.
-	 *
-	 * @since 0.5.6
+	 * @since 0.5.6 checks $wp->query_vars (the raw request) rather than $post or
+	 *              $wp_query, because a static front page makes WP_Query substitute
+	 *              that page into $post even for a plain query-string feed request.
 	 * @global WP $wp The WordPress environment instance for the current request.
 	 * @return bool True if this is a 'post' feed for the site's main/archive feed.
 	 */
@@ -450,22 +438,16 @@ class Disable_Blog_Public {
 	 * Get the XML-RPC methods to disable.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 fixed the 'wp.deleteCategory' typo (DEFECT D4) and removed the
-	 *              'system.*' introspection methods, which cannot actually be
-	 *              disabled this way (N3, see the note below).
+	 * @since 0.5.6 fixed the 'wp.deleteCategory' typo and removed the 'system.*'
+	 *              methods below, which this filter cannot actually disable.
 	 * @return array|bool
 	 */
 	private function get_disabled_xmlrpc_methods() {
 
 		// The methods to remove.
 		//
-		// N3: 'system.listMethods', 'system.multicall', and 'system.getCapabilities'
-		// are deliberately NOT listed here. wp-includes/IXR/class-IXR-server.php's
-		// IXR_Server::setCallbacks() re-registers every 'system.*' method AFTER the
-		// 'xmlrpc_methods' filter runs (see IXR_Server::__construct()), so unset()ting
-		// them from this array has no effect whatsoever -- they remain callable no
-		// matter what this filter does. Listing them here was dead code; do not
-		// re-add them without a different removal mechanism than this filter.
+		// 'system.*' methods intentionally omitted: IXR_Server re-registers them
+		// after this filter runs, so unset()ting them here would have no effect.
 		$methods_to_remove = array(
 			'wp.getUsersBlogs',
 			'wp.newPost',
@@ -554,49 +536,18 @@ class Disable_Blog_Public {
 	 * that send it via a direct header() call rather than the 'wp_headers'
 	 * filter.
 	 *
-	 * On WordPress core versions prior to 6.2, `WP::handle_404()` sends the
-	 * header itself:
-	 *
-	 *     header( 'X-Pingback: ' . get_bloginfo( 'pingback_url', 'display' ) );
-	 *
-	 * (wp-includes/class-wp.php, around line 695 on WP 5.9) and that call
-	 * happens AFTER the 'wp_headers' filter has already run, back in
-	 * `WP::send_headers()`:
-	 *
-	 *     $headers = apply_filters( 'wp_headers', $headers, $this ); // line 503.
-	 *
-	 * so filter_wp_headers() above -- which can only remove the header if it
-	 * shows up in the $headers array passed through that filter -- never gets
-	 * the chance on that core version, and the header ships regardless of the
-	 * 'dwpb_remove_pingback_header' setting. Modern WordPress (6.2+) instead
-	 * populates $headers['X-Pingback'] itself before firing 'wp_headers', so
-	 * filter_wp_headers() alone is sufficient there.
-	 *
-	 * This method is hooked on the 'wp' action, which fires after
-	 * `handle_404()` has already sent its direct header() call, so it can
-	 * strip the header after the fact via header_remove(). On modern core,
-	 * where filter_wp_headers() already removed the header (or it was never
-	 * added to begin with), this is a harmless no-op. Do not remove either
-	 * hook: filter_wp_headers() is required so the 'wp_headers' array (used
-	 * by e.g. REST responses) never contains the header in the first place,
-	 * and this method is required so directly-header()'d output on older
-	 * core is also caught.
-	 *
-	 * Both hooks are gated on the same 'dwpb_remove_pingback_header' filter
-	 * as filter_wp_headers(), so the feature is still controlled by a single
-	 * toggle.
-	 *
-	 * @since 0.5.6
+	 * @since 0.5.6 on core < 6.2, `WP::handle_404()` sends X-Pingback via a direct
+	 *              header() call that runs after both 'send_headers' and the
+	 *              'wp_headers' filter, so filter_wp_headers() alone can't catch it
+	 *              there; hooked on 'wp' (not 'send_headers') because it must run
+	 *              after handle_404() to strip the header after the fact.
 	 * @see Disable_Blog_Public::filter_wp_headers()
-	 * @link https://core.trac.wordpress.org/browser/tags/5.9/src/wp-includes/class-wp.php
 	 * @return void
 	 */
 	public function remove_pingback_header_fallback() {
 
 		/**
-		 * Toggle the disable pingback header feature.
-		 *
-		 * Same filter used in filter_wp_headers(); see that method's docblock.
+		 * Same toggle used by filter_wp_headers().
 		 *
 		 * @since 0.4.0
 		 * @param bool $bool True to disable the header, false to keep it.
@@ -692,49 +643,19 @@ class Disable_Blog_Public {
 	/**
 	 * 404 sitemap sub-file requests for providers this plugin has removed entirely.
 	 *
-	 * DEFECT D5: removing a whole sitemap provider (e.g. wp_author_sitemaps()
-	 * above, which removes the 'users' provider via the `wp_sitemaps_add_provider`
-	 * filter) is a different code path than removing a post type/taxonomy
-	 * subtype from a still-registered provider (wp_sitemaps_post_types() and
-	 * wp_sitemaps_taxonomies() both unset() entries from arrays those
-	 * providers still walk internally). `WP_Sitemaps::render_sitemaps()`
-	 * 404s correctly for the latter, since the provider itself is still
-	 * registered and simply reports no URLs for the removed subtype. For the
-	 * former, `$this->registry->get_provider( $sitemap )` returns null and
-	 * `render_sitemaps()` just `return`s without ever calling
-	 * `$wp_query->set_404()` -- the request falls through to the normal
-	 * template and serves the blog index as HTML, leaking post content.
-	 * This plugin's own `redirect_public_pages()` deliberately skips
-	 * sitemap requests too (see its `$sitemap` check), so nothing else
-	 * catches it.
-	 *
-	 * Hooked on `template_redirect` at priority 9 -- ahead of both core's
-	 * `WP_Sitemaps::render_sitemaps()` (priority 10) and this plugin's own
-	 * `redirect_public_pages()` (also priority 10) -- see
-	 * `Disable_Blog::define_public_hooks()`. Resolves the requested sitemap
-	 * against the LIVE provider registry rather than a hardcoded list, so
-	 * this keeps working correctly if a provider this plugin removes today
-	 * is ever re-registered later (e.g. a custom post type re-enabling
-	 * author archives).
-	 *
-	 * Mirrors core's own `WP_Sitemaps::render_sitemaps()` 404 handling
-	 * (`$wp_query->set_404(); status_header( 404 );`, no `exit`) so the
-	 * request continues on to render a normal 404 template, rather than
-	 * dying here.
-	 *
-	 * @since 0.5.6
-	 * @link https://developer.wordpress.org/reference/classes/wp_sitemaps_registry/get_providers/
+	 * @since 0.5.6 removing a whole provider (e.g. 'users', via wp_author_sitemaps())
+	 *              leaves core nothing registered to 404 against, so the request would
+	 *              otherwise fall through to the normal template and serve the blog
+	 *              index as HTML; resolves against the live provider registry rather
+	 *              than a hardcoded list. Filterable via 'dwpb_disable_removed_sitemaps'.
 	 * @return void
 	 */
 	public function disable_removed_sitemaps() {
 
 		$sitemap = get_query_var( 'sitemap', '' );
 
-		// Bail if this isn't a provider sub-file request. 'index' is core's
-		// own sitemap-index route (`/wp-sitemap.xml`), not a provider name,
-		// and is handled entirely by core -- it would never be found in the
-		// registry below, so it must be excluded here or every sitemap
-		// index request would incorrectly 404.
+		// Bail on non-sitemap requests, and on 'index' (core's own sitemap-index
+		// route), which isn't a provider name and must stay excluded from the check below.
 		if ( empty( $sitemap ) || 'index' === $sitemap ) {
 			return;
 		}

@@ -19,10 +19,9 @@ class Disable_Blog_Functions {
 	 * Redirect function, checks that a redirect looks safe and then runs it.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 derive the front-end loop-avoidance guard's current url from
-	 *              the actual request URI instead of $wp->request, which is
-	 *              path-only and used to cancel legitimate redirects that only
-	 *              differed from the target by their query string (N1 follow-on).
+	 * @since 0.5.6 derive the front-end loop guard's current url from the actual
+	 *              request URI, not $wp->request, which is path-only and could
+	 *              cancel legitimate redirects differing only by query string.
 	 * @param string $redirect_url the url to redirect to.
 	 * @return void
 	 */
@@ -34,22 +33,8 @@ class Disable_Blog_Functions {
 			$current_url = admin_url( add_query_arg( array(), $wp->request ) );
 		} else {
 
-			/*
-			 * Build the current url from the actual request URI, not from
-			 * $wp->request. WP::parse_request() only ever stores the
-			 * request's PATH on $wp->request -- never the query string --
-			 * so for a request whose path is empty (e.g. a bare "/" or a
-			 * query-string-only request like "/?feed=rss2"),
-			 * home_url( $wp->request ) used to collapse to exactly
-			 * home_url(), indistinguishable from a request that genuinely
-			 * carried no query string. That silently cancelled legitimate
-			 * redirects whose only difference from the target was the query
-			 * string. Comparing against the real request URI (path + query
-			 * string, as actually requested) keeps a query-string-only
-			 * request correctly recognised as a different URL, while a
-			 * request whose full URL already equals the target still bails
-			 * out below, same as before.
-			 */
+			// $wp->request is path-only; build from the full request URI instead
+			// (see the @since 0.5.6 note above).
 			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 			$current_url = home_url( $request_uri );
 

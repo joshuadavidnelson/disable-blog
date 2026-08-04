@@ -18,10 +18,8 @@ import { ADMIN_STORAGE_STATE } from './tests/e2e/config/roles';
  */
 const TESTS_PORT = 8889;
 
-// `@wordpress/scripts`' shared Playwright config reads these at require time,
-// so they have to be set before it is loaded. Pointing `STORAGE_STATE_PATH` at
-// our admin state keeps the `requestUtils` worker fixture and the browser
-// projects on a single file.
+// Must be set before `@wordpress/scripts`' shared config is required below —
+// it reads these env vars at require time.
 process.env.WP_ARTIFACTS_PATH ??= path.join( __dirname, 'artifacts' );
 process.env.STORAGE_STATE_PATH ??= ADMIN_STORAGE_STATE;
 
@@ -45,13 +43,8 @@ export default defineConfig( {
 	// Resolved relative to this config file.
 	globalSetup: './tests/e2e/config/global-setup.ts',
 
-	// `@wordpress/scripts`' base config already sets this to 1, but only as an
-	// inherited default — this repo never pins it itself, so a future upstream
-	// config change could silently parallelise workers. The whole suite shares
-	// one wp-env site and assumes serial execution: `global-setup.ts` wipes all
-	// content once up front rather than per test, and specs seed/clean up
-	// against that single shared site. Pinned here so the assumption is
-	// enforced by this repo, not borrowed from upstream.
+	// Pinned (not just inherited from `@wordpress/scripts`): the suite shares
+	// one wp-env site and assumes serial execution.
 	workers: 1,
 
 	use: {

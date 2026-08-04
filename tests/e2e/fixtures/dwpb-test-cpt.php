@@ -4,70 +4,35 @@
  * uses the built-in 'category' and 'post_tag' taxonomies, for the Playwright
  * suite.
  *
- * TOGGLE: `dwpb_test_cpt_enabled` (boolean, default false), registered via
- * `register_setting( 'options', ..., [ 'show_in_rest' => true ] )` so a spec
- * can flip it with one `PUT /wp-json/wp/v2/settings` call, the same pattern
- * used by every other fixture in this directory.
+ * TOGGLE: `dwpb_test_cpt_enabled` (boolean, default false), a `show_in_rest`
+ * option so a spec can flip it via `PUT /wp-json/wp/v2/settings`.
  *
- * WHY THIS EXISTS: most of Disable Blog's filters (`dwpb_post_types_with_tax()`,
- * `dwpb_post_types_with_feature()`, `Disable_Blog_Functions::author_archive_post_types()`)
- * gate their behaviour on "is any post type OTHER than 'post' using this
- * taxonomy/feature?". In a stock wp-env install the answer is always no for
- * 'category'/'post_tag' (only 'post' uses either), so every "unless another
- * post type uses it" branch in the plugin is unreachable without a second,
- * real post type in the mix. This single toggle supplies that post type,
- * unlocking category/tag archive un-redirection, the categories/tags REST
- * routes and admin menu links, the sitemap taxonomy entries, and the
- * XML-RPC taxonomy methods -- all exercised by `specs/filters/cpt-branches.spec.ts`.
+ * Most of the plugin's filters gate on "is any post type OTHER than 'post'
+ * using this taxonomy/feature?", which is unreachable in a stock install.
+ * This toggle supplies that second post type, unlocking category/tag archive
+ * un-redirection, the categories/tags REST routes and admin menu links, the
+ * sitemap taxonomy entries, and the XML-RPC taxonomy methods.
  *
- * REGISTERED ON `init` PRIORITY 10, DELIBERATELY: `Disable_Blog_Admin::modify_post_type_arguments()`
- * and `::modify_taxonomies_arguments()` are both hooked on `init` at priority
- * 25 (see `Disable_Blog::define_admin_hooks()`). Registering 'news' at
- * priority 10 -- strictly before those run -- means `dwpb_post_types_with_tax()`
- * sees 'news' already registered against 'category'/'post_tag' by the time
- * the plugin's own priority-25 taxonomy stripping runs, exactly like a real
- * third-party plugin's `init` callback (WordPress core itself recommends
- * priority 0-9 for CPT registration, but 10 is early enough here since the
- * plugin's own hooks are all >= 25).
+ * Registered on `init` priority 10, strictly before
+ * `Disable_Blog_Admin::modify_post_type_arguments()` /
+ * `::modify_taxonomies_arguments()` (both priority 25), so the plugin's own
+ * taxonomy stripping sees 'news' already registered.
  *
- * REWRITE RULES: registering 'news' alone does not make `/news/...` URLs
- * resolve -- WordPress caches its rewrite rules in the `rewrite_rules` option
- * and only regenerates them when that option is empty (see
- * `WP_Rewrite::wp_rewrite_rules()`). A spec that switches this fixture on
- * MUST call `flushRewrites()` (`tests/e2e/config/seed.ts`) afterwards, and
- * again after switching it back off, or `/news/...` and the taxonomy archive
- * base URLs will resolve against whatever rules happened to be cached from
- * before/after the CPT existed.
- *
- * This mu-plugin is mapped into `wp-content/mu-plugins` by `.wp-env.json`
- * (alongside the other `dwpb-test-*.php` fixtures), so it loads on every
- * request in the test environment. Registration is gated at call time on the
- * toggle option, so leaving this file active for the whole suite is safe when
- * the toggle is off.
+ * A spec that switches this on must call `flushRewrites()` afterwards (and
+ * again after switching off) — WordPress only regenerates rewrite rules when
+ * the cached `rewrite_rules` option is empty.
  *
  * @package Disable_Blog\TestFixtures
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// NOTE: do not add a `function_exists()` early-return guard at the top of this
-// file. PHP hoists unconditional top-level function declarations at compile
-// time, so every `dwpb_test_cpt_*` function below is already declared before
-// the first line of this file executes -- such a guard is therefore always
-// true and returns before the `add_action`/`add_filter` calls at the bottom
-// ever run, leaving the functions defined but every hook silently
-// unregistered (the toggle option would never even get registered, and the
-// post type would never get registered either). WordPress includes each
-// mu-plugin exactly once via `include_once`, so no guard is needed. See
-// `dwpb-test-api.php` for the same note, where this exact bug already cost a
-// debugging cycle.
+// No function_exists() guard here: PHP hoists these top-level function
+// declarations, so the guard would always be true and skip the
+// add_action()/add_filter() calls below, silently unregistering every hook.
 
 /**
  * Register the `dwpb_test_cpt_enabled` toggle option.
- *
- * Hooked on `init` at the default priority (10), matching core's own
- * guidance for `register_setting()` calls that need to be visible to both
- * `admin_init` (classic Settings API) and REST requests.
  *
  * @return void
  */
@@ -89,9 +54,8 @@ add_action( 'init', 'dwpb_test_cpt_register_settings' );
 /**
  * Register the 'news' post type when the fixture is switched on.
  *
- * Hooked on `init` at priority 10 -- see the file docblock for why this must
- * run strictly before `Disable_Blog_Admin::modify_post_type_arguments()` /
- * `::modify_taxonomies_arguments()` (both priority 25).
+ * Priority 10 -- see the file docblock for why this must run before the
+ * plugin's own priority-25 taxonomy/post-type hooks.
  *
  * @return void
  */

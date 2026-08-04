@@ -1,24 +1,15 @@
 /**
  * Harness smoke test.
  *
- * Proves the five things every later spec assumes without re-checking: the
- * plugin under test is active in the running wp-env site, the pinned theme
- * (see `global-setup.ts`) is the one actually active, `dwpb-test/v1` (the
- * mu-plugin fixture) is reachable and returns real data — not empty
- * placeholders — and the per-role storage-state mechanism `test.use(
- * { storageState: storageStatePath( role ) } )` actually signs in as that
- * role. If this file fails, the cause is one of those five things, not a
- * bug in a real feature spec — fix the harness before trusting any other
- * spec's result.
+ * Proves what every later spec assumes without re-checking: the plugin is
+ * active, the pinned theme (`global-setup.ts`) is actually active, the
+ * `dwpb-test/v1` mu-plugin fixture is reachable with real data, and the
+ * per-role storage-state mechanism signs in as the right role. If this file
+ * fails, fix the harness before trusting any other spec's result.
  *
- * Seeds no content and toggles no fixtures, so there is nothing to clean up
- * and no `afterEach`. It is not, however, read-only: the bootstrap check
- * below calls `setupSite()`, which re-asserts the canonical Home/Blog +
- * reading-settings state via four `update_option()` calls and a
- * `flush_rewrite_rules()` on the server, every time this spec runs. That is
- * by design — `setupSite()` is idempotent and self-healing (see its
- * docblock in `config/seed.ts`), so re-running it here restores the exact
- * baseline every other spec already assumes rather than seeding anything new.
+ * Not read-only: the bootstrap check calls `setupSite()`, which is
+ * idempotent and self-healing (see `config/seed.ts`), restoring the
+ * canonical baseline every other spec assumes.
  */
 
 /**
@@ -51,14 +42,9 @@ test.describe( 'e2e harness smoke', () => {
 		request,
 		requestUtils,
 	} ) => {
-		// Deliberately bypasses the memoized siteConfig() cache and calls
-		// setupSite() directly. With `workers: 1` every spec file shares one
-		// worker process, so once sibling specs exist there is no guarantee
-		// this file runs first — a memoized read here could silently return
-		// another spec's cached-in-memory snapshot instead of proving the
-		// live site is actually bootstrapped, defeating the point of a smoke
-		// gate. Ordinary specs should keep using the memoized siteConfig();
-		// only this harness check needs a guaranteed-live read.
+		// Calls setupSite() directly rather than the memoized siteConfig(),
+		// since a memoized read can't guarantee the live site is bootstrapped
+		// when specs share one worker process.
 		const config = await setupSite( requestUtils );
 
 		expect( config.permalinkStructure ).toBe( '/%postname%/' );
@@ -67,16 +53,8 @@ test.describe( 'e2e harness smoke', () => {
 		expect( config.blogId ).toBeGreaterThan( 0 );
 		expect( config.homeId ).not.toBe( config.blogId );
 
-		// get_permalink() on the page assigned to page_on_front returns the
-		// SITE ROOT, not "/home/" — WordPress special-cases the front page's
-		// permalink to be the home URL. So frontPageUrl is exactly homeUrl
-		// with a trailing slash appended, both pointing at the same origin.
-		// This is the distinction the whole redirect suite depends on: page
-		// redirects target frontPageUrl (root, with slash), the feed
-		// redirect targets homeUrl (no slash) — see the docblock in
-		// `config/redirects.ts`. Asserting the relationship, rather than a
-		// hardcoded host, keeps this test correct regardless of which port
-		// wp-env happens to be bound to.
+		// The front page's permalink is the site root, not "/home/" -- so
+		// frontPageUrl is homeUrl with a trailing slash (see config/redirects.ts).
 		expect( config.frontPageUrl ).toBe( `${ config.homeUrl }/` );
 
 		await expectStatus( request, '/', 200 );
@@ -84,12 +62,8 @@ test.describe( 'e2e harness smoke', () => {
 
 	test( 'the expected theme is active', async ( { requestUtils } ) => {
 		// global-setup.ts pins THEME_SLUG so every spec's DOM assertions run
-		// against the same markup regardless of which theme the running
-		// WordPress version ships by default. If that pinning ever silently
-		// stops working — a failed activation call that got swallowed, a
-		// theme that fails to install — this is the one test that should
-		// fail, instead of a scattering of confusing DOM assertions across
-		// the rest of the suite.
+		// against the same markup; this is the one test that should fail if
+		// that pinning silently breaks.
 		const activeThemes = await requestUtils.rest< Array< { stylesheet: string } > >( {
 			path: '/wp/v2/themes',
 			params: { status: 'active' },
@@ -102,14 +76,10 @@ test.describe( 'e2e harness smoke', () => {
 	test( 'the test API exposes plugin copy', async ( { requestUtils } ) => {
 		const strings = await pluginStrings( requestUtils );
 
-		// pluginStrings() already throws if any value is empty, so a
-		// toBeTruthy() check per key could never fail — it would be dead
-		// weight duplicating that upstream guard. Five of these six values
-		// are hand-copied literals in dwpb_test_api_strings() (see that
-		// function's docblock in dwpb-test-api.php) that must be kept in
-		// sync with the plugin by hand; wording drift, or a copy-paste swap
-		// between two keys, would sail through a mere non-emptiness check.
-		// Asserting a distinctive fragment of each real string catches that.
+		// pluginStrings() already guards against empty values, so this asserts
+		// a distinctive fragment of each string instead, catching wording
+		// drift or a copy-paste swap between the hand-synced literals in
+		// dwpb_test_api_strings().
 		const expectedFragments: Record< keyof PluginStrings, string > = {
 			no_front_page_notice: 'not fully active',
 			front_equals_posts_notice: 'different from the post page',

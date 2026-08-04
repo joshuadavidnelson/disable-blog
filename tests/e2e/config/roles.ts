@@ -1,16 +1,11 @@
-/**
- * External dependencies
- */
 import path from 'node:path';
 
 /**
- * Directory holding the authenticated browser storage state for each role.
+ * Directory holding each role's authenticated browser storage state.
  *
- * Written by `auth.setup.ts` (non-admin roles) and `global-setup.ts` (admin),
- * consumed by `playwright.config.ts` and by specs via
- * `test.use( { storageState: storageStatePath( 'editor' ) } )`.
- *
- * Git-ignored: the files hold live session cookies.
+ * Written by `auth.setup.ts` (non-admin roles) and `global-setup.ts` (admin);
+ * consumed by `playwright.config.ts` and by specs. Git-ignored — holds live
+ * session cookies.
  */
 export const AUTH_DIR = path.join( __dirname, '..', '..', '..', 'playwright', '.auth' );
 
@@ -27,10 +22,9 @@ export type Role = ( typeof ROLES )[ number ];
 /**
  * Non-admin users created by `auth.setup.ts`, keyed by role.
  *
- * Passwords are fixed so the state can be regenerated deterministically; this
- * is a throwaway local environment. The `dwpb_` username prefix is relied on
- * by `auth.setup.ts`, which searches `/wp/v2/users` on it to keep these three
- * logins on the first page no matter how many users a spec has left behind.
+ * Passwords are fixed (throwaway local env). The `dwpb_` prefix is relied on
+ * by `auth.setup.ts`'s `/wp/v2/users` search to find these users regardless
+ * of how many others a spec has left behind.
  */
 export const ROLE_USERS: Record<
 	Exclude< Role, 'administrator' >,
@@ -86,12 +80,9 @@ export const PLUGIN_FILE = 'disable-blog/disable-blog.php';
  * Stylesheet slug of the theme the suite pins, as `RequestUtils.activateTheme()`
  * and `/wp/v2/themes` key it.
  *
- * The suite never inherits whatever theme a WordPress version ships by
- * default — see the `activateTheme()` call in `global-setup.ts` for why.
- * Twenty Twenty-Two is chosen because it only requires WordPress 5.9+, so it
- * is installable across the plugin's whole supported version range (Twenty
- * Twenty-Four, the theme the suite was originally written against, needs
- * 6.4+).
+ * Twenty Twenty-Two, chosen for its low WP requirement (5.9+) so it installs
+ * across the plugin's whole supported version range; see `global-setup.ts`
+ * for why the theme is pinned at all.
  */
 export const THEME_SLUG = 'twentytwentytwo';
 

@@ -4,21 +4,11 @@
  *
  * COVERAGE: `Disable_Blog_Admin::plugin_links()`, hooked on `plugin_row_meta`
  * and gated on `current_user_can( 'install_plugins' )`, appends Support,
- * Review, Donate, and GitHub links to the plugin's row-meta
- * (`.plugin-version-author-uri`).
+ * Review, Donate, and GitHub links to the plugin's row-meta.
  *
- * CAPABILITY GATE, VERIFIED NOT ASSUMED: test 2 exercises that
- * `install_plugins` check, but an editor can't reach it at all -- core's own
- * `current_user_can( 'activate_plugins' )` check at the top of
- * wp-admin/plugins.php denies the ENTIRE screen first (an editor has neither
- * capability by default). That check calls
- * `wp_die( $message, $title, array( 'response' => 403 ) )` -- an explicit
- * `403`, not core's generic `wp_die()` 500 default -- verified directly
- * against wp-admin/plugins.php on the wp-env core install backing this suite,
- * not assumed.
- *
- * AUTHENTICATED BY DEFAULT (test 1): no `storageState` override -- the
- * project default (administrator) has `install_plugins`.
+ * Test 2 exercises that capability gate, but an editor is actually stopped
+ * earlier by core's own `activate_plugins` check on the whole screen, which
+ * `wp_die()`s with an explicit 403 (not core's generic 500 default).
  */
 
 /**
@@ -38,9 +28,7 @@ test.describe( 'admin: plugins screen row meta (default state)', () => {
 
 		const meta = page.locator( `tr[data-slug="${ PLUGIN_SLUG }"] .plugin-version-author-uri` );
 
-		// Asserted on hrefs, not labels -- more stable against copy changes,
-		// and every href here is a plugin-owned literal straight out of
-		// plugin_links() rather than translated text.
+		// Asserted on hrefs (plugin-owned literals), not translated labels.
 		await expect(
 			meta.locator( 'a[href="https://wordpress.org/support/plugin/disable-blog/"]' )
 		).toBeVisible();
@@ -62,19 +50,14 @@ test.describe( 'admin: plugins screen — capability gate (editor)', () => {
 	test.use( { storageState: storageStatePath( 'editor' ) } );
 
 	test( 'the links require the install_plugins capability', async ( { request } ) => {
-		// Deliberately not admin.visitAdminPage(): that helper throws on a
-		// PHP-error-shaped page, but what's needed here is to inspect the
-		// actual denied response, not navigate past it -- same reasoning as
-		// frontend/redirects.spec.ts's request-layer assertions.
+		// Not admin.visitAdminPage(): that helper throws on a PHP-error-shaped
+		// page; this needs to inspect the denied response itself.
 		const response = await request.get( adminUrl( 'plugins.php' ), { maxRedirects: 0 } );
 
 		expect( response.status() ).toBe( 403 );
 
-		// Verified against the live site: an editor is stopped by the
-		// screen-level capability check, which emits the generic
-		// "access this page" copy -- not the plugins-specific
-		// "manage plugins for this site" message that only appears once a
-		// user has reached plugins.php itself.
+		// The generic "access this page" copy from core's screen-level check,
+		// not the plugins-specific message reached only once inside plugins.php.
 		const body = await response.text();
 		expect( body ).toContain( 'Sorry, you are not allowed to access this page.' );
 	} );

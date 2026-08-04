@@ -1,15 +1,7 @@
 /**
- * WP-CLI bridge for the specs that need genuine command-line semantics.
- *
- * Used sparingly. Seeding goes through the `dwpb-test/v1` REST fixture
- * because a WP-CLI round trip costs ~1.2s of Docker/Node startup; this
- * helper exists for the cases where the CLI *is* the thing under test.
- *
- * Always targets the tests instance (:8889), never the dev site.
- */
-
-/**
- * External dependencies
+ * WP-CLI bridge for the specs that need genuine command-line semantics —
+ * used sparingly, since seeding normally goes through the cheaper
+ * `dwpb-test/v1` REST fixture. Always targets the tests instance (:8889).
  */
 import { execFile } from 'node:child_process';
 import path from 'node:path';
@@ -40,10 +32,8 @@ export interface WpCliResult {
 }
 
 /**
- * Run a `wp` command inside the tests container.
- *
- * Never throws on a non-zero exit: the exit code is part of what the CLI
- * specs assert, so it is returned rather than converted into a rejection.
+ * Run a `wp` command inside the tests container. Never throws on a non-zero
+ * exit — the caller asserts the returned exit code instead.
  *
  * @param args `wp` arguments, already split (no shell quoting needed).
  */

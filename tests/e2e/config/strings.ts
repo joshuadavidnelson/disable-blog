@@ -1,12 +1,7 @@
 /**
  * User-facing strings a spec asserts against, fetched from the plugin's own
- * source instead of duplicated as literals.
- *
- * The `dwpb-test/v1/strings` route (see `tests/e2e/fixtures/dwpb-test-api.php`)
- * returns copy read straight from `Disable_Blog_Admin`, so a wording change
- * can't silently desync the suite. Fetched once per run and memoized — the
- * strings are static for the duration of the suite, so there is no reason to
- * pay a request per test.
+ * source via `dwpb-test/v1/strings` instead of duplicated as literals, so a
+ * wording change can't silently desync the suite. Memoized per run.
  *
  * @see tests/e2e/fixtures/dwpb-test-api.php
  */
@@ -62,9 +57,8 @@ export async function pluginStrings(
 			path: `/${ TEST_API }/strings`,
 		} );
 
-		// Guard the single choke point every spec reads through: an empty
-		// value would make a toContainText()-style assertion vacuously true,
-		// so a broken route must throw here rather than pass silently.
+		// Throw on empty values so a toContainText()-style assertion can't
+		// pass vacuously.
 		for ( const [ key, value ] of Object.entries( fetched ) ) {
 			if ( ! value ) {
 				throw new Error(

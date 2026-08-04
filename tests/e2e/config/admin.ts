@@ -1,16 +1,11 @@
 /**
  * Locators and URL builders for WordPress-core admin screens.
  *
- * Disable Blog has no test-ids of its own; every selector below is either a
- * stable WP-core CSS id/class name, or a role/text locator where the visible
- * copy itself is the thing under test. Centralizing them here means a core
- * markup change — a WordPress version bump, say — touches exactly one file
- * instead of every spec that happens to click the Posts menu item.
+ * Disable Blog has no test-ids of its own, so every selector is a stable
+ * WP-core CSS id/class or a role/text locator, centralized here so a core
+ * markup change touches one file instead of every spec.
  */
 
-/**
- * External dependencies
- */
 import type { Locator, Page } from '@playwright/test';
 
 /* -------------------------------------------------------------------------
@@ -84,10 +79,8 @@ export const MENU_SETTINGS = '#menu-settings';
 
 /**
  * A menu link (top-level or submenu) by the wp-admin page it points at.
- *
- * Matches on `href$=` (suffix) rather than an exact string, so `href` can be
- * given as e.g. `edit.php?post_type=page` without also needing to know
- * whether core rendered a `/wp-admin/`-relative or absolute URL.
+ * Matches on `href$=` (suffix) so `href` can be given without knowing
+ * whether core rendered a relative or absolute URL.
  *
  * @param page Page under test.
  * @param href wp-admin page/query string the link's `href` ends with, e.g. `edit.php?post_type=page`.
@@ -105,16 +98,11 @@ export const ADMIN_BAR_NEW_PAGE = '#wp-admin-bar-new-page';
 export const ADMIN_BAR_COMMENTS = '#wp-admin-bar-comments';
 
 /**
- * The comment bubble's label.
+ * The comment bubble's label. NOT `.count` — core renders no bare `count`
+ * class, so that selector would silently match nothing.
  *
- * NOT `.count` -- core's `wp_admin_bar_comments_menu()` renders
- * `<span class="ab-label awaiting-mod pending-count count-{n}">`, so there is
- * no bare `count` class to match. A `.count` selector silently matches nothing,
- * which would make `toHaveCount( 0 )` pass whether or not the bubble is there.
- *
- * Note the bubble reports `wp_count_comments()->moderated` -- comments awaiting
- * moderation -- so an *approved* comment never moves this number. Seed pending
- * comments when asserting against it.
+ * Reports `wp_count_comments()->moderated`; an approved comment never moves
+ * it. Seed pending comments when asserting against it.
  */
 export const ADMIN_BAR_COMMENTS_LABEL = '#wp-admin-bar-comments .ab-label';
 

@@ -1,25 +1,13 @@
 /**
  * Content seeding + inspection helpers shared by every spec.
  *
- * WHY THIS FILE EXISTS: `Disable_Blog_Admin::modify_post_type_arguments()`,
- * hooked on `init` at priority 25, sets `show_in_rest` (and `public`,
- * `show_ui`, ...) to `false` on the `post` post type for the entire life of
- * the test environment. That means core REST has no route left for `post` at
- * all — `POST /wp/v2/posts` returns `rest_no_route`, and the standard
- * `RequestUtils.createPost()` helper simply cannot be used. Posts, comments,
- * and category/tag terms therefore go through the `dwpb-test/v1` mu-plugin
- * fixture, an authenticated back door that calls `wp_insert_post()` /
- * `wp_insert_comment()` / `wp_insert_term()` directly, the same way WP-CLI or
- * a direct database actor would.
+ * Posts go through the `dwpb-test/v1` mu-plugin fixture, not core REST: the
+ * plugin sets `show_in_rest => false` on `post`, so `POST /wp/v2/posts`
+ * 404s. Pages are untouched by the plugin, so `seedPage()` uses core REST
+ * (`/wp/v2/pages`) normally.
  *
- * Pages are untouched by the plugin — `seedPage()` goes through core REST
- * (`/wp/v2/pages`) like any stock WordPress install, and MUST keep doing so;
- * routing pages through the test API would exercise a code path real authors
- * never use.
- *
- * The PHP fixture's JSON is snake_case (`post_status`, `comment_status`, ...).
- * Every helper below converts it to camelCase before returning, so no spec
- * ever has to read a snake_case key off a seed result.
+ * The PHP fixture's JSON is snake_case; every helper here converts it to
+ * camelCase before returning.
  *
  * @see tests/e2e/fixtures/dwpb-test-api.php
  */
@@ -72,11 +60,8 @@ export interface PostState {
 let titleCounter = 0;
 
 /**
- * Build a title that is unique across specs, runs and workers.
- *
- * Specs must be independently re-runnable; a unique title keeps slug
- * collisions (`my-post-2`) and cross-spec locator matches (two specs both
- * asserting on a link with the text "Test Post") from ever happening.
+ * Build a title unique across specs, runs and workers, to avoid slug
+ * collisions and cross-spec locator matches.
  *
  * @param prefix Human-readable prefix, usually the spec name.
  */
@@ -89,13 +74,9 @@ export function uniqueTitle( prefix: string ): string {
 let cachedSiteConfig: SiteConfig | null = null;
 
 /**
- * Idempotently seed the Home/Blog pages and the reading settings that point
- * at them, via `dwpb-test/v1/setup`.
- *
- * Safe to call more than once: the route only creates what is missing and
- * corrects what has drifted (e.g. a spec that changed `show_on_front` and
- * did not restore it). Always re-fetches — use {@link siteConfig} instead
- * when a memoized read is good enough.
+ * Idempotently seed the Home/Blog pages and reading settings, via
+ * `dwpb-test/v1/setup`. Always re-fetches — use {@link siteConfig} for a
+ * memoized read.
  *
  * @param requestUtils Admin request utils.
  */
@@ -123,13 +104,9 @@ export async function setupSite( requestUtils: RequestUtils ): Promise< SiteConf
 }
 
 /**
- * Memoized wrapper around {@link setupSite}.
- *
- * The Home/Blog ids and permalink structure are static for the duration of a
- * run unless a spec deliberately changes them (and such a spec is
- * responsible for restoring them, typically by calling {@link setupSite}
- * again). Everything else can read the cached value instead of paying a
- * request per call.
+ * Memoized wrapper around {@link setupSite}. Values are static for a run
+ * unless a spec changes them directly, in which case it must restore them
+ * via {@link setupSite}.
  *
  * @param requestUtils Admin request utils.
  */
@@ -165,15 +142,9 @@ export interface SetReadingSettingsArgs {
  * Set `show_on_front` / `page_on_front` / `page_for_posts` directly via
  * `dwpb-test/v1/reading-settings`, bypassing core REST.
  *
- * WordPress 5.9's core `/wp/v2/settings` endpoint does not expose these three
- * keys at all -- they are simply absent from both the schema and the
- * response, so a `PUT` against them silently no-ops instead of erroring. A
- * spec relying on core REST here would never actually establish its
- * precondition on that version, even though the notice it's testing for is a
- * real, reachable branch of `admin_notices()`. This route calls
- * `update_option()` directly instead, the same way WP-CLI or a direct
- * database actor would, and hands back the values it overwrote so a caller
- * can restore exactly what it changed rather than assuming defaults.
+ * WordPress 5.9's `/wp/v2/settings` doesn't expose these keys at all, so a
+ * `PUT` against them silently no-ops there instead of erroring. Returns the
+ * values it overwrote so a caller can restore exactly what it changed.
  *
  * @param requestUtils Admin request utils.
  * @param args         Settings to change. Omitted keys are left untouched.
@@ -256,13 +227,11 @@ export interface SeedPostArgs {
 }
 
 /**
- * Create a post via `dwpb-test/v1/create-post` (`wp_insert_post()` under the
- * hood) — the route core REST won't allow for the `post` post type under
- * this plugin.
+ * Create a post via `dwpb-test/v1/create-post` (`wp_insert_post()`) — core
+ * REST won't allow this post type under this plugin.
  *
- * The response carries no title (`dwpb_test_api_create_post()` doesn't
- * return one), so the title on the returned {@link SeededPost} is the value
- * passed in, not a value read back from the server.
+ * The response carries no title, so the {@link SeededPost} title is the
+ * value passed in, not read back from the server.
  *
  * @param requestUtils Admin request utils.
  * @param args         Post attributes.
@@ -320,13 +289,9 @@ export interface SeedPageArgs {
 }
 
 /**
- * Create a page via core REST (`POST /wp/v2/pages`).
- *
- * Pages are untouched by Disable Blog's `show_in_rest` stripping, so — unlike
- * {@link seedPost} — this deliberately does NOT go through the
- * `dwpb-test/v1` fixture. Routing pages through the test API would exercise
- * a back door real authors never use for the one content type the plugin
- * leaves alone.
+ * Create a page via core REST (`POST /wp/v2/pages`) — pages are untouched by
+ * the plugin, so unlike {@link seedPost} this does not go through the test
+ * API fixture.
  *
  * @param requestUtils Admin request utils.
  * @param args         Page attributes.
@@ -445,11 +410,9 @@ export async function seedTerm(
 /**
  * Read a post's/page's status-relevant state via `dwpb-test/v1/post-state/<id>`.
  *
- * Preferred over `/wp/v2/pages/<id>` (and the only option at all for
- * `post`, which has no core REST route under this plugin) because it also
- * reports `comments_open` / `pings_open` as WordPress itself would evaluate
- * them (`comments_open()` / `pings_open()`), not just the raw
- * `comment_status` column.
+ * Reports `comments_open` / `pings_open` as WordPress evaluates them, not
+ * just the raw `comment_status` column — the only option at all for `post`,
+ * which has no core REST route under this plugin.
  *
  * @param requestUtils Admin request utils.
  * @param id           Post id.
@@ -484,14 +447,9 @@ export async function postState(
 /**
  * Force-delete posts/pages by id, via `dwpb-test/v1/post/<id>`.
  *
- * Deletes any post type — `wp_delete_post()` under the hood handles posts
- * and pages alike, so callers don't need to track which type each id was;
- * pass a mixed list straight from whatever a spec seeded. Ids that are
- * already gone are tolerated (the route itself is idempotent, returning
- * `deleted: false` with HTTP 200 rather than a 404), and this helper never
- * throws: this runs from `afterEach`, and a spec that already deleted
- * something as part of its assertions must still be able to run its own
- * teardown without failing an otherwise-passing test.
+ * Handles any post type, and never throws — already-gone ids are tolerated
+ * by the route, and this typically runs from `afterEach`, where a failure
+ * would fail an otherwise-passing test.
  *
  * @param requestUtils Admin request utils.
  * @param ids          Post/page ids to remove.
