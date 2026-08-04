@@ -11,16 +11,17 @@
  * — false here, since `page`/`attachment` support comments by default, so
  * neither screen redirects (test 6).
  *
- * Since v0.5.5: `post.php`, `edit-tags.php`, `term.php`, and `tools.php` are
- * covered here as regression guards for three fixed bugs —
- * `redirect_admin_term()` was misspelled (never matched, so term.php never
- * redirected); the `tools` loop entry expected `redirect_admin_tools()` but
- * the method was named `redirect_admin_options_tools()` (same effect, now
- * renamed, with the old `dwpb_redirect_admin_options_tools` filter name kept
- * via `apply_filters_deprecated()`); and `esc_url_raw( true )` for a boolean
- * `$redirect` resolved to the non-empty `"http://1"`, sending
- * `wp_safe_redirect()` to bare `/wp-admin/` instead of the dashboard (fixed
- * by checking `true === $redirect` first).
+ * `post.php`, `edit-tags.php`, `term.php`, and `tools.php` are covered here
+ * as regression guards on three name/type hazards in the dispatch:
+ * `redirect_admin_term()`'s method name must exactly match the loop's
+ * `redirect_admin_<slug>()` pattern, or `term.php` silently stops
+ * redirecting; the `tools` slug's method is `redirect_admin_options_tools()`
+ * (not `redirect_admin_tools()`), exposed under the legacy
+ * `dwpb_redirect_admin_options_tools` filter name via
+ * `apply_filters_deprecated()`; and the dashboard branch must check
+ * `true === $redirect` before `esc_url_raw()`, since `esc_url_raw( true )`
+ * resolves to the non-empty `"http://1"`, which would send
+ * `wp_safe_redirect()` to bare `/wp-admin/` instead of the dashboard.
  *
  * Assertions go through `expectRedirect()`/`expectStatus()` from
  * `config/redirects.ts` rather than `page.goto()`, to avoid Chromium's 301
@@ -45,7 +46,7 @@ import {
 	uniqueTitle,
 } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
-import { adminUrl, postPhp, editTagsPhp, termPhp } from '../../config/admin';
+import { adminUrl, editPhp, postNewPhp, postPhp, editTagsPhp, termPhp } from '../../config/admin';
 import { expectRedirect, expectStatus } from '../../config/redirects';
 
 test.describe( 'admin: redirects (default state)', () => {
@@ -62,8 +63,8 @@ test.describe( 'admin: redirects (default state)', () => {
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 
-		editPageTarget = `${ config.homeUrl }${ adminUrl( 'edit.php?post_type=page' ) }`;
-		postNewPageTarget = `${ config.homeUrl }${ adminUrl( 'post-new.php?post_type=page' ) }`;
+		editPageTarget = `${ config.homeUrl }${ editPhp( 'page' ) }`;
+		postNewPageTarget = `${ config.homeUrl }${ postNewPhp( 'page' ) }`;
 		dashboardTarget = `${ config.homeUrl }${ adminUrl( 'index.php' ) }`;
 
 		seededPost = await seedPost( requestUtils, {
@@ -99,7 +100,7 @@ test.describe( 'admin: redirects (default state)', () => {
 	} ) => {
 		await expectRedirect(
 			request,
-			adminUrl( 'edit.php?post_type=post' ),
+			editPhp( 'post' ),
 			editPageTarget,
 			301
 		);
@@ -114,7 +115,7 @@ test.describe( 'admin: redirects (default state)', () => {
 	test( 'an explicit post_type=post new screen redirects', async ( { request } ) => {
 		await expectRedirect(
 			request,
-			adminUrl( 'post-new.php?post_type=post' ),
+			postNewPhp( 'post' ),
 			postNewPageTarget,
 			301
 		);
@@ -123,7 +124,7 @@ test.describe( 'admin: redirects (default state)', () => {
 	// Controls: prove the redirect is targeted, not a blanket catch-all
 
 	test( 'the pages list is not redirected', async ( { request } ) => {
-		await expectStatus( request, adminUrl( 'edit.php?post_type=page' ), 200 );
+		await expectStatus( request, editPhp( 'page' ), 200 );
 	} );
 
 	test( 'the comments and discussion screens are not redirected by default', async ( {

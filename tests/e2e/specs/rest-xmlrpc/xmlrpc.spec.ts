@@ -7,9 +7,9 @@
  * failing the connection, and that lookup happens before params are read, so
  * fault tests can send empty param lists.
  *
- * Fixed since 0.5.5: the removal list's `wp.deleteCategory` entry was
- * misspelled `wp.deleteeCategory`, so the real method wasn't actually
- * removed. Now corrected and regression-guarded below.
+ * Regression guard: the removal list's `wp.deleteCategory` entry must stay
+ * correctly spelled -- a misspelling there silently leaves the real method
+ * reachable.
  *
  * `system.*` methods (listMethods, multicall, getCapabilities) can never be
  * removed via this filter — IXR_Server::setCallbacks() re-registers them
@@ -24,62 +24,16 @@
  * WordPress dependencies
  */
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
-import type { APIRequestContext } from '@playwright/test';
-
-// wp-env's built-in administrator; throwaway local credentials.
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'password';
 
 /**
- * Escape a string for safe inclusion inside XML-RPC `<string>` text content.
+ * Internal dependencies
  */
-function escapeXml( value: string ): string {
-	return value
-		.replace( /&/g, '&amp;' )
-		.replace( /</g, '&lt;' )
-		.replace( />/g, '&gt;' );
-}
-
-// Only string/int are needed: every fault test sends empty params, and the
-// one control test only needs strings and an int blog id.
-function xmlRpcParam( value: string | number ): string {
-	if ( 'number' === typeof value ) {
-		return `<param><value><int>${ value }</int></value></param>`;
-	}
-
-	return `<param><value><string>${ escapeXml( value ) }</string></value></param>`;
-}
-
-// Build a minimal XML-RPC methodCall request body.
-function methodCallXml( methodName: string, params: ( string | number )[] = [] ): string {
-	const paramsXml = params.map( xmlRpcParam ).join( '' );
-
-	return (
-		'<?xml version="1.0"?>' +
-		`<methodCall><methodName>${ escapeXml( methodName ) }</methodName>` +
-		`<params>${ paramsXml }</params></methodCall>`
-	);
-}
-
-// POST an XML-RPC methodCall to /xmlrpc.php and return the raw response text.
-async function callXmlRpc(
-	request: APIRequestContext,
-	methodName: string,
-	params: ( string | number )[] = []
-): Promise< string > {
-	const response = await request.post( '/xmlrpc.php', {
-		headers: { 'Content-Type': 'text/xml' },
-		data: methodCallXml( methodName, params ),
-	} );
-
-	return response.text();
-}
-
-// Assert that an XML-RPC response body is a fault with the given fault code.
-function expectXmlRpcFault( body: string, faultCode: number ): void {
-	expect( body ).toContain( '<name>faultCode</name>' );
-	expect( body ).toContain( `<int>${ faultCode }</int>` );
-}
+import {
+	ADMIN_USERNAME,
+	ADMIN_PASSWORD,
+	callXmlRpc,
+	expectXmlRpcFault,
+} from '../../config/xmlrpc';
 
 test.describe( 'XML-RPC: default state', () => {
 	test( 'the endpoint still responds to GET', async ( { request } ) => {
