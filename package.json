@@ -17,7 +17,8 @@
     "env:debuglog": "wp-env run tests-cli tail -f /var/www/html/wp-content/debug.log",
     "test:e2e": "wp-scripts test-e2e --config playwright.config.ts",
     "test:e2e:ui": "wp-scripts test-e2e --config playwright.config.ts --ui",
-    "test:e2e:core-version": "node ./tests/bin/set-core-version.js"
+    "test:e2e:core-version": "node ./tests/bin/set-core-version.js",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.0",

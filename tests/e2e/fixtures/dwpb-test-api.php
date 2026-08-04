@@ -253,7 +253,7 @@ function dwpb_test_api_reset_content() {
 			'post_status'  => 'any',
 			'numberposts'  => -1,
 			'fields'       => 'ids',
-			'post__not_in' => array_values( array_filter( array( $home_id, $blog_id ) ) ),
+			'post__not_in' => array_values( array_filter( array( $home_id, $blog_id ) ) ), // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- fixed-size test site, not a VIP-scale query.
 		)
 	);
 
