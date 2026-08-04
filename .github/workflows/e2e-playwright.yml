@@ -32,12 +32,12 @@ jobs:
         # Top of the supported PHP range.
         - wp: "latest"
           php: "8.4"
-        # The bottom of the supported PHP range.
+        # The bottom of the supported PHP+WP range.
         - wp: "5.9"
           php: "7.4"
         # Development WordPress, for early warning on upstream core changes.
         - wp: "master"
-          php: "8.3"
+          php: "8.4"
 
     env:
       # wp-env reads this on every invocation, see
