@@ -9,6 +9,7 @@ import { RequestUtils } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { resetFixtures } from './fixtures';
+import { resetFilterOverrides } from './filter-overrides';
 import { ADMIN_STORAGE_STATE } from './roles';
 import { resetContent } from './seed';
 
@@ -31,6 +32,7 @@ async function globalTeardown( config: FullConfig ): Promise< void > {
 
 	await resetContent( requestUtils );
 	await resetFixtures( requestUtils );
+	await resetFilterOverrides( requestUtils );
 
 	await requestContext.dispose();
 }
