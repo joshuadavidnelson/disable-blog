@@ -28,9 +28,9 @@
  *
  * Tests 3-4 mutate `page_for_posts`/`show_on_front` via `setReadingSettings()`
  * (the `dwpb-test/v1/reading-settings` route, not core's `/wp/v2/settings` —
- * see `config/seed.ts`) and restore the previous value in an in-test
- * `finally`, not a shared `afterAll`, so one failure can't strand the
- * setting for later tests.
+ * see `config/seed.ts`). Their restore lives in an `afterEach`, not the test
+ * body: a body is abandoned mid-unwind on timeout, stranding the setting for
+ * every later spec.
  */
 
 /**
@@ -88,16 +88,24 @@ test.describe( 'admin: settings screens (default state)', () => {
 		await expect( page.locator( '#front-static-pages' ) ).toBeVisible();
 	} );
 
-	test( 'the front-page-equals-posts-page notice appears', async ( {
-		admin,
-		page,
-		requestUtils,
-	} ) => {
-		const config = await siteConfig( requestUtils );
-
+	test.describe( 'reading settings notices (mutates site-wide reading settings)', () => {
 		let previous: ReadingSettings | undefined;
 
-		try {
+		test.afterEach( async ( { requestUtils } ) => {
+			// Restore the exact prior value rather than re-running setupSite().
+			if ( previous ) {
+				await setReadingSettings( requestUtils, previous );
+				previous = undefined;
+			}
+		} );
+
+		test( 'the front-page-equals-posts-page notice appears', async ( {
+			admin,
+			page,
+			requestUtils,
+		} ) => {
+			const config = await siteConfig( requestUtils );
+
 			( { previous } = await setReadingSettings( requestUtils, {
 				pageForPosts: config.homeId,
 			} ) );
@@ -106,24 +114,13 @@ test.describe( 'admin: settings screens (default state)', () => {
 
 			const strings = await pluginStrings( requestUtils );
 			await expect( noticeWith( page, strings.front_equals_posts_notice ) ).toBeVisible();
-		} finally {
-			// Restore the exact prior value rather than re-running setupSite().
-			if ( previous ) {
-				await setReadingSettings( requestUtils, {
-					pageForPosts: previous.pageForPosts,
-				} );
-			}
-		}
-	} );
+		} );
 
-	test( 'the no-front-page notice appears on the plugins screen', async ( {
-		admin,
-		page,
-		requestUtils,
-	} ) => {
-		let previous: ReadingSettings | undefined;
-
-		try {
+		test( 'the no-front-page notice appears on the plugins screen', async ( {
+			admin,
+			page,
+			requestUtils,
+		} ) => {
 			( { previous } = await setReadingSettings( requestUtils, {
 				showOnFront: 'posts',
 			} ) );
@@ -132,13 +129,7 @@ test.describe( 'admin: settings screens (default state)', () => {
 
 			const strings = await pluginStrings( requestUtils );
 			await expect( noticeWith( page, strings.no_front_page_notice ) ).toBeVisible();
-		} finally {
-			if ( previous ) {
-				await setReadingSettings( requestUtils, {
-					showOnFront: previous.showOnFront,
-				} );
-			}
-		}
+		} );
 	} );
 
 	// On modern WordPress, options-writing.php's Formatting and Link Manager

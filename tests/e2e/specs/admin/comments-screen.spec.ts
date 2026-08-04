@@ -23,105 +23,145 @@ import { seedPage, seedPost, seedComment, deletePosts, uniqueTitle } from '../..
 import type { SeededPost } from '../../config/seed';
 
 test.describe( 'admin: comments list table (default state)', () => {
-	let seededPage: SeededPost;
-	let seededPost: SeededPost;
-	let pageCommentId: number;
-	let pageCommentContent: string;
-	let postCommentContent: string;
+	test.describe( 'filtering by post type', () => {
+		let seededPage: SeededPost;
+		let seededPost: SeededPost;
+		let pageCommentContent: string;
+		let postCommentContent: string;
 
-	const seededIds: number[] = [];
+		const seededIds: number[] = [];
 
-	test.beforeAll( async ( { requestUtils } ) => {
-		seededPage = await seedPage( requestUtils, {
-			title: uniqueTitle( 'comments screen page' ),
+		test.beforeAll( async ( { requestUtils } ) => {
+			seededPage = await seedPage( requestUtils, {
+				title: uniqueTitle( 'comments screen page' ),
+			} );
+			seededIds.push( seededPage.id );
+
+			seededPost = await seedPost( requestUtils, {
+				title: uniqueTitle( 'comments screen post' ),
+			} );
+			seededIds.push( seededPost.id );
+
+			pageCommentContent = uniqueTitle( 'page comment body' );
+			postCommentContent = uniqueTitle( 'post comment body' );
+
+			await seedComment( requestUtils, {
+				postId: seededPage.id,
+				content: pageCommentContent,
+				approved: true,
+			} );
+
+			await seedComment( requestUtils, {
+				postId: seededPost.id,
+				content: postCommentContent,
+				approved: true,
+			} );
 		} );
-		seededIds.push( seededPage.id );
 
-		seededPost = await seedPost( requestUtils, {
-			title: uniqueTitle( 'comments screen post' ),
+		test.afterAll( async ( { requestUtils } ) => {
+			// Force-deleting the post/page also deletes its comments.
+			await deletePosts( requestUtils, seededIds );
 		} );
-		seededIds.push( seededPost.id );
 
-		pageCommentContent = uniqueTitle( 'page comment body' );
-		postCommentContent = uniqueTitle( 'post comment body' );
+		test( 'post comments are filtered out of the comments list', async ( { admin, page } ) => {
+			await admin.visitAdminPage( 'edit-comments.php' );
 
-		const pageComment = await seedComment( requestUtils, {
-			postId: seededPage.id,
-			content: pageCommentContent,
-			approved: true,
-		} );
-		pageCommentId = pageComment.id;
+			// Scoped to #the-comment-list rows: core also emits a hidden
+			// <textarea class="comment"> per row (inline-edit's data carrier)
+			// duplicating the body, which an unscoped getByText() would also match.
 
-		await seedComment( requestUtils, {
-			postId: seededPost.id,
-			content: postCommentContent,
-			approved: true,
+			// Control: the page's comment is a supported post type, so it must
+			// still be listed.
+			await expect(
+				page.locator( '#the-comment-list tr', { hasText: pageCommentContent } )
+			).toHaveCount( 1 );
+
+			await expect(
+				page.locator( '#the-comment-list tr', { hasText: postCommentContent } )
+			).toHaveCount( 0 );
 		} );
 	} );
 
-	test.afterAll( async ( { requestUtils } ) => {
-		// Force-deleting the post/page also deletes its comments.
-		await deletePosts( requestUtils, seededIds );
-	} );
+	test.describe( 'empty state (only unsupported-type comments exist)', () => {
+		let seededPage: SeededPost;
+		let seededPost: SeededPost;
+		let pageCommentId: number;
 
-	test( 'post comments are filtered out of the comments list', async ( { admin, page } ) => {
-		await admin.visitAdminPage( 'edit-comments.php' );
+		test.beforeEach( async ( { requestUtils } ) => {
+			seededPage = await seedPage( requestUtils, {
+				title: uniqueTitle( 'comments screen empty-state page' ),
+			} );
+			seededPost = await seedPost( requestUtils, {
+				title: uniqueTitle( 'comments screen empty-state post' ),
+			} );
 
-		// Scoped to #the-comment-list rows: core also emits a hidden
-		// <textarea class="comment"> per row (inline-edit's data carrier)
-		// duplicating the body, which an unscoped getByText() would also match.
+			const pageComment = await seedComment( requestUtils, {
+				postId: seededPage.id,
+				approved: true,
+			} );
+			pageCommentId = pageComment.id;
 
-		// Control: the page's comment is a supported post type, so it must
-		// still be listed.
-		await expect(
-			page.locator( '#the-comment-list tr', { hasText: pageCommentContent } )
-		).toHaveCount( 1 );
-
-		await expect(
-			page.locator( '#the-comment-list tr', { hasText: postCommentContent } )
-		).toHaveCount( 0 );
-	} );
-
-	test( 'the list reports no comments when only post comments exist', async ( {
-		admin,
-		page,
-		requestUtils,
-	} ) => {
-		// Force-delete the page's comment, leaving only the 'post' comment,
-		// which comment_filter() excludes from every view's query entirely.
-		await requestUtils.rest( {
-			method: 'DELETE',
-			path: `/wp/v2/comments/${ pageCommentId }?force=true`,
+			await seedComment( requestUtils, { postId: seededPost.id, approved: true } );
 		} );
 
-		await admin.visitAdminPage( 'edit-comments.php' );
+		test.afterEach( async ( { requestUtils } ) => {
+			// Force-deleting the post/page also deletes its comments.
+			await deletePosts( requestUtils, [ seededPage.id, seededPost.id ] );
+		} );
 
-		// Core's own empty-state copy. Scoped to #the-comment-list: core also
-		// renders a hidden #the-extra-comment-list clone repeating this same
-		// text, which an unscoped match would also hit.
-		await expect(
-			page.locator( '#the-comment-list' ).getByText( 'No comments found.' )
-		).toBeVisible();
+		test( 'the list reports no comments when only post comments exist', async ( {
+			admin,
+			page,
+			requestUtils,
+		} ) => {
+			// Force-delete the page's comment, leaving only the 'post' comment,
+			// which comment_filter() excludes from every view's query entirely.
+			await requestUtils.rest( {
+				method: 'DELETE',
+				path: `/wp/v2/comments/${ pageCommentId }?force=true`,
+			} );
+
+			await admin.visitAdminPage( 'edit-comments.php' );
+
+			// Core's own empty-state copy. Scoped to #the-comment-list: core also
+			// renders a hidden #the-extra-comment-list clone repeating this same
+			// text, which an unscoped match would also hit.
+			await expect(
+				page.locator( '#the-comment-list' ).getByText( 'No comments found.' )
+			).toBeVisible();
+		} );
 	} );
 
-	test( 'the view counts exclude post comments', async ( { admin, page, requestUtils } ) => {
-		// A before/after delta, not an absolute count: the "All" count is
-		// site-wide, so a fresh pair of comments (one supported type, one
-		// 'post') proves the post comment contributes zero to the delta.
-		await admin.visitAdminPage( 'edit-comments.php' );
+	test.describe( 'view counts', () => {
+		const seededIds: number[] = [];
 
-		const allCount = page.locator( '.subsubsub .all-count' );
-		const before = Number( await allCount.innerText() );
-
-		const extraPage = await seedPage( requestUtils, {
-			title: uniqueTitle( 'comment count control page' ),
+		test.afterEach( async ( { requestUtils } ) => {
+			await deletePosts( requestUtils, seededIds.splice( 0 ) );
 		} );
-		const extraPost = await seedPost( requestUtils, {
-			title: uniqueTitle( 'comment count control post' ),
-		} );
-		const extraIds = [ extraPage.id, extraPost.id ];
 
-		try {
+		test( 'the view counts exclude post comments', async ( {
+			admin,
+			page,
+			requestUtils,
+		} ) => {
+			// A before/after delta, not an absolute count: the "All" count is
+			// site-wide, so a fresh pair of comments (one supported type, one
+			// 'post') proves the post comment contributes zero to the delta.
+			await admin.visitAdminPage( 'edit-comments.php' );
+
+			const allCount = page.locator( '.subsubsub .all-count' );
+			const before = Number( await allCount.innerText() );
+
+			const extraPage = await seedPage( requestUtils, {
+				title: uniqueTitle( 'comment count control page' ),
+			} );
+			seededIds.push( extraPage.id );
+
+			const extraPost = await seedPost( requestUtils, {
+				title: uniqueTitle( 'comment count control post' ),
+			} );
+			seededIds.push( extraPost.id );
+
 			await seedComment( requestUtils, { postId: extraPage.id, approved: true } );
 			await seedComment( requestUtils, { postId: extraPost.id, approved: true } );
 
@@ -129,8 +169,6 @@ test.describe( 'admin: comments list table (default state)', () => {
 			const after = Number( await allCount.innerText() );
 
 			expect( after ).toBe( before + 1 );
-		} finally {
-			await deletePosts( requestUtils, extraIds );
-		}
+		} );
 	} );
 } );
