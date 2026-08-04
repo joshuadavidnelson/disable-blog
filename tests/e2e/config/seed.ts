@@ -60,15 +60,19 @@ export interface PostState {
 let titleCounter = 0;
 
 /**
- * Build a title unique across specs, runs and workers, to avoid slug
+ * Build a title unique across specs, runs, workers and shards, to avoid slug
  * collisions and cross-spec locator matches.
+ *
+ * The counter only separates calls within one process, so the pid is mixed in
+ * too — two shards can otherwise start inside the same millisecond and
+ * produce identical titles.
  *
  * @param prefix Human-readable prefix, usually the spec name.
  */
 export function uniqueTitle( prefix: string ): string {
 	titleCounter += 1;
 
-	return `${ prefix } ${ Date.now().toString( 36 ) }-${ titleCounter }`;
+	return `${ prefix } ${ Date.now().toString( 36 ) }-${ process.pid.toString( 36 ) }-${ titleCounter }`;
 }
 
 let cachedSiteConfig: SiteConfig | null = null;
@@ -464,6 +468,33 @@ export async function deletePosts(
 				await requestUtils.rest( {
 					method: 'DELETE',
 					path: `/${ TEST_API }/post/${ id }`,
+				} );
+			} catch {
+				// Best-effort — see the docblock above.
+			}
+		} )
+	);
+}
+
+/**
+ * Delete terms by id, in whichever taxonomy owns each one, via
+ * `dwpb-test/v1/term/<id>`.
+ *
+ * Never throws, for the same reason as {@link deletePosts}.
+ *
+ * @param requestUtils Admin request utils.
+ * @param ids          Term ids to remove.
+ */
+export async function deleteTerms(
+	requestUtils: RequestUtils,
+	ids: number[]
+): Promise< void > {
+	await Promise.all(
+		ids.map( async ( id ) => {
+			try {
+				await requestUtils.rest( {
+					method: 'DELETE',
+					path: `/${ TEST_API }/term/${ id }`,
 				} );
 			} catch {
 				// Best-effort — see the docblock above.

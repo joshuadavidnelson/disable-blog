@@ -5,10 +5,10 @@
  * option is switched on, so a spec can flip one with a single
  * `PUT /wp/v2/settings` instead of a WP-CLI round trip.
  *
- * `tests/e2e/fixtures/` is mapped into both the :8888 dev site and the :8889
- * test site (see `.wp-env.json`), so a toggle left on pollutes local
- * development, not just the next test run. Calling `resetFixtures()` in
- * `afterEach`/`afterAll` is not optional.
+ * `tests/e2e/fixtures/` mounts into both the :8888 dev site and the :8889
+ * test site (see `.wp-env.json`), but each fixture file is inert unless
+ * `DWPB_TEST_FIXTURES` is defined, a constant only the tests environment
+ * sets — so a toggle left on has no effect on :8888.
  *
  * @see tests/e2e/fixtures/
  */

@@ -41,6 +41,7 @@ import {
 	seedPage,
 	seedTerm,
 	deletePosts,
+	deleteTerms,
 	uniqueTitle,
 } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
@@ -56,6 +57,7 @@ test.describe( 'admin: redirects (default state)', () => {
 	let categoryTerm: { termId: number; slug: string; link: string };
 
 	const seededIds: number[] = [];
+	const seededTermIds: number[] = [];
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
@@ -78,12 +80,12 @@ test.describe( 'admin: redirects (default state)', () => {
 			taxonomy: 'category',
 			name: uniqueTitle( 'admin redirects category' ),
 		} );
+		seededTermIds.push( categoryTerm.termId );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		// The seeded category term is left in place, wiped only by the next
-		// run's global-setup reset.
 		await deletePosts( requestUtils, seededIds );
+		await deleteTerms( requestUtils, seededTermIds );
 	} );
 
 	// redirect_admin_edit() / redirect_admin_post_new()
