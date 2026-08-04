@@ -14,5 +14,12 @@
 	"testsPort": 8889,
 	"mappings": {
 		"wp-content/mu-plugins": "./tests/e2e/fixtures"
+	},
+	"env": {
+		"tests": {
+			"config": {
+				"DWPB_TEST_FIXTURES": true
+			}
+		}
 	}
 }

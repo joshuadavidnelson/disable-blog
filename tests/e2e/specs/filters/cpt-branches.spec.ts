@@ -30,6 +30,7 @@ import {
 	seedPost,
 	seedTerm,
 	deletePosts,
+	deleteTerms,
 	uniqueTitle,
 	flushRewrites,
 } from '../../config/seed';
@@ -91,6 +92,7 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 	let tagTerm: { termId: number; slug: string; link: string };
 
 	const seededIds: number[] = [];
+	const seededTermIds: number[] = [];
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		await siteConfig( requestUtils );
@@ -111,12 +113,14 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 			name: uniqueTitle( 'cpt category' ),
 			assignTo: newsItem.id,
 		} );
+		seededTermIds.push( categoryTerm.termId );
 
 		tagTerm = await seedTerm( requestUtils, {
 			taxonomy: 'post_tag',
 			name: uniqueTitle( 'cpt tag' ),
 			assignTo: newsItem.id,
 		} );
+		seededTermIds.push( tagTerm.termId );
 
 		otherPost = await seedPost( requestUtils, {
 			title: uniqueTitle( 'cpt other post' ),
@@ -127,9 +131,8 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		// Seeded category/tag terms are left in place, wiped by global-setup's
-		// reset-content at the start of the next run.
 		await deletePosts( requestUtils, seededIds );
+		await deleteTerms( requestUtils, seededTermIds );
 
 		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.cptEnabled ] );
 

@@ -13,6 +13,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Inert without DWPB_TEST_FIXTURES: this mu-plugin also mounts on the :8888 dev site.
+if ( ! defined( 'DWPB_TEST_FIXTURES' ) ) {
+	return;
+}
+
 // No function_exists() guard here: PHP hoists these top-level function
 // declarations, so the guard would always be true and skip the
 // add_action( 'rest_api_init', ... ) below, silently unregistering every route.
@@ -203,8 +208,9 @@ function dwpb_test_api_set_reading_settings( WP_REST_Request $request ) {
 }
 
 /**
- * Delete all spec-seeded content: every 'post', every 'page' except
- * Home/Blog, every comment, and every non-default category/post_tag term.
+ * Delete all spec-seeded content: every post of any public type except pages
+ * and attachments, every 'page' except Home/Blog, every comment, and every
+ * non-default category/post_tag term.
  *
  * Uses get_posts()/get_comments()/get_terms() directly rather than the REST
  * controllers, since the 'post' type's REST route is disabled by the plugin.
@@ -217,9 +223,16 @@ function dwpb_test_api_reset_content() {
 	$blog_id = (int) get_option( 'page_for_posts' );
 
 	$deleted_posts = 0;
+	// Every public post type except pages and attachments, so a fixture CPT
+	// left behind by a crashed run is cleaned up too. Deliberately not 'any',
+	// which would sweep in the block theme's wp_template and wp_global_styles
+	// posts and break every markup assertion.
+	$content_types = array_values(
+		array_diff( get_post_types( array( 'public' => true ), 'names' ), array( 'page', 'attachment' ) )
+	);
 	$post_ids      = get_posts(
 		array(
-			'post_type'   => 'post',
+			'post_type'   => $content_types,
 			'post_status' => 'any',
 			'numberposts' => -1,
 			'fields'      => 'ids',
@@ -355,6 +368,36 @@ function dwpb_test_api_delete_post( $post_id ) {
 	return array(
 		'deleted' => (bool) $result,
 		'id'      => $post_id,
+	);
+}
+
+/**
+ * Delete a single term by id, in whichever taxonomy owns it.
+ *
+ * The taxonomy is resolved from the term rather than passed in, so a spec
+ * only has to track ids. A missing/already-deleted id reports
+ * `deleted => false` with HTTP 200, matching dwpb_test_api_delete_post().
+ *
+ * @param int $term_id Term ID.
+ * @return array<string, mixed>
+ */
+function dwpb_test_api_delete_term( $term_id ) {
+
+	$term = get_term( $term_id );
+
+	if ( ! $term instanceof WP_Term ) {
+		return array(
+			'deleted' => false,
+			'id'      => $term_id,
+		);
+	}
+
+	$result = wp_delete_term( $term_id, $term->taxonomy );
+
+	return array(
+		'deleted'  => true === $result,
+		'id'       => $term_id,
+		'taxonomy' => $term->taxonomy,
 	);
 }
 
@@ -632,6 +675,19 @@ function dwpb_test_api_register_routes() {
 			'permission_callback' => 'dwpb_test_api_can_manage',
 			'callback'            => static function ( WP_REST_Request $request ) {
 				return rest_ensure_response( dwpb_test_api_delete_post( (int) $request['id'] ) );
+			},
+		)
+	);
+
+	// Force-delete a single term (any taxonomy) by id; idempotent, see function docblock.
+	register_rest_route(
+		'dwpb-test/v1',
+		'/term/(?P<id>\d+)',
+		array(
+			'methods'             => 'DELETE',
+			'permission_callback' => 'dwpb_test_api_can_manage',
+			'callback'            => static function ( WP_REST_Request $request ) {
+				return rest_ensure_response( dwpb_test_api_delete_term( (int) $request['id'] ) );
 			},
 		)
 	);

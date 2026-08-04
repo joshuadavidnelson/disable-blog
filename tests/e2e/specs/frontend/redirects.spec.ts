@@ -24,6 +24,7 @@ import {
 	seedPage,
 	seedTerm,
 	deletePosts,
+	deleteTerms,
 	uniqueTitle,
 } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
@@ -50,6 +51,7 @@ test.describe( 'frontend: redirects (default state)', () => {
 	let originalPostsPerPage: number | undefined;
 
 	const seededIds: number[] = [];
+	const seededTermIds: number[] = [];
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
@@ -79,6 +81,7 @@ test.describe( 'frontend: redirects (default state)', () => {
 			assignTo: seededPost.id,
 		} );
 		tagSlug = term.slug;
+		seededTermIds.push( term.termId );
 
 		// Force a real page 2 to exist: with the default posts_per_page (10)
 		// and only two seeded posts, /blog/page/2/ 404s before
@@ -107,6 +110,7 @@ test.describe( 'frontend: redirects (default state)', () => {
 		}
 
 		await deletePosts( requestUtils, seededIds );
+		await deleteTerms( requestUtils, seededTermIds );
 	} );
 
 	/* -------------------------------------------------------------------

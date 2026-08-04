@@ -42,6 +42,7 @@ export default defineConfig( {
 
 	// Resolved relative to this config file.
 	globalSetup: './tests/e2e/config/global-setup.ts',
+	globalTeardown: './tests/e2e/config/global-teardown.ts',
 
 	// Pinned (not just inherited from `@wordpress/scripts`): the suite shares
 	// one wp-env site and assumes serial execution.

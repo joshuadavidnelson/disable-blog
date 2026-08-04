@@ -16,6 +16,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Inert without DWPB_TEST_FIXTURES: this mu-plugin also mounts on the :8888 dev site.
+if ( ! defined( 'DWPB_TEST_FIXTURES' ) ) {
+	return;
+}
+
 // No function_exists() guard here: PHP hoists these top-level function
 // declarations, so the guard would always be true and skip the
 // add_action()/add_filter() calls below, silently unregistering every hook.
