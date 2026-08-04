@@ -204,9 +204,7 @@ test.describe( 'frontend: redirects (default state)', () => {
 		// post_type query var entirely; the request collapses to the static
 		// front page (200, not a redirect). Only worth checking no seeded
 		// post content leaks through.
-		await expectStatus( request, '/?post_type=post', 200 );
-
-		const response = await request.get( '/?post_type=post' );
+		const response = await expectStatus( request, '/?post_type=post', 200 );
 		const body = await response.text();
 
 		expect( body ).not.toContain( seededPost.title );
