@@ -20,7 +20,6 @@
  * WordPress dependencies
  */
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
-import type { APIRequestContext } from '@playwright/test';
 
 /**
  * Internal dependencies
@@ -38,52 +37,7 @@ import type { SeededPost } from '../../config/seed';
 import { adminUrl } from '../../config/admin';
 import { expectStatus } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
-
-// wp-env's built-in administrator; throwaway local credentials.
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'password';
-
-// Escape a string for safe inclusion inside XML-RPC `<string>` text content.
-function escapeXml( value: string ): string {
-	return value
-		.replace( /&/g, '&amp;' )
-		.replace( /</g, '&lt;' )
-		.replace( />/g, '&gt;' );
-}
-
-// Render a single XML-RPC param, as `<string>` or `<int>` depending on type.
-function xmlRpcParam( value: string | number ): string {
-	if ( 'number' === typeof value ) {
-		return `<param><value><int>${ value }</int></value></param>`;
-	}
-
-	return `<param><value><string>${ escapeXml( value ) }</string></value></param>`;
-}
-
-// Build a minimal XML-RPC methodCall request body.
-function methodCallXml( methodName: string, params: ( string | number )[] = [] ): string {
-	const paramsXml = params.map( xmlRpcParam ).join( '' );
-
-	return (
-		'<?xml version="1.0"?>' +
-		`<methodCall><methodName>${ escapeXml( methodName ) }</methodName>` +
-		`<params>${ paramsXml }</params></methodCall>`
-	);
-}
-
-// POST an XML-RPC methodCall to /xmlrpc.php and return the raw response text.
-async function callXmlRpc(
-	request: APIRequestContext,
-	methodName: string,
-	params: ( string | number )[] = []
-): Promise< string > {
-	const response = await request.post( '/xmlrpc.php', {
-		headers: { 'Content-Type': 'text/xml' },
-		data: methodCallXml( methodName, params ),
-	} );
-
-	return response.text();
-}
+import { ADMIN_USERNAME, ADMIN_PASSWORD, callXmlRpc } from '../../config/xmlrpc';
 
 test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 	let newsItem: SeededPost;

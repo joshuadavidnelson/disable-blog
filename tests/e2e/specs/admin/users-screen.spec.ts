@@ -17,27 +17,10 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 
 /**
- * External dependencies
- */
-import type { Page } from '@playwright/test';
-
-/**
  * Internal dependencies
  */
+import { userRowLocator } from '../../config/admin';
 import { pluginStrings } from '../../config/strings';
-
-/**
- * A `users.php` list-table row, by user id.
- *
- * Not `rowLocator()` from `config/admin.ts` -- that helper is `#post-<id>`;
- * `WP_Users_List_Table::single_row()` renders `<tr id='user-<id>'>` instead.
- *
- * @param page   Page under test.
- * @param userId User id.
- */
-function userRowLocator( page: Page, userId: number ) {
-	return page.locator( `#user-${ userId }` );
-}
 
 test.describe( 'admin: users screen (default state)', () => {
 	test( 'the Posts column is replaced by a Pages column', async ( {

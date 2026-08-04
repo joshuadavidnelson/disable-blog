@@ -23,7 +23,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { siteConfig } from '../../config/seed';
-import { adminUrl } from '../../config/admin';
+import { adminUrl, editPhp } from '../../config/admin';
 import { expectRedirect } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
 
@@ -40,7 +40,7 @@ test.describe( 'filters: admin redirect filters (fixture-driven)', () => {
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 
-		editPageTarget = `${ config.homeUrl }${ adminUrl( 'edit.php?post_type=page' ) }`;
+		editPageTarget = `${ config.homeUrl }${ editPhp( 'page' ) }`;
 	} );
 
 	test.afterEach( async ( { requestUtils } ) => {

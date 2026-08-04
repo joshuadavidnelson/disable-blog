@@ -148,14 +148,13 @@ export function rightNowCommentCount( page: Page ): Locator {
  * ---------------------------------------------------------------------- */
 
 /**
- * Every admin notice on the screen.
- *
- * More than one can be present at once; prefer {@link noticeWith} over
+ * Every admin notice on the screen. Not exported -- more than one can be
+ * present at once, so specs should use {@link noticeWith} instead of
  * asserting on this locator directly.
  *
  * @param page Page under test.
  */
-export function noticeLocator( page: Page ): Locator {
+function noticeLocator( page: Page ): Locator {
 	return page.locator( '.notice' );
 }
 
@@ -184,16 +183,29 @@ export function rowLocator( page: Page, id: number ): Locator {
 }
 
 /**
- * A row action link inside a row.
+ * A `users.php` list-table row, by user id. Not {@link rowLocator} -- that
+ * helper is `#post-<id>`; `WP_Users_List_Table::single_row()` renders
+ * `<tr id='user-<id>'>` instead.
  *
  * @param page   Page under test.
- * @param id     Row id.
- * @param action Row action key (`edit`, `trash`, `view`, ...).
+ * @param userId User id.
  */
-export function rowActionLocator(
-	page: Page,
-	id: number,
-	action: string
-): Locator {
-	return rowLocator( page, id ).locator( `.row-actions .${ action } a` );
+export function userRowLocator( page: Page, userId: number ): Locator {
+	return page.locator( `#user-${ userId }` );
+}
+
+/* -------------------------------------------------------------------------
+ * Settings screens (options-*.php)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Row of a `.form-table` on a settings screen, matched by the `<label
+ * for="...">` inside it rather than table position -- more resilient than
+ * mirroring CSS `tr:nth-child()` selectors verbatim.
+ *
+ * @param page     Page under test.
+ * @param labelFor The `for` attribute of a `<label>` inside the target row.
+ */
+export function formTableRow( page: Page, labelFor: string ): Locator {
+	return page.locator( 'tr', { has: page.locator( `label[for="${ labelFor }"]` ) } );
 }

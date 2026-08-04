@@ -39,29 +39,12 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 
 /**
- * External dependencies
- */
-import type { Page } from '@playwright/test';
-
-/**
  * Internal dependencies
  */
-import { noticeWith } from '../../config/admin';
+import { formTableRow, noticeWith } from '../../config/admin';
 import { setReadingSettings, siteConfig } from '../../config/seed';
 import type { ReadingSettings } from '../../config/seed';
 import { pluginStrings } from '../../config/strings';
-
-/**
- * Row-of-a-`.form-table` locator, matched by the `<label for="...">` inside
- * it rather than table position — more resilient than mirroring the CSS's
- * `tr:nth-child()` selectors verbatim.
- *
- * @param page      Page under test.
- * @param labelFor  The `for` attribute of a `<label>` inside the target row.
- */
-function formTableRow( page: Page, labelFor: string ) {
-	return page.locator( 'tr', { has: page.locator( `label[for="${ labelFor }"]` ) } );
-}
 
 test.describe( 'admin: settings screens (default state)', () => {
 	test( 'the reading screen carries the plugin body class', async ( { admin, page } ) => {

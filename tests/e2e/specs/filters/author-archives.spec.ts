@@ -20,22 +20,12 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 
 /**
- * External dependencies
- */
-import type { Locator, Page } from '@playwright/test';
-
-/**
  * Internal dependencies
  */
+import { userRowLocator } from '../../config/admin';
 import { siteConfig, seedPost, deletePosts, uniqueTitle } from '../../config/seed';
 import { expectRedirect } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
-
-// A users.php list-table row, by user id (`#user-<id>`, distinct from the
-// `#post-<id>` shape rowLocator() in config/admin.ts covers).
-function userRowLocator( page: Page, userId: number ): Locator {
-	return page.locator( `#user-${ userId }` );
-}
 
 test.describe( 'author archives: disabled (dwpb_disable_author_archives)', () => {
 	test.describe( 'front end', () => {
