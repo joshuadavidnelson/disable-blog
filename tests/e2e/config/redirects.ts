@@ -13,7 +13,7 @@
  */
 
 import { expect } from '@playwright/test';
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
 
 /**
  * Assert that requesting `from` returns exactly `status`, with a `Location`
@@ -30,7 +30,7 @@ export async function expectRedirect(
 	from: string,
 	to: string,
 	status = 301
-): Promise< void > {
+): Promise< APIResponse > {
 	const response = await request.get( from, { maxRedirects: 0 } );
 	const actualStatus = response.status();
 	const actualLocation = response.headers()[ 'location' ] ?? null;
@@ -44,6 +44,8 @@ export async function expectRedirect(
 
 	expect( actualStatus, message ).toBe( status );
 	expect( actualLocation, message ).toBe( to );
+
+	return response;
 }
 
 /**
@@ -61,7 +63,7 @@ export async function expectStatus(
 	request: APIRequestContext,
 	url: string,
 	status: number
-): Promise< void > {
+): Promise< APIResponse > {
 	const response = await request.get( url, { maxRedirects: 0 } );
 	const actualStatus = response.status();
 	const actualLocation = response.headers()[ 'location' ] ?? null;
@@ -73,6 +75,8 @@ export async function expectStatus(
 		( actualLocation ? `\n  actual Location: ${ actualLocation }` : '' );
 
 	expect( actualStatus, message ).toBe( status );
+
+	return response;
 }
 
 /**
@@ -87,6 +91,6 @@ export async function expectStatus(
 export async function expectNoRedirect(
 	request: APIRequestContext,
 	url: string
-): Promise< void > {
-	await expectStatus( request, url, 200 );
+): Promise< APIResponse > {
+	return expectStatus( request, url, 200 );
 }

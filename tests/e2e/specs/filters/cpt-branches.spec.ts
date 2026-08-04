@@ -117,9 +117,7 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 	} );
 
 	test( 'tag archives stop redirecting and exclude posts', async ( { request } ) => {
-		await expectStatus( request, tagTerm.link, 200 );
-
-		const response = await request.get( tagTerm.link );
+		const response = await expectStatus( request, tagTerm.link, 200 );
 		const body = await response.text();
 
 		expect( body ).toContain( newsItem.title );

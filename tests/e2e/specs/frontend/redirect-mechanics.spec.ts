@@ -69,9 +69,7 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 		} );
 
 		// Confirms the page actually rendered, not merely that the redirect vanished.
-		await expectStatus( request, seededPost.permalink, 200 );
-
-		const response = await request.get( seededPost.permalink );
+		const response = await expectStatus( request, seededPost.permalink, 200 );
 		const body = await response.text();
 
 		expect( body ).toContain( seededPost.title );
