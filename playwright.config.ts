@@ -66,6 +66,19 @@ export default defineConfig( {
 			name: 'auth',
 			testMatch: /auth\.setup\.ts$/,
 		},
+		// The harness gate: proves the plugin, theme, test-API fixture, and
+		// per-role storage states are all in a trustworthy state before any
+		// other spec runs. Depending on 'smoke' (rather than 'auth' directly)
+		// makes 'chromium' run only once smoke has passed.
+		{
+			name: 'smoke',
+			use: {
+				...devices[ 'Desktop Chrome' ],
+				storageState: ADMIN_STORAGE_STATE,
+			},
+			testMatch: /\/smoke\.spec\.ts$/,
+			dependencies: [ 'auth' ],
+		},
 		// Firefox and WebKit are deliberately deferred; chromium is the only
 		// browser this suite targets.
 		{
@@ -77,11 +90,12 @@ export default defineConfig( {
 				storageState: ADMIN_STORAGE_STATE,
 			},
 			testMatch: /.*\.spec\.ts$/,
-			// lifecycle.spec.ts deactivates/reactivates the plugin itself; it
-			// runs under its own 'lifecycle' project instead (below), never
+			// smoke.spec.ts runs under its own 'smoke' project (above);
+			// lifecycle.spec.ts deactivates/reactivates the plugin itself and
+			// runs under its own 'lifecycle' project (below) — neither is
 			// interleaved with the rest of the suite.
-			testIgnore: /\/lifecycle\/lifecycle\.spec\.ts$/,
-			dependencies: [ 'auth' ],
+			testIgnore: [ /\/smoke\.spec\.ts$/, /\/lifecycle\/lifecycle\.spec\.ts$/ ],
+			dependencies: [ 'smoke' ],
 		},
 		// Mutates plugin activation state (Disable_Blog_Activator /
 		// Disable_Blog_Deactivator / Disable_Blog::upgrade_check() coverage),

@@ -9,10 +9,15 @@
  * `modify_taxonomies_arguments()` hides the `category`/`post_tag` menu links
  * whenever `dwpb_post_types_with_tax()` is false for that taxonomy.
  *
- * Default-state gating: comments stay supported by `page`/`attachment`, so
- * Comments/Discussion links remain (tests 3, 6); `dwpb_remove_options_writing`
- * defaults false, so Writing stays (test 5); `category`/`post_tag` are used
- * only by the disabled `post` type, so their menu links are gone (test 2).
+ * Default-state gating: `category`/`post_tag` are used only by the disabled
+ * `post` type, so their menu links are gone (test 2). Comments stay
+ * supported by `page`/`attachment` by default, and `dwpb_remove_options_writing`
+ * defaults false, so nothing here removes the Comments/Discussion/Writing
+ * links -- but that "stays untouched" state is identical to the plugin being
+ * deactivated entirely, so it isn't asserted as its own test; the plugin
+ * actually causing their removal is covered by `filters/comments-unsupported.spec.ts`
+ * and `filters/options-writing.spec.ts` instead, each paired with its own
+ * control.
  *
  * Every test visits `edit.php?post_type=page`, which is not one of the
  * screens `redirect_admin_pages()` redirects (see `admin-redirects.spec.ts`).
@@ -26,7 +31,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { MENU_POSTS, MENU_PAGES, MENU_COMMENTS, MENU_TOOLS, menuLink } from '../../config/admin';
+import { MENU_POSTS, MENU_PAGES, MENU_TOOLS, menuLink } from '../../config/admin';
 
 // Scoped to `.wp-submenu`: the top-level Tools anchor also links to
 // tools.php (core duplicates the parent slug in its first submenu item), so
@@ -53,22 +58,10 @@ test.describe( 'admin: adminmenu (default state)', () => {
 		await expect( page.locator( '#adminmenu' ) ).toBeVisible();
 	} );
 
-	test( 'the Comments menu is present by default', async ( { page } ) => {
-		await expect( page.locator( MENU_COMMENTS ) ).toBeVisible();
-	} );
-
 	test( 'Available Tools is removed from the Tools menu', async ( { page } ) => {
 		await expect( page.locator( TOOLS_AVAILABLE_TOOLS_LINK ) ).toHaveCount( 0 );
 
 		// Control: the Tools top-level menu itself is untouched.
 		await expect( page.locator( MENU_TOOLS ) ).toBeVisible();
-	} );
-
-	test( 'Settings has a Writing link by default', async ( { page } ) => {
-		await expect( menuLink( page, 'options-writing.php' ) ).toBeVisible();
-	} );
-
-	test( 'Settings has a Discussion link by default', async ( { page } ) => {
-		await expect( menuLink( page, 'options-discussion.php' ) ).toBeVisible();
 	} );
 } );

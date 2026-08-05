@@ -8,8 +8,14 @@
  * (both return a plain boolean `true`, which `redirect_admin_pages()`
  * special-cases to `admin_url( 'index.php' )`).
  *
- * All six tests share one beforeAll/afterAll toggle since none mutate
+ * All five tests share one beforeAll/afterAll toggle since none mutate
  * content another test depends on.
+ *
+ * The Dashboard's JS-console regression guard for this state lives in
+ * `admin/dashboard-console.spec.ts` instead of here — that spec binds
+ * `pageerror` and pairs it with a control proving the script still runs
+ * elsewhere in this state, which this file's other tests don't need to
+ * duplicate.
  */
 
 /**
@@ -83,38 +89,5 @@ test.describe( 'filters: comments unsupported (dwpb_post_types_supporting_commen
 
 		await expect( page.locator( ADMIN_BAR_COMMENTS ) ).toHaveCount( 0 );
 		await expect( page.locator( ADMIN_BAR_NEW_CONTENT ) ).toBeVisible();
-	} );
-
-	test( 'the dashboard loads cleanly in this state', async ( { admin, page } ) => {
-		// Fixed since 0.5.5: hideRow() in disable-blog-admin.js threw an
-		// uncaught TypeError on WP 6.1+'s Dashboard when commentsSupported was
-		// false (querySelector returned null, .parentNode was unguarded),
-		// silently killing later cases in the same handler. Now returns null
-		// instead. An uncaught exception surfaces as 'pageerror', not
-		// 'console', so that's what this listens for.
-		const pageErrors: string[] = [];
-		const consoleErrors: string[] = [];
-
-		page.on( 'pageerror', ( error ) => {
-			pageErrors.push( error.message );
-		} );
-		page.on( 'console', ( message ) => {
-			if ( 'error' === message.type() ) {
-				consoleErrors.push( message.text() );
-			}
-		} );
-
-		await admin.visitAdminPage( 'index.php' );
-
-		expect(
-			pageErrors,
-			'Uncaught page error(s) on the Dashboard with commentsSupported === false ' +
-				'(regression guard for the fixed D6 TypeError in ' +
-				"assets/js/disable-blog-admin.js's hideRow()):\n" +
-				pageErrors.join( '\n' ) +
-				( consoleErrors.length
-					? `\n\nconsole error(s) also seen:\n${ consoleErrors.join( '\n' ) }`
-					: '' )
-		).toEqual( [] );
 	} );
 } );

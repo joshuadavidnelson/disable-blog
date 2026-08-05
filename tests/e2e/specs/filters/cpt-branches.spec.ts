@@ -14,6 +14,9 @@
  *
  * `otherPost` is seeded into the same category/tag as `newsItem` as a
  * negative control, proving the archive query excludes 'post' specifically.
+ * `secondOtherPost` adds a second 'post' onto `categoryTerm` alone, for the
+ * `filter_taxonomy_count()`/`get_term_post_count_by_type()` test, which needs
+ * per-post-type counts that actually differ from each other.
  */
 
 /**
@@ -34,7 +37,7 @@ import {
 	flushRewrites,
 } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
-import { adminUrl } from '../../config/admin';
+import { adminUrl, termRowLocator } from '../../config/admin';
 import { expectStatus } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
 import { ADMIN_USERNAME, ADMIN_PASSWORD, callXmlRpc } from '../../config/xmlrpc';
@@ -42,6 +45,7 @@ import { ADMIN_USERNAME, ADMIN_PASSWORD, callXmlRpc } from '../../config/xmlrpc'
 test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 	let newsItem: SeededPost;
 	let otherPost: SeededPost;
+	let secondOtherPost: SeededPost;
 	let categoryTerm: { termId: number; slug: string; link: string };
 	let tagTerm: { termId: number; slug: string; link: string };
 
@@ -82,6 +86,18 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 			tags: [ tagTerm.termId ],
 		} );
 		seededIds.push( otherPost.id );
+
+		// A second 'post' on categoryTerm, for the taxonomy-count test below:
+		// modify_taxonomies_arguments() unconditionally strips 'post' from
+		// category's object_type, so the raw cached WP_Term->count only ever
+		// reflects 'news' (1) -- two 'post's on the term (2) is what makes the
+		// 'post'-scoped screen's count observably different from that cached
+		// value, proving get_term_post_count_by_type() actually re-queried.
+		secondOtherPost = await seedPost( requestUtils, {
+			title: uniqueTitle( 'cpt other post 2' ),
+			categories: [ categoryTerm.termId ],
+		} );
+		seededIds.push( secondOtherPost.id );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
@@ -146,6 +162,25 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 
 	test( 'edit-tags.php stops redirecting', async ( { request } ) => {
 		await expectStatus( request, adminUrl( 'edit-tags.php?taxonomy=category' ), 200 );
+	} );
+
+	test( "edit-tags.php's Count column is scoped to the current screen's post type", async ( {
+		admin,
+		page,
+	} ) => {
+		// categoryTerm sits on 1 'news' post and 2 'post's. filter_taxonomy_count()
+		// re-queries by $screen->post_type, so each screen shows only its own
+		// share -- not the raw cached count (which is 1 either way; see the
+		// beforeAll comment), and not the 3-post combined total.
+		await admin.visitAdminPage( 'edit-tags.php', 'taxonomy=category&post_type=news' );
+		await expect(
+			termRowLocator( page, categoryTerm.termId ).locator( '.column-posts' )
+		).toHaveText( '1' );
+
+		await admin.visitAdminPage( 'edit-tags.php', 'taxonomy=category&post_type=post' );
+		await expect(
+			termRowLocator( page, categoryTerm.termId ).locator( '.column-posts' )
+		).toHaveText( '2' );
 	} );
 
 	test( 'the sitemap index gains CPT and taxonomy sitemaps', async ( { request } ) => {
