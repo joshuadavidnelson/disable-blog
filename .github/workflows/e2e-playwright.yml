@@ -60,8 +60,27 @@ jobs:
     - name: "Typecheck the e2e suite"
       run: "npm run typecheck"
 
+    - name: "Resolve the Playwright version"
+      id: "playwright"
+      run: |
+        VERSION="$(node -p "require('@playwright/test/package.json').version")"
+        echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+    - name: "Cache the Playwright browser"
+      id: "playwright-cache"
+      uses: "actions/cache@v4"
+      with:
+        path: "~/.cache/ms-playwright"
+        key: "playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}"
+
     - name: "Install the Playwright browser"
-      run: "npx playwright install --with-deps chromium"
+      run: |
+        if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+          # The cache holds the browser but not the apt packages it links against.
+          npx playwright install-deps chromium
+        else
+          npx playwright install --with-deps chromium
+        fi
 
     - name: "Pin the WordPress core version"
       env:
@@ -83,15 +102,34 @@ jobs:
     - name: "Browser suite"
       run: "npm run test:e2e"
 
+    # Always, not just on failure: a PHP notice or deprecation usually breaks
+    # no assertion, so on a green run it would otherwise never be seen — and
+    # catching those across PHP 7.4 to 8.4 is most of why this matrix exists.
     - name: "Collect the WordPress debug log"
-      if: failure()
+      if: always()
       continue-on-error: true
       run: |
         mkdir -p artifacts
-        npx wp-env run tests-cli -- cat /var/www/html/wp-content/debug.log > artifacts/debug.log
+        npx wp-env run tests-cli -- cat /var/www/html/wp-content/debug.log > artifacts/debug.log 2>/dev/null || true
 
-    - name: "Upload failure artifacts"
-      if: failure()
+    - name: "Check the debug log for PHP diagnostics"
+      if: always()
+      run: |
+        test -s artifacts/debug.log || exit 0
+
+        if grep -qE "PHP (Warning|Deprecated|Notice)" artifacts/debug.log; then
+          echo "::warning title=PHP diagnostics::WP ${{ matrix.wp }} / PHP ${{ matrix.php }} logged PHP diagnostics; see the debug.log artifact."
+          grep -E "PHP (Warning|Deprecated|Notice)" artifacts/debug.log | sort -u | head -40
+        fi
+
+        if grep -q "PHP Fatal error" artifacts/debug.log; then
+          echo "::error title=PHP fatal::A PHP fatal error was logged during the run."
+          grep "PHP Fatal error" artifacts/debug.log | sort -u | head -20
+          exit 1
+        fi
+
+    - name: "Upload artifacts"
+      if: always()
       uses: "actions/upload-artifact@v4"
       with:
         name: "e2e-wp${{ matrix.wp }}-php${{ matrix.php }}-${{ github.run_id }}"
