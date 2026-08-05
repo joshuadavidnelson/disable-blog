@@ -26,8 +26,9 @@ import {
 	deletePosts,
 	deleteTerms,
 	uniqueTitle,
+	setReadingSettings,
 } from '../../config/seed';
-import type { SeededPost } from '../../config/seed';
+import type { SeededPost, ReadingSettings } from '../../config/seed';
 import { expectRedirect, expectStatus, expectNoRedirect } from '../../config/redirects';
 
 /**
@@ -187,8 +188,11 @@ test.describe( 'frontend: redirects (default state)', () => {
 	 * ---------------------------------------------------------------- */
 
 	test( 'the front page itself is not redirected', async ( { request } ) => {
-		// Guard in Disable_Blog_Functions::redirect(): bails when
-		// $redirect_url === $current_url instead of 301-ing to itself.
+		// None of $public_redirects matches the front page itself -- is_home()
+		// is false here (that's the posts-page condition, not the static
+		// front page) -- so redirect_public_pages() bails at
+		// `if ( ! $redirect_url ) return;` before
+		// Disable_Blog_Functions::redirect() is ever called.
 		await expectStatus( request, '/', 200 );
 	} );
 
@@ -236,5 +240,39 @@ test.describe( 'frontend: redirects (default state)', () => {
 			`${ seededPost.permalink }?utm_source=x&foo=1`,
 			frontPageUrl
 		);
+	} );
+
+	/* -------------------------------------------------------------------
+	 * redirect_public_pages()'s no-front-page bail (mutates reading settings)
+	 * ---------------------------------------------------------------- */
+
+	test.describe( 'no-front-page bail', () => {
+		let previous: ReadingSettings | undefined;
+
+		test.afterEach( async ( { requestUtils } ) => {
+			// Restore in a hook, not the test body -- see settings-screens.spec.ts.
+			if ( previous ) {
+				await setReadingSettings( requestUtils, previous );
+				previous = undefined;
+			}
+		} );
+
+		test( 'a category archive is not redirected when there is no front page', async ( {
+			request,
+			requestUtils,
+		} ) => {
+			// redirect_public_pages() bails on `! get_option( 'page_on_front' )`
+			// directly, not on has_front_page() -- show_on_front alone isn't
+			// enough to trigger it. Verified live: leaving page_on_front set
+			// while show_on_front is 'posts' still redirects, just to a
+			// different URL, because get_permalink() on a page that's no
+			// longer page_on_front stops returning the site root.
+			( { previous } = await setReadingSettings( requestUtils, {
+				showOnFront: 'posts',
+				pageOnFront: 0,
+			} ) );
+
+			await expectStatus( request, '/category/uncategorized/', 200 );
+		} );
 	} );
 } );

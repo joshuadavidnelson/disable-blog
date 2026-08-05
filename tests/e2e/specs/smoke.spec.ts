@@ -7,6 +7,12 @@
  * per-role storage-state mechanism signs in as the right role. If this file
  * fails, fix the harness before trusting any other spec's result.
  *
+ * Runs under its own 'smoke' Playwright project (see `playwright.config.ts`),
+ * depending on 'auth' and depended on by 'chromium' — the same dependency
+ * mechanism 'lifecycle' uses to run last, applied here to guarantee this file
+ * runs before every other spec rather than alongside them in alphabetical
+ * order.
+ *
  * Not read-only: the bootstrap check calls `setupSite()`, which is
  * idempotent and self-healing (see `config/seed.ts`), restoring the
  * canonical baseline every other spec assumes.

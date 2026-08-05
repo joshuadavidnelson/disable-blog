@@ -11,11 +11,6 @@
  * surfaces to Playwright as a `pageerror` event, not `console` — the
  * assertion below binds to `pageerror` specifically; the `console` collector
  * is kept only to enrich the failure message.
- *
- * This overlaps with `filters/comments-unsupported.spec.ts`'s final test
- * (also asserts a clean dashboard in this state) but is kept separate: that
- * file covers the fixture branch as a whole, this one is scoped to the JS
- * regression itself.
  */
 
 /**

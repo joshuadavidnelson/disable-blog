@@ -195,6 +195,18 @@ export function userRowLocator( page: Page, userId: number ): Locator {
 	return page.locator( `#user-${ userId }` );
 }
 
+/**
+ * A `edit-tags.php` list-table row, by term id. Not {@link rowLocator} --
+ * that helper is `#post-<id>`; `WP_Terms_List_Table::single_row()` renders
+ * `<tr id="tag-<id>">` instead, regardless of taxonomy.
+ *
+ * @param page   Page under test.
+ * @param termId Term id.
+ */
+export function termRowLocator( page: Page, termId: number ): Locator {
+	return page.locator( `#tag-${ termId }` );
+}
+
 /* -------------------------------------------------------------------------
  * Settings screens (options-*.php)
  * ---------------------------------------------------------------------- */
