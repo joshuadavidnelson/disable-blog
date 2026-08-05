@@ -143,6 +143,10 @@ npm run test:e2e
 
 The suite is chromium-only and runs serially (`workers: 1` in `playwright.config.ts`) by design: every spec shares a single `wp-env` site rather than spinning up its own, so parallel workers would race each other's content. This is deliberate, not a performance shortcut waiting to be fixed.
 
+Sharding across CI runners would be safe — each runner boots its own `wp-env`, so shards never share a site — but it is not worth it: the whole suite runs in roughly two and a half minutes, well under what a second cold Docker and WordPress boot would cost. Cache the browser and the core download before reaching for more runners.
+
+Specs run under four Playwright projects in order: `auth` creates the role users, `smoke` proves the harness before anything trusts it, `chromium` is the suite proper, and `lifecycle` runs last because it deactivates and reactivates the plugin.
+
 **Theme:** the suite pins the Twenty Twenty-Two theme (installed via `.wp-env.json` and activated in `tests/e2e/config/global-setup.ts`) instead of relying on whichever theme a given WordPress version ships as its default. That keeps the markup specs assert against deterministic across WordPress versions — a stock install's default theme changes from version to version (e.g. Twenty Twenty-Three on WordPress 6.2, Twenty Twenty-Five on current WordPress), which would otherwise silently change the DOM the suite is testing against. Twenty Twenty-Two was chosen because it only requires WordPress 5.9+, so it works across the plugin's whole supported version range.
 
 **Debugging:**
