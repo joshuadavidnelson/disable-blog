@@ -578,9 +578,10 @@ function dwpb_test_api_create_term( WP_REST_Request $request ) {
  * User-facing strings asserted by specs, kept in one place so no spec ever
  * hardcodes plugin copy inline.
  *
- * Only `users_pages_column_label` is derived at runtime; the other five are
+ * Only `users_pages_column_label` is derived at runtime; the rest are
  * hand-copied literals that must be kept in sync manually, since the plugin
- * echoes/wp_die()s that copy inline rather than exposing an accessor.
+ * echoes/wp_die()s/localizes that copy inline rather than exposing an
+ * accessor.
  *
  * @return array<string, string>
  */
@@ -605,6 +606,27 @@ function dwpb_test_api_strings() {
 		'page_post_state'           => __( 'Redirected to the homepage', 'disable-blog' ),
 		// Disable_Blog_Admin::manage_users_columns().
 		'users_pages_column_label'  => $users_pages_column_label,
+		// Disable_Blog_Admin::customizer_scripts(), localized as
+		// `dwpbCustomizer.homepageSettingsText`.
+		'homepage_settings_text'    => __( 'You can choose what\'s displayed on the homepage of your site. To set a static homepage, create or select the page below.', 'disable-blog' ),
+	);
+}
+
+/**
+ * Report the widget classes currently registered with WordPress.
+ *
+ * `wp-admin/widgets.php` `wp_die()`s in this environment (the pinned theme
+ * declares no sidebars, so `current_theme_supports( 'widgets' )` is false),
+ * so `Disable_Blog_Admin::remove_widgets()` / `::filter_widget_removal()`
+ * are only observable through the registry they mutate.
+ *
+ * @return array<string, mixed>
+ */
+function dwpb_test_api_widget_state() {
+	global $wp_widget_factory;
+
+	return array(
+		'registered' => array_keys( $wp_widget_factory->widgets ),
 	);
 }
 
@@ -888,6 +910,19 @@ function dwpb_test_api_register_routes() {
 			'permission_callback' => 'dwpb_test_api_can_manage',
 			'callback'            => static function () {
 				return rest_ensure_response( dwpb_test_api_strings() );
+			},
+		)
+	);
+
+	// Registered widget classes; see dwpb_test_api_widget_state().
+	register_rest_route(
+		'dwpb-test/v1',
+		'/widgets',
+		array(
+			'methods'             => 'GET',
+			'permission_callback' => 'dwpb_test_api_can_manage',
+			'callback'            => static function () {
+				return rest_ensure_response( dwpb_test_api_widget_state() );
 			},
 		)
 	);

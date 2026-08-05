@@ -31,6 +31,8 @@ export const FIXTURE_TOGGLES = {
 	feedDieMessage: 'dwpb_test_feed_die_message',
 	removeOptionsWriting: 'dwpb_test_remove_options_writing',
 	xmlrpcRestore: 'dwpb_test_xmlrpc_restore',
+	integrationsDisableComments: 'dwpb_test_integrations_disable_comments',
+	integrationsWoocommerce: 'dwpb_test_integrations_woocommerce',
 } as const;
 
 export type FixtureToggle =
@@ -55,6 +57,8 @@ const TOGGLE_OFF: Record< FixtureToggle, boolean | number > = {
 	[ FIXTURE_TOGGLES.feedDieMessage ]: false,
 	[ FIXTURE_TOGGLES.removeOptionsWriting ]: false,
 	[ FIXTURE_TOGGLES.xmlrpcRestore ]: false,
+	[ FIXTURE_TOGGLES.integrationsDisableComments ]: false,
+	[ FIXTURE_TOGGLES.integrationsWoocommerce ]: false,
 };
 
 /**

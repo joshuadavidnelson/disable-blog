@@ -40,6 +40,11 @@ export interface PluginStrings {
 	 * label change is caught the same way a plugin copy change would be.
 	 */
 	users_pages_column_label: string;
+	/**
+	 * `Disable_Blog_Admin::customizer_scripts()`, localized as
+	 * `dwpbCustomizer.homepageSettingsText`.
+	 */
+	homepage_settings_text: string;
 }
 
 let cached: PluginStrings | null = null;

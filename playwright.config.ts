@@ -77,7 +77,26 @@ export default defineConfig( {
 				storageState: ADMIN_STORAGE_STATE,
 			},
 			testMatch: /.*\.spec\.ts$/,
+			// lifecycle.spec.ts deactivates/reactivates the plugin itself; it
+			// runs under its own 'lifecycle' project instead (below), never
+			// interleaved with the rest of the suite.
+			testIgnore: /\/lifecycle\/lifecycle\.spec\.ts$/,
 			dependencies: [ 'auth' ],
+		},
+		// Mutates plugin activation state (Disable_Blog_Activator /
+		// Disable_Blog_Deactivator / Disable_Blog::upgrade_check() coverage),
+		// so it must never run interleaved with a spec that assumes the
+		// plugin is continuously active. Depending on 'chromium' makes
+		// Playwright run this project only once every other spec file has
+		// finished, regardless of worker count.
+		{
+			name: 'lifecycle',
+			use: {
+				...devices[ 'Desktop Chrome' ],
+				storageState: ADMIN_STORAGE_STATE,
+			},
+			testMatch: /\/lifecycle\/lifecycle\.spec\.ts$/,
+			dependencies: [ 'chromium' ],
 		},
 	],
 } );
