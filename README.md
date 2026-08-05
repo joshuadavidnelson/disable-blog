@@ -131,7 +131,7 @@ This repo includes a [Playwright](https://playwright.dev/) end-to-end suite that
 
 **Requirements:**
 - Docker
-- Node 22
+- Node 24 (the version CI uses)
 
 **Running the suite:**
 
@@ -166,9 +166,9 @@ This pins `wp-env` to that core version by writing `.wp-env.override.json`. Run 
 
 CI is unaffected: every job starts on a fresh runner with no database to carry over.
 
-**Versions the suite is verified against:** WordPress 5.9 through current, on PHP 7.4 through 8.4 — the plugin's full declared support range. CI runs current WordPress on PHP 8.1/8.3/8.4, WordPress 5.9 on PHP 7.4 (the declared floor from `readme.txt`), and WordPress `master` as a non-blocking early warning.
+**Versions the suite is verified against:** WordPress 5.9 through current, on PHP 7.4 through 8.4 — the plugin's full declared support range. CI runs current WordPress on PHP 8.3 and 8.4, WordPress 5.9 on PHP 7.4 (the declared floor from `readme.txt`), and WordPress `master` on PHP 8.4 as a non-blocking early warning.
 
-A couple of specs have to accommodate older core, and both are commented where they occur: the block editor's canvas is only iframed on newer WordPress, so the editor-ready wait accepts either shape; and WordPress 5.9's core `/wp/v2/settings` endpoint does not expose `show_on_front`, `page_on_front` or `page_for_posts`, so reading settings are set through the `dwpb-test/v1` API rather than core REST.
+One spec has to accommodate older core, commented where it occurs: WordPress 5.9's core `/wp/v2/settings` endpoint does not expose `show_on_front`, `page_on_front` or `page_for_posts`, so reading settings are set through the `dwpb-test/v1` API rather than core REST.
 
 **How the test fixtures work:**
 

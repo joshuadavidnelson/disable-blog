@@ -36,5 +36,9 @@ if (!config.core.match(/^WordPress\/WordPress\#/)) {
 try {
   fs.writeFileSync(path, JSON.stringify(config));
 } catch (err) {
+  // Exit non-zero: a swallowed failure here leaves no override file, which
+  // the CI step reads as "latest stable" — silently testing the wrong
+  // WordPress on the leg that exists to pin one.
   console.error(err);
+  exit(1);
 }
