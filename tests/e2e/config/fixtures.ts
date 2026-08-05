@@ -10,7 +10,29 @@
  * `DWPB_TEST_FIXTURES` is defined, a constant only the tests environment
  * sets — so a toggle left on has no effect on :8888.
  *
+ * A toggle exists only where a spec needs behaviour the plugin cannot reach
+ * on its own; for a one-off filter value, prefer `setFilterOverrides()` in
+ * `config/filter-overrides.ts`, which needs no new fixture.
+ *
+ * Which spec owns which toggle, relative to `tests/e2e/specs/`:
+ *
+ *   frontEndRedirectsOff         filters/redirect-filters, frontend/redirect-mechanics, feeds/feeds
+ *   adminRedirectsOff            filters/redirect-filters
+ *   redirectStatusCode           filters/redirect-filters, frontend/redirect-mechanics
+ *   queryStringPassthrough       frontend/redirect-mechanics
+ *   customRedirectUrl            frontend/redirect-mechanics
+ *   cptEnabled                   filters/cpt-branches, filters/author-archives
+ *   authorArchivesDisabled       filters/author-archives
+ *   authorArchiveCpt             filters/author-archives
+ *   commentsUnsupported          filters/comments-unsupported, admin/dashboard-console, admin/widgets
+ *   feedDieMessage               filters/feed-message
+ *   removeOptionsWriting         filters/options-writing
+ *   xmlrpcRestore                filters/xmlrpc-restore
+ *   integrationsDisableComments  filters/integrations
+ *   integrationsWoocommerce      filters/integrations
+ *
  * @see tests/e2e/fixtures/
+ * @see tests/e2e/config/filter-overrides.ts
  */
 import type { RequestUtils } from '@wordpress/e2e-test-utils-playwright';
 
