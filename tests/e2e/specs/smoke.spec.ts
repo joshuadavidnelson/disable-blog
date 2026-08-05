@@ -87,6 +87,7 @@ test.describe( 'e2e harness smoke', () => {
 			press_this_disabled: 'Press This',
 			page_post_state: 'Redirected to the homepage',
 			users_pages_column_label: 'Pages',
+			homepage_settings_text: 'You can choose',
 		};
 
 		for ( const [ key, fragment ] of Object.entries(
