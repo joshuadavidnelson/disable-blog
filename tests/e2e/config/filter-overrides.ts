@@ -22,6 +22,11 @@
 import type { RequestUtils } from '@wordpress/e2e-test-utils-playwright';
 
 /**
+ * Internal dependencies
+ */
+import { TEST_API } from './roles';
+
+/**
  * Option name of the JSON-encoded override map.
  */
 export const FILTER_OVERRIDES_OPTION = 'dwpb_test_filter_overrides';
@@ -190,5 +195,78 @@ export async function resetFilterOverrides( requestUtils: RequestUtils ): Promis
 		method: 'PUT',
 		path: '/wp/v2/settings',
 		data: { [ FILTER_OVERRIDES_OPTION ]: '' },
+	} );
+}
+
+/**
+ * Write a raw string straight into the `dwpb_test_filter_overrides` option,
+ * bypassing {@link setFilterOverrides}'s `JSON.stringify()`.
+ *
+ * Exists only for asserting the fixture's malformed-JSON safety net: a
+ * caller can hand this deliberately-broken JSON (or any other raw string)
+ * and confirm the site still responds rather than fataling on the next
+ * bootstrap, when `dwpb_test_filters_register_overrides()` re-decodes it.
+ *
+ * @param requestUtils Admin request utils.
+ * @param raw          Raw option value to store, unencoded.
+ */
+export async function setRawFilterOverridesOption(
+	requestUtils: RequestUtils,
+	raw: string
+): Promise< void > {
+	await requestUtils.rest( {
+		method: 'PUT',
+		path: '/wp/v2/settings',
+		data: { [ FILTER_OVERRIDES_OPTION ]: raw },
+	} );
+}
+
+/**
+ * Result of resolving one override spec against one incoming value, via
+ * `dwpb-test/v1/resolve-filter-override`.
+ */
+export interface ResolveFilterOverrideResult {
+	/**
+	 * True when `override` was an object with none of 'set'/'append'/'remove'
+	 * -- the resolver skips rather than guesses at it. `output`/`priority` are
+	 * both `null` in that case.
+	 */
+	skipped: boolean;
+	/** The transformed value, or `null` when `skipped` is true. */
+	output: JsonValue | null;
+	/** The resolved priority (default 10), or `null` when `skipped` is true. */
+	priority: number | null;
+}
+
+/**
+ * Resolve one override spec against one incoming value, via
+ * `dwpb-test/v1/resolve-filter-override`.
+ *
+ * Calls the exact `dwpb_test_filters_resolve_spec()` /
+ * `dwpb_test_filters_transform()` functions the live registration path in
+ * dwpb-test-filters.php uses, so this is direct coverage of the resolver
+ * itself -- not the `dwpb_`/`dpwb_` hook-name guard, which only applies in
+ * the live registration path (see the file docblock above) and so needs a
+ * real hook to observe, not this route.
+ *
+ * `override` is typed as {@link JsonValue} rather than
+ * {@link FilterOverrideValue} so a spec can also hand it a shape the
+ * resolver doesn't recognize (e.g. `{ nonsense: 1 }`) and assert it's
+ * skipped rather than guessed at.
+ *
+ * @param requestUtils Admin request utils.
+ * @param override     Override spec to resolve.
+ * @param incoming     The value to feed in as the filter's incoming (first) argument.
+ * @see tests/e2e/fixtures/dwpb-test-api.php
+ */
+export async function resolveFilterOverride(
+	requestUtils: RequestUtils,
+	override: JsonValue,
+	incoming: JsonValue
+): Promise< ResolveFilterOverrideResult > {
+	return requestUtils.rest< ResolveFilterOverrideResult >( {
+		method: 'POST',
+		path: `/${ TEST_API }/resolve-filter-override`,
+		data: { override, incoming },
 	} );
 }

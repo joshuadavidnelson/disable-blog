@@ -67,6 +67,13 @@ add_action( 'init', 'dwpb_test_filters_register_settings' );
 /**
  * Transform an incoming filter value per a decoded override spec.
  *
+ * Shared with the `dwpb-test/v1/resolve-filter-override` probe route in
+ * dwpb-test-api.php, which calls this directly so it exercises the exact
+ * same code the live registration below runs -- not a copy. That route's
+ * callback only runs at REST-dispatch time, long after every mu-plugin
+ * (including this file) has loaded, so it's safe for it to call this despite
+ * dwpb-test-api.php loading first alphabetically.
+ *
  * @param string $mode     One of 'set', 'append', 'remove'.
  * @param mixed  $override The spec's override value.
  * @param mixed  $incoming The filter's incoming (first) argument.
@@ -83,6 +90,55 @@ function dwpb_test_filters_transform( $mode, $override, $incoming ) {
 	}
 
 	return $override;
+}
+
+/**
+ * Resolve a decoded override spec into a mode/value/priority triple.
+ *
+ * Shared by the live registration loop in
+ * `dwpb_test_filters_register_overrides()` below and the
+ * `dwpb-test/v1/resolve-filter-override` probe route in dwpb-test-api.php, so
+ * both decode overrides identically. See {@see dwpb_test_filters_transform()}
+ * for why the cross-file load order is safe.
+ *
+ * @param mixed $spec Decoded override spec: a bare scalar, or an object
+ *                     (assoc array) with one of 'set'/'append'/'remove' and
+ *                     an optional 'priority'.
+ * @return array{mode: string, value: mixed, priority: int}|null Null when
+ *                     $spec is an object with none of the recognized keys --
+ *                     the caller should skip the entry rather than guess.
+ */
+function dwpb_test_filters_resolve_spec( $spec ) {
+
+	$mode     = 'set';
+	$value    = $spec;
+	$priority = 10;
+
+	if ( is_array( $spec ) ) {
+
+		if ( array_key_exists( 'append', $spec ) ) {
+			$mode  = 'append';
+			$value = $spec['append'];
+		} elseif ( array_key_exists( 'remove', $spec ) ) {
+			$mode  = 'remove';
+			$value = $spec['remove'];
+		} elseif ( array_key_exists( 'set', $spec ) ) {
+			$value = $spec['set'];
+		} else {
+			// Unrecognized object shape -- skip rather than guess.
+			return null;
+		}
+
+		if ( isset( $spec['priority'] ) ) {
+			$priority = (int) $spec['priority'];
+		}
+	}
+
+	return array(
+		'mode'     => $mode,
+		'value'    => $value,
+		'priority' => $priority,
+	);
 }
 
 /**
@@ -103,6 +159,9 @@ function dwpb_test_filters_register_overrides() {
 
 	$overrides = json_decode( $raw, true );
 
+	// Malformed or non-object JSON decodes to a non-array here; PHP's
+	// foreach() below already tolerates that with a warning rather than a
+	// fatal, but this keeps the map's shape guaranteed for the loop body.
 	if ( ! is_array( $overrides ) ) {
 		return;
 	}
@@ -114,38 +173,20 @@ function dwpb_test_filters_register_overrides() {
 			continue;
 		}
 
-		$mode     = 'set';
-		$value    = $spec;
-		$priority = 10;
+		$resolved = dwpb_test_filters_resolve_spec( $spec );
 
-		if ( is_array( $spec ) ) {
-
-			if ( array_key_exists( 'append', $spec ) ) {
-				$mode  = 'append';
-				$value = $spec['append'];
-			} elseif ( array_key_exists( 'remove', $spec ) ) {
-				$mode  = 'remove';
-				$value = $spec['remove'];
-			} elseif ( array_key_exists( 'set', $spec ) ) {
-				$value = $spec['set'];
-			} else {
-				// Unrecognized object shape -- skip rather than guess.
-				continue;
-			}
-
-			if ( isset( $spec['priority'] ) ) {
-				$priority = (int) $spec['priority'];
-			}
+		if ( null === $resolved ) {
+			continue;
 		}
 
 		add_filter(
 			$hook,
-			static function ( ...$args ) use ( $mode, $value ) {
+			static function ( ...$args ) use ( $resolved ) {
 				$incoming = isset( $args[0] ) ? $args[0] : null;
 
-				return dwpb_test_filters_transform( $mode, $value, $incoming );
+				return dwpb_test_filters_transform( $resolved['mode'], $resolved['value'], $incoming );
 			},
-			$priority,
+			$resolved['priority'],
 			// Accepts up to 10 args: covers every plugin filter (max is 5), and
 			// only the first is ever transformed -- WP passes exactly however
 			// many the caller's own apply_filters() supplied, never more, so a
