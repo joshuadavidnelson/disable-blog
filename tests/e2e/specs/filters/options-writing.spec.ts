@@ -1,12 +1,11 @@
 /**
- * The `dwpb_remove_options_writing` filter, via the
- * `dwpb-test-options-writing.php` mu-plugin fixture (shipped default:
- * `false`). Once true, `remove_writing_options()` redirects
+ * The `dwpb_remove_options_writing` filter (shipped default: `false`), via
+ * `setFilterOverrides()`. Once true, `remove_writing_options()` redirects
  * `options-writing.php` to `options-general.php` and drops it from the
  * Settings submenu. Uses the default authenticated admin session.
  *
- * Test 3 turns the fixture off mid-test, to prove `resetFixtures()` itself
- * restores stock behaviour.
+ * Test 3 clears the override mid-test, to prove `resetFilterOverrides()`
+ * itself restores stock behaviour.
  */
 
 /**
@@ -20,7 +19,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import { siteConfig } from '../../config/seed';
 import { adminUrl, menuLink, MENU_SETTINGS } from '../../config/admin';
 import { expectRedirect, expectStatus } from '../../config/redirects';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 test.describe( 'filters: remove options-writing (dwpb_remove_options_writing)', () => {
 	let generalSettingsTarget: string;
@@ -31,13 +30,13 @@ test.describe( 'filters: remove options-writing (dwpb_remove_options_writing)', 
 	} );
 
 	test.beforeEach( async ( { requestUtils } ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.removeOptionsWriting ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_remove_options_writing: true,
 		} );
 	} );
 
 	test.afterEach( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.removeOptionsWriting ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'options-writing.php redirects to general settings', async ( { request } ) => {
@@ -52,7 +51,7 @@ test.describe( 'filters: remove options-writing (dwpb_remove_options_writing)', 
 	} );
 
 	test( 'toggling the filter off restores the screen', async ( { request, requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.removeOptionsWriting ] );
+		await resetFilterOverrides( requestUtils );
 
 		await expectStatus( request, adminUrl( 'options-writing.php' ), 200 );
 	} );

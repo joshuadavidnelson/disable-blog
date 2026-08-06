@@ -1,9 +1,9 @@
 /**
- * The `dwpb_disabled_xmlrpc_methods` escape hatch, via the
- * `dwpb-test-xmlrpc.php` mu-plugin fixture. Returning `false` from this
- * filter (instead of an array) short-circuits the entire XML-RPC removal
- * loop, restoring every method on the plugin's fixed list — not just the
- * taxonomy-conditional subset `filters/cpt-branches.spec.ts` exercises.
+ * The `dwpb_disabled_xmlrpc_methods` escape hatch, via `setFilterOverrides()`.
+ * Returning `false` from this filter (instead of an array) short-circuits
+ * the entire XML-RPC removal loop, restoring every method on the plugin's
+ * fixed list — not just the taxonomy-conditional subset
+ * `filters/cpt-branches.spec.ts` exercises.
  *
  * `demo.sayHello` is used instead of `pingback.ping` to prove the restore:
  * WordPress 7.1 removes `pingback.ping` itself on any non-production
@@ -21,16 +21,16 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 import { ADMIN_USERNAME, ADMIN_PASSWORD, callXmlRpc } from '../../config/xmlrpc';
 
 test.describe( 'filters: XML-RPC restore (dwpb_disabled_xmlrpc_methods)', () => {
 	test.beforeAll( async ( { requestUtils } ) => {
-		await setFixtures( requestUtils, { [ FIXTURE_TOGGLES.xmlrpcRestore ]: true } );
+		await setFilterOverrides( requestUtils, { dwpb_disabled_xmlrpc_methods: false } );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.xmlrpcRestore ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'wp.getPosts is restored', async ( { request } ) => {

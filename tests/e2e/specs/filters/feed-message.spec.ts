@@ -1,8 +1,8 @@
 /**
- * The `dwpb_feed_message` / `dwpb_feed_die_message` filter pair, via the
- * `dwpb-test-feeds.php` mu-plugin fixture. Once `dwpb_feed_message` is
- * truthy, `disable_feed()` calls `wp_die()` with a message run through
- * `dwpb_feed_die_message`, instead of redirecting.
+ * The `dwpb_feed_message` / `dwpb_feed_die_message` filter pair, via
+ * `setFilterOverrides()`. Once `dwpb_feed_message` is truthy, `disable_feed()`
+ * calls `wp_die()` with a message run through `dwpb_feed_die_message`,
+ * instead of redirecting.
  *
  * No seeded content needed: `is_post_feed_request()` reads request query vars
  * rather than the global `$post`, so a bare `/feed/` reads as a 'post' feed
@@ -21,20 +21,22 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
-// Must match DWPB_TEST_FEED_DIE_MESSAGE in dwpb-test-feeds.php verbatim.
 const DWPB_TEST_FEED_DIE_MESSAGE_LITERAL = 'DWPB test fixture: feed die message.';
 
 test.describe( 'filters: feed die message (dwpb_feed_message / dwpb_feed_die_message)', () => {
 	test.use( { storageState: { cookies: [], origins: [] } } );
 
 	test.beforeAll( async ( { requestUtils } ) => {
-		await setFixtures( requestUtils, { [ FIXTURE_TOGGLES.feedDieMessage ]: true } );
+		await setFilterOverrides( requestUtils, {
+			dwpb_feed_message: true,
+			dwpb_feed_die_message: DWPB_TEST_FEED_DIE_MESSAGE_LITERAL,
+		} );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.feedDieMessage ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'the feed dies with the custom message instead of redirecting', async ( {

@@ -1,16 +1,11 @@
 /**
- * Admin-side redirect filters exposed by `redirect_admin_pages()`, via the
- * `dwpb-test-redirects.php` mu-plugin fixture — the admin-screen counterpart
- * to `frontend/redirect-mechanics.spec.ts`. Covers `dwpb_redirect_admin` (the
+ * Admin-side redirect filters exposed by `redirect_admin_pages()`, via
+ * `setFilterOverrides()` — the admin-screen counterpart to
+ * `frontend/redirect-mechanics.spec.ts`. Covers `dwpb_redirect_admin` (the
  * admin kill switch), `dwpb_redirect_status_code` (proven here to also
  * govern admin redirects, since both paths share the same `redirect()`
  * method), and isolation showing the front-end kill switch
  * (`dwpb_redirect_front_end`) has no reach into admin redirects.
- *
- * `dwpb_admin_redirect_url` isn't wired by that fixture (`customRedirectUrl`
- * only filters the front-end target), so its own describe block below goes
- * through the generic filter-override mechanism
- * (`config/filter-overrides.ts`) instead.
  *
  * Uses the project's default authenticated admin session throughout.
  */
@@ -26,20 +21,12 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import { siteConfig } from '../../config/seed';
 import { adminUrl, editPhp } from '../../config/admin';
 import { expectRedirect } from '../../config/redirects';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 // Same host as home_url(): wp_safe_redirect() rejects an off-site Location.
 const OVERRIDE_PATH = '/dwpb-test-filter-override-admin-url/';
 
-// Reset together in afterEach so a failing assertion can't leak a fixture.
-const TOGGLES_USED = [
-	FIXTURE_TOGGLES.adminRedirectsOff,
-	FIXTURE_TOGGLES.redirectStatusCode,
-	FIXTURE_TOGGLES.frontEndRedirectsOff,
-];
-
-test.describe( 'filters: admin redirect filters (fixture-driven)', () => {
+test.describe( 'filters: admin redirect filters (override-driven)', () => {
 	let editPageTarget: string;
 
 	test.beforeAll( async ( { requestUtils } ) => {
@@ -49,15 +36,15 @@ test.describe( 'filters: admin redirect filters (fixture-driven)', () => {
 	} );
 
 	test.afterEach( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, TOGGLES_USED );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'the admin kill switch disables admin redirects', async ( {
 		request,
 		requestUtils,
 	} ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.adminRedirectsOff ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_admin: false,
 		} );
 
 		// With dwpb_redirect_admin forced false, the plugin's usual 301 to
@@ -85,7 +72,7 @@ test.describe( 'filters: admin redirect filters (fixture-driven)', () => {
 		);
 
 		// Control: reset and confirm the redirect returns.
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.adminRedirectsOff ] );
+		await resetFilterOverrides( requestUtils );
 
 		await expectRedirect( request, adminUrl( 'edit.php' ), editPageTarget, 301 );
 	} );
@@ -94,8 +81,8 @@ test.describe( 'filters: admin redirect filters (fixture-driven)', () => {
 		request,
 		requestUtils,
 	} ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.redirectStatusCode ]: 302,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_status_code: 302,
 		} );
 
 		await expectRedirect( request, adminUrl( 'edit.php' ), editPageTarget, 302 );
@@ -105,8 +92,8 @@ test.describe( 'filters: admin redirect filters (fixture-driven)', () => {
 		request,
 		requestUtils,
 	} ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.frontEndRedirectsOff ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_front_end: false,
 		} );
 
 		await expectRedirect( request, adminUrl( 'edit.php' ), editPageTarget, 301 );
