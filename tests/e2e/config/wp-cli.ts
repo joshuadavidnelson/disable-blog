@@ -6,6 +6,7 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { expect } from '@playwright/test';
 
 const execFileAsync = promisify( execFile );
 
@@ -79,4 +80,23 @@ export async function wpCliOk( args: string[] ): Promise< string > {
 	}
 
 	return result.stdout;
+}
+
+/**
+ * Assert a `wp-cli` command exited cleanly with no PHP fatal in its output.
+ *
+ * Exit code alone is not enough: a bare `exit()` anywhere in the PHP that
+ * WP-CLI loaded ends the process at 0, taking the command's own success or
+ * failure report with it. Specs that care should also assert on the expected
+ * stdout.
+ *
+ * @param result Result of a {@link wpCli} call.
+ * @param label  Human-readable label for the assertion failure message.
+ */
+export function expectCliSuccess( result: WpCliResult, label: string ): void {
+	expect(
+		result.exitCode,
+		`${ label } exited ${ result.exitCode }:\n${ result.stderr }`
+	).toBe( 0 );
+	expect( result.stdout + result.stderr ).not.toMatch( /fatal error/i );
 }

@@ -20,62 +20,84 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * If uninstall not called from WordPress,
- * If no uninstall action,
- * If not this plugin,
- * If no caps,
- * then exit.
+ * If uninstall not called from WordPress, exit.
+ *
+ * Required in every context, including WP-CLI.
  *
  * @since 0.4.0
  * @uses  WP_UNINSTALL_PLUGIN
  */
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' )
-		|| empty( $_REQUEST )
-		|| ! isset( $_REQUEST['plugin'] )
-		|| ! isset( $_REQUEST['action'] )
-		|| strpos( $_REQUEST['plugin'], 'disable-blog.php' ) === false // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		|| 'delete-plugin' !== $_REQUEST['action']
-		|| ! check_ajax_referer( 'updates', '_ajax_nonce' )
-		|| ! current_user_can( 'activate_plugins' )
-	) {
-
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit();
-
 }
 
 /**
- * Various user checks.
+ * Everything below validates the admin delete request, which only a browser
+ * makes. WP-CLI has no request to validate and no nonce or session to check --
+ * `wp plugin uninstall` resolved the plugin itself, and shell access is the
+ * authority. Running these checks against a command-line uninstall stops it
+ * before it cleans anything up.
  *
- * @since 0.4.0
- *
- * @uses  is_user_logged_in()
- * @uses  current_user_can()
- * @uses  wp_die()
+ * @since 0.5.6
+ * @uses  WP_CLI
  */
-if ( ! is_user_logged_in() ) {
-	// translators: This error shows up when the uninstall process is run but the user login session is invalid.
-	$message = __( 'You must be logged in to run this script.', 'disable-blog' );
+if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 
-	// translators: The plugin name.
-	$message_title = __( 'Disable Blog', 'disable-blog' );
-	wp_die(
-		esc_attr( $message ),
-		esc_attr( $message_title ),
-		array( 'back_link' => true )
-	);
-}
+	/**
+	 * If no uninstall action,
+	 * If not this plugin,
+	 * If no caps,
+	 * then exit.
+	 *
+	 * @since 0.4.0
+	 */
+	if ( empty( $_REQUEST )
+			|| ! isset( $_REQUEST['plugin'] )
+			|| ! isset( $_REQUEST['action'] )
+			|| strpos( $_REQUEST['plugin'], 'disable-blog.php' ) === false // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			|| 'delete-plugin' !== $_REQUEST['action']
+			|| ! check_ajax_referer( 'updates', '_ajax_nonce' )
+			|| ! current_user_can( 'activate_plugins' )
+		) {
 
-if ( ! current_user_can( 'install_plugins' ) ) {
-	// translators: This error shows up if the user does not have permissions to uninstall the plugin.
-	$message = __( 'You do not have permission to run this script.', 'disable-blog' );
+		exit();
 
-	// translators: The plugin name.
-	$message_title = __( 'Disable Blog', 'disable-blog' );
-	wp_die(
-		esc_attr( $message ),
-		esc_attr( $message_title ),
-		array( 'back_link' => true )
-	);
+	}
+
+	/**
+	 * Various user checks.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @uses  is_user_logged_in()
+	 * @uses  current_user_can()
+	 * @uses  wp_die()
+	 */
+	if ( ! is_user_logged_in() ) {
+		// translators: This error shows up when the uninstall process is run but the user login session is invalid.
+		$message = __( 'You must be logged in to run this script.', 'disable-blog' );
+
+		// translators: The plugin name.
+		$message_title = __( 'Disable Blog', 'disable-blog' );
+		wp_die(
+			esc_attr( $message ),
+			esc_attr( $message_title ),
+			array( 'back_link' => true )
+		);
+	}
+
+	if ( ! current_user_can( 'install_plugins' ) ) {
+		// translators: This error shows up if the user does not have permissions to uninstall the plugin.
+		$message = __( 'You do not have permission to run this script.', 'disable-blog' );
+
+		// translators: The plugin name.
+		$message_title = __( 'Disable Blog', 'disable-blog' );
+		wp_die(
+			esc_attr( $message ),
+			esc_attr( $message_title ),
+			array( 'back_link' => true )
+		);
+	}
 }
 
 /**

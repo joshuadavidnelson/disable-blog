@@ -91,25 +91,28 @@ export default defineConfig( {
 			},
 			testMatch: /.*\.spec\.ts$/,
 			// smoke.spec.ts runs under its own 'smoke' project (above);
-			// lifecycle.spec.ts deactivates/reactivates the plugin itself and
-			// runs under its own 'lifecycle' project (below) — neither is
+			// everything in specs/lifecycle/ mutates plugin state and runs
+			// under its own 'lifecycle' project (below) — neither is
 			// interleaved with the rest of the suite.
-			testIgnore: [ /\/smoke\.spec\.ts$/, /\/lifecycle\/lifecycle\.spec\.ts$/ ],
+			testIgnore: [ /\/smoke\.spec\.ts$/, /\/specs\/lifecycle\// ],
 			dependencies: [ 'smoke' ],
 		},
-		// Mutates plugin activation state (Disable_Blog_Activator /
-		// Disable_Blog_Deactivator / Disable_Blog::upgrade_check() coverage),
-		// so it must never run interleaved with a spec that assumes the
-		// plugin is continuously active. Depending on 'chromium' makes
-		// Playwright run this project only once every other spec file has
-		// finished, regardless of worker count.
+		// Mutates plugin activation state and the plugin's own options
+		// (Disable_Blog_Activator / Disable_Blog_Deactivator /
+		// Disable_Blog::upgrade_check() / uninstall.php coverage), so it must
+		// never run interleaved with a spec that assumes the plugin is
+		// continuously active. Depending on 'chromium' makes Playwright run
+		// this project only once every other spec file has finished,
+		// regardless of worker count. Matched by directory, so a new
+		// state-mutating spec belongs in specs/lifecycle/ and needs no
+		// change here.
 		{
 			name: 'lifecycle',
 			use: {
 				...devices[ 'Desktop Chrome' ],
 				storageState: ADMIN_STORAGE_STATE,
 			},
-			testMatch: /\/lifecycle\/lifecycle\.spec\.ts$/,
+			testMatch: /\/specs\/lifecycle\/.*\.spec\.ts$/,
 			dependencies: [ 'chromium' ],
 		},
 	],
