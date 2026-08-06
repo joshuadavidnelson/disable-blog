@@ -1,27 +1,22 @@
 /**
  * Proof spec for the generic filter-override mechanism
- * (`config/filter-overrides.ts` + `dwpb-test-filters.php`): covers three of
- * the per-branch filters built by string concatenation inside
+ * (`config/filter-overrides.ts` + `dwpb-test-filters.php`), covering three
+ * filters built by string concatenation inside
  * `Disable_Blog_Public::redirect_public_pages()`'s `foreach` loop
- * (`'dwpb_redirect_' . $filtername`) that never appear as a string literal
- * anywhere in the plugin and so have no dedicated fixture toggle:
- * `dwpb_redirect_date_archive`, `dwpb_redirect_category_archive`, and
- * `dwpb_redirect_post_tag_archive`.
+ * (`'dwpb_redirect_' . $filtername`): `dwpb_redirect_date_archive`,
+ * `dwpb_redirect_category_archive`, and `dwpb_redirect_post_tag_archive`.
  *
- * Each block asserts BOTH that its overridden branch redirects to the
- * override target AND that a different branch of the same loop (the blog
- * page) still redirects to the plugin's default front page — proving the
- * dynamically-built filter name resolves per-branch, rather than some
- * umbrella filter being what actually fired.
+ * Each block also asserts that the blog page (a different branch of the same
+ * loop) still redirects to the default front page, proving the per-branch
+ * filter name resolves independently rather than one umbrella filter firing
+ * for every page.
  *
- * The category/tag blocks are also the regression cover for the
- * `is_category()`/`is_tag()` detection in `redirect_public_pages()`: with no
- * other post type using the taxonomy, `Disable_Blog_Admin::modify_taxonomies_arguments()`
- * strips the taxonomy's `query_var` (among other public-facing args), which
- * stops core from ever populating `WP_Query::$tax_query` for `category_name`
- * requests, so `is_category()` stays false. `redirect_public_pages()` reads
- * the raw request query var directly instead, which the rewrite rule
- * populates regardless of the taxonomy's public state.
+ * The category/tag blocks double as regression cover for `is_category()`/
+ * `is_tag()` detection: with no other post type using the taxonomy,
+ * `modify_taxonomies_arguments()` strips its `query_var`, so core never
+ * populates `WP_Query::$tax_query` and `is_category()` stays false.
+ * `redirect_public_pages()` reads the raw request query var directly
+ * instead, which the rewrite rule populates regardless.
  */
 
 /**
@@ -79,9 +74,6 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_date_a
 	} );
 
 	test( 'the blog page still redirects to the default front page', async ( { request } ) => {
-		// Different branch of the same foreach loop, left untouched by the
-		// override above -- confirms 'dwpb_redirect_' . $filtername resolves
-		// per-branch rather than one umbrella filter firing for every page.
 		await expectRedirect( request, '/blog/', frontPageUrl );
 	} );
 } );
@@ -123,23 +115,17 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_catego
 	} );
 
 	test( 'the blog page still redirects to the default front page', async ( { request } ) => {
-		// Different branch of the same foreach loop, left untouched by the
-		// override above -- confirms 'dwpb_redirect_' . $filtername resolves
-		// per-branch rather than every branch collapsing onto is_home().
 		await expectRedirect( request, '/blog/', frontPageUrl );
 	} );
 
 	test( 'the blog page still redirects to the default front page when the request carries an incidental cat query var', async ( {
 		request,
 	} ) => {
-		// is_category_archive_request()'s fallback reads the raw 'cat' query
-		// var directly (see its docblock), because is_category() is
-		// unreliable here. That raw var is present on this request too --
-		// WordPress copies it onto the queried_object regardless of what's
-		// actually being served -- so the fallback must also require an
-		// empty get_queried_object() before trusting it, or a blog-page
-		// request with an incidental '?cat=' would be misrouted onto this
-		// override's target instead of its own.
+		// WordPress copies the raw 'cat' query var onto queried_object
+		// regardless of what's actually being served, so
+		// is_category_archive_request()'s fallback must also require an
+		// empty get_queried_object() before trusting it -- otherwise this
+		// blog-page request would misroute onto the category override.
 		await expectRedirect( request, `/blog/?cat=${ categoryTermId }`, frontPageUrl );
 	} );
 } );
@@ -179,9 +165,6 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_post_t
 	} );
 
 	test( 'the blog page still redirects to the default front page', async ( { request } ) => {
-		// Different branch of the same foreach loop, left untouched by the
-		// override above -- confirms 'dwpb_redirect_' . $filtername resolves
-		// per-branch rather than one umbrella filter firing for every page.
 		await expectRedirect( request, '/blog/', frontPageUrl );
 	} );
 

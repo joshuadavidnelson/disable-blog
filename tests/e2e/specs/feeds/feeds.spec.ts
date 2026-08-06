@@ -1,25 +1,23 @@
 /**
  * Front-end feed behaviour (`Disable_Blog_Public::disable_feed()`), every
  * filter at its shipped default. Assertions run request-layer via
- * expectRedirect(), same reasoning as frontend/redirects.spec.ts; the describe
- * block is anonymous.
+ * expectRedirect(), same reasoning as frontend/redirects.spec.ts.
  *
- * Fixed since 0.5.5: query-string feed URLs (`/?feed=rss2`) used to leak real
- * post content, because disable_feed() guarded on the global `$post` being a
- * 'post' — which is the Home page, not a post, for a query-string feed
- * request. It now delegates to `is_post_feed_request()`, which reads
- * `$wp->query_vars` instead, so these now redirect like the pretty-permalink
- * feed forms. Covered below alongside a leak-specific body check.
+ * @since 0.5.5 Query-string feed URLs (`/?feed=rss2`) redirect too, alongside
+ * a leak-specific body check below. Previously `disable_feed()` guarded on
+ * the global `$post` being a 'post', which is the Home page rather than a
+ * post for a query-string feed request, so real post content leaked. It now
+ * delegates to `is_post_feed_request()`, which reads `$wp->query_vars`
+ * instead.
  *
  * `is_post_feed_request()` excludes singular query vars (`p`/`name`/etc.) but
  * not `category_name`/`tag`/`author_name`, so term and author feeds are swept
- * into the disabled-feed redirect too. A second, override-driven describe
- * block covers the singular-exclusion branch itself — the reason the
- * function exists — with `redirect_public_pages()` switched off (via a
- * `dwpb_redirect_front_end` override) so the request actually reaches
- * `disable_feed()`. A third describe block, same override, isolates that
- * same sweep for a tag feed specifically, since `redirect_public_pages()`
- * otherwise wins that race first and masks it.
+ * into the disabled-feed redirect too. The second describe block below
+ * covers the singular-exclusion branch itself, with `redirect_public_pages()`
+ * switched off (via a `dwpb_redirect_front_end` override) so the request
+ * actually reaches `disable_feed()`. The third isolates the same sweep for a
+ * tag feed specifically, since `redirect_public_pages()` otherwise wins that
+ * race first and masks it.
  */
 
 /**
@@ -53,9 +51,7 @@ test.describe( 'feeds: default state', () => {
 		homeUrl = config.homeUrl;
 		frontPageUrl = config.frontPageUrl;
 
-		// Needed for "a post's own feed redirects" (real permalink) and the
-		// query-string leak assertion below (known title), not the redirect
-		// logic itself — see feeds-empty-site.spec.ts for the zero-post case.
+		// See feeds-empty-site.spec.ts for the zero-post case.
 		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'feeds post' ),
 		} );
@@ -125,7 +121,7 @@ test.describe( 'feeds: default state', () => {
 	} );
 
 	/* -------------------------------------------------------------------
-	 * Query-string feed URLs — regression guard for N1
+	 * Query-string feed URLs (see @since 0.5.5 note above)
 	 * ---------------------------------------------------------------- */
 
 	test( 'a query-string feed URL redirects to the home URL', async ( {
@@ -156,24 +152,17 @@ test.describe( 'feeds: default state', () => {
 	} );
 
 	/* -------------------------------------------------------------------
-	 * Term and author feeds — is_post_feed_request() excludes singular
-	 * query vars (p/name/pagename/page_id/attachment*) but not
-	 * category_name/tag/author_name, so none of these are recognized as
-	 * "a specific object" and all three get swept up, just via two
-	 * different code paths (see the comments below).
+	 * Term and author feeds (see docblock) — swept up via two different
+	 * code paths, per test below.
 	 * ---------------------------------------------------------------- */
 
 	test( "a category archive's feed redirects, swept in by disable_feed()", async ( {
 		request,
 	} ) => {
-		// modify_taxonomies_arguments() strips 'category''s query_var when no
-		// other post type uses it (the default here), and WP_Query only turns
-		// 'category_name' into a tax query -- setting is_category() -- through
-		// that query_var. So is_category() never becomes true here and
-		// redirect_public_pages()'s category_archive branch never matches;
-		// the request falls through to disable_feed(), whose
-		// is_post_feed_request() sweeps it in as if it were the main post
-		// feed (no singular query var is present) and 301s to home_url().
+		// modify_taxonomies_arguments() strips 'category''s query_var by
+		// default, and WP_Query only sets is_category() through that
+		// query_var, so redirect_public_pages()'s category_archive branch
+		// never matches; the request falls through to disable_feed() instead.
 		await expectRedirect( request, `${ categoryTerm.link }feed/`, homeUrl );
 	} );
 
@@ -181,12 +170,10 @@ test.describe( 'feeds: default state', () => {
 		request,
 	} ) => {
 		// Unlike 'category_name', WP_Query keeps a legacy code path for the
-		// 'tag' query var that runs regardless of the taxonomy's query_var
-		// setting, so is_tag() stays true here. redirect_public_pages() (on
-		// template_redirect, ahead of do_feed()) catches it via its
-		// post_tag_archive branch -- the same mechanism as a post's own feed
-		// above -- so the target is the front page, not home_url(), unlike
-		// the category feed above.
+		// 'tag' query var that ignores the taxonomy's query_var setting, so
+		// is_tag() stays true and redirect_public_pages() catches this first
+		// -- target is the front page, not home_url(), unlike the category
+		// feed above.
 		await expectRedirect( request, `${ tagTerm.link }feed/`, frontPageUrl );
 	} );
 
@@ -232,19 +219,16 @@ test.describe( "feeds: is_post_feed_request()'s singular-exclusion branch", () =
 		requestUtils,
 	} ) => {
 		// redirect_public_pages() would otherwise catch this first via its
-		// 'post' branch (see "a post's own feed redirects" in the default-state
-		// describe above), so switch it off to let the request reach
+		// 'post' branch, so switch it off to let the request reach
 		// disable_feed() and actually exercise is_post_feed_request().
 		await setFilterOverrides( requestUtils, {
 			dwpb_redirect_front_end: false,
 		} );
 
-		// withoutcomments=1 is required: a singular feed request defaults to
-		// the comment feed (is_comment_feed = true), and disable_feed() bails
-		// on that before is_post_feed_request() ever runs, since 'page'
-		// supports comments. This is the only way to reach the branch
-		// is_post_feed_request() exists for -- its check of the 'name' query
-		// var -- rather than the earlier, unrelated comment-feed bail.
+		// withoutcomments=1 is required: a singular feed request otherwise
+		// defaults to the comment feed, and disable_feed() bails on that
+		// before is_post_feed_request() ever runs, since 'page' supports
+		// comments.
 		const response = await expectStatus(
 			request,
 			`${ seededPost.permalink }feed/?withoutcomments=1`,
@@ -255,9 +239,8 @@ test.describe( "feeds: is_post_feed_request()'s singular-exclusion branch", () =
 		expect( body ).toContain( seededPost.title );
 
 		// Control: the main site feed is still swept in with the same override
-		// active (it only silences redirect_public_pages(), not disable_feed()),
-		// proving the post's own feed above is a targeted exception rather than
-		// a side effect of the override disabling redirects generally.
+		// active, proving the post's own feed above is a targeted exception
+		// rather than a side effect of the override disabling redirects generally.
 		await expectRedirect( request, '/feed/', homeUrl );
 	} );
 } );
@@ -299,14 +282,9 @@ test.describe( "feeds: disable_feed()'s sweep also catches tag archive feeds", (
 		request,
 		requestUtils,
 	} ) => {
-		// The default-state describe above shows redirect_public_pages()'s
-		// post_tag_archive branch wins the race for a plain tag feed request
-		// (target: the front page, with a trailing slash -- see "a tag
-		// archive's feed redirects" above). Switching it off here proves
-		// is_post_feed_request()'s sweep independently catches the same
-		// request too, exactly like the category and author feeds above --
-		// just with a different target (home_url(), no trailing slash), the
-		// asymmetry noted there.
+		// Switching redirect_public_pages() off proves is_post_feed_request()'s
+		// sweep independently catches a tag feed too, not just the plain
+		// request where redirect_public_pages() wins the race first.
 		await setFilterOverrides( requestUtils, {
 			dwpb_redirect_front_end: false,
 		} );

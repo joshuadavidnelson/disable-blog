@@ -4,19 +4,13 @@
  * 'category'/'post_tag' taxonomies, via the `dwpb-test-cpt.php` mu-plugin
  * fixture. With `dwpb_test_cpt_enabled` on, `dwpb_post_types_with_tax()`
  * returns `array( 'news' )` instead of `false`, which un-redirects the
- * category/tag archives, scopes their query to non-'post' types, restores
- * the category/tag REST routes, admin menu links, `edit-tags.php`, taxonomy
- * sitemaps, and the taxonomy XML-RPC methods.
+ * category/tag archives, scopes their query to non-'post' types, and
+ * restores the taxonomy REST routes, admin menu links, `edit-tags.php`,
+ * taxonomy sitemaps, and XML-RPC methods.
  *
  * Rewrite rules must be flushed after the fixture is toggled on (so
  * `/news/...` and the taxonomy archive URLs resolve) and again after it's
- * toggled off in afterAll, so no later spec inherits stale rules.
- *
- * `otherPost` is seeded into the same category/tag as `newsItem` as a
- * negative control, proving the archive query excludes 'post' specifically.
- * `secondOtherPost` adds a second 'post' onto `categoryTerm` alone, for the
- * `filter_taxonomy_count()`/`get_term_post_count_by_type()` test, which needs
- * per-post-type counts that actually differ from each other.
+ * toggled off in `afterAll`, so no later spec inherits stale rules.
  */
 
 /**
@@ -75,11 +69,10 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 		} );
 
 		// A second 'post' on categoryTerm, for the taxonomy-count test below:
-		// modify_taxonomies_arguments() unconditionally strips 'post' from
-		// category's object_type, so the raw cached WP_Term->count only ever
-		// reflects 'news' (1) -- two 'post's on the term (2) is what makes the
-		// 'post'-scoped screen's count observably different from that cached
-		// value, proving get_term_post_count_by_type() actually re-queried.
+		// the raw cached WP_Term->count only ever reflects 'news' (1), so two
+		// 'post's on the term (2) is what makes the 'post'-scoped screen's
+		// count observably different from that cached value, proving
+		// get_term_post_count_by_type() actually re-queried.
 		await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'cpt other post 2' ),
 			categories: [ categoryTerm.termId ],

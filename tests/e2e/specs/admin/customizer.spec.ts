@@ -1,24 +1,14 @@
 /**
  * The Customizer (`customize.php`), default plugin state.
  *
- * COVERAGE: `Disable_Blog_Admin::customizer_styles()`, hooked on
- * `customize_controls_print_styles`, echoes an inline `<style>` block hiding
- * five Homepage Settings-related controls (two of them Genesis-theme
- * specific) whenever `has_front_page()` is true. `customizer_scripts()`,
- * hooked on `customize_controls_enqueue_scripts`, unconditionally enqueues
- * `disable-blog-customizer.js` and localizes `dwpbCustomizer.
- * homepageSettingsText`, which that script uses to replace the "Homepage
- * Settings" section's description text client-side.
+ * Both hooks fire directly inside `wp-admin/customize.php`'s own document,
+ * not the site-preview iframe, so `page.content()` sees their output without
+ * opening the (JS-driven, normally-collapsed) Homepage Settings panel.
  *
- * OBSERVABILITY: both hooks fire directly inside `wp-admin/customize.php`'s
- * own document (verified directly), not the site-preview iframe, so
- * `page.content()` sees their output without needing to open the (JS-driven,
- * normally-collapsed) Homepage Settings panel. `has_front_page()` is true for
- * the whole suite by default — global-setup's `setupSite()` sets
- * `show_on_front` = 'page' / `page_on_front` — so the style block's
- * default-state assertion is "present"; the negative control clears that
- * reading setting the same way `admin/settings-screens.spec.ts` does for its
- * own `has_front_page()`-gated assertions.
+ * `has_front_page()` is true for the whole suite by default (global-setup's
+ * `setupSite()`), so the default-state assertion below is "present"; the
+ * negative control clears that reading setting the same way
+ * `admin/settings-screens.spec.ts` does.
  */
 
 /**

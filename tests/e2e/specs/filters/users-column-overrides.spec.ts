@@ -1,17 +1,15 @@
 /**
  * Back-compat coverage for the two `dpwb_`-prefixed filters
- * `Disable_Blog_Admin::manage_users_columns()` fires on `users.php`:
- * `dpwb_disable_user_post_column` and `dpwb_create_user_{$post_type}_column`
- * were misspelled -- the plugin's prefix is `dwpb_` everywhere else. Both now
- * have a correctly-spelled primary filter, with the old name still honored
- * via `apply_filters_deprecated()` (see `class-disable-blog-admin.php`).
+ * `manage_users_columns()` fires on `users.php`: `dpwb_disable_user_post_column`
+ * and `dpwb_create_user_{$post_type}_column` were misspelled -- the plugin's
+ * prefix is `dwpb_` everywhere else. Both now have a correctly-spelled
+ * primary filter, with the old name still honored via
+ * `apply_filters_deprecated()`.
  *
  * Each pair below is proven with the generic filter-override mechanism
- * (`config/filter-overrides.ts` + `dwpb-test-filters.php`, whose security
- * guard allows both the `dwpb_` and `dpwb_` prefixes) plus a control test
- * confirming the un-overridden default, so the override assertions can't
- * pass vacuously (e.g. if the column were unconditionally present/absent
- * regardless of any filter).
+ * (whose security guard allows both the `dwpb_` and `dpwb_` prefixes) plus a
+ * control test confirming the un-overridden default, so the override
+ * assertions can't pass vacuously.
  */
 
 /**

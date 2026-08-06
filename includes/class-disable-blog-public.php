@@ -151,29 +151,15 @@ class Disable_Blog_Public {
 	/**
 	 * Determine if the current request is a category archive.
 	 *
-	 * `is_category()` alone isn't reliable here: when 'post' is the only post
-	 * type using the 'category' taxonomy,
-	 * `Disable_Blog_Admin::modify_taxonomies_arguments()` strips the
-	 * taxonomy's `query_var`, which stops `WP_Query::parse_tax_query()` from
-	 * ever building a tax query for `category_name` -- `is_category()` then
-	 * stays false even though the rewrite rule already resolved the request
-	 * to that category. The raw `category_name`/`cat` query vars are set by
-	 * the rewrite match itself and aren't affected by the taxonomy's public
-	 * state, so they're used as a fallback signal.
-	 *
-	 * That raw query var alone isn't sufficient, though: WordPress also
-	 * copies it onto requests that resolve to something else entirely (e.g.
-	 * a `page_for_posts` request carrying an incidental `?cat=` query
-	 * string keeps its own queried object). Requiring `get_queried_object()`
-	 * to be empty confines the fallback to requests core failed to resolve
-	 * to anything -- exactly the broken-taxonomy case above -- so a request
-	 * that legitimately resolved elsewhere keeps its own branch.
-	 *
-	 * Excludes feed requests: a category feed already has its own redirect
-	 * path through `disable_feed()`'s `dwpb_redirect_feeds` filter, run from
-	 * `do_feed`, which fires after `template_redirect`. Matching the
-	 * fallback here would redirect the feed before `do_feed` ever runs,
-	 * taking that URL away from `dwpb_redirect_feeds`.
+	 * `is_category()` alone is unreliable: if 'post' is the only post type
+	 * using the 'category' taxonomy, `modify_taxonomies_arguments()` strips
+	 * its `query_var`, so `is_category()` stays false even though the
+	 * rewrite already matched a category URL. Falls back to the raw
+	 * `category_name`/`cat` query vars, but only when `get_queried_object()`
+	 * is empty -- otherwise a request that legitimately resolved elsewhere
+	 * with an incidental `?cat=` (e.g. `page_for_posts`) would match too.
+	 * Feed requests are excluded so `do_feed()`'s later `dwpb_redirect_feeds`
+	 * filter still gets a chance to run.
 	 *
 	 * @since 0.5.6
 	 * @return bool
@@ -193,15 +179,13 @@ class Disable_Blog_Public {
 	/**
 	 * Determine if the current request is a post_tag archive.
 	 *
-	 * `is_tag()` isn't affected by the same taxonomy-stripping issue that
-	 * `is_category_archive_request()` works around -- the 'tag' query var is
-	 * parsed independently of the taxonomy's `query_var` setting -- but the
-	 * raw query vars are checked too, for symmetry with the category check
-	 * and to cover a `tag_id` request that `is_tag()` might miss. See
-	 * `is_category_archive_request()` for why the fallback also requires an
-	 * empty `get_queried_object()` and excludes feed requests -- `is_tag()`
-	 * already resolves true on a tag feed, so this only affects the
-	 * (otherwise unreachable) fallback branch.
+	 * Unlike 'category', WP_Query resolves `tag`/`tag_id` through a hardcoded
+	 * path rather than the generic per-taxonomy query_var loop that
+	 * {@see self::is_category_archive_request()} works around, so `is_tag()`
+	 * alone is reliable here. The raw query vars and feed exclusion are still
+	 * checked for symmetry and to catch a `tag_id` request `is_tag()` might
+	 * miss, but since `is_tag()` already resolves true on a tag feed, that
+	 * branch is effectively unreachable for real tag requests.
 	 *
 	 * @since 0.5.6
 	 * @return bool
@@ -387,10 +371,9 @@ class Disable_Blog_Public {
 	}
 
 	/**
-	 * Determine if the current feed request is for the site's 'post' content
-	 * (e.g. the main feed at `/feed/` or `/?feed=rss2`), as opposed to a feed
-	 * scoped to a specific singular object (a single post, page, or
-	 * attachment) or another post type.
+	 * Determine if the current feed request is for the site's main 'post'
+	 * feed (e.g. `/feed/` or `/?feed=rss2`), as opposed to a feed scoped to
+	 * a specific singular object or another post type.
 	 *
 	 * @since 0.5.6 checks $wp->query_vars (the raw request) rather than $post or
 	 *              $wp_query, because a static front page makes WP_Query substitute
@@ -406,9 +389,8 @@ class Disable_Blog_Public {
 			return false;
 		}
 
-		// If any of these are present, the request explicitly names a
-		// specific singular object (or an attachment), so this isn't the
-		// general 'post' listing feed.
+		// Any of these present means the request names a specific singular
+		// object (or attachment), not the general 'post' listing feed.
 		$singular_query_vars = array( 'p', 'name', 'pagename', 'page_id', 'attachment', 'attachment_id' );
 
 		foreach ( $singular_query_vars as $var ) {
@@ -514,10 +496,8 @@ class Disable_Blog_Public {
 	 */
 	private function get_disabled_xmlrpc_methods() {
 
-		// The methods to remove.
-		//
-		// 'system.*' methods intentionally omitted: IXR_Server re-registers them
-		// after this filter runs, so unset()ting them here would have no effect.
+		// The methods to remove. 'system.*' methods are intentionally omitted:
+		// IXR_Server re-registers them after this filter runs, so removing them here is a no-op.
 		$methods_to_remove = array(
 			'wp.getUsersBlogs',
 			'wp.newPost',
@@ -605,15 +585,12 @@ class Disable_Blog_Public {
 	}
 
 	/**
-	 * Fallback removal of the X-Pingback HTTP header for WordPress versions
-	 * that send it via a direct header() call rather than the 'wp_headers'
-	 * filter.
+	 * Fallback removal of the X-Pingback header for WordPress versions where
+	 * it bypasses the 'wp_headers' filter used by filter_wp_headers().
 	 *
-	 * @since 0.5.6 on core < 6.2, `WP::handle_404()` sends X-Pingback via a direct
-	 *              header() call that runs after both 'send_headers' and the
-	 *              'wp_headers' filter, so filter_wp_headers() alone can't catch it
-	 *              there; hooked on 'wp' (not 'send_headers') because it must run
-	 *              after handle_404() to strip the header after the fact.
+	 * @since 0.5.6 core < 6.2's `WP::handle_404()` sends X-Pingback via a direct
+	 *              header() call; hooked on 'wp' (not 'send_headers') so this
+	 *              runs after handle_404() to strip it after the fact.
 	 * @see Disable_Blog_Public::filter_wp_headers()
 	 * @return void
 	 */
@@ -716,11 +693,10 @@ class Disable_Blog_Public {
 	/**
 	 * 404 sitemap sub-file requests for providers this plugin has removed entirely.
 	 *
-	 * @since 0.5.6 removing a whole provider (e.g. 'users', via wp_author_sitemaps())
-	 *              leaves core nothing registered to 404 against, so the request would
-	 *              otherwise fall through to the normal template and serve the blog
-	 *              index as HTML; resolves against the live provider registry rather
-	 *              than a hardcoded list. Filterable via 'dwpb_disable_removed_sitemaps'.
+	 * @since 0.5.6 without this, a removed provider (e.g. 'users', via
+	 *              wp_author_sitemaps()) leaves core nothing registered to 404
+	 *              against, so the request would fall through to the normal
+	 *              template and serve the blog index as HTML.
 	 * @return void
 	 */
 	public function disable_removed_sitemaps() {

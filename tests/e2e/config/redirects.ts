@@ -81,9 +81,7 @@ export async function expectStatus(
 
 /**
  * Assert that requesting `url` returns a plain `200` — i.e. that Disable
- * Blog is NOT redirecting it. The common negative-space assertion: "this URL
- * used to redirect before the toggle was flipped off; confirm it no longer
- * does."
+ * Blog is NOT redirecting it.
  *
  * @param request Playwright API request context.
  * @param url     URL (relative or absolute) to request.

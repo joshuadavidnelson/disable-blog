@@ -33,8 +33,7 @@ class Disable_Blog_Functions {
 			$current_url = admin_url( add_query_arg( array(), $wp->request ) );
 		} else {
 
-			// $wp->request is path-only; build from the full request URI instead
-			// (see the @since 0.5.6 note above).
+			// $wp->request is path-only (see @since 0.5.6 above).
 			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 			$current_url = home_url( $request_uri );
 
@@ -43,9 +42,7 @@ class Disable_Blog_Functions {
 			add_filter( 'wp_safe_redirect_fallback', array( $this, 'wp_safe_redirect_fallback' ), 9, 1 );
 		}
 
-		// Compare the current url (including its query string) to the
-		// redirect url -- if they are the same, bail to avoid a loop.
-		// If there is no valid redirect url, then also bail.
+		// Bail to avoid a loop if the current and redirect urls match, or if there's no valid redirect url.
 		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
 			return;
 		}

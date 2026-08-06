@@ -1,18 +1,15 @@
 /**
  * Role-conditional consequences of `redirect_admin_pages()` and
- * `remove_admin_bar_links()`, exercised via per-role `storageState`s
- * (`config/roles.ts`) rather than fixture toggles.
+ * `remove_admin_bar_links()`, exercised via per-role `storageState`s.
  *
  * `redirect_admin_edit()` sends `edit.php` to `edit.php?post_type=page`
  * unconditionally, regardless of capability, so an Author (who lacks
  * `edit_pages`) lands on core's own 403 permission-error page — a real,
  * intentional side effect of the plugin's design, not a defect.
  *
- * Tests 1/2/4 let `request.get()` follow redirects (default behaviour) since
- * they want the page at the end of the chain, except test 4 which uses
- * `maxRedirects: 0` to inspect core's own `auth_redirect()` 302, which fires
- * before the plugin's redirect gets a chance to run. Test 3 uses `page`
- * since admin-bar DOM structure can't be observed from a raw response body.
+ * The anonymous-role test uses `maxRedirects: 0` to inspect core's own
+ * `auth_redirect()` 302, which fires before the plugin's redirect gets a
+ * chance to run; the others let requests follow redirects by default.
  */
 
 /**

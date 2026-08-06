@@ -6,24 +6,17 @@
  * Two `show_in_rest` boolean options, each default `false`:
  *
  *   dwpb_test_integrations_disable_comments  defines a `Disable_Comments`
- *                                             class -- the `class_exists()`
- *                                             fallback
- *                                             `is_disable_comments_active()`
- *                                             checks when the real plugin
- *                                             isn't installed.
+ *     class, the class_exists() fallback is_disable_comments_active() checks
+ *     when the real plugin isn't installed.
  *   dwpb_test_integrations_woocommerce       defines a `WC()` function and a
- *                                             `WC_VERSION` constant below
- *                                             2.6.3 -- the `function_exists()`
- *                                             fallback `is_woocommerce_active()`
- *                                             checks, and the version
- *                                             `woocommerce_version_check()`
- *                                             compares against.
+ *     WC_VERSION constant below 2.6.3, what is_woocommerce_active() and
+ *     woocommerce_version_check() check and compare against.
  *
  * Read directly at file scope, not deferred to an action: mu-plugins load
- * before regular plugins, so `class_exists( 'Disable_Comments' )` /
- * `function_exists( 'WC' )` must already be true before
- * `Disable_Blog::plugin_integrations()` runs on `plugins_loaded`.
- * `get_option()` already works this early -- see dwpb-test-filters.php.
+ * before regular plugins, so `class_exists()`/`function_exists()` must
+ * already be true before `Disable_Blog::plugin_integrations()` runs on
+ * `plugins_loaded` (see dwpb-test-filters.php for why `get_option()` already
+ * works this early).
  *
  * @package Disable_Blog\TestFixtures
  */

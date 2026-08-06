@@ -2,10 +2,7 @@
  * The `dwpb_remove_options_writing` filter (shipped default: `false`), via
  * `setFilterOverrides()`. Once true, `remove_writing_options()` redirects
  * `options-writing.php` to `options-general.php` and drops it from the
- * Settings submenu. Uses the default authenticated admin session.
- *
- * Test 3 clears the override mid-test, to prove `resetFilterOverrides()`
- * itself restores stock behaviour.
+ * Settings submenu.
  */
 
 /**

@@ -2,15 +2,9 @@
  * Search results, `wp_head` output, the `X-Pingback` header, and the
  * front-end admin bar's "New Post" link — default plugin state.
  *
- * Covers `modify_post_type_arguments()` (excludes 'post' from search),
- * `header_feeds()` (strips feed/RSD links from wp_head but not generator,
- * REST, or oEmbed discovery), `filter_wp_headers()` (unsets X-Pingback,
- * which core would otherwise set for a page with open pings — pings_open()
- * has no post-type gating unlike comments_open), and
- * `remove_admin_bar_links()` (removes the admin bar's New Post node only).
- *
- * The first describe block is anonymous (signed-out visitor); the admin-bar
- * block relies on the project's default admin storageState.
+ * `filter_wp_headers()` unsets X-Pingback, which core would otherwise set
+ * for a page with open pings -- `pings_open()` has no post-type gating,
+ * unlike `comments_open()`.
  */
 
 /**

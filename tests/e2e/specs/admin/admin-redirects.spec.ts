@@ -1,31 +1,20 @@
 /**
  * Admin-screen 301 redirects, default plugin state.
  *
- * COVERAGE: `Disable_Blog_Admin::redirect_admin_pages()`, hooked on
- * `current_screen`, walks a fixed list of admin page slugs and calls the
- * matching `redirect_admin_<slug>()` method. `redirect_admin_edit()` and
- * `redirect_admin_post_new()` redirect to the `page` equivalent screen
- * whenever `post_type` is absent or `'post'`, via `wp_safe_redirect()` at
- * 301. `redirect_admin_edit_comments()` (and its `options-discussion`
- * wrapper) redirect only when `! dwpb_post_types_with_feature( 'comments' )`
- * — false here, since `page`/`attachment` support comments by default, so
- * neither screen redirects (test 6).
+ * The `post.php`/`edit-tags.php`/`term.php`/`tools.php` tests below guard
+ * three dispatch hazards: `redirect_admin_term()`'s method name must exactly
+ * match the `redirect_admin_<slug>()` pattern the dispatcher builds from the
+ * screen slug, or `term.php` silently stops redirecting; the `tools` slug's
+ * method is `redirect_admin_options_tools()` (not `redirect_admin_tools()`),
+ * exposed under the legacy `dwpb_redirect_admin_options_tools` filter name;
+ * and the dashboard branch must check `true === $redirect` before
+ * `esc_url_raw()`, since `esc_url_raw( true )` resolves to `"http://1"`,
+ * which would send `wp_safe_redirect()` to bare `/wp-admin/` instead of the
+ * dashboard.
  *
- * `post.php`, `edit-tags.php`, `term.php`, and `tools.php` are covered here
- * as regression guards on three name/type hazards in the dispatch:
- * `redirect_admin_term()`'s method name must exactly match the loop's
- * `redirect_admin_<slug>()` pattern, or `term.php` silently stops
- * redirecting; the `tools` slug's method is `redirect_admin_options_tools()`
- * (not `redirect_admin_tools()`), exposed under the legacy
- * `dwpb_redirect_admin_options_tools` filter name via
- * `apply_filters_deprecated()`; and the dashboard branch must check
- * `true === $redirect` before `esc_url_raw()`, since `esc_url_raw( true )`
- * resolves to the non-empty `"http://1"`, which would send
- * `wp_safe_redirect()` to bare `/wp-admin/` instead of the dashboard.
- *
- * Assertions go through `expectRedirect()`/`expectStatus()` from
- * `config/redirects.ts` rather than `page.goto()`, to avoid Chromium's 301
- * caching serving a stale redirect (see `frontend/redirects.spec.ts`).
+ * Assertions go through `expectRedirect()`/`expectStatus()` rather than
+ * `page.goto()`, to avoid Chromium's 301 caching serving a stale redirect
+ * (see `frontend/redirects.spec.ts`).
  */
 
 /**
@@ -139,8 +128,6 @@ test.describe( 'admin: redirects (default state)', () => {
 	test( 'regression guard control: a third-party tools.php subpage is not redirected by the plugin', async ( {
 		request,
 	} ) => {
-		// redirect_admin_tools() only targets the bare tools.php screen
-		// (`! isset( $_GET['page'] )`), so a subpage must stay untouched.
 		// Not a bare status check: core itself 302s an unregistered
 		// tools.php?page=... slug, so this asserts specifically that the
 		// response isn't the plugin's own 301-to-dashboard.

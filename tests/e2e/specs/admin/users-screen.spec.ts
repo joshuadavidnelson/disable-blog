@@ -1,14 +1,9 @@
 /**
  * The Users list table (`users.php`), default plugin state.
  *
- * COVERAGE:
- *  - `manage_users_columns()` unsets core's `posts` column and adds a `page`
- *    column labelled with the `page` post type's own `labels->name`.
- *  - `manage_users_custom_column()` renders that column's cell as a link to
- *    `edit.php?post_type=page&author=<user_id>`, mirroring core's Posts link.
- *  - `user_row_actions()` unsets the `view` row action only when
- *    `dwpb_disable_author_archives` is true — false by default, so `view`
- *    stays (test 3).
+ * `user_row_actions()` unsets the `view` row action only when
+ * `dwpb_disable_author_archives` is true — false by default, so `view`
+ * stays.
  */
 
 /**

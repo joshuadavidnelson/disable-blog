@@ -1,27 +1,21 @@
 /**
- * Two admin-redirect filters covered only through the generic filter-override
- * mechanism (`config/filter-overrides.ts` + `dwpb-test-filters.php`):
+ * Two admin-redirect filters reachable only through the generic
+ * filter-override mechanism (`config/filter-overrides.ts` +
+ * `dwpb-test-filters.php`), since neither name is spelled out as a string
+ * literal elsewhere in the plugin.
  *
- * `dwpb_redirect_admin_edit` is one of the NINE per-screen filters
- * `redirect_admin_pages()` builds as `'dwpb_' . 'redirect_admin_' .
- * str_replace( '-', '_', $pagename )`. Only the `tools` entry's filter name
- * (below) is ever spelled out as a string literal anywhere in the plugin, so
- * this is the only way to reach the other eight.
+ * `dwpb_redirect_admin_edit` is one of nine per-screen filters
+ * `redirect_admin_pages()` builds as `'dwpb_redirect_admin_' .
+ * str_replace( '-', '_', $pagename )`.
  *
  * `dwpb_redirect_admin_options_tools` is the deprecated alias
- * `redirect_admin_pages()` forwards through `apply_filters_deprecated()` for
- * `tools.php` only. `apply_filters_deprecated()` bails out before calling
- * `_deprecated_hook()` at all when nothing is hooked to the deprecated name
- * (`if ( ! has_filter( $hook_name ) ) { return $args[0]; }`), which is why
- * this alias has stayed silent in every other spec that hits tools.php.
- * Registering the override here makes `has_filter()` true, so
- * `_deprecated_hook()` does run — but its own notice is gated on `WP_DEBUG`,
- * which `@wordpress/env` forces off for the `tests` environment by default
- * (`env.tests.config` in its own defaults, unrelated to and not overridden by
- * this project's `.wp-env.json`), so no notice reaches the response body or
- * debug.log to mask a broken redirect. `apply_filters_ref_array()` still
- * applies the filter regardless of that notice, which is the part this test
- * actually exercises.
+ * `redirect_admin_pages()` forwards for `tools.php` via
+ * `apply_filters_deprecated()`. That function skips `_deprecated_hook()`
+ * entirely when nothing is hooked to the deprecated name -- which is why it
+ * stays silent in every other spec that hits tools.php -- and even once
+ * hooked, the notice is gated on `WP_DEBUG`, which `@wordpress/env` forces
+ * off here. `apply_filters_ref_array()` still applies the filter regardless,
+ * which is what this test actually exercises.
  */
 
 /**
@@ -64,10 +58,8 @@ test.describe( 'filters: dwpb_redirect_admin_edit (one of the nine dynamic admin
 	} );
 
 	test( 'tools.php still redirects to its own default target', async ( { request } ) => {
-		// Different filter name built by the same foreach loop, left
-		// untouched by the override above -- confirms the dynamically-built
-		// name resolves per-screen rather than one umbrella filter firing
-		// for every admin page.
+		// Confirms the dynamically-built filter name resolves per-screen
+		// rather than one umbrella filter firing for every admin page.
 		await expectRedirect( request, adminUrl( 'tools.php' ), dashboardTarget );
 	} );
 } );

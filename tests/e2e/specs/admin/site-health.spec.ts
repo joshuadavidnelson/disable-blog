@@ -2,14 +2,11 @@
  * Site Health's REST Availability check, and Press This, default plugin
  * state.
  *
- * COVERAGE:
- *  - `Disable_Blog_Admin::site_status_tests()` swaps core's
- *    `rest_availability` Site Health test for a copy probing
- *    `wp/v2/types/page` instead of `wp/v2/types/post`, since the 'post'
- *    route is unreachable under this plugin (see `rest-xmlrpc/rest-api.spec.ts`)
- *    and would otherwise fail this check on every install.
- *  - `disable_press_this()`, hooked on `load-press-this.php`, unconditionally
- *    `wp_die()`s.
+ * `site_status_tests()` swaps core's `rest_availability` test for a copy
+ * probing `wp/v2/types/page` instead of `wp/v2/types/post`, since the
+ * 'post' route is unreachable under this plugin (see
+ * `rest-xmlrpc/rest-api.spec.ts`) and would otherwise fail this check on
+ * every install.
  *
  * `rest_availability` is a 'direct' Site Health test, run server-side during
  * `site-health.php`'s own PHP render (via a loopback request) with no REST
@@ -35,11 +32,9 @@ test.describe( 'admin: site health (default state)', () => {
 
 		await admin.visitAdminPage( 'site-health.php' );
 
-		// A selector string, reused below scoped to three different ancestor panels.
 		const restAvailabilitySelector =
 			'button[aria-controls="health-check-accordion-block-rest_availability"]';
 
-		// Generous timeout to absorb the PHP-side loopback latency.
 		await expect( page.locator( restAvailabilitySelector ) ).toHaveCount( 1, {
 			timeout: 45_000,
 		} );
@@ -68,7 +63,7 @@ test.describe( 'admin: site health (default state)', () => {
 
 		const response = await request.get( adminUrl( 'press-this.php' ), { maxRedirects: 0 } );
 
-		// wp_die() with no $args defaults to a 500 (see plugins-screen.spec.ts).
+		// wp_die() with no $args defaults to a 500 (see filters/feed-message.spec.ts).
 		expect( response.status() ).toBe( 500 );
 
 		const body = await response.text();

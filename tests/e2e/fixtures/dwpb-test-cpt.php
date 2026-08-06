@@ -8,10 +8,9 @@
  * option so a spec can flip it via `PUT /wp-json/wp/v2/settings`.
  *
  * Most of the plugin's filters gate on "is any post type OTHER than 'post'
- * using this taxonomy/feature?", which is unreachable in a stock install.
- * This toggle supplies that second post type, unlocking category/tag archive
- * un-redirection, the categories/tags REST routes and admin menu links, the
- * sitemap taxonomy entries, and the XML-RPC taxonomy methods.
+ * using this taxonomy/feature?", unreachable in a stock install. This toggle
+ * supplies that second post type, unlocking archive un-redirection, REST
+ * routes/admin menus, sitemap entries, and XML-RPC methods gated on it.
  *
  * Registered on `init` priority 10, strictly before
  * `Disable_Blog_Admin::modify_post_type_arguments()` /

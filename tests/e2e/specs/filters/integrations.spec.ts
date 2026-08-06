@@ -5,17 +5,12 @@
  * exactly the signal each detector checks: a `Disable_Comments` class for
  * `is_disable_comments_active()`'s `class_exists()` fallback, and a `WC()`
  * function plus a pre-2.6.3 `WC_VERSION` constant for
- * `is_woocommerce_active()`'s `function_exists()` fallback and
- * `woocommerce_version_check()`.
+ * `is_woocommerce_active()`'s `function_exists()` fallback.
  *
- * OBSERVABILITY: `is_disable_comments_active()` reaching `true` makes
- * `plugin_integrations()` force `dwpb_post_types_supporting_comments` false,
- * observable the same way `filters/comments-unsupported.spec.ts` observes it
- * (Comments menu, edit-comments.php redirect). `is_woocommerce_active()`
- * reaching `true` only adds `filter_woocommerce_comment_count()` to
- * `wp_count_comments`, which casts the site-wide count back to an array on
- * an old WooCommerce -- a type WordPress core itself never returns and
- * nothing in this stubbed environment consumes, so `wp-count-comments-type`
+ * `is_woocommerce_active()` reaching `true` only adds
+ * `filter_woocommerce_comment_count()` to `wp_count_comments`, which casts
+ * the site-wide count back to an array on an old WooCommerce -- a type
+ * WordPress core itself never returns, so `wp-count-comments-type`
  * (`config/integrations.ts`) is the only way to see it happen at all.
  */
 

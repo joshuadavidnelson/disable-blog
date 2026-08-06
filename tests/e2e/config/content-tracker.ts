@@ -1,26 +1,10 @@
 /**
- * Guaranteed-cleanup wrapper around the seed helpers in `config/seed.ts`.
+ * Guaranteed-cleanup wrapper around the seed helpers in `config/seed.ts`:
+ * each method records the id it creates, so a spec can seed content without
+ * keeping its own id array and remove it all via `cleanup()` in one call.
  *
- * Each method wraps its `seed.ts` counterpart and records the id, so a spec
- * seeds content without keeping an array of its own. Comments are not
- * tracked: force-deleting their post or page takes them along.
- *
- * A plain object rather than a Playwright fixture, so one instance serves
- * `beforeAll`+`afterAll` and `beforeEach`+`afterEach` alike. `cleanup()`
- * drains the ids it fires against, leaving the tracker reusable, and never
- * throws — safe to call from a hook even when seeding failed.
- *
- * @example
- * const content = createContentTracker();
- * let seededPost: SeededPost;
- *
- * test.beforeAll( async ( { requestUtils } ) => {
- *   seededPost = await content.seedPost( requestUtils, { title: uniqueTitle( 'x' ) } );
- * } );
- *
- * test.afterAll( async ( { requestUtils } ) => {
- *   await content.cleanup( requestUtils );
- * } );
+ * A plain object rather than a Playwright fixture, so one instance can span
+ * both `beforeAll`+`afterAll` and `beforeEach`+`afterEach`.
  *
  * @see tests/e2e/config/seed.ts
  */
@@ -60,16 +44,15 @@ export interface ContentTracker {
 	/** Seed a term via {@link seedTermRaw} and track its id for cleanup. */
 	seedTerm: ( requestUtils: RequestUtils, args: SeedTermArgs ) => Promise< SeededTerm >;
 	/**
-	 * Seed a comment via {@link seedCommentRaw}. Not separately tracked --
-	 * force-deleting its post/page (via {@link ContentTracker.cleanup}) takes
-	 * the comment with it -- wrapped only so a spec can seed everything
-	 * through one object.
+	 * Seed a comment via {@link seedCommentRaw}. Not tracked separately --
+	 * deleting its post/page via {@link ContentTracker.cleanup} takes it too.
 	 */
 	seedComment: ( requestUtils: RequestUtils, args: SeedCommentArgs ) => Promise< SeededComment >;
 	/**
-	 * Remove everything this tracker has seeded so far, via `deletePosts()`/
-	 * `deleteTerms()`. Never throws. Drains its id lists, so the tracker is
-	 * safe to reuse for further seed/cleanup rounds.
+	 * Remove everything seeded so far. Never throws -- safe to call
+	 * unconditionally from an afterEach/afterAll even if the matching seed
+	 * step failed partway through -- and drains its id lists so the tracker
+	 * stays reusable.
 	 */
 	cleanup: ( requestUtils: RequestUtils ) => Promise< void >;
 }

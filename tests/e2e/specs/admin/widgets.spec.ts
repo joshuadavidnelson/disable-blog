@@ -1,38 +1,22 @@
 /**
  * The widget registry (`$wp_widget_factory->widgets`), default plugin state,
- * plus the `dwpb_unregister_widgets` filter it runs through.
+ * and the `dwpb_unregister_widgets` filter it runs through.
  *
- * COVERAGE: `Disable_Blog_Admin::remove_widgets()`, hooked on `widgets_init`,
- * unregisters eight legacy blog widgets, each gated by `dwpb_unregister_widgets`
- * (fired once per widget, `true` by default). `filter_widget_removal()`,
- * hooked onto that same filter, vetoes the removal of WP_Widget_Categories /
- * WP_Widget_Tag_Cloud / WP_Widget_Recent_Comments specifically when another
- * post type still uses their taxonomy/feature.
+ * `wp-admin/widgets.php` `wp_die()`s in this environment — the pinned theme
+ * registers no sidebars, so the widgets screen never renders. Assertions
+ * below read the registry through `dwpb-test/v1/widgets` instead.
  *
- * OBSERVABILITY: `wp-admin/widgets.php` `wp_die()`s outright in this
- * environment (verified directly) — the pinned theme registers no sidebars,
- * so `current_theme_supports( 'widgets' )` is false and neither the classic
- * nor block-based widgets screen ever renders. Every assertion below reads
- * `$wp_widget_factory->widgets` through `dwpb-test/v1/widgets`
- * (`config/widgets.ts`) instead.
+ * WP_Widget_Links is never asserted here: core only registers it when the
+ * (deprecated) Link Manager is on, which is off in this environment
+ * regardless of the plugin.
  *
- * WP_Widget_Links is excluded from every list here on purpose: WordPress
- * core only registers it when the (long-deprecated) Link Manager is on, and
- * `link_manager_enabled` is off in this environment regardless of the
- * plugin — so it's absent in every state below, and asserting that would
- * prove nothing.
- *
- * `cptEnabled` (see filters/cpt-branches.spec.ts) cannot exercise
+ * `cptEnabled` (filters/cpt-branches.spec.ts) can't exercise
  * `filter_widget_removal()`'s taxonomy branches: `wp_widgets_init()` runs on
- * `init` at priority 1, while the fixture's `register_post_type( 'news',
- * ... )` call runs on `init` at priority 10 — 'news' does not exist yet when
- * `remove_widgets()` reads `dwpb_post_types_with_tax()` (verified directly:
- * toggling the fixture on leaves the registry unchanged). The generic
- * `dwpb_taxonomy_support` override (already used in
- * filters/taxonomy-support-override.spec.ts) and the
- * `dwpb_post_types_supporting_comments` override
- * (filters/comments-unsupported.spec.ts) reach the exact same downstream
- * branches without that ordering problem, so they stand in below.
+ * `init` priority 1, before the fixture's `register_post_type()` call at
+ * priority 10, so the taxonomy doesn't exist yet when `remove_widgets()`
+ * checks it. The `dwpb_taxonomy_support` and
+ * `dwpb_post_types_supporting_comments` overrides reach the same branches
+ * without that ordering problem, so they stand in below.
  */
 
 /**
@@ -47,12 +31,10 @@ import { registeredWidgets } from '../../config/widgets';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 /**
- * Widgets `remove_widgets()` unregisters in the default environment.
  * `WP_Widget_Categories` and `WP_Widget_Tag_Cloud` do have a veto branch in
- * `filter_widget_removal()` (see the "conditional widgets restored" describe
- * block below, which triggers it) — it just isn't reached by default, since
- * no other post type supports the category/post_tag taxonomies out of the
- * box. The other four widgets have no veto branch at all.
+ * `filter_widget_removal()` (see "conditional widgets restored" below); it
+ * just isn't reached by default, since no other post type supports the
+ * category/post_tag taxonomies out of the box.
  */
 const REMOVED_BY_DEFAULT = [
 	'WP_Widget_Tag_Cloud',
@@ -71,9 +53,7 @@ test.describe( 'admin: widgets registry (default state)', () => {
 			expect( registered ).not.toContain( widget );
 		}
 
-		// Control: proves the route reports the real registry rather than
-		// something that reads empty regardless — core widgets outside the
-		// plugin's removal list are still there.
+		// Control: core widgets outside the plugin's removal list are still there.
 		expect( registered ).toContain( 'WP_Widget_Search' );
 		expect( registered ).toContain( 'WP_Widget_Pages' );
 	} );
@@ -84,9 +64,7 @@ test.describe( 'admin: widgets registry (default state)', () => {
 		const registered = await registeredWidgets( requestUtils );
 
 		// 'page' and 'attachment' both support 'comments' out of the box, so
-		// dwpb_post_types_with_feature( 'comments' ) is truthy here without any
-		// fixture at all — filter_widget_removal() vetoes the removal. Proven
-		// non-vacuous below: forcing that support false removes it.
+		// filter_widget_removal() vetoes the removal without any fixture at all.
 		expect( registered ).toContain( 'WP_Widget_Recent_Comments' );
 	} );
 } );
@@ -152,9 +130,6 @@ test.describe( 'admin: widgets registry — dwpb_unregister_widgets override', (
 	} ) => {
 		const registered = await registeredWidgets( requestUtils );
 
-		// Every widget the default-state test above proved gone is back,
-		// including the ones filter_widget_removal() never touches — the raw
-		// filter return value alone controls unregister_widget() here.
 		for ( const widget of REMOVED_BY_DEFAULT ) {
 			expect( registered ).toContain( widget );
 		}
