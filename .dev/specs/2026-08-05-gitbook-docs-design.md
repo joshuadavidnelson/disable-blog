@@ -2,6 +2,7 @@
 
 **Date:** 2026-08-05
 **Status:** Approved
+**Documents plugin version:** 0.5.6
 
 ## Goal
 
@@ -12,16 +13,28 @@ uninstall, and extend the plugin.
 The docs will publish at `docs.disable.blog`. Until that is live, all internal links are
 relative so they resolve correctly on GitHub.
 
+## Version and branch
+
+This branch is based on `stable` (0.5.5), but the docs describe **0.5.6**, which is in
+development on `e2e/playwright`. 0.5.6 changes the public filter surface enough that
+documenting 0.5.5 would be wrong on release day.
+
+Every source detail is read from `e2e/playwright`, not from the checked-out `stable`
+tree.
+
+Only new files are added, so nothing conflicts with the 0.5.6 work in flight.
+
 ## Writing rules
 
 These apply to every page.
 
 - No em dashes.
 - Brief, plainly readable by end users. Short declarative sentences, second person.
-- Document the plugin's current released state. Include version nuance only when it
-  changes what a user sees or does, written as a "Changed in X.Y.Z" callout.
-- No references to intermediate work, branches, or internal process. If it does not
+- Document the plugin's released behavior. Include version nuance only when it changes
+  what a user sees or does, written as a "Changed in X.Y.Z" callout.
+- Do not document bugs, known issues, or anything about work in progress. If it does not
   impact a user on a release branch, it does not go in.
+- No references to branches, refactors, or internal process.
 
 Match the conventions in the archived-post-status `docs/` folder:
 `{% hint style="warning" %}` for cautions, `{% code overflow="wrap" %}` for shell and PHP
@@ -65,15 +78,15 @@ structure:
 
 ## Files modified
 
-**`README.md`.** Keeps the badges, description, static front page warning, support,
-contributing, and local development sections. The "How does this plugin work?" list and
-the FAQ section are replaced by a Documentation section linking into `docs/` with
-relative paths.
+None. `README.md`, `readme.txt`, and `.distignore` are left untouched so the 0.5.6 work
+in flight can absorb those edits.
 
-**`.distignore`.** Add `/docs/` and `.gitbook.yaml` so neither ships in the
-WordPress.org plugin ZIP. The current file excludes neither.
+Two follow-ups are handed back rather than done here:
 
-**`readme.txt`.** Untouched. The WordPress.org readme stays self-contained.
+1. `.distignore` needs `/docs/` and `.gitbook.yaml` added, or the docs ship inside the
+   WordPress.org plugin ZIP. The current file excludes neither.
+2. `README.md` can drop its "How does this plugin work?" list and FAQ in favor of links
+   into `docs/`, once the docs are live.
 
 ## Table of contents
 
@@ -123,10 +136,11 @@ comment handling, dashboard widgets, Reading and Writing settings, the user tabl
 to Pages column swap, taxonomy count corrections, and the Site Health REST check
 replacement.
 
-The admin redirect table lists only the screens that actually redirect in 0.5.5:
-`post.php`, `edit.php`, `post-new.php`, `edit-tags.php`, `edit-comments.php`,
-`options-discussion.php`, and `options-writing.php`. Tools is described as removed from
-the menu, not redirected.
+The admin redirect table lists all nine screens that redirect: `post.php`, `edit.php`,
+`post-new.php`, `term.php`, `edit-tags.php`, `edit-comments.php`,
+`options-discussion.php`, `options-writing.php`, and `tools.php`.
+
+Dashboard widgets removed are Quick Press and Activity.
 
 **Your Content & Data.** Nothing is deleted. Posts, categories, tags, and comments stay
 in the database but become inaccessible while the plugin is active. Explains how to
@@ -150,7 +164,7 @@ entries grouped by area: Redirects, Front-End, Admin, and Post Types & Taxonomie
 entry gives a description, Since version, parameters, return value, and a runnable
 example.
 
-Covers 25 named filters:
+Covers 26 named filters:
 
 `dwpb_pass_query_string_on_redirect`, `dwpb_allowed_query_vars`,
 `dwpb_redirect_status_code`, `dwpb_redirect_front_end`, `dwpb_front_end_redirect_url`,
@@ -159,40 +173,39 @@ Covers 25 named filters:
 `dwpb_disable_author_archives`, `dwpb_author_archive_post_types`,
 `dwpb_tag_post_types`, `dwpb_category_post_types`, `dwpb_taxonomy_support`,
 `dwpb_disabled_xmlrpc_methods`, `dwpb_remove_pingback_header`,
-`dwpb_disable_user_sitemap`, `dwpb_menu_pages_to_remove`,
-`dwpb_menu_subpages_to_remove`, `dwpb_remove_options_writing`,
-`dwpb_unregister_widgets`, `dwpb_admin_user_post_types`, and
-`dpwb_disable_user_post_column`.
+`dwpb_disable_user_sitemap`, `dwpb_disable_removed_sitemaps`,
+`dwpb_menu_pages_to_remove`, `dwpb_menu_subpages_to_remove`,
+`dwpb_remove_options_writing`, `dwpb_unregister_widgets`,
+`dwpb_admin_user_post_types`, and `dwpb_disable_user_post_column`.
 
-Plus the six front-end redirect filters built from the page being viewed:
+Plus the six front-end redirect filters, named for the page being viewed:
 `dwpb_redirect_post`, `dwpb_redirect_post_tag_archive`,
 `dwpb_redirect_category_archive`, `dwpb_redirect_blog_page`,
 `dwpb_redirect_date_archive`, and `dwpb_redirect_author_archive`.
 
-Plus the seven admin redirect filters that fire: `dwpb_redirect_admin_post`,
+Plus the nine admin redirect filters: `dwpb_redirect_admin_post`,
 `dwpb_redirect_admin_edit`, `dwpb_redirect_admin_post_new`,
-`dwpb_redirect_admin_edit_tags`, `dwpb_redirect_admin_edit_comments`,
-`dwpb_redirect_admin_options_discussion`, and `dwpb_redirect_admin_options_writing`.
+`dwpb_redirect_admin_term`, `dwpb_redirect_admin_edit_tags`,
+`dwpb_redirect_admin_edit_comments`, `dwpb_redirect_admin_options_discussion`,
+`dwpb_redirect_admin_options_writing`, and `dwpb_redirect_admin_tools`.
 
 Plus three dynamic filters: `dwpb_post_types_supporting_{$feature}`,
-`dwpb_disable_{$metabox_id}` (the four dashboard widgets are `dashboard_quick_press`,
-`dashboard_recent_drafts`, `dashboard_incoming_links`, and `dashboard_activity`), and
-`dpwb_create_user_{$post_type}_column`.
+`dwpb_disable_{$metabox_id}` (valid IDs are `dashboard_quick_press` and
+`dashboard_activity`), and `dwpb_create_user_{$post_type}_column`.
 
 Plus the `dwpb_init` action.
 
-Two filters are misspelled in the source, using `dpwb` rather than `dwpb`:
-`dpwb_disable_user_post_column` and `dpwb_create_user_{$post_type}_column`. Document
-them exactly as they are, with a short note, since renaming them would break sites.
+A short Deprecated section at the end covers the three filters renamed in 0.5.6. Each
+still works through `apply_filters_deprecated()`, and each entry names its replacement:
+
+| Deprecated | Use instead |
+| --- | --- |
+| `dwpb_redirect_admin_options_tools` | `dwpb_redirect_admin_tools` |
+| `dpwb_disable_user_post_column` | `dwpb_disable_user_post_column` |
+| `dpwb_create_user_{$post_type}_column` | `dwpb_create_user_{$post_type}_column` |
 
 Do not document `https_local_ssl_verify`. That is a WordPress core filter the plugin
 re-applies inside its Site Health check, not a plugin filter.
-
-Do not document `dwpb_redirect_admin_term` or `dwpb_redirect_admin_tools`. Neither
-fires in 0.5.5, so neither belongs in the docs until the underlying issue is resolved.
-For the same reason, the Admin Changes page must not claim that the Tools screen
-redirects to the dashboard. It is removed from the menu, which is what the docs should
-say.
 
 **PHP Functions.** `dwpb_post_types_with_feature()` and `dwpb_post_types_with_tax()`.
 Signature, parameters, return value, examples, and the caching behavior.
@@ -209,21 +222,18 @@ add your own integration.
 ### Changelog
 
 A GitBook GitHub code-block embed pointing at `CHANGELOG.md` on the `stable` branch, the
-same pattern archived-post-status uses.
+same pattern archived-post-status uses. It picks up 0.5.6 automatically once that
+release merges.
 
 ## Accuracy
 
 Every filter entry takes its Since version, default value, and parameter list from the
-source rather than from inference. Where a docblock disagrees with the code, the code
-wins. Every code example is written to run as given.
-
-The docs describe what 0.5.5 actually does, which in two places differs from what
-`README.md` currently claims. The Tools screen redirect is the known case. Any other
-mismatch found while writing is resolved in favor of the code, and noted here.
+0.5.6 source rather than from inference. Where a docblock disagrees with the code, the
+code wins. Every code example is written to run as given.
 
 ## Out of scope
 
 - Screenshots. The pages are structured so images can be added later without rewriting.
   `docs/.gitbook/assets/` is created empty and ready.
-- Changes to `readme.txt`.
+- Any edit to `README.md`, `readme.txt`, or `.distignore`.
 - Any change to plugin behavior.
