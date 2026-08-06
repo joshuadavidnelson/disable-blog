@@ -3,8 +3,7 @@
  * `dwpb_pass_query_string_on_redirect` + `dwpb_allowed_query_vars`,
  * `dwpb_front_end_redirect_url`), toggled via `setFilterOverrides()` rather
  * than plugin defaults. Assertions run request-layer, same reasoning as
- * `redirects.spec.ts`; the describe block is anonymous, requestUtils stays
- * admin-authenticated for seeding/override setting.
+ * `redirects.spec.ts`.
  */
 
 /**

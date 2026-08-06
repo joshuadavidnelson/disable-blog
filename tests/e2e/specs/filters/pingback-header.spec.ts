@@ -1,23 +1,16 @@
 /**
  * `dwpb_remove_pingback_header`, via the generic filter-override mechanism.
  *
- * Two call sites strip the X-Pingback header: `filter_wp_headers()` on the
- * `wp_headers` filter (fires while `WP::send_headers()` builds the header
- * array) and `remove_pingback_header_fallback()` on `wp` (fires after
- * `send_headers()`, on every request, not just 404s -- per `WP::main()`'s
- * hook order: `handle_404()` -> `send_headers()` -> the `'wp'` action). The
- * fallback exists for core < 6.2, where `WP::handle_404()` sent X-Pingback
- * via a direct `header()` call that ran after `wp_headers` and so escaped
- * `filter_wp_headers()`.
+ * Two call sites strip the X-Pingback header: `filter_wp_headers()` on
+ * `wp_headers`, and `remove_pingback_header_fallback()` on `wp` (added to
+ * catch core < 6.2, which sent X-Pingback via a direct `header()` call in
+ * `WP::handle_404()` that bypassed `wp_headers` entirely).
  *
  * On the core version this suite runs against, `WP::send_headers()` only
- * ever adds X-Pingback for `is_singular()` requests with pings open, and
- * `WP::handle_404()` makes no `header()` call of its own. A 404 therefore
- * never carries the header, with or without this filter -- there is no
- * request that isolates `remove_pingback_header_fallback()`'s branch from
- * `filter_wp_headers()`'s, so the single-page test below is the
- * load-bearing coverage for both call sites (`remove_pingback_header_fallback()`
- * also runs on that same request, redundantly with `filter_wp_headers()`).
+ * ever adds X-Pingback for `is_singular()` requests, and `handle_404()`
+ * makes no `header()` call of its own -- so no request can isolate the
+ * fallback from `filter_wp_headers()`; the single-page test below covers
+ * both call sites at once.
  *
  * Control: frontend/search-and-head.spec.ts asserts the header is stripped
  * at the filter's shipped default (`true`).
@@ -44,9 +37,8 @@ test.describe( 'filters: X-Pingback header override (dwpb_remove_pingback_header
 	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
-		// pingStatus 'open' on a page so pings_open() is true and core would
-		// set X-Pingback absent the plugin's filter (mirrors
-		// frontend/search-and-head.spec.ts).
+		// pingStatus 'open' so pings_open() is true and core would set
+		// X-Pingback absent the plugin's filter.
 		pageWithPingsOpen = await content.seedPage( requestUtils, {
 			title: uniqueTitle( 'pingback header override page' ),
 			pingStatus: 'open',

@@ -1,14 +1,12 @@
 /**
  * The admin comments list table (`edit-comments.php`), default plugin state.
  *
- * COVERAGE:
- *  - `Disable_Blog_Admin::comment_filter()`, hooked on `pre_get_comments`,
- *    scopes the query's `post_type` to `dwpb_post_types_with_feature(
- *    'comments' )` -- 'page'/'attachment' by default -- structurally
- *    excluding every comment on a 'post'.
- *  - `Disable_Blog_Admin::filter_admin_table_comment_count()`, hooked on
- *    `views_edit-comments`, rewrites each view's count using the same
- *    post-type-scoped SQL rather than trusting `wp_count_comments()`'s cache.
+ * `comment_filter()` (on `pre_get_comments`) scopes the query's post_type to
+ * `dwpb_post_types_with_feature( 'comments' )` -- 'page'/'attachment' by
+ * default -- excluding every comment on a 'post'.
+ * `filter_admin_table_comment_count()` rewrites each view's count with the
+ * same post-type-scoped SQL rather than trusting `wp_count_comments()`'s
+ * cache.
  */
 
 /**
@@ -106,7 +104,6 @@ test.describe( 'admin: comments list table (default state)', () => {
 		} );
 
 		test.afterEach( async ( { requestUtils } ) => {
-			// Force-deleting the post/page also deletes its comments.
 			await content.cleanup( requestUtils );
 		} );
 

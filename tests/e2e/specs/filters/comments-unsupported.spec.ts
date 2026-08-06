@@ -1,21 +1,14 @@
 /**
  * wp-admin behaviour when `dwpb_post_types_with_feature( 'comments' )` is
  * forced false via a `dwpb_post_types_supporting_comments` override.
- * `page`/`attachment` support comments by default in this environment, so
- * this spec flips that gate and asserts the opposite of default-state
- * coverage: the Comments menu, Discussion settings submenu, and admin-bar
+ * `page`/`attachment` support comments by default, so this spec flips that
+ * gate: the Comments menu, Discussion settings submenu, and admin-bar
  * comments bubble disappear, and `edit-comments.php`/`options-discussion.php`
  * redirect to the dashboard (both return a plain boolean `true`, which
  * `redirect_admin_pages()` special-cases to `admin_url( 'index.php' )`).
  *
- * All five tests share one beforeAll/afterAll override since none mutate
- * content another test depends on.
- *
  * The Dashboard's JS-console regression guard for this state lives in
- * `admin/dashboard-console.spec.ts` instead of here — that spec binds
- * `pageerror` and pairs it with a control proving the script still runs
- * elsewhere in this state, which this file's other tests don't need to
- * duplicate.
+ * `admin/dashboard-console.spec.ts` instead of here.
  */
 
 /**

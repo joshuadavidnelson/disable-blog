@@ -1,15 +1,10 @@
 /**
  * The wp-admin toolbar (`#wpadminbar`), default plugin state.
  *
- * COVERAGE: `Disable_Blog_Admin::remove_admin_bar_links()`, hooked on
- * `wp_before_admin_bar_render`, always removes the 'new-post' node and, when
- * comments are unsupported, would also remove the comments menu — not the
- * case here (see `admin-menu.spec.ts`).
- *
  * The comments bubble count comes from `filter_wp_count_comments()`, which
- * reads `wp_count_comments()->moderated` (pending, not approved/total
- * comments), scoped to comment-supporting post types — so tests below seed
- * *pending* comments on posts vs. pages to prove that scoping.
+ * reads `wp_count_comments()->moderated` (pending, not approved/total), so
+ * tests below seed *pending* comments on posts vs. pages to prove the
+ * comment-supporting-post-types scoping.
  *
  * Dropdown children (`new-post`/`new-page`) are CSS-hidden until the parent
  * is hovered, so presence is asserted with `toHaveCount()`, not

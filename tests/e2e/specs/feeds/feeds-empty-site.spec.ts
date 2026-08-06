@@ -1,15 +1,16 @@
 /**
  * Main feed behaviour on a site with zero 'post' content.
  *
- * Fixed since 0.5.5: `disable_feed()` used to key off the global `$post`,
- * which `WP_Query` never populates for a zero-result query, so an empty site
- * let core render a normal 200 feed instead of redirecting. It now gates on
- * `is_post_feed_request()`, a query-based check, so `/feed/` redirects
- * regardless of post count.
+ * @since 0.5.5 `/feed/` redirects regardless of post count. Previously
+ * `disable_feed()` keyed off the global `$post`, which `WP_Query` never
+ * populates for a zero-result query, so an empty site rendered a normal 200
+ * feed instead. It now gates on `is_post_feed_request()`, a query-based
+ * check.
  *
- * `beforeAll` wipes every post via `delete-all-posts` so test 1 proves a
- * genuinely empty site rather than depending on other specs' cleanup — every
- * other spec tears down its own uniquely-titled content, so this is safe.
+ * `beforeAll` wipes every post via `delete-all-posts` so the first test
+ * proves a genuinely empty site rather than depending on other specs'
+ * cleanup — every other spec tears down its own uniquely-titled content, so
+ * this is safe.
  */
 
 /**
@@ -39,7 +40,7 @@ test.describe( 'feeds: empty site', () => {
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		// Cleans up whatever test 2 seeded, leaving the site at zero posts.
+		// Cleans up whatever the second test seeded, leaving the site at zero posts.
 		await content.cleanup( requestUtils );
 	} );
 

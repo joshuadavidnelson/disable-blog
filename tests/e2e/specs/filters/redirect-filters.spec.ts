@@ -6,8 +6,6 @@
  * govern admin redirects, since both paths share the same `redirect()`
  * method), and isolation showing the front-end kill switch
  * (`dwpb_redirect_front_end`) has no reach into admin redirects.
- *
- * Uses the project's default authenticated admin session throughout.
  */
 
 /**
@@ -47,8 +45,6 @@ test.describe( 'filters: admin redirect filters (override-driven)', () => {
 			dwpb_redirect_admin: false,
 		} );
 
-		// With dwpb_redirect_admin forced false, the plugin's usual 301 to
-		// the pages list never fires.
 		const response = await request.get( adminUrl( 'edit.php' ), {
 			maxRedirects: 0,
 		} );
@@ -60,9 +56,8 @@ test.describe( 'filters: admin redirect filters (override-driven)', () => {
 		).not.toBe( editPageTarget );
 
 		// Not a 200 either: modify_post_type_arguments() separately sets
-		// show_ui false on 'post', independently of dwpb_redirect_admin, so
-		// edit.php is still inaccessible and core's own capability check
-		// wp_die()s with 500.
+		// show_ui false on 'post', so core's own capability check wp_die()s
+		// with 500 regardless of dwpb_redirect_admin.
 		const status = response.status();
 		expect( status ).toBe( 500 );
 
@@ -126,11 +121,9 @@ test.describe( 'filters: global admin redirect override (dwpb_admin_redirect_url
 		request,
 	} ) => {
 		// dwpb_admin_redirect_url runs unconditionally after the per-page
-		// loop in redirect_admin_pages(), even when nothing in that loop
-		// matched — unlike the per-page filters, it can force a redirect on
-		// a screen the plugin otherwise leaves alone. The pages list is a
-		// plain 200 by default (see admin-redirects.spec.ts), so a redirect
-		// here can only come from this filter.
+		// loop, even when nothing in that loop matched, so it can force a
+		// redirect on a screen the plugin otherwise leaves alone. The pages
+		// list is a plain 200 by default (see admin-redirects.spec.ts).
 		await expectRedirect( request, editPhp( 'page' ), overrideUrl );
 	} );
 } );

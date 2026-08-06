@@ -1,16 +1,15 @@
 /**
- * Core XML sitemap index behaviour, default plugin state. `wp_sitemaps_post_types()`
- * unsets 'post'; `wp_sitemaps_taxonomies()` unsets category/post_tag (default,
- * since only 'post' supports them); `wp_author_sitemaps()` removes the
- * 'users' provider via `wp_sitemaps_add_provider`. Content-type checks look
- * for `xml` rather than the exact charset string, so a core version bump
- * can't break this suite for no reason.
+ * Core XML sitemap index behaviour, default plugin state.
+ * `wp_sitemaps_taxonomies()` unsets category/post_tag by default, since only
+ * 'post' supports them. Content-type checks look for `xml` rather than the
+ * exact charset string, so a core version bump can't break this suite for
+ * no reason.
  *
- * Fixed since 0.5.5: requesting `/wp-sitemap-users-1.xml` directly used to
- * fall through to the normal template and leak post content as HTML 200,
- * because removing the 'users' provider (via wp_sitemaps_add_provider)
- * leaves core nothing to 404 against, unlike posts/taxonomies which unset()
- * array entries and 404 on their own. `disable_removed_sitemaps()` now
+ * @since 0.5.5 Requesting `/wp-sitemap-users-1.xml` directly 404s. Removing
+ * the 'users' provider (via `wp_sitemaps_add_provider`) leaves core nothing
+ * to 404 against, unlike posts/taxonomies which unset() array entries and
+ * 404 on their own, so this previously fell through to the normal template
+ * and leaked post content as HTML 200. `disable_removed_sitemaps()` now
  * resolves the request against the live provider registry and 404s it.
  */
 

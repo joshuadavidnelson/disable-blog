@@ -1,15 +1,10 @@
 /**
  * XML-RPC endpoint behaviour (`Disable_Blog_Public::xmlrpc_methods()` on the
- * `xmlrpc_methods` filter), default plugin state. It unsets a fixed method
- * list plus, conditionally, taxonomy methods (removed by default, since only
- * 'post' supports category/post_tag out of the box). The endpoint itself
- * stays up; a removed method faults with IXR fault code -32601 rather than
+ * `xmlrpc_methods` filter), default plugin state. Taxonomy methods are
+ * removed by default, since only 'post' supports category/post_tag out of
+ * the box. A removed method faults with IXR fault code -32601 rather than
  * failing the connection, and that lookup happens before params are read, so
  * fault tests can send empty param lists.
- *
- * Regression guard: the removal list's `wp.deleteCategory` entry must stay
- * correctly spelled -- a misspelling there silently leaves the real method
- * reachable.
  *
  * `system.*` methods (listMethods, multicall, getCapabilities) can never be
  * removed via this filter — IXR_Server::setCallbacks() re-registers them

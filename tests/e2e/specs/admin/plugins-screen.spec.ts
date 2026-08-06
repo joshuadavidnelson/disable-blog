@@ -2,19 +2,14 @@
  * The plugin's own row on the Plugins screen (`plugins.php`), default plugin
  * state.
  *
- * COVERAGE: `Disable_Blog_Admin::plugin_links()`, hooked on `plugin_row_meta`
- * and gated on `current_user_can( 'install_plugins' )`, appends Support,
- * Review, Donate, and GitHub links to the plugin's row-meta.
- *
- * The second describe block below exercises that gate directly: an editor
- * (who has neither `activate_plugins` nor `install_plugins`) never reaches
- * `plugin_links()` at all -- core's own screen-level `activate_plugins` check
- * on the whole of `plugins.php` stops them first, with an explicit 403. Stock
- * WordPress roles grant `install_plugins` and `activate_plugins` together (to
- * Administrator only), so proving `plugin_links()`'s own check is reachable
- * needs a role that splits the two: `dwpb_activate_only` has `activate_plugins`
- * (clears core's wall) but not `install_plugins` (still blocked by the
- * plugin's own check), created and torn down via WP-CLI for this file alone.
+ * The second describe block exercises `plugin_links()`'s own
+ * `install_plugins` gate directly. Stock WordPress roles grant
+ * `install_plugins` and `activate_plugins` together (Administrator only), so
+ * an editor never reaches `plugin_links()` at all -- core's own
+ * screen-level `activate_plugins` check on `plugins.php` stops them first
+ * with a 403. Proving the plugin's own check needs a role that splits the
+ * two: `dwpb_activate_only` has `activate_plugins` (clears core's wall) but
+ * not `install_plugins` (still blocked by the plugin's own check).
  */
 
 /**

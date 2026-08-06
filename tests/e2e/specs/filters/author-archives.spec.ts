@@ -10,8 +10,6 @@
  * true; the CPT-backed describe block deliberately leaves
  * `dwpb_disable_author_archives` unset so its sitemap test isolates the
  * post-types-empty condition specifically.
- *
- * Front-end tests run anonymous; admin-screen tests use the default admin session.
  */
 
 /**

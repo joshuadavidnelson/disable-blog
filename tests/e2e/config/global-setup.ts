@@ -50,15 +50,10 @@ async function globalSetup( config: FullConfig ): Promise< void > {
 		);
 	}
 
-	// The plugin under test must be active before anything else touches
-	// content or settings.
 	await requestUtils.activatePlugin( PLUGIN_SLUG );
 
-	// Seed the Home/Blog pages and reading settings the redirect behaviour
-	// depends on.
 	await setupSite( requestUtils );
 
-	// Start from a clean content set and stock fixture behaviour.
 	await resetContent( requestUtils );
 	await resetFixtures( requestUtils );
 	await resetFilterOverrides( requestUtils );

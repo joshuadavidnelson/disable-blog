@@ -273,8 +273,7 @@ class Disable_Blog_Admin {
 				 */
 				$redirect_url = apply_filters( $filter, $url );
 
-				// Back-compat: honor the old filter name too, since the redirect it
-				// belonged to never actually fired before this fix.
+				// Back-compat: keep firing the pre-0.5.6 filter name for existing hooks.
 				if ( 'tools' === $pagename ) {
 					$redirect_url = apply_filters_deprecated( 'dwpb_redirect_admin_options_tools', array( $redirect_url ), '0.5.6', 'dwpb_redirect_admin_tools' );
 				}
@@ -609,12 +608,9 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.1.0
 	 * @since 0.4.1 dry out the code with a foreach loop
-	 * @since 0.5.6 removed 'dashboard_recent_drafts' and 'dashboard_incoming_links':
-	 *              neither is a metabox core registers on any supported WordPress
-	 *              version, so remove_meta_box() for either was always a no-op.
-	 *              "Recent Drafts" renders inline inside the Quick Press widget's
-	 *              own callback rather than as its own postbox, and "Incoming
-	 *              Links" was removed from core entirely in WordPress 3.8.
+	 * @since 0.5.6 removed 'dashboard_recent_drafts' (renders inline inside Quick
+	 *              Press, never its own metabox) and 'dashboard_incoming_links'
+	 *              (removed from core in WP 3.8) -- both were no-ops.
 	 * @return void
 	 */
 	public function remove_dashboard_widgets() {

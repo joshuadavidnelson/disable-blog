@@ -15,20 +15,15 @@
  *
  * Each object form takes an optional "priority" (default 10).
  *
- * Registered at file scope rather than deferred to an action: mu-plugins
- * load before regular plugins, so add_filter() calls made here are in place
- * long before the plugin's own files run, including its dynamically-built
- * hook names -- e.g. `'dwpb_redirect_' . $filtername` in
- * Disable_Blog_Public::redirect_public_pages(), `'dwpb_' . $function` in
- * Disable_Blog_Admin::redirect_admin_pages(), `"dwpb_disable_{$metabox_id}"`,
- * `"dpwb_create_user_{$post_type}_column"` -- which never appear as string
- * literals anywhere for a bespoke fixture to hook.
+ * Registered at file scope, not deferred to an action: mu-plugins load
+ * before regular plugins, so these add_filter() calls are already in place
+ * before the plugin's own dynamically-built hook names (e.g.
+ * `'dwpb_redirect_' . $filtername`) ever fire, even though those names never
+ * appear as string literals for a bespoke fixture to hook.
  *
  * SECURITY GUARD: only hook names starting with `dwpb_` or the plugin's own
- * `dpwb_` typo-prefix (see `dpwb_disable_user_post_column` and
- * `"dpwb_create_user_{$post_type}_column"` in class-disable-blog-admin.php)
- * are registered; anything else is silently skipped, so this fixture can't
- * become a general-purpose arbitrary-hook injection surface.
+ * `dpwb_` typo-prefix are registered; anything else is silently skipped, so
+ * this can't become a general-purpose arbitrary-hook injection surface.
  *
  * @package Disable_Blog\TestFixtures
  */
@@ -159,9 +154,8 @@ function dwpb_test_filters_register_overrides() {
 
 	$overrides = json_decode( $raw, true );
 
-	// Malformed or non-object JSON decodes to a non-array here; PHP's
-	// foreach() below already tolerates that with a warning rather than a
-	// fatal, but this keeps the map's shape guaranteed for the loop body.
+	// Malformed or non-object JSON decodes to a non-array; bail explicitly
+	// rather than let the foreach() below tolerate it with a PHP warning.
 	if ( ! is_array( $overrides ) ) {
 		return;
 	}
@@ -187,10 +181,8 @@ function dwpb_test_filters_register_overrides() {
 				return dwpb_test_filters_transform( $resolved['mode'], $resolved['value'], $incoming );
 			},
 			$resolved['priority'],
-			// Accepts up to 10 args: covers every plugin filter (max is 5), and
-			// only the first is ever transformed -- WP passes exactly however
-			// many the caller's own apply_filters() supplied, never more, so a
-			// generous accepted_args here can't corrupt a multi-arg filter.
+			// A generous accepted_args is safe: WP passes only however many
+			// args the caller's apply_filters() actually supplied.
 			10
 		);
 	}

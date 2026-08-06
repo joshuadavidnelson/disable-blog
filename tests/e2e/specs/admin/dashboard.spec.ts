@@ -1,13 +1,9 @@
 /**
  * The wp-admin Dashboard (`index.php`), default plugin state.
  *
- * COVERAGE: `Disable_Blog_Admin::remove_dashboard_widgets()`, hooked on
- * `admin_init`, calls `remove_meta_box()` for `dashboard_quick_press` and
- * `dashboard_activity` unconditionally (each via its own
- * `dwpb_disable_{$metabox_id}` filter, both defaulting to true) — both are
- * asserted here. Separately, `disable-blog-admin.css` unconditionally hides
- * `#dashboard_right_now`'s post/comment counts (not the page count)
- * regardless of the `.disabled-blog` body class.
+ * `disable-blog-admin.css` hides `#dashboard_right_now`'s post/comment
+ * counts (not the page count) unconditionally, regardless of the
+ * `.disabled-blog` body class.
  */
 
 /**

@@ -1,25 +1,20 @@
 /**
  * Direct coverage for the generic filter-override *resolver* itself
  * (`dwpb_test_filters_resolve_spec()` + `dwpb_test_filters_transform()` in
- * `dwpb-test-filters.php`), not just the plugin filters it happens to be
- * used to override elsewhere in this suite. That mechanism now backs most of
- * `filters/*.spec.ts`, so a silent bug in its decoding -- e.g. `append`
- * quietly doing nothing, `priority` being ignored, an unrecognized spec
- * shape being guessed at instead of skipped -- would make many of those
- * specs pass vacuously rather than fail.
+ * `dwpb-test-filters.php`), not just the plugin filters it's used to
+ * override elsewhere. That mechanism now backs most of `filters/*.spec.ts`,
+ * so a silent decoding bug -- `append` doing nothing, `priority` ignored, an
+ * unrecognized spec shape guessed at instead of skipped -- would make many
+ * of those specs pass vacuously rather than fail.
  *
- * Three ways in, matching the three things this file can get wrong:
+ * Three entry points, matching three things this file can get wrong:
  *
- * 1. The resolver's own decode/transform logic, via the
- *    `dwpb-test/v1/resolve-filter-override` probe route, which calls that
- *    exact code directly (see `config/filter-overrides.ts`). No hook ever
- *    fires here -- the probe skips the `dwpb_`/`dpwb_` name guard entirely.
- * 2. That name guard itself, which only applies in the real registration
- *    path, so it needs an override set through `setFilterOverrides()` and a
- *    real hook to observe.
- * 3. `dwpb_test_filter_overrides` holding malformed JSON, also only
- *    observable through the real registration path (it's decoded once, at
- *    mu-plugin load time).
+ * 1. The resolver's decode/transform logic, via the
+ *    `dwpb-test/v1/resolve-filter-override` probe route, which skips the
+ *    `dwpb_`/`dpwb_` name guard entirely.
+ * 2. That name guard itself, only enforced on the real registration path.
+ * 3. `dwpb_test_filter_overrides` holding malformed JSON, decoded once at
+ *    mu-plugin load time -- also only observable via the real path.
  */
 
 /**
@@ -82,11 +77,10 @@ test.describe( 'filters: generic filter-override resolver (probe route)', () => 
 	} );
 
 	test( 'a "remove" override array_diff()s from an incoming array', async ( { requestUtils } ) => {
-		// The removed element sits last in `incoming`: array_diff() preserves
-		// the surviving elements' original keys rather than reindexing, so
-		// removing from the middle would leave a non-contiguous ['0' => 'a',
-		// '2' => 'c'] that round-trips through JSON as an object, not an array
-		// -- a distraction from what this test is actually checking.
+		// The removed element sits last: array_diff() preserves surviving
+		// elements' original keys rather than reindexing, so removing from
+		// the middle would leave a non-contiguous result that round-trips
+		// through JSON as an object, not an array.
 		const result = await resolveFilterOverride(
 			requestUtils,
 			{ remove: [ 'remove-me' ] },
@@ -97,10 +91,7 @@ test.describe( 'filters: generic filter-override resolver (probe route)', () => 
 
 	// Both modes cast a non-array incoming value with PHP's (array) operator
 	// before combining it with the override -- (array) "x" becomes [0 => "x"],
-	// (array) null becomes [] -- rather than skip the merge/diff. That's the
-	// standard, deterministic behaviour of PHP's array cast, applied the same
-	// way regardless of the incoming value's type, so the two assertions below
-	// describe intended behaviour rather than a bug.
+	// (array) null becomes [] -- rather than skip the merge/diff.
 	test( 'an "append" override given a non-array incoming value wraps that value at index 0', async ( {
 		requestUtils,
 	} ) => {
@@ -168,9 +159,8 @@ test.describe( 'filters: generic filter-override resolver -- hook-name guard (re
 	} ) => {
 		await setFilterOverrides( requestUtils, {
 			// 'the_content' fires on every page render, unlike a made-up name
-			// such as 'evil_dwpb_thing' that nothing in WordPress or the plugin
-			// ever calls -- an override on a hook nobody fires would "have no
-			// effect" whether or not the guard worked, proving nothing either way.
+			// that nothing ever calls -- an override on a hook nobody fires
+			// would "have no effect" whether or not the guard worked.
 			the_content: { set: 'DWPB-GUARD-SHOULD-NEVER-APPEAR' },
 		} );
 
@@ -191,21 +181,18 @@ test.describe( 'filters: generic filter-override resolver -- malformed JSON safe
 		request,
 		requestUtils,
 	} ) => {
-		// A regression guard rather than proof today's code can fatal on this
-		// input: PHP's foreach() already tolerates the non-array json_decode()
-		// result with a warning, not a fatal, so this locks in that resilience
-		// against a future change to dwpb_test_filters_register_overrides()
-		// that assumes $overrides is always an array. Every other spec in this
-		// suite shares this site, so a regression here would take all of them
-		// down, not just this test.
+		// A regression guard, not proof today's code can fatal: PHP's foreach()
+		// already tolerates the non-array json_decode() result with a warning,
+		// not a fatal. Locks in that resilience against a future change to
+		// dwpb_test_filters_register_overrides() that assumes $overrides is
+		// always an array -- every other spec in this suite shares this site.
 		await setRawFilterOverridesOption( requestUtils, '{not valid json!!' );
 
 		const home = await request.get( '/' );
 		expect( home.status() ).toBe( 200 );
 
-		// Also exercises the REST bootstrap itself, i.e. that every mu-plugin's
-		// rest_api_init handler -- including dwpb-test-api.php's own routes --
-		// still runs to completion.
+		// Also confirms every mu-plugin's rest_api_init handler still runs to
+		// completion, including dwpb-test-api.php's own routes.
 		const restIndex = await request.get( '/wp-json/' );
 		expect( restIndex.status() ).toBe( 200 );
 	} );

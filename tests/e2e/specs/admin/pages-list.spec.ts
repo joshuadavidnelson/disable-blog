@@ -2,16 +2,14 @@
  * The Pages list table (`edit.php?post_type=page`) and the Blog page's own
  * edit screen, default plugin state.
  *
- * COVERAGE:
- *  - `Disable_Blog_Admin::page_post_states()`, hooked on `display_post_states`,
- *    adds the `page_post_state` copy ("Redirected to the homepage") to the
- *    `page_for_posts` row whenever `has_front_page()` is true — only the
- *    Blog page's row, never the Home page's.
- *  - `Disable_Blog_Admin::posts_page_notice()` — see test 3: this notice
- *    never renders under the block editor, since both it and core's own
- *    equivalent only hook into the classic editor template
- *    (`edit-form-advanced.php`), which `post.php` never loads once
- *    `use_block_editor_for_post()` is true, as it is for `page` here.
+ * `page_post_states()` adds the `page_post_state` copy ("Redirected to the
+ * homepage") to the `page_for_posts` row whenever `has_front_page()` is
+ * true -- only the Blog page's row, never the Home page's.
+ *
+ * `posts_page_notice()` never renders under the block editor: both it and
+ * core's own equivalent only hook into the classic editor template
+ * (`edit-form-advanced.php`), which `post.php` never loads once
+ * `use_block_editor_for_post()` is true, as it is for `page` here.
  */
 
 /**
@@ -78,10 +76,7 @@ test.describe( 'admin: pages list table (default state)', () => {
 		// absence assertion below can't pass vacuously.
 		expect( body ).toContain( `post=${ config.blogId }` );
 
-		// Genuine plugin gap: both core's default notice and the plugin's
-		// replacement hook into edit_form_after_title, which only fires from
-		// the classic editor template — never loaded here since 'page' uses
-		// the block editor. Neither notice renders for the Blog page.
+		// See docblock: neither notice renders under the block editor.
 		expect( body ).not.toContain( strings.posts_page_edit_notice );
 	} );
 } );

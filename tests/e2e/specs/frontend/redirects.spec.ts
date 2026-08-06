@@ -24,8 +24,8 @@ import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect, expectStatus, expectNoRedirect } from '../../config/redirects';
 
 /**
- * Fixed, known post date for the seeded post, so the year/month archive URLs
- * in tests 5 and 6 are deterministic instead of depending on "today".
+ * Fixed, known post date for the seeded post, so the year/month archive
+ * URLs below are deterministic instead of depending on "today".
  */
 const POST_YEAR = '2022';
 const POST_MONTH = '03';
@@ -249,10 +249,10 @@ test.describe( 'frontend: redirects (default state)', () => {
 		} ) => {
 			// redirect_public_pages() bails on `! get_option( 'page_on_front' )`
 			// directly, not on has_front_page() -- show_on_front alone isn't
-			// enough to trigger it. Verified live: leaving page_on_front set
-			// while show_on_front is 'posts' still redirects, just to a
-			// different URL, because get_permalink() on a page that's no
-			// longer page_on_front stops returning the site root.
+			// enough to trigger it. Leaving page_on_front set while
+			// show_on_front is 'posts' still redirects, just to a different
+			// URL, since get_permalink() on a page that's no longer
+			// page_on_front stops returning the site root.
 			( { previous } = await setReadingSettings( requestUtils, {
 				showOnFront: 'posts',
 				pageOnFront: 0,

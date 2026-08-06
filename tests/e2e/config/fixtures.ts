@@ -14,12 +14,6 @@
  * on its own; for a one-off filter value, prefer `setFilterOverrides()` in
  * `config/filter-overrides.ts`, which needs no new fixture.
  *
- * Which spec owns which toggle, relative to `tests/e2e/specs/`:
- *
- *   cptEnabled                   filters/cpt-branches, filters/author-archives
- *   integrationsDisableComments  filters/integrations
- *   integrationsWoocommerce      filters/integrations
- *
  * @see tests/e2e/fixtures/
  * @see tests/e2e/config/filter-overrides.ts
  */

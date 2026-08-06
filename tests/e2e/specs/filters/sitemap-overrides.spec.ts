@@ -3,21 +3,16 @@
  * mechanism -- neither is exposed by a fixture toggle already.
  *
  * `dwpb_disable_removed_sitemaps` guards `disable_removed_sitemaps()`'s
- * manual 404 of sub-file requests for a provider the plugin removed entirely
- * (e.g. 'users'). Forced false, that manual 404 never runs, and -- since
- * core's own renderer just `return`s on a missing provider without 404ing
- * itself (`WP_Sitemaps::render_sitemaps()`) -- the request falls through to
- * the normal front-end template instead.
+ * manual 404 of sub-file requests for a provider the plugin removed
+ * entirely. Forced false, the request falls through to the normal front-end
+ * template, since core's own renderer (`WP_Sitemaps::render_sitemaps()`)
+ * just `return`s on a missing provider without 404ing itself.
  *
  * `dwpb_disable_user_sitemap` overrides the computed "should the users
  * sitemap be hidden" value inside `wp_author_sitemaps()`, independent of the
- * two conditions (`dwpb_disable_author_archives` true, or an empty
- * `author_archive_post_types()`) that normally drive it -- see
- * filters/author-archives.spec.ts for those.
+ * two conditions that normally drive it -- see filters/author-archives.spec.ts.
  *
- * Control for both: sitemap/sitemap.spec.ts asserts the shipped defaults --
- * `/wp-sitemap-users-1.xml` 404s, and the users sitemap is absent from the
- * index.
+ * Control for both: sitemap/sitemap.spec.ts asserts the shipped defaults.
  */
 
 /**
