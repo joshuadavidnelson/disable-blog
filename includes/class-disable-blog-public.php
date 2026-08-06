@@ -88,8 +88,8 @@ class Disable_Blog_Public {
 		global $post;
 		$public_redirects = array(
 			'post'             => ( $post instanceof WP_Post && is_singular( 'post' ) ),
-			'post_tag_archive' => ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
-			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
+			'post_tag_archive' => ( $this->is_tag_archive_request() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
+			'category_archive' => ( $this->is_category_archive_request() && ! dwpb_post_types_with_tax( 'category' ) ),
 			'blog_page'        => is_home(),
 			'date_archive'     => is_date(),
 			'author_archive'   => ( is_author() && true === $this->functions->disable_author_archives() ),
@@ -146,6 +146,60 @@ class Disable_Blog_Public {
 
 			$this->functions->redirect( $redirect_url );
 		}
+	}
+
+	/**
+	 * Determine if the current request is a category archive.
+	 *
+	 * `is_category()` alone is unreliable: if 'post' is the only post type
+	 * using the 'category' taxonomy, `modify_taxonomies_arguments()` strips
+	 * its `query_var`, so `is_category()` stays false even though the
+	 * rewrite already matched a category URL. Falls back to the raw
+	 * `category_name`/`cat` query vars, but only when `get_queried_object()`
+	 * is empty -- otherwise a request that legitimately resolved elsewhere
+	 * with an incidental `?cat=` (e.g. `page_for_posts`) would match too.
+	 * Feed requests are excluded so `do_feed()`'s later `dwpb_redirect_feeds`
+	 * filter still gets a chance to run.
+	 *
+	 * @since 0.5.6
+	 * @return bool
+	 */
+	private function is_category_archive_request() {
+		if ( is_category() ) {
+			return true;
+		}
+
+		if ( is_feed() ) {
+			return false;
+		}
+
+		return ! get_queried_object() && ( '' !== get_query_var( 'category_name' ) || '' !== get_query_var( 'cat' ) );
+	}
+
+	/**
+	 * Determine if the current request is a post_tag archive.
+	 *
+	 * Unlike 'category', WP_Query resolves `tag`/`tag_id` through a hardcoded
+	 * path rather than the generic per-taxonomy query_var loop that
+	 * {@see self::is_category_archive_request()} works around, so `is_tag()`
+	 * alone is reliable here. The raw query vars and feed exclusion are still
+	 * checked for symmetry and to catch a `tag_id` request `is_tag()` might
+	 * miss, but since `is_tag()` already resolves true on a tag feed, that
+	 * branch is effectively unreachable for real tag requests.
+	 *
+	 * @since 0.5.6
+	 * @return bool
+	 */
+	private function is_tag_archive_request() {
+		if ( is_tag() ) {
+			return true;
+		}
+
+		if ( is_feed() ) {
+			return false;
+		}
+
+		return ! get_queried_object() && ( '' !== get_query_var( 'tag' ) || '' !== get_query_var( 'tag_id' ) );
 	}
 
 	/**
@@ -241,6 +295,9 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
+	 * @since 0.5.6 use is_post_feed_request() instead of checking $post->post_type; with a
+	 *              static front page, $post resolves to the Home page and the old check let
+	 *              query-string feed URLs through.
 	 * @param bool $is_comment_feed true if a comment feed.
 	 * @return void
 	 */
@@ -255,7 +312,7 @@ class Disable_Blog_Public {
 		global $post;
 
 		// Check that we're disabling feeds and everything is good to go.
-		if ( $this->functions->disable_feeds( $post, $is_comment_feed ) && isset( $post->post_type ) && 'post' === $post->post_type ) {
+		if ( $this->functions->disable_feeds( $post, $is_comment_feed ) && $this->is_post_feed_request() ) {
 
 			/**
 			 * Filter the feed redirect url.
@@ -311,6 +368,45 @@ class Disable_Blog_Public {
 
 			}
 		}
+	}
+
+	/**
+	 * Determine if the current feed request is for the site's main 'post'
+	 * feed (e.g. `/feed/` or `/?feed=rss2`), as opposed to a feed scoped to
+	 * a specific singular object or another post type.
+	 *
+	 * @since 0.5.6 checks $wp->query_vars (the raw request) rather than $post or
+	 *              $wp_query, because a static front page makes WP_Query substitute
+	 *              that page into $post even for a plain query-string feed request.
+	 * @global WP $wp The WordPress environment instance for the current request.
+	 * @return bool True if this is a 'post' feed for the site's main/archive feed.
+	 */
+	private function is_post_feed_request() {
+
+		global $wp;
+
+		if ( empty( $wp->query_vars ) || ! is_array( $wp->query_vars ) ) {
+			return false;
+		}
+
+		// Any of these present means the request names a specific singular
+		// object (or attachment), not the general 'post' listing feed.
+		$singular_query_vars = array( 'p', 'name', 'pagename', 'page_id', 'attachment', 'attachment_id' );
+
+		foreach ( $singular_query_vars as $var ) {
+			if ( ! empty( $wp->query_vars[ $var ] ) ) {
+				return false;
+			}
+		}
+
+		// No post type specified in the request means WP_Query defaults to 'post'.
+		$queried_post_type = isset( $wp->query_vars['post_type'] ) ? $wp->query_vars['post_type'] : '';
+
+		if ( empty( $queried_post_type ) ) {
+			return true;
+		}
+
+		return is_array( $queried_post_type ) ? in_array( 'post', $queried_post_type, true ) : 'post' === $queried_post_type;
 	}
 
 	/**
@@ -394,11 +490,14 @@ class Disable_Blog_Public {
 	 * Get the XML-RPC methods to disable.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.6 fixed the 'wp.deleteCategory' typo and removed the 'system.*'
+	 *              methods below, which this filter cannot actually disable.
 	 * @return array|bool
 	 */
 	private function get_disabled_xmlrpc_methods() {
 
-		// The methods to remove.
+		// The methods to remove. 'system.*' methods are intentionally omitted:
+		// IXR_Server re-registers them after this filter runs, so removing them here is a no-op.
 		$methods_to_remove = array(
 			'wp.getUsersBlogs',
 			'wp.newPost',
@@ -421,9 +520,6 @@ class Disable_Blog_Public {
 			'mt.publishPost',
 			'pingback.ping',
 			'pingback.extensions.getPingbacks',
-			'system.multicall',
-			'system.listMethods',
-			'system.getCapabilities',
 			'demo.sayHello',
 			'demo.addTwoNumbers',
 		);
@@ -433,7 +529,7 @@ class Disable_Blog_Public {
 		if ( ! dwpb_post_types_with_tax( 'category' ) ) {
 			$taxonomy_methods = array(
 				'wp.newCategory',
-				'wp.deleteeCategory',
+				'wp.deleteCategory',
 				'mt.getCategoryList',
 				'wp.suggestCategories',
 				'mt.getPostCategories',
@@ -451,6 +547,9 @@ class Disable_Blog_Public {
 		 * Filter the methods being disabled by the plugin.
 		 *
 		 * Return false to disable this functionality entirely and keep all methods in place.
+		 *
+		 * Note that WordPress 7.1 removes `pingback.ping` itself on any non-production
+		 * environment, so that one method stays gone there regardless of this filter.
 		 *
 		 * @since 0.5.0
 		 * @param array $methods_to_remove an array of all the XMLRPC methods to disable.
@@ -483,6 +582,33 @@ class Disable_Blog_Public {
 		}
 
 		return $headers;
+	}
+
+	/**
+	 * Fallback removal of the X-Pingback header for WordPress versions where
+	 * it bypasses the 'wp_headers' filter used by filter_wp_headers().
+	 *
+	 * @since 0.5.6 core < 6.2's `WP::handle_404()` sends X-Pingback via a direct
+	 *              header() call; hooked on 'wp' (not 'send_headers') so this
+	 *              runs after handle_404() to strip it after the fact.
+	 * @see Disable_Blog_Public::filter_wp_headers()
+	 * @return void
+	 */
+	public function remove_pingback_header_fallback() {
+
+		/**
+		 * Same toggle used by filter_wp_headers().
+		 *
+		 * @since 0.4.0
+		 * @param bool $bool True to disable the header, false to keep it.
+		 */
+		if ( ! apply_filters( 'dwpb_remove_pingback_header', true ) ) {
+			return;
+		}
+
+		if ( ! headers_sent() ) {
+			header_remove( 'X-Pingback' );
+		}
 	}
 
 	/**
@@ -562,5 +688,57 @@ class Disable_Blog_Public {
 		}
 
 		return $provider;
+	}
+
+	/**
+	 * 404 sitemap sub-file requests for providers this plugin has removed entirely.
+	 *
+	 * @since 0.5.6 without this, a removed provider (e.g. 'users', via
+	 *              wp_author_sitemaps()) leaves core nothing registered to 404
+	 *              against, so the request would fall through to the normal
+	 *              template and serve the blog index as HTML.
+	 * @return void
+	 */
+	public function disable_removed_sitemaps() {
+
+		$sitemap = get_query_var( 'sitemap', '' );
+
+		// Bail on non-sitemap requests, and on 'index' (core's own sitemap-index
+		// route), which isn't a provider name and must stay excluded from the check below.
+		if ( empty( $sitemap ) || 'index' === $sitemap ) {
+			return;
+		}
+
+		/**
+		 * Toggle 404-ing sitemap sub-files for providers this plugin has removed.
+		 *
+		 * @since 0.5.6
+		 * @param bool $bool True to 404 removed sitemap providers, defaults to true.
+		 */
+		if ( ! apply_filters( 'dwpb_disable_removed_sitemaps', true ) ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wp_sitemaps_get_server' ) ) {
+			return;
+		}
+
+		$server = wp_sitemaps_get_server();
+		if ( ! $server instanceof WP_Sitemaps || ! $server->registry instanceof WP_Sitemaps_Registry ) {
+			return;
+		}
+
+		$providers = $server->registry->get_providers();
+
+		// The provider is still registered (e.g. 'posts', 'taxonomies'), so
+		// let core handle it -- it already 404s an unknown subtype on its own.
+		if ( isset( $providers[ $sitemap ] ) ) {
+			return;
+		}
+
+		global $wp_query;
+		$wp_query->set_404();
+		status_header( 404 );
+		nocache_headers();
 	}
 }

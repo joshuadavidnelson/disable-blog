@@ -19,6 +19,9 @@ class Disable_Blog_Functions {
 	 * Redirect function, checks that a redirect looks safe and then runs it.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.6 derive the front-end loop guard's current url from the actual
+	 *              request URI, not $wp->request, which is path-only and could
+	 *              cancel legitimate redirects differing only by query string.
 	 * @param string $redirect_url the url to redirect to.
 	 * @return void
 	 */
@@ -29,15 +32,17 @@ class Disable_Blog_Functions {
 		if ( is_admin() ) {
 			$current_url = admin_url( add_query_arg( array(), $wp->request ) );
 		} else {
-			$current_url = home_url( add_query_arg( array(), $wp->request ) );
 
-			// Filter the safe redirect to avoid redirectin non-admin urls to the dashboard
+			// $wp->request is path-only (see @since 0.5.6 above).
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+			$current_url = home_url( $request_uri );
+
+			// Filter the safe redirect to avoid redirecting non-admin urls to the dashboard
 			// if the fallback is used by the core wp_redirect.
 			add_filter( 'wp_safe_redirect_fallback', array( $this, 'wp_safe_redirect_fallback' ), 9, 1 );
 		}
 
-		// Compare the current url to the redirect url, if they are the same, bail to avoid a loop.
-		// If there is no valid redirect url, then also bail.
+		// Bail to avoid a loop if the current and redirect urls match, or if there's no valid redirect url.
 		if ( $redirect_url === $current_url || ! esc_url_raw( $redirect_url ) ) {
 			return;
 		}

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.6
+
+- **New:** Disables RSS/Atom feeds requested via query string (e.g. `/?feed=rss2`), which previously returned live post content.
+- **New:** Disable post content from appearing on user sitemaps (e.g. `/wp-sitemap-users-1.xml`). **New filter:** `dwpb_disable_removed_sitemaps` (default `true`) toggles this behavior.
+- Fix `term.php` and `tools.php` never redirecting, caused by typos.
+- **Filter renamed:** the redirect url for this screen is now filtered via `dwpb_redirect_admin_tools` (previously documented as `dwpb_redirect_admin_options_tools`).
+- Fix the `dwpb_redirect_admin_*` filters receiving `"http://1"` instead of the dashboard url on screens whose check returns `true`. The destination was unaffected, but a custom redirect url built from the filtered value would not have worked.
+- Fix `wp.deleteCategory` never being removed from XML-RPC, caused by a misspelled method name (`wp.deleteeCategory`).
+- Remove `system.listMethods`, `system.multicall` and `system.getCapabilities` from the XML-RPC disabled-methods list; core re-registers them after the filter runs, so listing them never disabled anything. No behavior change.
+- Fix redirects being silently cancelled on requests that only differed from their target by a query string (e.g. a root request carrying query vars and targeting `home_url()`).
+- Fix a TypeError in `disable-blog-admin.js` on the Dashboard screen when comment support was unavailable, caused by a selector (`.welcome-icon.welcome-comments`) that WordPress 6.1 removed from the welcome panel markup.
+- Fix the `X-Pingback` header still being sent on older WordPress even with the "remove pingback header" feature enabled, caused by core (pre-6.2) sending that header via a direct `header()` call that runs after the `wp_headers` filter this plugin relies on has already fired.
+- Fix two misspelled filters on the Users list table (`dpwb_` instead of `dwpb_`): `dwpb_disable_user_post_column` and `dwpb_create_user_{$post_type}_column`.
+- Fix `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive` never firing on a category/tag archive request. The request instead matched the `blog_page` branch, using the wrong filter, even though the redirect itself still worked as expected.
+- Fix uninstalling via WP-CLI (`wp plugin uninstall disable-blog`) leaving the `dwpb_version` and `dwpb_previous_version` options in the database. The uninstall routine only recognized the admin Delete request and stopped silently in any other context.
+
 ## 0.5.5
 
 - Tested up to WordPress 6.9.1

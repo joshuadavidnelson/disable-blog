@@ -1,0 +1,60 @@
+/**
+ * Main feed behaviour on a site with zero 'post' content.
+ *
+ * @since 0.5.5 `/feed/` redirects regardless of post count. Previously
+ * `disable_feed()` keyed off the global `$post`, which `WP_Query` never
+ * populates for a zero-result query, so an empty site rendered a normal 200
+ * feed instead. It now gates on `is_post_feed_request()`, a query-based
+ * check.
+ *
+ * `beforeAll` wipes every post via `delete-all-posts` so the first test
+ * proves a genuinely empty site rather than depending on other specs'
+ * cleanup — every other spec tears down its own uniquely-titled content, so
+ * this is safe.
+ */
+
+/**
+ * WordPress dependencies
+ */
+import { test } from '@wordpress/e2e-test-utils-playwright';
+
+/**
+ * Internal dependencies
+ */
+import { siteConfig, deleteAllPosts, uniqueTitle } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
+import { expectRedirect } from '../../config/redirects';
+
+test.describe( 'feeds: empty site', () => {
+	test.use( { storageState: { cookies: [], origins: [] } } );
+
+	let homeUrl: string;
+
+	const content = createContentTracker();
+
+	test.beforeAll( async ( { requestUtils } ) => {
+		const config = await siteConfig( requestUtils );
+		homeUrl = config.homeUrl;
+
+		await deleteAllPosts( requestUtils );
+	} );
+
+	test.afterAll( async ( { requestUtils } ) => {
+		// Cleans up whatever the second test seeded, leaving the site at zero posts.
+		await content.cleanup( requestUtils );
+	} );
+
+	test( 'with zero posts the main feed still redirects to the home URL', async ( {
+		request,
+	} ) => {
+		await expectRedirect( request, '/feed/', homeUrl );
+	} );
+
+	test( 'seeding a post does not disturb the redirect', async ( { requestUtils, request } ) => {
+		await content.seedPost( requestUtils, {
+			title: uniqueTitle( 'empty-site restore post' ),
+		} );
+
+		await expectRedirect( request, '/feed/', homeUrl );
+	} );
+} );

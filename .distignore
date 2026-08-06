@@ -3,6 +3,9 @@
 /.wordpress-org
 /vendor/
 /tests/
+/playwright/
+/artifacts/
+/playwright-report/
 .editorconfig
 .gitignore
 .distignore
@@ -10,7 +13,10 @@ composer.json
 composer.lock
 code-of-conduct.md
 contributing.md
+phpcs.xml
 phpstan.neon.dist
 package.json
 package-lock.json
 .wp-env.json
+playwright.config.ts
+.wp-env.override.json

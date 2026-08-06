@@ -1,0 +1,137 @@
+name: "E2E Tests"
+
+on:
+  pull_request:
+    branches:
+    - stable
+    - develop
+  workflow_dispatch: null
+
+permissions:
+  contents: "read"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: "WP ${{ matrix.wp }} / PHP ${{ matrix.php }} E2E"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 60
+    # Development WordPress (master) is upstream code that shouldn't
+    # block the rest of the test matrix if it fails.
+    continue-on-error: ${{ matrix.wp == 'master' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        # .wp-env.json phpVersion - parity with local development.
+        - wp: "latest"
+          php: "8.3"
+        # Top of the supported PHP range.
+        - wp: "latest"
+          php: "8.4"
+        # The bottom of the supported PHP+WP range.
+        - wp: "5.9"
+          php: "7.4"
+        # Development WordPress, for early warning on upstream core changes.
+        - wp: "master"
+          php: "8.4"
+
+    env:
+      # wp-env reads this on every invocation, see
+      # tests/bin/set-core-version.js.
+      WP_ENV_PHP_VERSION: "${{ matrix.php }}"
+
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v7"
+
+    - name: "Setup Node.js"
+      uses: "actions/setup-node@v7"
+      with:
+        node-version: "24"
+        cache: "npm"
+
+    - name: "Install npm dependencies"
+      run: "npm ci"
+
+    - name: "Typecheck the e2e suite"
+      run: "npm run typecheck"
+
+    - name: "Resolve the Playwright version"
+      id: "playwright"
+      run: |
+        VERSION="$(node -p "require('@playwright/test/package.json').version")"
+        echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+    - name: "Cache the Playwright browser"
+      id: "playwright-cache"
+      uses: "actions/cache@v4"
+      with:
+        path: "~/.cache/ms-playwright"
+        key: "playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}"
+
+    - name: "Install the Playwright browser"
+      run: |
+        if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+          # The cache holds the browser but not the apt packages it links against.
+          npx playwright install-deps chromium
+        else
+          npx playwright install --with-deps chromium
+        fi
+
+    - name: "Pin the WordPress core version"
+      env:
+        DWPB_WP_VERSION: "${{ matrix.wp }}"
+      run: |
+        npm run test:e2e:core-version -- "${DWPB_WP_VERSION}"
+        cat .wp-env.override.json || echo "No override written: latest stable."
+
+    - name: "Start wp-env"
+      id: wp-env
+      timeout-minutes: 30
+      run: "npm run env:start"
+
+    - name: "Report the environment under test"
+      run: |
+        npx wp-env run tests-cli -- wp core version
+        npx wp-env run tests-cli -- php -r 'echo PHP_VERSION, PHP_EOL;'
+
+    - name: "Browser suite"
+      run: "npm run test:e2e"
+
+    # Always, not just on failure: a PHP notice or deprecation usually breaks
+    # no assertion, so on a green run it would otherwise never be seen — and
+    # catching those across PHP 7.4 to 8.4 is most of why this matrix exists.
+    - name: "Collect the WordPress debug log"
+      if: always()
+      continue-on-error: true
+      run: |
+        mkdir -p artifacts
+        npx wp-env run tests-cli -- cat /var/www/html/wp-content/debug.log > artifacts/debug.log 2>/dev/null || true
+
+    - name: "Check the debug log for PHP diagnostics"
+      if: always()
+      run: |
+        test -s artifacts/debug.log || exit 0
+
+        if grep -qE "PHP (Warning|Deprecated|Notice)" artifacts/debug.log; then
+          echo "::warning title=PHP diagnostics::WP ${{ matrix.wp }} / PHP ${{ matrix.php }} logged PHP diagnostics; see the debug.log artifact."
+          grep -E "PHP (Warning|Deprecated|Notice)" artifacts/debug.log | sort -u | head -40
+        fi
+
+        if grep -q "PHP Fatal error" artifacts/debug.log; then
+          echo "::error title=PHP fatal::A PHP fatal error was logged during the run."
+          grep "PHP Fatal error" artifacts/debug.log | sort -u | head -20
+          exit 1
+        fi
+
+    - name: "Upload artifacts"
+      if: always()
+      uses: "actions/upload-artifact@v4"
+      with:
+        name: "e2e-wp${{ matrix.wp }}-php${{ matrix.php }}-${{ github.run_id }}"
+        path: "artifacts/"
+        retention-days: 7

@@ -131,11 +131,13 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 	 * off related features if they are not being used by anything other than built-in posts.
 	 *
 	 * @since 0.4.0
-	 * @param mixed         $null                Null for no override, otherwise pass an array of post type slugs.
-	 * @param string|object $taxonomy            The current taxonomy slug.
-	 * @param array|bool    $post_types_with_tax An array of post types use this taxonomy or false if none.
-	 * @param array         $args                An array of key => value arguments to match against the post type objects. Default empty array.
-	 * @param string        $output              The type of output to return, either 'names' or 'objects'.
+	 * @param mixed         $null       Null for no override, otherwise pass an array of post type slugs.
+	 * @param string|object $taxonomy   The current taxonomy slug.
+	 * @param array         $post_types Every registered post type matching $args, as returned by
+	 *                                  get_post_types(). Not narrowed to the post types using this
+	 *                                  taxonomy.
+	 * @param array         $args       An array of key => value arguments to match against the post type objects. Default empty array.
+	 * @param string        $output     The type of output to return, either 'names' or 'objects'.
 	 * @return mixed A list of post type names that use this taxonomy or false if nothing found.
 	 */
 	$override = apply_filters( 'dwpb_taxonomy_support', null, $taxonomy, $post_types, $args, $output );

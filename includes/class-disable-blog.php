@@ -295,6 +295,8 @@ class Disable_Blog {
 	 * of the plugin.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.6 added disable_removed_sitemaps() on template_redirect.
+	 * @since 0.5.6 added remove_pingback_header_fallback() on the 'wp' action, for older WP.
 	 * @access private
 	 */
 	private function define_public_hooks() {
@@ -320,6 +322,10 @@ class Disable_Blog {
 		// Remove the X-Pingback HTTP header.
 		$this->loader->add_filter( 'wp_headers', $plugin_public, 'filter_wp_headers', 10, 1 );
 
+		// Fallback removal of the X-Pingback header for WP < 6.2, which sends it via a
+		// direct header() call after the 'wp_headers' filter above has already fired.
+		$this->loader->add_action( 'wp', $plugin_public, 'remove_pingback_header_fallback' );
+
 		// Hide Feed links.
 		$this->loader->add_filter( 'feed_links_show_posts_feed', $plugin_public, 'feed_links_show_posts_feed', 10, 1 );
 		$this->loader->add_filter( 'feed_links_show_comments_feed', $plugin_public, 'feed_links_show_comments_feed', 10, 1 );
@@ -335,6 +341,10 @@ class Disable_Blog {
 
 		// Conditionally remove author sitemaps, if author archives are not being supported.
 		$this->loader->add_filter( 'wp_sitemaps_add_provider', $plugin_public, 'wp_author_sitemaps', 100, 2 );
+
+		// 404 sitemap sub-file requests for providers removed entirely (e.g. users);
+		// priority 9 runs ahead of core's render_sitemaps() and redirect_public_pages() (both 10).
+		$this->loader->add_action( 'template_redirect', $plugin_public, 'disable_removed_sitemaps', 9 );
 	}
 
 	/**

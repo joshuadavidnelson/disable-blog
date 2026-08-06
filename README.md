@@ -6,8 +6,8 @@ Disable Blog
 [![WP compatibility](https://plugintests.com/plugins/wporg/disable-blog/wp-badge.svg)](https://plugintests.com/plugins/wporg/disable-blog/latest) [![PHP compatibility](https://plugintests.com/plugins/wporg/disable-blog/php-badge.svg)](https://plugintests.com/plugins/wporg/disable-blog/latest)
 
 **Requires at least WordPress:** 5.9  
-**Tested up to WordPress:** 6.9  
-**Stable version:** 0.5.5  
+**Tested up to WordPress:** 7.0  
+**Stable version:** 0.5.6  
 **License:** GPLv2 or later  
 **Requires PHP:** 7.4  
 **Tested up to PHP:** 8.4  
@@ -124,3 +124,62 @@ The `develop` branch is the most current working branch. _Please direct all pull
 This repo contains the files needed to boot up a local development environment using [wp-env](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/).
 
 Run `npm install` and the `npm run env:start` to boot up a local environment. 
+
+### E2E Tests
+
+This repo includes a [Playwright](https://playwright.dev/) end-to-end suite that exercises the plugin against a real WordPress install.
+
+**Requirements:**
+- Docker
+- Node 24 (the version CI uses)
+
+**Running the suite:**
+
+```bash
+npm ci
+npm run env:start
+npm run test:e2e
+```
+
+The suite is chromium-only and runs serially (`workers: 1` in `playwright.config.ts`) by design: every spec shares a single `wp-env` site rather than spinning up its own, so parallel workers would race each other's content. This is deliberate, not a performance shortcut waiting to be fixed.
+
+Sharding across CI runners would be safe — each runner boots its own `wp-env`, so shards never share a site — but it is not worth it: the whole suite runs in roughly two and a half minutes, well under what a second cold Docker and WordPress boot would cost. Cache the browser and the core download before reaching for more runners.
+
+Specs run under four Playwright projects in order: `auth` creates the role users, `smoke` proves the harness before anything trusts it, `chromium` is the suite proper, and `lifecycle` runs last because it deactivates and reactivates the plugin.
+
+**Theme:** the suite pins the Twenty Twenty-Two theme (installed via `.wp-env.json` and activated in `tests/e2e/config/global-setup.ts`) instead of relying on whichever theme a given WordPress version ships as its default. That keeps the markup specs assert against deterministic across WordPress versions — a stock install's default theme changes from version to version (e.g. Twenty Twenty-Three on WordPress 6.2, Twenty Twenty-Five on current WordPress), which would otherwise silently change the DOM the suite is testing against. Twenty Twenty-Two was chosen because it only requires WordPress 5.9+, so it works across the plugin's whole supported version range.
+
+**Debugging:**
+
+- `npm run test:e2e:ui` opens the Playwright UI mode for stepping through specs interactively.
+- `npm run env:debuglog` tails the site's `wp-content/debug.log` (`WP_DEBUG_LOG` is enabled in `.wp-env.json`).
+- On failure, traces, screenshots and videos are written to `artifacts/` (see `WP_ARTIFACTS_PATH` in `playwright.config.ts`).
+
+**Testing against another WordPress version:**
+
+```bash
+npm run test:e2e:core-version -- 5.9
+npx wp-env start --update
+npx wp-env clean all
+npx wp-env start
+```
+
+This pins `wp-env` to that core version by writing `.wp-env.override.json`. Run `npm run test:e2e:core-version -- latest` to remove the override and go back to the latest stable release.
+
+⚠️ The `--update` flag and the `clean all` **order** both matter. Your existing database still holds the previous version's active theme and schema. Downgrading core without resetting the database leaves WordPress running an incompatible theme — on an older core that is a fatal error during `wp-env start`, not a graceful failure, so it looks like the WordPress version is unsupported when it is not. `wp-env start` alone will not re-download core when only the pinned version changed, so without `--update` you silently keep testing the version you already had. Start with `--update` so the pinned core is fetched, *then* clean, so the database is reinstalled against the version you are actually testing.
+
+CI is unaffected: every job starts on a fresh runner with no database to carry over.
+
+**Versions the suite is verified against:** WordPress 5.9 through current, on PHP 7.4 through 8.4 — the plugin's full declared support range. CI runs current WordPress on PHP 8.3 and 8.4, WordPress 5.9 on PHP 7.4 (the declared floor from `readme.txt`), and WordPress `master` on PHP 8.4 as a non-blocking early warning.
+
+One spec has to accommodate older core, commented where it occurs: WordPress 5.9's core `/wp/v2/settings` endpoint does not expose `show_on_front`, `page_on_front` or `page_for_posts`, so reading settings are set through the `dwpb-test/v1` API rather than core REST.
+
+**How the test fixtures work:**
+
+The mu-plugins in `tests/e2e/fixtures/` are mapped into `wp-content/mu-plugins` by `.wp-env.json`. Each one declares a `dwpb_test_*` option that specs flip on or off with a single `PUT /wp-json/wp/v2/settings` call, rather than editing files or restarting the environment mid-run.
+
+⚠️ These mu-plugins are mapped into **both** the dev site (`:8888`) and the tests site (`:8889`). Specs always reset the options they flip, but if a spec run is interrupted, a toggle can be left on and bleed into local development on `:8888` as well as the next test run. If local dev starts behaving oddly after running the suite, check the `dwpb_test_*` options.
+
+**Why there is a test API:** the plugin sets `show_in_rest => false` on the `post` post type, so `POST /wp/v2/posts` returns `rest_no_route` and posts cannot be seeded through core REST. The `dwpb-test/v1` mu-plugin namespace (`tests/e2e/fixtures/dwpb-test-api.php`) provides an authenticated back door that calls `wp_insert_post()`/`wp_insert_comment()`/`wp_insert_term()` directly instead. Pages are untouched by the plugin and are seeded normally through core REST.
+
+**Ports:** the environment uses `8888` for the dev site and `8889` for the tests site, both pinned in `.wp-env.json`. If another `wp-env` project is already running on either port, `npm run env:start` will fail with a "port is already allocated" error — stop the other environment first.
