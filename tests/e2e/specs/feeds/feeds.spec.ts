@@ -30,16 +30,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import {
-	siteConfig,
-	seedPost,
-	seedPage,
-	seedTerm,
-	deletePosts,
-	deleteTerms,
-	uniqueTitle,
-} from '../../config/seed';
+import { siteConfig, uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect, expectStatus } from '../../config/redirects';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
@@ -53,8 +46,7 @@ test.describe( 'feeds: default state', () => {
 	let categoryTerm: { termId: number; slug: string; link: string };
 	let tagTerm: { termId: number; slug: string; link: string };
 
-	const seededIds: number[] = [];
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
@@ -64,37 +56,32 @@ test.describe( 'feeds: default state', () => {
 		// Needed for "a post's own feed redirects" (real permalink) and the
 		// query-string leak assertion below (known title), not the redirect
 		// logic itself — see feeds-empty-site.spec.ts for the zero-post case.
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'feeds post' ),
 		} );
-		seededIds.push( seededPost.id );
 
 		// 'page' supports comments by default, so its comment feed renders.
-		seededPage = await seedPage( requestUtils, {
+		seededPage = await content.seedPage( requestUtils, {
 			title: uniqueTitle( 'feeds page' ),
 		} );
-		seededIds.push( seededPage.id );
 
 		// For the term-feed assertions below; assigned to seededPost so the
 		// archives themselves are never empty.
-		categoryTerm = await seedTerm( requestUtils, {
+		categoryTerm = await content.seedTerm( requestUtils, {
 			taxonomy: 'category',
 			name: uniqueTitle( 'feeds category' ),
 			assignTo: seededPost.id,
 		} );
-		seededTermIds.push( categoryTerm.termId );
 
-		tagTerm = await seedTerm( requestUtils, {
+		tagTerm = await content.seedTerm( requestUtils, {
 			taxonomy: 'post_tag',
 			name: uniqueTitle( 'feeds tag' ),
 			assignTo: seededPost.id,
 		} );
-		seededTermIds.push( tagTerm.termId );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'the main feed redirects to the home URL', async ( { request } ) => {
@@ -220,20 +207,19 @@ test.describe( "feeds: is_post_feed_request()'s singular-exclusion branch", () =
 	let homeUrl: string;
 	let seededPost: SeededPost;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		homeUrl = config.homeUrl;
 
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'feeds singular post' ),
 		} );
-		seededIds.push( seededPost.id );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	// Restored in afterEach, not the test body -- see settings-screens.spec.ts.
@@ -283,29 +269,25 @@ test.describe( "feeds: disable_feed()'s sweep also catches tag archive feeds", (
 	let seededPost: SeededPost;
 	let tagTerm: { termId: number; slug: string; link: string };
 
-	const seededIds: number[] = [];
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		homeUrl = config.homeUrl;
 
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'feeds tag sweep post' ),
 		} );
-		seededIds.push( seededPost.id );
 
-		tagTerm = await seedTerm( requestUtils, {
+		tagTerm = await content.seedTerm( requestUtils, {
 			taxonomy: 'post_tag',
 			name: uniqueTitle( 'feeds tag sweep' ),
 			assignTo: seededPost.id,
 		} );
-		seededTermIds.push( tagTerm.termId );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	// Restored in afterEach, not the test body -- see settings-screens.spec.ts.

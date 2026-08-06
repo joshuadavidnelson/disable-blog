@@ -21,8 +21,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { seedPost, seedPage, deletePosts, uniqueTitle } from '../../config/seed';
+import { uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { ADMIN_BAR_NEW_POST, ADMIN_BAR_NEW_PAGE } from '../../config/admin';
 
 // Parent "+ New" dropdown node in the admin bar; only this spec needs it.
@@ -37,27 +38,25 @@ test.describe( 'frontend: search results and wp_head output (default state)', ()
 	let seededPage: SeededPost;
 	let searchUrl: string;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: `${ needle } post`,
 		} );
-		seededIds.push( seededPost.id );
 
 		// pingStatus 'open' on a page (not a post) so the X-Pingback test
 		// proves a real removal rather than pings already being closed.
-		seededPage = await seedPage( requestUtils, {
+		seededPage = await content.seedPage( requestUtils, {
 			title: `${ needle } page`,
 			pingStatus: 'open',
 		} );
-		seededIds.push( seededPage.id );
 
 		searchUrl = `/?s=${ encodeURIComponent( needle ) }`;
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'search results exclude posts', async ( { request } ) => {

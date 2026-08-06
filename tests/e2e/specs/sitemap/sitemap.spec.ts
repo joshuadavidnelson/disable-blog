@@ -22,8 +22,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { seedPost, deletePosts, uniqueTitle } from '../../config/seed';
+import { uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectStatus } from '../../config/redirects';
 
 test.describe( 'sitemap: default state', () => {
@@ -31,19 +32,18 @@ test.describe( 'sitemap: default state', () => {
 
 	let seededPost: SeededPost;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		// So the exclusion assertions below prove a real post exists to be
 		// excluded, rather than passing vacuously against an empty site.
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'sitemap post' ),
 		} );
-		seededIds.push( seededPost.id );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'the sitemap index renders', async ( { request } ) => {

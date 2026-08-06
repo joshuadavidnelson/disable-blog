@@ -15,8 +15,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { siteConfig, seedPost, deletePosts, uniqueTitle } from '../../config/seed';
+import { siteConfig, uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect, expectStatus } from '../../config/redirects';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
@@ -29,17 +30,16 @@ test.describe( 'frontend: redirect mechanics (override-driven)', () => {
 	let homeUrl: string;
 	let seededPost: SeededPost;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		frontPageUrl = config.frontPageUrl;
 		homeUrl = config.homeUrl;
 
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'redirect mechanics post' ),
 		} );
-		seededIds.push( seededPost.id );
 	} );
 
 	test.afterEach( async ( { requestUtils } ) => {
@@ -47,7 +47,7 @@ test.describe( 'frontend: redirect mechanics (override-driven)', () => {
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'the front-end kill switch disables redirects', async ( {

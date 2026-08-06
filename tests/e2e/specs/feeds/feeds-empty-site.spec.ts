@@ -20,7 +20,8 @@ import { test } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { siteConfig, seedPost, deletePosts, deleteAllPosts, uniqueTitle } from '../../config/seed';
+import { siteConfig, deleteAllPosts, uniqueTitle } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect } from '../../config/redirects';
 
 test.describe( 'feeds: empty site', () => {
@@ -28,7 +29,7 @@ test.describe( 'feeds: empty site', () => {
 
 	let homeUrl: string;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
@@ -39,7 +40,7 @@ test.describe( 'feeds: empty site', () => {
 
 	test.afterAll( async ( { requestUtils } ) => {
 		// Cleans up whatever test 2 seeded, leaving the site at zero posts.
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'with zero posts the main feed still redirects to the home URL', async ( {
@@ -49,10 +50,9 @@ test.describe( 'feeds: empty site', () => {
 	} );
 
 	test( 'seeding a post does not disturb the redirect', async ( { requestUtils, request } ) => {
-		const seededPost = await seedPost( requestUtils, {
+		await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'empty-site restore post' ),
 		} );
-		seededIds.push( seededPost.id );
 
 		await expectRedirect( request, '/feed/', homeUrl );
 	} );

@@ -19,14 +19,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import {
-	seedPost,
-	seedPage,
-	deletePosts,
-	uniqueTitle,
-	postState,
-} from '../../config/seed';
+import { uniqueTitle, postState } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 
 test.describe( 'frontend: comment status on posts vs. pages (default state)', () => {
 	test.use( { storageState: { cookies: [], origins: [] } } );
@@ -34,28 +29,26 @@ test.describe( 'frontend: comment status on posts vs. pages (default state)', ()
 	let seededPost: SeededPost;
 	let seededPage: SeededPost;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		// Explicitly seeded 'open' so an observed 'closed' proves the plugin
 		// forced it, not a coincidence of the default already being closed.
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'comments post' ),
 			commentStatus: 'open',
 			pingStatus: 'open',
 		} );
-		seededIds.push( seededPost.id );
 
-		seededPage = await seedPage( requestUtils, {
+		seededPage = await content.seedPage( requestUtils, {
 			title: uniqueTitle( 'comments page' ),
 			commentStatus: 'open',
 			pingStatus: 'open',
 		} );
-		seededIds.push( seededPage.id );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'comments and pings are closed on posts', async ( { requestUtils } ) => {
