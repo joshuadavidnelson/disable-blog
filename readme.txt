@@ -88,20 +88,18 @@ There are numerous filters available to change the way this plugin works. Refer 
 == Changelog ==
 
 = 0.5.6 =
-- **Security fix:** RSS/Atom feeds requested via query string (e.g. `/?feed=rss2`) were not disabled and leaked live post content; now correctly blocked like `/feed/` already was.
-- **Security fix:** Removed user sitemaps (e.g. `/wp-sitemap-users-1.xml`) served page content instead of a 404; now correctly return 404. New `dwpb_disable_removed_sitemaps` filter (default `true`).
-- Fix `term.php` and `tools.php` (Available Tools) admin redirects, which never fired due to method name typos.
-- **Filter renamed:** `dwpb_redirect_admin_options_tools` is now `dwpb_redirect_admin_tools` (old name still honored, but deprecated).
-- Fix admin redirects to the dashboard landing on a bare `/wp-admin/` instead of the intended dashboard page.
-- Fix `wp.deleteCategory` never being removed from XML-RPC due to a misspelled method name.
-- Remove dead `system.*` XML-RPC entries that core re-registers regardless, so they were never actually removable this way (no behavior change).
-- Fix redirects being silently cancelled on query-string-only requests to the homepage.
-- Fix a JS TypeError on the Dashboard screen (WordPress 6.1+) that silently broke other admin screen behaviors on that page load.
-- Fix the `X-Pingback` header still being sent on older WordPress despite the "remove pingback header" feature being enabled, caused by core (pre-6.2) sending that header directly rather than through the filter this plugin relies on.
-- **Filters renamed:** `dpwb_disable_user_post_column` is now `dwpb_disable_user_post_column`, and `dpwb_create_user_{$post_type}_column` is now `dwpb_create_user_{$post_type}_column` (old names still honored, but deprecated).
-- Fix `WP_Widget_Tag_Cloud` being listed twice in the widget removal list, which fired the `dwpb_unregister_widgets` filter twice for that widget.
-- Fix `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive` never firing on a category/tag archive request; the archive still redirected to the front page as usual, but a custom target hooked to either filter was silently ignored.
-- Remove `dashboard_recent_drafts` and `dashboard_incoming_links` from the dashboard widget removal list; core doesn't register either as its own widget on any supported WordPress version, so removing them was always a no-op. **Filters removed:** `dwpb_disable_dashboard_recent_drafts` and `dwpb_disable_dashboard_incoming_links`, which never had any effect, go with them.
+- **New:** Disables RSS/Atom feeds requested via query string (e.g. `/?feed=rss2`), which previously returned live post content.
+- **New:** Disable post content from appearing on user sitemaps (e.g. `/wp-sitemap-users-1.xml`). **New filter:** `dwpb_disable_removed_sitemaps` (default `true`) toggles this behaviorr.
+- Fix `term.php` and `tools.php` never redirecting, caused by typos.
+- **Filter renamed:** the redirect url for this screen is now filtered via `dwpb_redirect_admin_tools` (previously documented as `dwpb_redirect_admin_options_tools`).
+- Fix admin redirects to the dashboard landing on a bare `/wp-admin/` instead of the intended dashboard url. A check method returning boolean `true` was being passed through `esc_url_raw()`, which turns `true` into the string `"http://1"`; that non-empty string was then mistaken for a custom redirect url and rejected by `wp_safe_redirect()`. Affected `post.php`, `edit-tags.php`, `edit-comments.php`, `options-discussion.php`, and (now that they work) `term.php` and `tools.php`. These now correctly redirect to `admin_url( 'index.php' )`.
+- Fix `wp.deleteCategory` never being removed from XML-RPC, caused by a misspelled method name (`wp.deleteeCategory`).
+- Fix the `system.listMethods`, `system.multicall`, and `system.getCapabilities` XML-RPC disabled-methods entries.
+- Fix redirects being silently cancelled on requests that only differed from their target by a query string (e.g. a root request carrying query vars and targeting `home_url()`).
+- Fix a TypeError in `disable-blog-admin.js` on the Dashboard screen when comment support was unavailable, caused by a selector (`.welcome-icon.welcome-comments`) that WordPress 6.1 removed from the welcome panel markup.
+- Fix the `X-Pingback` header still being sent on older WordPress even with the "remove pingback header" feature enabled, caused by core (pre-6.2) sending that header via a direct `header()` call that runs after the `wp_headers` filter this plugin relies on has already fired.
+- Fix two misspelled filters on the Users list table (`dpwb_` instead of `dwpb_`): `dwpb_disable_user_post_column` and `dwpb_create_user_{$post_type}_column`.
+- Fix `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive` never firing on a category/tag archive request. The request instead matched the `blog_page` branch, using the wrong filter, even though the redirect itself still worked as expected.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
@@ -323,9 +321,9 @@ A bunch of stuff:
 == Upgrade Notice ==
 
 = 0.5.6 =
-- Security fixes: query-string feed requests (e.g. `/?feed=rss2`) and removed user sitemaps could leak post content; both are now correctly blocked.
-- Fixes `term.php` and `tools.php` admin redirects, which never worked. Renames the `dwpb_redirect_admin_options_tools` filter to `dwpb_redirect_admin_tools` (old name still works).
+- Tested up to WordPress 7.0.2
 - Several other bugfixes, view the plugin's `changelog.md` for specifics.
+- Added end-to-end tests via Playwright.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
