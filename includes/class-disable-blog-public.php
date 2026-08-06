@@ -88,8 +88,8 @@ class Disable_Blog_Public {
 		global $post;
 		$public_redirects = array(
 			'post'             => ( $post instanceof WP_Post && is_singular( 'post' ) ),
-			'post_tag_archive' => ( is_tag() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
-			'category_archive' => ( is_category() && ! dwpb_post_types_with_tax( 'category' ) ),
+			'post_tag_archive' => ( $this->is_tag_archive_request() && ! dwpb_post_types_with_tax( 'post_tag' ) ),
+			'category_archive' => ( $this->is_category_archive_request() && ! dwpb_post_types_with_tax( 'category' ) ),
 			'blog_page'        => is_home(),
 			'date_archive'     => is_date(),
 			'author_archive'   => ( is_author() && true === $this->functions->disable_author_archives() ),
@@ -146,6 +146,76 @@ class Disable_Blog_Public {
 
 			$this->functions->redirect( $redirect_url );
 		}
+	}
+
+	/**
+	 * Determine if the current request is a category archive.
+	 *
+	 * `is_category()` alone isn't reliable here: when 'post' is the only post
+	 * type using the 'category' taxonomy,
+	 * `Disable_Blog_Admin::modify_taxonomies_arguments()` strips the
+	 * taxonomy's `query_var`, which stops `WP_Query::parse_tax_query()` from
+	 * ever building a tax query for `category_name` -- `is_category()` then
+	 * stays false even though the rewrite rule already resolved the request
+	 * to that category. The raw `category_name`/`cat` query vars are set by
+	 * the rewrite match itself and aren't affected by the taxonomy's public
+	 * state, so they're used as a fallback signal.
+	 *
+	 * That raw query var alone isn't sufficient, though: WordPress also
+	 * copies it onto requests that resolve to something else entirely (e.g.
+	 * a `page_for_posts` request carrying an incidental `?cat=` query
+	 * string keeps its own queried object). Requiring `get_queried_object()`
+	 * to be empty confines the fallback to requests core failed to resolve
+	 * to anything -- exactly the broken-taxonomy case above -- so a request
+	 * that legitimately resolved elsewhere keeps its own branch.
+	 *
+	 * Excludes feed requests: a category feed already has its own redirect
+	 * path through `disable_feed()`'s `dwpb_redirect_feeds` filter, run from
+	 * `do_feed`, which fires after `template_redirect`. Matching the
+	 * fallback here would redirect the feed before `do_feed` ever runs,
+	 * taking that URL away from `dwpb_redirect_feeds`.
+	 *
+	 * @since 0.5.6
+	 * @return bool
+	 */
+	private function is_category_archive_request() {
+		if ( is_category() ) {
+			return true;
+		}
+
+		if ( is_feed() ) {
+			return false;
+		}
+
+		return ! get_queried_object() && ( '' !== get_query_var( 'category_name' ) || '' !== get_query_var( 'cat' ) );
+	}
+
+	/**
+	 * Determine if the current request is a post_tag archive.
+	 *
+	 * `is_tag()` isn't affected by the same taxonomy-stripping issue that
+	 * `is_category_archive_request()` works around -- the 'tag' query var is
+	 * parsed independently of the taxonomy's `query_var` setting -- but the
+	 * raw query vars are checked too, for symmetry with the category check
+	 * and to cover a `tag_id` request that `is_tag()` might miss. See
+	 * `is_category_archive_request()` for why the fallback also requires an
+	 * empty `get_queried_object()` and excludes feed requests -- `is_tag()`
+	 * already resolves true on a tag feed, so this only affects the
+	 * (otherwise unreachable) fallback branch.
+	 *
+	 * @since 0.5.6
+	 * @return bool
+	 */
+	private function is_tag_archive_request() {
+		if ( is_tag() ) {
+			return true;
+		}
+
+		if ( is_feed() ) {
+			return false;
+		}
+
+		return ! get_queried_object() && ( '' !== get_query_var( 'tag' ) || '' !== get_query_var( 'tag_id' ) );
 	}
 
 	/**

@@ -100,6 +100,8 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Fix the `X-Pingback` header still being sent on older WordPress despite the "remove pingback header" feature being enabled, caused by core (pre-6.2) sending that header directly rather than through the filter this plugin relies on.
 - **Filters renamed:** `dpwb_disable_user_post_column` is now `dwpb_disable_user_post_column`, and `dpwb_create_user_{$post_type}_column` is now `dwpb_create_user_{$post_type}_column` (old names still honored, but deprecated).
 - Fix `WP_Widget_Tag_Cloud` being listed twice in the widget removal list, which fired the `dwpb_unregister_widgets` filter twice for that widget.
+- Fix `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive` never firing on a category/tag archive request; the archive still redirected to the front page as usual, but a custom target hooked to either filter was silently ignored.
+- Remove `dashboard_recent_drafts` and `dashboard_incoming_links` from the dashboard widget removal list; core doesn't register either as its own widget on any supported WordPress version, so removing them was always a no-op. **Filters removed:** `dwpb_disable_dashboard_recent_drafts` and `dwpb_disable_dashboard_incoming_links`, which never had any effect, go with them.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1

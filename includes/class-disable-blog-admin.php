@@ -609,16 +609,20 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.1.0
 	 * @since 0.4.1 dry out the code with a foreach loop
+	 * @since 0.5.6 removed 'dashboard_recent_drafts' and 'dashboard_incoming_links':
+	 *              neither is a metabox core registers on any supported WordPress
+	 *              version, so remove_meta_box() for either was always a no-op.
+	 *              "Recent Drafts" renders inline inside the Quick Press widget's
+	 *              own callback rather than as its own postbox, and "Incoming
+	 *              Links" was removed from core entirely in WordPress 3.8.
 	 * @return void
 	 */
 	public function remove_dashboard_widgets() {
 
 		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary.
 		$metabox = array(
-			'dashboard_quick_press'    => 'side', // Quick Press.
-			'dashboard_recent_drafts'  => 'side', // Recent Drafts.
-			'dashboard_incoming_links' => 'normal', // Incoming Links.
-			'dashboard_activity'       => 'normal', // Activity.
+			'dashboard_quick_press' => 'side', // Quick Press.
+			'dashboard_activity'    => 'normal', // Activity.
 		);
 
 		foreach ( $metabox as $metabox_id => $context ) {
