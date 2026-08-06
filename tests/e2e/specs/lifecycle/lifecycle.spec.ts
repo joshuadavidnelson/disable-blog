@@ -30,7 +30,7 @@ import { siteConfig } from '../../config/seed';
 import { adminUrl, editPhp } from '../../config/admin';
 import { expectRedirect, expectStatus } from '../../config/redirects';
 import { PLUGIN_SLUG } from '../../config/roles';
-import { wpCli, wpCliOk } from '../../config/wp-cli';
+import { expectCliSuccess, wpCli, wpCliOk } from '../../config/wp-cli';
 
 /** A stand-in old version, distinct from any real released `DWPB_VERSION`. */
 const OLD_VERSION = '0.0.1';
@@ -42,17 +42,6 @@ const OLD_VERSION = '0.0.1';
  */
 const PROBE_TRANSIENT = 'wc_count_comments';
 const PROBE_VALUE = 'lifecycle-probe-value';
-
-/**
- * Assert a `wp-cli` command exited cleanly with no PHP fatal in its output.
- *
- * @param result Result of a `wpCli()` call.
- * @param label  Human-readable label for the assertion failure message.
- */
-function expectCliSuccess( result: { exitCode: number; stdout: string; stderr: string }, label: string ): void {
-	expect( result.exitCode, `${ label } exited ${ result.exitCode }:\n${ result.stderr }` ).toBe( 0 );
-	expect( result.stdout + result.stderr ).not.toMatch( /fatal error/i );
-}
 
 /**
  * Sets `PROBE_TRANSIENT` and confirms it took, so its later absence is
