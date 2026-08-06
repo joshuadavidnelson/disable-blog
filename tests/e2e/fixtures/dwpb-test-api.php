@@ -631,6 +631,51 @@ function dwpb_test_api_widget_state() {
 }
 
 /**
+ * Resolve one override spec against one incoming value, via the exact
+ * decode/transform functions `dwpb-test-filters.php`'s live registration
+ * path calls -- not a copy of them.
+ *
+ * Direct coverage for that mechanism's edge cases (bare scalars, each object
+ * form, an unrecognized object shape, non-array incoming values, explicit
+ * priority) without needing a real hook firing to observe the result.
+ * Deliberately does not run the SECURITY GUARD `dwpb_test_filters_register_overrides()`
+ * applies to the hook name -- that guard, and malformed-JSON safety, are
+ * only observable through the real option + a real hook, which is what
+ * `filter-overrides-resolver.spec.ts`'s non-probe block exercises instead.
+ *
+ * `dwpb_test_filters_resolve_spec()` and `dwpb_test_filters_transform()`
+ * live in dwpb-test-filters.php, which loads after this file (mu-plugins
+ * load alphabetically, "api" < "filters"). That's fine here: this callback
+ * only runs when a REST request actually dispatches, long after every
+ * mu-plugin -- this one included -- has finished loading; it is not called
+ * from this file's own top-level, load-time code.
+ *
+ * @param WP_REST_Request $request Full request object.
+ * @return array<string, mixed>
+ */
+function dwpb_test_api_resolve_filter_override( WP_REST_Request $request ) {
+
+	$override = $request->get_param( 'override' );
+	$incoming = $request->get_param( 'incoming' );
+
+	$resolved = dwpb_test_filters_resolve_spec( $override );
+
+	if ( null === $resolved ) {
+		return array(
+			'skipped'  => true,
+			'output'   => null,
+			'priority' => null,
+		);
+	}
+
+	return array(
+		'skipped'  => false,
+		'output'   => dwpb_test_filters_transform( $resolved['mode'], $resolved['value'], $incoming ),
+		'priority' => $resolved['priority'],
+	);
+}
+
+/**
  * Register every dwpb-test/v1 route.
  *
  * @return void
@@ -923,6 +968,27 @@ function dwpb_test_api_register_routes() {
 			'permission_callback' => 'dwpb_test_api_can_manage',
 			'callback'            => static function () {
 				return rest_ensure_response( dwpb_test_api_widget_state() );
+			},
+		)
+	);
+
+	// Resolve one override spec against one incoming value; see
+	// dwpb_test_api_resolve_filter_override(). No 'args' schema: 'override'/
+	// 'incoming' can each legitimately be a bool, int, string, array, object,
+	// or null, so no 'type' constraint could fit both without rejecting a
+	// shape the resolver itself accepts. 'required' is skipped too, not just
+	// 'type' -- core's own required-param check reads `isset( $params[ $key
+	// ] )`, which is false for a JSON body key explicitly set to `null`, so
+	// 'required' => true would 400 on exactly the null-incoming/null-override
+	// requests this route exists to accept.
+	register_rest_route(
+		'dwpb-test/v1',
+		'/resolve-filter-override',
+		array(
+			'methods'             => 'POST',
+			'permission_callback' => 'dwpb_test_api_can_manage',
+			'callback'            => static function ( WP_REST_Request $request ) {
+				return rest_ensure_response( dwpb_test_api_resolve_filter_override( $request ) );
 			},
 		)
 	);
