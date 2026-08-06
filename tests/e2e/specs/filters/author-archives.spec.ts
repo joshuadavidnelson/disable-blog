@@ -23,7 +23,8 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { userRowLocator } from '../../config/admin';
-import { siteConfig, seedPost, deletePosts, uniqueTitle } from '../../config/seed';
+import { siteConfig, uniqueTitle } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
@@ -98,7 +99,7 @@ test.describe( 'author archives: disabled (dwpb_disable_author_archives)', () =>
 test.describe( 'author archives: CPT-backed (dwpb_author_archive_post_types)', () => {
 	test.use( { storageState: { cookies: [], origins: [] } } );
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		await setFixtures( requestUtils, {
@@ -110,7 +111,7 @@ test.describe( 'author archives: CPT-backed (dwpb_author_archive_post_types)', (
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 
 		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.cptEnabled ] );
 		await resetFilterOverrides( requestUtils );
@@ -121,16 +122,14 @@ test.describe( 'author archives: CPT-backed (dwpb_author_archive_post_types)', (
 		requestUtils,
 	} ) => {
 		// Both authored by the default API user ('admin'), matching /author/admin/ below.
-		const post = await seedPost( requestUtils, {
+		const post = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'author archive post' ),
 		} );
-		seededIds.push( post.id );
 
-		const newsItem = await seedPost( requestUtils, {
+		const newsItem = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'author archive news' ),
 			postType: 'news',
 		} );
-		seededIds.push( newsItem.id );
 
 		const response = await request.get( '/author/admin/' );
 

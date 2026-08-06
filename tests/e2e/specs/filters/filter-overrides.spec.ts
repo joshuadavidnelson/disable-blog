@@ -32,14 +32,8 @@ import { test } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import {
-	siteConfig,
-	seedPost,
-	seedTerm,
-	deletePosts,
-	deleteTerms,
-	uniqueTitle,
-} from '../../config/seed';
+import { siteConfig, uniqueTitle } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect } from '../../config/redirects';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
@@ -58,18 +52,17 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_date_a
 	let frontPageUrl: string;
 	let overrideUrl: string;
 
-	const seededPostIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		frontPageUrl = config.frontPageUrl;
 		overrideUrl = `${ config.homeUrl }${ OVERRIDE_PATH }`;
 
-		const post = await seedPost( requestUtils, {
+		await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'filter override date archive post' ),
 			postDate: POST_DATE,
 		} );
-		seededPostIds.push( post.id );
 
 		await setFilterOverrides( requestUtils, {
 			dwpb_redirect_date_archive: overrideUrl,
@@ -78,7 +71,7 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_date_a
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await resetFilterOverrides( requestUtils );
-		await deletePosts( requestUtils, seededPostIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'a date archive redirects to the overridden URL', async ( { request } ) => {
@@ -101,20 +94,19 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_catego
 	let categorySlug: string;
 	let categoryTermId: number;
 
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		frontPageUrl = config.frontPageUrl;
 		overrideUrl = `${ config.homeUrl }${ OVERRIDE_PATH }category/`;
 
-		const term = await seedTerm( requestUtils, {
+		const term = await content.seedTerm( requestUtils, {
 			taxonomy: 'category',
 			name: uniqueTitle( 'filter override category archive term' ),
 		} );
 		categorySlug = term.slug;
 		categoryTermId = term.termId;
-		seededTermIds.push( term.termId );
 
 		await setFilterOverrides( requestUtils, {
 			dwpb_redirect_category_archive: overrideUrl,
@@ -123,7 +115,7 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_catego
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await resetFilterOverrides( requestUtils );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'a category archive redirects to the overridden URL', async ( { request } ) => {
@@ -159,19 +151,18 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_post_t
 	let overrideUrl: string;
 	let tagSlug: string;
 
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		frontPageUrl = config.frontPageUrl;
 		overrideUrl = `${ config.homeUrl }${ OVERRIDE_PATH }tag/`;
 
-		const term = await seedTerm( requestUtils, {
+		const term = await content.seedTerm( requestUtils, {
 			taxonomy: 'post_tag',
 			name: uniqueTitle( 'filter override tag archive term' ),
 		} );
 		tagSlug = term.slug;
-		seededTermIds.push( term.termId );
 
 		await setFilterOverrides( requestUtils, {
 			dwpb_redirect_post_tag_archive: overrideUrl,
@@ -180,7 +171,7 @@ test.describe( 'filters: generic filter-override mechanism (dwpb_redirect_post_t
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await resetFilterOverrides( requestUtils );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'a tag archive redirects to the overridden URL', async ( { request } ) => {

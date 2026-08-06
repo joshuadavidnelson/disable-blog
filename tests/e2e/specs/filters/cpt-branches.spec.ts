@@ -27,16 +27,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import {
-	siteConfig,
-	seedPost,
-	seedTerm,
-	deletePosts,
-	deleteTerms,
-	uniqueTitle,
-	flushRewrites,
-} from '../../config/seed';
+import { siteConfig, uniqueTitle, flushRewrites } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { adminUrl, termRowLocator } from '../../config/admin';
 import { expectStatus } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
@@ -45,12 +38,10 @@ import { ADMIN_USERNAME, ADMIN_PASSWORD, callXmlRpc } from '../../config/xmlrpc'
 test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 	let newsItem: SeededPost;
 	let otherPost: SeededPost;
-	let secondOtherPost: SeededPost;
 	let categoryTerm: { termId: number; slug: string; link: string };
 	let tagTerm: { termId: number; slug: string; link: string };
 
-	const seededIds: number[] = [];
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		await siteConfig( requestUtils );
@@ -60,32 +51,28 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 		// Required so /news/... and the taxonomy archive base URLs resolve.
 		await flushRewrites( requestUtils );
 
-		newsItem = await seedPost( requestUtils, {
+		newsItem = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'cpt news item' ),
 			postType: 'news',
 		} );
-		seededIds.push( newsItem.id );
 
-		categoryTerm = await seedTerm( requestUtils, {
+		categoryTerm = await content.seedTerm( requestUtils, {
 			taxonomy: 'category',
 			name: uniqueTitle( 'cpt category' ),
 			assignTo: newsItem.id,
 		} );
-		seededTermIds.push( categoryTerm.termId );
 
-		tagTerm = await seedTerm( requestUtils, {
+		tagTerm = await content.seedTerm( requestUtils, {
 			taxonomy: 'post_tag',
 			name: uniqueTitle( 'cpt tag' ),
 			assignTo: newsItem.id,
 		} );
-		seededTermIds.push( tagTerm.termId );
 
-		otherPost = await seedPost( requestUtils, {
+		otherPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'cpt other post' ),
 			categories: [ categoryTerm.termId ],
 			tags: [ tagTerm.termId ],
 		} );
-		seededIds.push( otherPost.id );
 
 		// A second 'post' on categoryTerm, for the taxonomy-count test below:
 		// modify_taxonomies_arguments() unconditionally strips 'post' from
@@ -93,16 +80,14 @@ test.describe( 'filters: CPT branches (dwpb_test_cpt_enabled)', () => {
 		// reflects 'news' (1) -- two 'post's on the term (2) is what makes the
 		// 'post'-scoped screen's count observably different from that cached
 		// value, proving get_term_post_count_by_type() actually re-queried.
-		secondOtherPost = await seedPost( requestUtils, {
+		await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'cpt other post 2' ),
 			categories: [ categoryTerm.termId ],
 		} );
-		seededIds.push( secondOtherPost.id );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 
 		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.cptEnabled ] );
 

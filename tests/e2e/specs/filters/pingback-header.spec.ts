@@ -31,8 +31,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { seedPage, deletePosts, uniqueTitle } from '../../config/seed';
+import { uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 test.describe( 'filters: X-Pingback header override (dwpb_remove_pingback_header)', () => {
@@ -40,17 +41,16 @@ test.describe( 'filters: X-Pingback header override (dwpb_remove_pingback_header
 
 	let pageWithPingsOpen: SeededPost;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		// pingStatus 'open' on a page so pings_open() is true and core would
 		// set X-Pingback absent the plugin's filter (mirrors
 		// frontend/search-and-head.spec.ts).
-		pageWithPingsOpen = await seedPage( requestUtils, {
+		pageWithPingsOpen = await content.seedPage( requestUtils, {
 			title: uniqueTitle( 'pingback header override page' ),
 			pingStatus: 'open',
 		} );
-		seededIds.push( pageWithPingsOpen.id );
 
 		await setFilterOverrides( requestUtils, {
 			dwpb_remove_pingback_header: false,
@@ -59,7 +59,7 @@ test.describe( 'filters: X-Pingback header override (dwpb_remove_pingback_header
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await resetFilterOverrides( requestUtils );
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'the X-Pingback header survives on a normal single-page request', async ( {

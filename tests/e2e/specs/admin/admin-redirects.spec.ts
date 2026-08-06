@@ -36,16 +36,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import {
-	siteConfig,
-	seedPost,
-	seedPage,
-	seedTerm,
-	deletePosts,
-	deleteTerms,
-	uniqueTitle,
-} from '../../config/seed';
+import { siteConfig, uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { adminUrl, editPhp, postNewPhp, postPhp, editTagsPhp, termPhp } from '../../config/admin';
 import { expectRedirect, expectStatus } from '../../config/redirects';
 
@@ -57,8 +50,7 @@ test.describe( 'admin: redirects (default state)', () => {
 	let seededPage: SeededPost;
 	let categoryTerm: { termId: number; slug: string; link: string };
 
-	const seededIds: number[] = [];
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
@@ -67,26 +59,22 @@ test.describe( 'admin: redirects (default state)', () => {
 		postNewPageTarget = `${ config.homeUrl }${ postNewPhp( 'page' ) }`;
 		dashboardTarget = `${ config.homeUrl }${ adminUrl( 'index.php' ) }`;
 
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'admin redirects post' ),
 		} );
-		seededIds.push( seededPost.id );
 
-		seededPage = await seedPage( requestUtils, {
+		seededPage = await content.seedPage( requestUtils, {
 			title: uniqueTitle( 'admin redirects page' ),
 		} );
-		seededIds.push( seededPage.id );
 
-		categoryTerm = await seedTerm( requestUtils, {
+		categoryTerm = await content.seedTerm( requestUtils, {
 			taxonomy: 'category',
 			name: uniqueTitle( 'admin redirects category' ),
 		} );
-		seededTermIds.push( categoryTerm.termId );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	// redirect_admin_edit() / redirect_admin_post_new()

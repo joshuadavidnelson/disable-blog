@@ -16,8 +16,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import { seedPost, deletePosts, uniqueTitle } from '../../config/seed';
+import { uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectStatus } from '../../config/redirects';
 
 test.describe( 'frontend: author archives (default state)', () => {
@@ -25,19 +26,18 @@ test.describe( 'frontend: author archives (default state)', () => {
 
 	let seededPost: SeededPost;
 
-	const seededIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		// No author param: requestUtils authenticates as the wp-env admin
 		// ('admin'), which post creation defaults post_author to.
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'author archive post' ),
 		} );
-		seededIds.push( seededPost.id );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await deletePosts( requestUtils, seededIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	test( 'an author archive lists posts by default', async ( { page } ) => {

@@ -18,17 +18,9 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * Internal dependencies
  */
-import {
-	siteConfig,
-	seedPost,
-	seedPage,
-	seedTerm,
-	deletePosts,
-	deleteTerms,
-	uniqueTitle,
-	setReadingSettings,
-} from '../../config/seed';
+import { siteConfig, uniqueTitle, setReadingSettings } from '../../config/seed';
 import type { SeededPost, ReadingSettings } from '../../config/seed';
+import { createContentTracker } from '../../config/content-tracker';
 import { expectRedirect, expectStatus, expectNoRedirect } from '../../config/redirects';
 
 /**
@@ -51,38 +43,33 @@ test.describe( 'frontend: redirects (default state)', () => {
 	// posts_per_page as read before beforeAll forces it to 1; restored in afterAll.
 	let originalPostsPerPage: number | undefined;
 
-	const seededIds: number[] = [];
-	const seededTermIds: number[] = [];
+	const content = createContentTracker();
 
 	test.beforeAll( async ( { requestUtils } ) => {
 		const config = await siteConfig( requestUtils );
 		frontPageUrl = config.frontPageUrl;
 
-		seededPost = await seedPost( requestUtils, {
+		seededPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'redirects post' ),
 			postDate: POST_DATE,
 		} );
-		seededIds.push( seededPost.id );
 
 		// Second post gives the blog a real page 2 to paginate to (see below).
-		secondPost = await seedPost( requestUtils, {
+		secondPost = await content.seedPost( requestUtils, {
 			title: uniqueTitle( 'redirects post 2' ),
 			postDate: POST_DATE,
 		} );
-		seededIds.push( secondPost.id );
 
-		seededPage = await seedPage( requestUtils, {
+		seededPage = await content.seedPage( requestUtils, {
 			title: uniqueTitle( 'redirects page' ),
 		} );
-		seededIds.push( seededPage.id );
 
-		const term = await seedTerm( requestUtils, {
+		const term = await content.seedTerm( requestUtils, {
 			taxonomy: 'post_tag',
 			name: uniqueTitle( 'redirects tag' ),
 			assignTo: seededPost.id,
 		} );
 		tagSlug = term.slug;
-		seededTermIds.push( term.termId );
 
 		// Force a real page 2 to exist: with the default posts_per_page (10)
 		// and only two seeded posts, /blog/page/2/ 404s before
@@ -110,8 +97,7 @@ test.describe( 'frontend: redirects (default state)', () => {
 			} );
 		}
 
-		await deletePosts( requestUtils, seededIds );
-		await deleteTerms( requestUtils, seededTermIds );
+		await content.cleanup( requestUtils );
 	} );
 
 	/* -------------------------------------------------------------------
