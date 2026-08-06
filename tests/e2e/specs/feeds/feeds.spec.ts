@@ -13,12 +13,13 @@
  *
  * `is_post_feed_request()` excludes singular query vars (`p`/`name`/etc.) but
  * not `category_name`/`tag`/`author_name`, so term and author feeds are swept
- * into the disabled-feed redirect too. A second, fixture-driven describe
+ * into the disabled-feed redirect too. A second, override-driven describe
  * block covers the singular-exclusion branch itself — the reason the
- * function exists — with `redirect_public_pages()` switched off so the
- * request actually reaches `disable_feed()`. A third describe block, same
- * fixture, isolates that same sweep for a tag feed specifically, since
- * `redirect_public_pages()` otherwise wins that race first and masks it.
+ * function exists — with `redirect_public_pages()` switched off (via a
+ * `dwpb_redirect_front_end` override) so the request actually reaches
+ * `disable_feed()`. A third describe block, same override, isolates that
+ * same sweep for a tag feed specifically, since `redirect_public_pages()`
+ * otherwise wins that race first and masks it.
  */
 
 /**
@@ -40,7 +41,7 @@ import {
 } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
 import { expectRedirect, expectStatus } from '../../config/redirects';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 test.describe( 'feeds: default state', () => {
 	test.use( { storageState: { cookies: [], origins: [] } } );
@@ -237,7 +238,7 @@ test.describe( "feeds: is_post_feed_request()'s singular-exclusion branch", () =
 
 	// Restored in afterEach, not the test body -- see settings-screens.spec.ts.
 	test.afterEach( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.frontEndRedirectsOff ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( "a post's own content feed is not swept into the site-feed redirect", async ( {
@@ -248,8 +249,8 @@ test.describe( "feeds: is_post_feed_request()'s singular-exclusion branch", () =
 		// 'post' branch (see "a post's own feed redirects" in the default-state
 		// describe above), so switch it off to let the request reach
 		// disable_feed() and actually exercise is_post_feed_request().
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.frontEndRedirectsOff ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_front_end: false,
 		} );
 
 		// withoutcomments=1 is required: a singular feed request defaults to
@@ -267,11 +268,10 @@ test.describe( "feeds: is_post_feed_request()'s singular-exclusion branch", () =
 
 		expect( body ).toContain( seededPost.title );
 
-		// Control: the main site feed is still swept in with the same fixture
-		// toggle on (it only silences redirect_public_pages(), not
-		// disable_feed()), proving the post's own feed above is a targeted
-		// exception rather than a side effect of the toggle disabling
-		// redirects generally.
+		// Control: the main site feed is still swept in with the same override
+		// active (it only silences redirect_public_pages(), not disable_feed()),
+		// proving the post's own feed above is a targeted exception rather than
+		// a side effect of the override disabling redirects generally.
 		await expectRedirect( request, '/feed/', homeUrl );
 	} );
 } );
@@ -310,7 +310,7 @@ test.describe( "feeds: disable_feed()'s sweep also catches tag archive feeds", (
 
 	// Restored in afterEach, not the test body -- see settings-screens.spec.ts.
 	test.afterEach( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.frontEndRedirectsOff ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'a tag feed is independently swept in by disable_feed(), not just caught by redirect_public_pages() first', async ( {
@@ -325,8 +325,8 @@ test.describe( "feeds: disable_feed()'s sweep also catches tag archive feeds", (
 		// request too, exactly like the category and author feeds above --
 		// just with a different target (home_url(), no trailing slash), the
 		// asymmetry noted there.
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.frontEndRedirectsOff ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_front_end: false,
 		} );
 
 		await expectRedirect( request, `${ tagTerm.link }feed/`, homeUrl );

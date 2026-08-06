@@ -1,7 +1,8 @@
 /**
  * The wp-admin Dashboard (`index.php`) console behaviour when
  * `dwpb.commentsSupported` is `false` — unreachable via the plugin's normal
- * default state, so exercised here via a test fixture toggle.
+ * default state, so exercised here via a `dwpb_post_types_supporting_comments`
+ * filter override.
  *
  * Regression guard: `document.querySelector( '.welcome-icon.welcome-comments'
  * )` is `null` on WordPress 6.1+, so `disable-blog-admin.js`'s Dashboard case
@@ -22,17 +23,17 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { formTableRow } from '../../config/admin';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 test.describe( 'admin: dashboard console (commentsSupported === false)', () => {
 	test.beforeAll( async ( { requestUtils } ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.commentsUnsupported ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_post_types_supporting_comments: false,
 		} );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.commentsUnsupported ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'regression guard (D6): the dashboard throws no TypeError when comments are unsupported', async ( {

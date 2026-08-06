@@ -1,14 +1,14 @@
 /**
  * The author-archive filter pair (`dwpb_disable_author_archives`,
- * `dwpb_author_archive_post_types`), toggled via the
- * `dwpb-test-author-archives.php` mu-plugin fixture. `authorArchivesDisabled`
- * flips the author-archive redirect, the users-screen "view" row action, and
- * the `%author%` permalink tag. `authorArchiveCpt` (paired with `cptEnabled`)
- * scopes the archive query to the 'news' CPT and re-enables the users sitemap.
+ * `dwpb_author_archive_post_types`), toggled via `setFilterOverrides()`.
+ * `dwpb_disable_author_archives` flips the author-archive redirect, the
+ * users-screen "view" row action, and the `%author%` permalink tag.
+ * `dwpb_author_archive_post_types` (paired with `cptEnabled`) scopes the
+ * archive query to the 'news' CPT and re-enables the users sitemap.
  *
  * `wp_author_sitemaps()` disables the users sitemap when EITHER condition is
  * true; the CPT-backed describe block deliberately leaves
- * `authorArchivesDisabled` unset so its sitemap test isolates the
+ * `dwpb_disable_author_archives` unset so its sitemap test isolates the
  * post-types-empty condition specifically.
  *
  * Front-end tests run anonymous; admin-screen tests use the default admin session.
@@ -26,6 +26,7 @@ import { userRowLocator } from '../../config/admin';
 import { siteConfig, seedPost, deletePosts, uniqueTitle } from '../../config/seed';
 import { expectRedirect } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 test.describe( 'author archives: disabled (dwpb_disable_author_archives)', () => {
 	test.describe( 'front end', () => {
@@ -37,13 +38,13 @@ test.describe( 'author archives: disabled (dwpb_disable_author_archives)', () =>
 			const config = await siteConfig( requestUtils );
 			frontPageUrl = config.frontPageUrl;
 
-			await setFixtures( requestUtils, {
-				[ FIXTURE_TOGGLES.authorArchivesDisabled ]: true,
+			await setFilterOverrides( requestUtils, {
+				dwpb_disable_author_archives: true,
 			} );
 		} );
 
 		test.afterAll( async ( { requestUtils } ) => {
-			await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.authorArchivesDisabled ] );
+			await resetFilterOverrides( requestUtils );
 		} );
 
 		test( 'author archives redirect when disabled', async ( { request } ) => {
@@ -53,13 +54,13 @@ test.describe( 'author archives: disabled (dwpb_disable_author_archives)', () =>
 
 	test.describe( 'admin screens', () => {
 		test.beforeAll( async ( { requestUtils } ) => {
-			await setFixtures( requestUtils, {
-				[ FIXTURE_TOGGLES.authorArchivesDisabled ]: true,
+			await setFilterOverrides( requestUtils, {
+				dwpb_disable_author_archives: true,
 			} );
 		} );
 
 		test.afterAll( async ( { requestUtils } ) => {
-			await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.authorArchivesDisabled ] );
+			await resetFilterOverrides( requestUtils );
 		} );
 
 		test( 'the users screen drops the View row action', async ( {
@@ -102,17 +103,17 @@ test.describe( 'author archives: CPT-backed (dwpb_author_archive_post_types)', (
 	test.beforeAll( async ( { requestUtils } ) => {
 		await setFixtures( requestUtils, {
 			[ FIXTURE_TOGGLES.cptEnabled ]: true,
-			[ FIXTURE_TOGGLES.authorArchiveCpt ]: true,
+		} );
+		await setFilterOverrides( requestUtils, {
+			dwpb_author_archive_post_types: { set: [ 'news' ] },
 		} );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await deletePosts( requestUtils, seededIds );
 
-		await resetFixtures( requestUtils, [
-			FIXTURE_TOGGLES.cptEnabled,
-			FIXTURE_TOGGLES.authorArchiveCpt,
-		] );
+		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.cptEnabled ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'author archives serve CPT content when a post type opts in', async ( {

@@ -29,9 +29,10 @@
  * `remove_widgets()` reads `dwpb_post_types_with_tax()` (verified directly:
  * toggling the fixture on leaves the registry unchanged). The generic
  * `dwpb_taxonomy_support` override (already used in
- * filters/taxonomy-support-override.spec.ts) and the `commentsUnsupported`
- * fixture (filters/comments-unsupported.spec.ts) reach the exact same
- * downstream branches without that ordering problem, so they stand in below.
+ * filters/taxonomy-support-override.spec.ts) and the
+ * `dwpb_post_types_supporting_comments` override
+ * (filters/comments-unsupported.spec.ts) reach the exact same downstream
+ * branches without that ordering problem, so they stand in below.
  */
 
 /**
@@ -43,7 +44,6 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { registeredWidgets } from '../../config/widgets';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 /**
@@ -114,15 +114,15 @@ test.describe( 'admin: widgets registry — conditional widgets restored', () =>
 		} );
 	} );
 
-	test.describe( 'comments unsupported by any other post type (commentsUnsupported fixture)', () => {
+	test.describe( 'comments unsupported by any other post type (dwpb_post_types_supporting_comments override)', () => {
 		test.beforeAll( async ( { requestUtils } ) => {
-			await setFixtures( requestUtils, {
-				[ FIXTURE_TOGGLES.commentsUnsupported ]: true,
+			await setFilterOverrides( requestUtils, {
+				dwpb_post_types_supporting_comments: false,
 			} );
 		} );
 
 		test.afterAll( async ( { requestUtils } ) => {
-			await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.commentsUnsupported ] );
+			await resetFilterOverrides( requestUtils );
 		} );
 
 		test( 'Recent Comments is unregistered once forced false', async ( { requestUtils } ) => {
@@ -130,7 +130,7 @@ test.describe( 'admin: widgets registry — conditional widgets restored', () =>
 
 			expect( registered ).not.toContain( 'WP_Widget_Recent_Comments' );
 
-			// Control: a widget with no comments branch is unaffected by this fixture.
+			// Control: a widget with no comments branch is unaffected by this override.
 			expect( registered ).not.toContain( 'WP_Widget_Archives' );
 		} );
 	} );

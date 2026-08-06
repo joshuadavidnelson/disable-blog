@@ -1,11 +1,10 @@
 /**
  * Redirect filters (`dwpb_redirect_front_end`, `dwpb_redirect_status_code`,
  * `dwpb_pass_query_string_on_redirect` + `dwpb_allowed_query_vars`,
- * `dwpb_front_end_redirect_url`), toggled via the `dwpb-test-redirects.php`
- * mu-plugin fixture rather than plugin defaults — see that file's docblock
- * for the option -> filter map. Assertions run request-layer, same reasoning
- * as `redirects.spec.ts`; the describe block is anonymous, requestUtils stays
- * admin-authenticated for seeding/fixture toggling.
+ * `dwpb_front_end_redirect_url`), toggled via `setFilterOverrides()` rather
+ * than plugin defaults. Assertions run request-layer, same reasoning as
+ * `redirects.spec.ts`; the describe block is anonymous, requestUtils stays
+ * admin-authenticated for seeding/override setting.
  */
 
 /**
@@ -19,20 +18,11 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import { siteConfig, seedPost, deletePosts, uniqueTitle } from '../../config/seed';
 import type { SeededPost } from '../../config/seed';
 import { expectRedirect, expectStatus } from '../../config/redirects';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
-// Must match DWPB_TEST_REDIRECT_LANDING_PATH in dwpb-test-redirects.php.
 const LANDING_PATH = '/dwpb-test-landing/';
 
-// Reset together in afterEach so a failing assertion can't leak a fixture.
-const TOGGLES_USED = [
-	FIXTURE_TOGGLES.frontEndRedirectsOff,
-	FIXTURE_TOGGLES.redirectStatusCode,
-	FIXTURE_TOGGLES.queryStringPassthrough,
-	FIXTURE_TOGGLES.customRedirectUrl,
-];
-
-test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
+test.describe( 'frontend: redirect mechanics (override-driven)', () => {
 	test.use( { storageState: { cookies: [], origins: [] } } );
 
 	let frontPageUrl: string;
@@ -53,7 +43,7 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 	} );
 
 	test.afterEach( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, TOGGLES_USED );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
@@ -64,8 +54,8 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 		request,
 		requestUtils,
 	} ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.frontEndRedirectsOff ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_front_end: false,
 		} );
 
 		// Confirms the page actually rendered, not merely that the redirect vanished.
@@ -76,8 +66,8 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 	} );
 
 	test( 'the status code filter is honored', async ( { request, requestUtils } ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.redirectStatusCode ]: 302,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_status_code: 302,
 		} );
 
 		await expectRedirect( request, seededPost.permalink, frontPageUrl, 302 );
@@ -89,8 +79,8 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 	} ) => {
 		// 200 is outside the 300-399 range get_redirect_status_code() allows,
 		// so it clamps back to 301 rather than passing 200 to wp_safe_redirect().
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.redirectStatusCode ]: 200,
+		await setFilterOverrides( requestUtils, {
+			dwpb_redirect_status_code: 200,
 		} );
 
 		await expectRedirect( request, seededPost.permalink, frontPageUrl, 301 );
@@ -100,11 +90,12 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 		request,
 		requestUtils,
 	} ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.queryStringPassthrough ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_pass_query_string_on_redirect: true,
+			dwpb_allowed_query_vars: { set: [ 'utm_source' ] },
 		} );
 
-		// Fixture allow-lists only 'utm_source'; 'evil' must be dropped.
+		// Allow-lists only 'utm_source'; 'evil' must be dropped.
 		await expectRedirect(
 			request,
 			`${ seededPost.permalink }?utm_source=x&evil=1`,
@@ -116,11 +107,14 @@ test.describe( 'frontend: redirect mechanics (fixture-driven)', () => {
 		request,
 		requestUtils,
 	} ) => {
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.customRedirectUrl ]: true,
+		// homeUrl carries no trailing slash, so the target is a plain
+		// concatenation -- matches home_url( $path ) server-side.
+		const landingUrl = `${ homeUrl }${ LANDING_PATH }`;
+
+		await setFilterOverrides( requestUtils, {
+			dwpb_front_end_redirect_url: landingUrl,
 		} );
 
-		// homeUrl carries no trailing slash, so the target is a plain concatenation.
-		await expectRedirect( request, seededPost.permalink, `${ homeUrl }${ LANDING_PATH }` );
+		await expectRedirect( request, seededPost.permalink, landingUrl );
 	} );
 } );

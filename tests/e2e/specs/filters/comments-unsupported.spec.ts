@@ -1,14 +1,14 @@
 /**
  * wp-admin behaviour when `dwpb_post_types_with_feature( 'comments' )` is
- * forced false via the `commentsUnsupported` fixture toggle. `page`/`attachment`
- * support comments by default in this environment, so this spec flips that
- * gate and asserts the opposite of default-state coverage: the Comments menu,
- * Discussion settings submenu, and admin-bar comments bubble disappear, and
- * `edit-comments.php`/`options-discussion.php` redirect to the dashboard
- * (both return a plain boolean `true`, which `redirect_admin_pages()`
- * special-cases to `admin_url( 'index.php' )`).
+ * forced false via a `dwpb_post_types_supporting_comments` override.
+ * `page`/`attachment` support comments by default in this environment, so
+ * this spec flips that gate and asserts the opposite of default-state
+ * coverage: the Comments menu, Discussion settings submenu, and admin-bar
+ * comments bubble disappear, and `edit-comments.php`/`options-discussion.php`
+ * redirect to the dashboard (both return a plain boolean `true`, which
+ * `redirect_admin_pages()` special-cases to `admin_url( 'index.php' )`).
  *
- * All five tests share one beforeAll/afterAll toggle since none mutate
+ * All five tests share one beforeAll/afterAll override since none mutate
  * content another test depends on.
  *
  * The Dashboard's JS-console regression guard for this state lives in
@@ -36,7 +36,7 @@ import {
 	menuLink,
 } from '../../config/admin';
 import { expectRedirect } from '../../config/redirects';
-import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 // Parent "+ New" dropdown node, used as a control that the toolbar rendered.
 const ADMIN_BAR_NEW_CONTENT = '#wp-admin-bar-new-content';
@@ -48,13 +48,13 @@ test.describe( 'filters: comments unsupported (dwpb_post_types_supporting_commen
 		const config = await siteConfig( requestUtils );
 		dashboardTarget = `${ config.homeUrl }${ adminUrl( 'index.php' ) }`;
 
-		await setFixtures( requestUtils, {
-			[ FIXTURE_TOGGLES.commentsUnsupported ]: true,
+		await setFilterOverrides( requestUtils, {
+			dwpb_post_types_supporting_comments: false,
 		} );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.commentsUnsupported ] );
+		await resetFilterOverrides( requestUtils );
 	} );
 
 	test( 'the Comments menu is removed', async ( { admin, page } ) => {
