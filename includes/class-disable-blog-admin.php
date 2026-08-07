@@ -49,13 +49,14 @@ class Disable_Blog_Admin {
 	 * Initialize the class and set its properties.
 	 *
 	 * @since 0.4.0
-	 * @param string $plugin_name The name of this plugin.
-	 * @param string $version     The version of this plugin.
+	 * @param string                       $plugin_name The name of this plugin.
+	 * @param string                       $version     The version of this plugin.
+	 * @param Disable_Blog_Functions|null  $functions   Optional functions instance, e.g. a test double. Defaults to a new instance.
 	 */
-	public function __construct( $plugin_name, $version ) {
+	public function __construct( $plugin_name, $version, $functions = null ) {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
-		$this->functions   = new Disable_Blog_Functions();
+		$this->functions   = $functions ? $functions : new Disable_Blog_Functions();
 	}
 
 	/**
