@@ -7,3 +7,7 @@
 /artifacts/
 /playwright-report/
 /.wp-env.override.json
+
+# PHPUnit artifacts
+.phpunit.cache/
+/coverage/
