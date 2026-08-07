@@ -3,6 +3,9 @@
 /.wordpress-org
 /vendor/
 /tests/
+/docs/
+/.dev/
+.gitbook.yaml
 .editorconfig
 .gitignore
 .distignore
