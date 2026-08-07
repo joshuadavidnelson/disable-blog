@@ -22,7 +22,6 @@ parameters:
         # errors we don't care about.
         - '#^Property Disable_Blog_Public::\$plugin_name is never read, only written\.#'
         - '#^Property Disable_Blog_Public::\$version is never read, only written\.#'
-        - '#^Constant DWPB_URL not found\.#'
 
         # tests/php-only exemptions. None of these may leak into includes/: each is
         # scoped to the single test file that needs it.
@@ -94,6 +93,12 @@ parameters:
         -
             message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::#'
             path: tests/php/PublicMiscTest.php
+        -
+            message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::#'
+            path: tests/php/AdminRedirectsTest.php
+        -
+            message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::#'
+            path: tests/php/AdminHooksTest.php
 
         # Disable_Blog_Public::header_feeds() is documented @return void and never returns a
         # value on any path. assertNull() on its call result is how this test proves the
