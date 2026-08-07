@@ -233,6 +233,49 @@ class AdminRedirectsTest extends TestCase {
 	}
 
 	/**
+	 * Continue semantics: is_admin_page() is forced (as in the break test below) to report
+	 * a match for every slug the loop checks, so 'post' (the first row) and then 'edit'
+	 * (the second row) are both reached. redirect_admin_post() is driven to return false --
+	 * neither boolean true nor a non-empty string -- so the 'post' row's `else` arm hits
+	 * `continue` rather than `break`, and the loop moves on to check 'edit' instead of
+	 * stopping. dwpb_redirect_admin_edit firing, and its url reaching redirect(), is what
+	 * proves the loop actually continued: if `continue` were replaced with `break`, the
+	 * loop would stop at 'post' and $functions->redirect_calls would stay empty.
+	 */
+	public function test_redirect_admin_pages_continues_past_slug_when_redirect_function_returns_false() {
+		global $pagenow;
+		// The value doesn't matter to is_admin_page() here (it's mocked to always match),
+		// but it must be a real string to pass the `! isset( $pagenow )` guard.
+		$pagenow = 'post.php';
+
+		$dashboard_url = 'https://example.test/wp-admin/index.php';
+		$edit_url      = 'https://example.test/wp-admin/edit.php?post_type=page';
+		$this->stub_dashboard_guards_pass( $dashboard_url );
+		WP_Mock::userFunction( 'is_admin' )->andReturn( true );
+
+		// $_GET['post'] is deliberately left unset, so redirect_admin_post() short-
+		// circuits to false without needing get_post_type() stubbed -- this is what
+		// drives the 'post' row into the `continue` arm.
+		// $_GET['post_type'] is also left unset, so redirect_admin_edit() takes its
+		// url-returning branch on the very next iteration.
+		WP_Mock::userFunction( 'admin_url' )->with( 'edit.php?post_type=page' )->andReturn( $edit_url );
+		WP_Mock::userFunction( 'esc_url_raw' )->with( $edit_url )->andReturn( $edit_url );
+		WP_Mock::onFilter( 'dwpb_redirect_admin_edit' )->with( $edit_url )->reply( $edit_url );
+		$this->stub_final_filters_passthrough( $edit_url );
+
+		$functions = new Disable_Blog_Admin_Functions_Double();
+		$admin     = $this->getMockBuilder( Disable_Blog_Admin::class )
+			->setConstructorArgs( array( 'disable-blog', '0.5.6', $functions ) )
+			->onlyMethods( array( 'is_admin_page' ) )
+			->getMock();
+		$admin->method( 'is_admin_page' )->willReturn( true );
+
+		$admin->redirect_admin_pages();
+
+		$this->assertSame( array( $edit_url ), $functions->redirect_calls );
+	}
+
+	/**
 	 * Break semantics: is_admin_page() is forced to report a match for every slug the loop
 	 * checks, so the FIRST entry in $admin_redirects ('post') is reached before any later
 	 * entry. dwpb_redirect_admin_edit (the second row's filter) is deliberately left
