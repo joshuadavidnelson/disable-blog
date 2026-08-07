@@ -10,7 +10,7 @@
 
 ### Install via FTP
 
-1. Download the most current version of the plugin from the WP repository or Github release.
+1. Download the most current version of the plugin from the WP repository or GitHub release.
 2. Access your site's FTP using the tool of your choice, such as FileZilla or Cyberduck.
 3. Unzip the plugin files and upload the `disable-blog` plugin folder into your `wp-content/plugins/` folder.
 4. From the WordPress admin screen, navigate to "Plugins."
@@ -46,11 +46,22 @@ composer require wpackagist-plugin/disable-blog
 ```
 {% endcode %}
 
-Or add the package to your `composer.json`:
+That command assumes wpackagist is already registered as a repository in your project.
+If it is not, add it to your `composer.json` along with the plugin:
 
 {% code overflow="wrap" %}
-```bash
-wpackagist-plugin/disable-blog
+```json
+{
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        }
+    ],
+    "require": {
+        "wpackagist-plugin/disable-blog": "^0.5"
+    }
+}
 ```
 {% endcode %}
 

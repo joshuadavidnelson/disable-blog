@@ -6,7 +6,7 @@ description: Turn off the blog in WordPress with the Disable Blog plugin
 
 [![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/disable-blog)](https://wordpress.org/plugins/disable-blog/) ![Downloads](https://img.shields.io/wordpress/plugin/dt/disable-blog.svg) ![Rating](https://img.shields.io/wordpress/plugin/r/disable-blog.svg) [![WP compatibility](https://plugintests.com/plugins/wporg/disable-blog/wp-badge.svg)](https://plugintests.com/plugins/wporg/disable-blog/latest) [![PHP compatibility](https://plugintests.com/plugins/wporg/disable-blog/php-badge.svg)](https://plugintests.com/plugins/wporg/disable-blog/latest)
 
-View on: [Github](https://github.com/joshuadavidnelson/disable-blog/) & [WordPress.org](https://wordpress.org/plugins/disable-blog/)
+View on: [GitHub](https://github.com/joshuadavidnelson/disable-blog/) & [WordPress.org](https://wordpress.org/plugins/disable-blog/)
 
 ## All the power of WordPress, without a blog
 

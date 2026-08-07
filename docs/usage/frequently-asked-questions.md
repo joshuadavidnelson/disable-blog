@@ -1,7 +1,5 @@
 # Frequently Asked Questions
 
-## Frequently Asked Questions
-
 <details>
 
 <summary>Can I disable comments?</summary>
