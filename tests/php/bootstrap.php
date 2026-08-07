@@ -46,3 +46,4 @@ require __DIR__ . '/../../includes/class-disable-blog-deactivator.php';
 // Disable_Blog_Functions is deliberately NOT required here -- see ConstructorInjectionTest.php's
 // note; LoaderTest's autoloader test needs it to remain undefined until its own isolated process.
 require __DIR__ . '/../../includes/class-disable-blog-public.php';
+require __DIR__ . '/../../includes/class-disable-blog-admin.php';
