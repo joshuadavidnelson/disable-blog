@@ -20,6 +20,12 @@
     ],
     "lint": [
       "find *.php includes/ -type f -name '*.php' -print0 | xargs -0 -L1 -P4 -- php -l"
+    ],
+    "test": [
+      "./vendor/bin/phpunit"
+    ],
+    "test:coverage": [
+      "@php -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-text"
     ]
   },
   "minimum-stability": "stable",
@@ -48,6 +54,10 @@
     "phpcompatibility/phpcompatibility-wp": "^2.1",
     "szepeviktor/phpstan-wordpress": "^2.0",
     "sirbrillig/phpcs-variable-analysis": "^2.12",
-    "automattic/vipwpcs": "^3.0"
+    "automattic/vipwpcs": "^3.0",
+    "phpunit/phpunit": "^9.6",
+    "10up/wp_mock": "^1.1",
+    "yoast/phpunit-polyfills": "^4.0",
+    "mockery/mockery": "^1.6"
   }
 }
