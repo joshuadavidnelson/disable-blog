@@ -27,7 +27,10 @@ class ConstructorInjectionTest extends TestCase {
 	 * value and driving a real method that calls through it.
 	 */
 	public function test_admin_constructor_uses_the_injected_functions_instance() {
-		$double = new class() {
+		$double = new class() extends Disable_Blog_Functions {
+			/**
+			 * @return string[]
+			 */
 			public function author_archive_post_types() {
 				return array( 'injected_cpt' );
 			}
@@ -62,10 +65,13 @@ class ConstructorInjectionTest extends TestCase {
 	 * is the only way $provider (not false) can come back out.
 	 */
 	public function test_public_constructor_uses_the_injected_functions_instance() {
-		$double = new class() {
+		$double = new class() extends Disable_Blog_Functions {
 			public function disable_author_archives() {
 				return false;
 			}
+			/**
+			 * @return string[]
+			 */
 			public function author_archive_post_types() {
 				return array( 'book' );
 			}
