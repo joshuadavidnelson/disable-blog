@@ -112,6 +112,10 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/wp-admin/options-general.php';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
+		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, 'https://example.test/wp-admin/edit.php', $redirect_url )
+			->reply( 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -153,6 +157,10 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/other-page/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
+		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, 'https://example.test/current-page/?foo=bar', $redirect_url )
+			->reply( 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -217,6 +225,13 @@ class DisableBlogFunctionsTest extends TestCase {
 			->with( '/current-page/' )
 			->andReturn( 'https://example.test/current-page/' );
 
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
 		WP_Mock::userFunction( 'esc_url_raw' )->with( '' )->andReturn( '' );
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )->never();
@@ -243,6 +258,13 @@ class DisableBlogFunctionsTest extends TestCase {
 			->with( '/current-page/' )
 			->andReturn( 'https://example.test/current-page/' );
 
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
 		$redirect_url         = 'https://example.test/target/';
 		$redirect_url_with_qs = 'https://example.test/target/?foo=bar';
 
@@ -258,6 +280,9 @@ class DisableBlogFunctionsTest extends TestCase {
 			->with( array( 'foo' => 'bar' ), $redirect_url )
 			->andReturn( $redirect_url_with_qs );
 
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, 'https://example.test/current-page/', $redirect_url_with_qs )
+			->reply( 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -290,11 +315,22 @@ class DisableBlogFunctionsTest extends TestCase {
 			->with( '/current-page/' )
 			->andReturn( 'https://example.test/current-page/' );
 
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
 		$redirect_url = 'https://example.test/target/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
+		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
 		WP_Mock::userFunction( 'add_query_arg' )->never();
 
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, 'https://example.test/current-page/', $redirect_url )
+			->reply( 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -325,9 +361,17 @@ class DisableBlogFunctionsTest extends TestCase {
 			->with( '/current-page/' )
 			->andReturn( 'https://example.test/current-page/' );
 
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
 		$redirect_url = 'https://example.test/target/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
+		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
 
 		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
 			->with( 301, 'https://example.test/current-page/', $redirect_url )
@@ -377,14 +421,15 @@ class DisableBlogFunctionsTest extends TestCase {
 	}
 
 	/**
-	 * dwpb_allowed_query_vars is left unstubbed here: it defaults to an empty array, so
-	 * the outer `! empty( $allowed_query_vars )` guard must skip everything below it.
+	 * dwpb_allowed_query_vars replies with its own default (an empty array) here, so the
+	 * outer `! empty( $allowed_query_vars )` guard must skip everything below it.
 	 */
 	public function test_parse_query_string_returns_url_unchanged_when_no_allowed_query_vars() {
 		$_SERVER['QUERY_STRING'] = 'foo=bar';
 
 		$functions = new Disable_Blog_Functions();
 
+		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array() );
 		WP_Mock::userFunction( 'add_query_arg' )->never();
 
 		$this->assertSame(
@@ -442,6 +487,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_get_allowed_query_vars_returns_empty_array_by_default() {
 		$functions = new Disable_Blog_Functions();
 
+		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array() );
 		WP_Mock::userFunction( 'sanitize_key' )->never();
 
 		$this->assertSame( array(), $this->invoke_private( $functions, 'get_allowed_query_vars' ) );
@@ -559,6 +605,8 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_author_archive_post_types_returns_false_when_empty_by_default() {
 		$functions = new Disable_Blog_Functions();
 
+		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array() );
+
 		$this->assertFalse( $functions->author_archive_post_types() );
 	}
 
@@ -568,6 +616,8 @@ class DisableBlogFunctionsTest extends TestCase {
 
 	public function test_disable_author_archives_defaults_to_false() {
 		$functions = new Disable_Blog_Functions();
+
+		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
 
 		$this->assertFalse( $functions->disable_author_archives() );
 	}

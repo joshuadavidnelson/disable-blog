@@ -94,6 +94,10 @@ class HelperFunctionsTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', array( 'page' ), 'post-types-by-feature' );
 
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
+			->with( array( 'page' ), $args )
+			->reply( array( 'page' ) );
+
 		$result = dwpb_post_types_with_feature( $feature, $args );
 
 		$this->assertSame( array( 'page' ), $result );
@@ -122,6 +126,8 @@ class HelperFunctionsTest extends TestCase {
 		WP_Mock::userFunction( 'get_post_types' )->never();
 		WP_Mock::userFunction( 'post_type_supports' )->never();
 		WP_Mock::userFunction( 'wp_cache_set' )->never();
+
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )->with( $cached, array() )->reply( $cached );
 
 		$result = dwpb_post_types_with_feature( $feature );
 
@@ -154,6 +160,8 @@ class HelperFunctionsTest extends TestCase {
 		WP_Mock::userFunction( 'wp_cache_set' )
 			->once()
 			->with( 'post-types-supporting-comments', false, 'post-types-by-feature' );
+
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )->with( false, array() )->reply( false );
 
 		$result = dwpb_post_types_with_feature( $feature );
 
@@ -235,6 +243,10 @@ class HelperFunctionsTest extends TestCase {
 			->with( 'page', 'names' )
 			->andReturn( array( 'category', 'post_tag' ) );
 
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, 'category', array( 'post', 'page' ), array(), 'names' )
+			->reply( null );
+
 		$result = dwpb_post_types_with_tax( $taxonomy );
 
 		$this->assertSame( array( 'page' ), $result );
@@ -260,6 +272,10 @@ class HelperFunctionsTest extends TestCase {
 
 		WP_Mock::userFunction( 'get_object_taxonomies' )->with( 'page', 'names' )->andReturn( array( 'category' ) );
 		WP_Mock::userFunction( 'get_object_taxonomies' )->with( 'book', 'names' )->andReturn( array( 'genre' ) );
+
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, 'category', array( 'post', 'page', 'book' ), array(), 'names' )
+			->reply( null );
 
 		$result = dwpb_post_types_with_tax( 'category' );
 
@@ -288,6 +304,10 @@ class HelperFunctionsTest extends TestCase {
 			->once()
 			->with( 'page', 'names' )
 			->andReturn( array( 'post_tag' ) );
+
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, 'category', array( 'page' ), array(), 'names' )
+			->reply( null );
 
 		$result = dwpb_post_types_with_tax( 'category' );
 
@@ -360,6 +380,10 @@ class HelperFunctionsTest extends TestCase {
 			->once()
 			->with( $this->tax_cache_key( $taxonomy, $args, $output ), array( 'page' ), 'post-types-by-tax' );
 
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, $taxonomy, array( 'post', 'page', 'book' ), $args, $output )
+			->reply( null );
+
 		$result = dwpb_post_types_with_tax( $taxonomy, $args, $output );
 
 		$this->assertSame( array( 'page' ), $result );
@@ -388,6 +412,10 @@ class HelperFunctionsTest extends TestCase {
 		WP_Mock::userFunction( 'get_post_types' )->once()->with( array(), 'names' )->andReturn( array( 'page' ) );
 		WP_Mock::userFunction( 'get_object_taxonomies' )->never();
 		WP_Mock::userFunction( 'wp_cache_set' )->never();
+
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, $taxonomy, array( 'page' ), array(), 'names' )
+			->reply( null );
 
 		$result = dwpb_post_types_with_tax( $taxonomy );
 
@@ -460,6 +488,9 @@ class HelperFunctionsTest extends TestCase {
 			);
 		WP_Mock::userFunction( 'wp_cache_set' )->twice();
 
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )->with( null, 'cat', array(), array(), 'single-tag' )->reply( null );
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )->with( null, 'cat-single', array(), array(), 'tag' )->reply( null );
+
 		dwpb_post_types_with_tax( 'cat', array(), 'single-tag' );
 		dwpb_post_types_with_tax( 'cat-single', array(), 'tag' );
 
@@ -489,6 +520,9 @@ class HelperFunctionsTest extends TestCase {
 				}
 			);
 		WP_Mock::userFunction( 'wp_cache_set' )->twice();
+
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )->with( null, 'category', array(), array(), 'names' )->reply( null );
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )->with( null, 'category', array(), array(), 'objects' )->reply( null );
 
 		dwpb_post_types_with_tax( 'category', array(), 'names' );
 		dwpb_post_types_with_tax( 'category', array(), 'objects' );

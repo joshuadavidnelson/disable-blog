@@ -50,6 +50,16 @@ parameters:
             message: '#^Result of method Disable_Blog_Functions::redirect\(\) \(void\) is used\.$#'
             path: tests/php/DisableBlogFunctionsTest.php
 
+        # Disable_Blog_Public::modify_query() is documented @return void and never returns a
+        # value on any path. assertNull() on its call result is how these tests prove the
+        # function completed rather than fatal-erroring partway through -- phpunit.xml's
+        # failOnRisky="true" means the test needs an assertion, and the Mockery expectations
+        # set on $query (verified separately, at tear_down()'s Mockery::close()) don't count
+        # as one; a void call has no other observable result to assert on.
+        -
+            message: '#^Result of method Disable_Blog_Public::modify_query\(\) \(void\) is used\.$#'
+            path: tests/php/PublicRedirectsTest.php
+
         # WC() must be declared as a real global function (not a closure assigned to a
         # variable) for function_exists('WC') to observe it, and it must stay nested inside
         # this @runInSeparateProcess test method rather than move to file scope -- a
@@ -61,3 +71,47 @@ parameters:
         -
             message: '#^Inner named functions are not supported by PHPStan\.#'
             path: tests/php/IntegrationsTest.php
+
+        # Same reasoning as the WC() entry above: wp_sitemaps_get_server() must be a real global
+        # function (function_exists('wp_sitemaps_get_server') can't observe a closure) and must
+        # stay nested inside each @runInSeparateProcess test method rather than move to file
+        # scope, or a file-scope declaration would run on every process and permanently break the
+        # "function missing" case elsewhere in this file.
+        -
+            message: '#^Inner named functions are not supported by PHPStan\.#'
+            path: tests/php/PublicMiscTest.php
+
+        # Mockery\LegacyMockInterface::shouldReceive() is documented to return
+        # Expectation|ExpectationInterface|HigherOrderMessage, but PHPStan can only resolve the
+        # union down to a specific method's real Expectation-typed return with the separate
+        # phpstan-mockery extension -- Phase 3's composer rules disallow adding a new dependency
+        # for it. Without it, chaining any Expectation-only method (once(), with(), never(), ...)
+        # off shouldReceive() reads as undefined against the narrower ExpectationInterface|
+        # HigherOrderMessage union PHPStan does resolve, even though it exists and works at runtime.
+        -
+            message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::#'
+            path: tests/php/PublicRedirectsTest.php
+        -
+            message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::#'
+            path: tests/php/PublicMiscTest.php
+
+        # Disable_Blog_Public::header_feeds() is documented @return void and never returns a
+        # value on any path. assertNull() on its call result is how this test proves the
+        # function completed rather than fatal-erroring partway through the four remove_action()
+        # calls -- phpunit.xml's failOnRisky="true" means the test needs an assertion, and a
+        # void call has no other observable result to assert on.
+        -
+            message: '#^Result of method Disable_Blog_Public::header_feeds\(\) \(void\) is used\.$#'
+            path: tests/php/PublicFeedsTest.php
+
+        # Disable_Blog_Public::remove_pingback_header_fallback() and disable_removed_sitemaps()
+        # are both documented @return void and never return a value on any path. assertNull() on
+        # their call result is how these tests prove each function completed rather than
+        # fatal-erroring partway through -- phpunit.xml's failOnRisky="true" means the test needs
+        # an assertion, and a void call has no other observable result to assert on.
+        -
+            message: '#^Result of method Disable_Blog_Public::remove_pingback_header_fallback\(\) \(void\) is used\.$#'
+            path: tests/php/PublicMiscTest.php
+        -
+            message: '#^Result of method Disable_Blog_Public::disable_removed_sitemaps\(\) \(void\) is used\.$#'
+            path: tests/php/PublicMiscTest.php
