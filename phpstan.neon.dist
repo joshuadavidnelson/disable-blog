@@ -80,6 +80,17 @@ parameters:
             message: '#^Inner named functions are not supported by PHPStan\.#'
             path: tests/php/PublicMiscTest.php
 
+        # get_term_post_count_by_type()'s tests mock WP_Query itself (see
+        # stub_wp_query_returns_posts()'s docblock in AdminCommentsTest.php for why an
+        # overload mock is used instead of a same-named fixture class). end() on
+        # Mockery\Container::getMocks() types as mixed|false because getMocks() can, in
+        # general, return an empty array; in this specific overload-mock flow it always
+        # returns the instance just constructed. There is no supported way to narrow that
+        # without the disallowed phpstan-mockery extension.
+        -
+            message: '#^Cannot access property \$posts on Mockery\\MockInterface\|false\.$#'
+            path: tests/php/AdminCommentsTest.php
+
         # Disable_Blog_Public::header_feeds() is documented @return void and never returns a
         # value on any path. assertNull() on its call result is how this test proves the
         # function completed rather than fatal-erroring partway through the four remove_action()
