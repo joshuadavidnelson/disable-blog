@@ -133,8 +133,16 @@ class LoaderTest extends TestCase {
 	/**
 	 * A requested class whose mapped filename exists in includes/ must be included, making
 	 * the class available. Disable_Blog_Functions is deliberately not required by the test
-	 * bootstrap so this is the first and only place it gets loaded (a second autoloader()
-	 * call for the same class would fatal on redeclaration).
+	 * bootstrap, so it starts undefined in a fresh process -- but DisableBlogFunctionsTest.php
+	 * and DisableBlogTest.php both require it directly (outside bootstrap.php) to exercise it,
+	 * and PHPUnit's suite discovery loads every *Test.php file up front regardless of run
+	 * order. Isolated so this test's "not yet defined" assumption holds regardless: the
+	 * child process only re-runs bootstrap.php plus this file, neither of which loads it (a
+	 * second, non-include_once autoloader() include of an already-declared class would fatal
+	 * on redeclaration).
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
 	 */
 	public function test_autoloader_includes_file_for_a_class_it_should_load() {
 		$includes_dir = $this->includes_dir();
