@@ -38,6 +38,10 @@ class ConstructorInjectionTest extends TestCase {
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6', $double );
 
+		WP_Mock::onFilter( 'dwpb_admin_user_post_types' )
+			->with( array( 'page', 'injected_cpt' ) )
+			->reply( array( 'page', 'injected_cpt' ) );
+
 		$reflection = new ReflectionMethod( $admin, 'user_column_post_types' );
 		$reflection->setAccessible( true );
 
@@ -79,6 +83,8 @@ class ConstructorInjectionTest extends TestCase {
 
 		$public   = new Disable_Blog_Public( 'disable-blog', '0.5.6', $double );
 		$provider = new stdClass();
+
+		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( false )->reply( false );
 
 		$this->assertSame( $provider, $public->wp_author_sitemaps( $provider, 'users' ) );
 	}

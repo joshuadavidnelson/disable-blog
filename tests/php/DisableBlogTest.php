@@ -156,6 +156,9 @@ class DisableBlogTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
 			->andReturn( array( 'page' ) );
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
+			->with( array( 'page' ), array() )
+			->reply( array( 'page' ) );
 
 		WP_Mock::expectFilterAdded( 'enable_update_services_configuration', '__return_false' );
 		WP_Mock::expectFilterAdded( 'enable_post_by_email_configuration', '__return_false' );
@@ -251,6 +254,10 @@ class DisableBlogTest extends TestCase {
 		WP_Mock::userFunction( 'get_post_types' )->once()->with( array(), 'names' )->andReturn( array( 'post' ) );
 		WP_Mock::userFunction( 'post_type_supports' )->with( 'post', 'comments' )->andReturn( true );
 		WP_Mock::userFunction( 'wp_cache_set' )->once();
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )->with( false, array() )->reply( false );
+
+		WP_Mock::expectFilterAdded( 'enable_update_services_configuration', '__return_false' );
+		WP_Mock::expectFilterAdded( 'enable_post_by_email_configuration', '__return_false' );
 
 		$disable_blog = $this->make_disable_blog();
 
@@ -301,6 +308,9 @@ class DisableBlogTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
 			->andReturn( array( 'page' ) );
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
+			->with( array( 'page' ), array() )
+			->reply( array( 'page' ) );
 
 		$disable_blog = $this->make_disable_blog();
 
