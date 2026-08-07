@@ -21,7 +21,9 @@
  * @throws Exception Always, carrying $message.
  */
 function wp_die( $message = '', $title = '', $args = array() ) {
-	throw new Exception( $message );
+	// $message never reaches any output sink here -- it only carries the string a test
+	// asserts against via expectExceptionMessage(), inside the same PHP process.
+	throw new Exception( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 }
 
 // Intentionally NOT stubbed here: wp_cache_get() / wp_cache_set().

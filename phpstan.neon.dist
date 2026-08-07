@@ -7,14 +7,57 @@ parameters:
         - includes/functions.php
     scanDirectories:
         - includes/
+        - tests/php/
+        # WP_Mock's Action_Responder, Filter_Responder and HookedCallbackResponder classes
+        # live as secondary classes inside Action.php/Filter.php/HookedCallback.php rather
+        # than their own PSR-4-mapped files, so composer's autoloader never registers them
+        # on their own; PHPStan needs the directory scanned directly to resolve ->reply().
+        - vendor/10up/wp_mock/php/
     paths:
         - includes/
+        - tests/php/
     ignoreErrors:
         # Method can return bool via filter.
         - '#^Method Disable_Blog_Public::get_disabled_xmlrpc_methods\(\) never returns bool so it can be removed from the return type\.#'
         # errors we don't care about.
         - '#^Property Disable_Blog_Public::\$plugin_name is never read, only written\.#'
         - '#^Property Disable_Blog_Public::\$version is never read, only written\.#'
-        # Implode is correctly used in get_comments_count for supported PHP versions of this plugin.
-        - '#^Parameter \#2 \$array of function implode expects array\<string\>, array\<array\|string\> given\.#'
         - '#^Constant DWPB_URL not found\.#'
+
+        # tests/php-only exemptions. None of these may leak into includes/: each is
+        # scoped to the single test file that needs it.
+
+        # dwpb_post_types_with_feature()/dwpb_post_types_with_tax() take undeclared-type
+        # $feature/$taxonomy parameters (docblock-only "string"/"object|string") and both
+        # explicitly runtime-check is_string()/is_object() before doing anything else.
+        # These tests deliberately feed the invalid types that check exists to catch, to
+        # prove the defensive branch itself -- passing only the docblock-legal types would
+        # delete the coverage the test exists to provide.
+        -
+            message: '#^Parameter \#1 \$feature of function dwpb_post_types_with_feature expects string, (?:int|false|null|array\<int, string\>) given\.$#'
+            path: tests/php/HelperFunctionsTest.php
+        -
+            message: '#^Parameter \#1 \$taxonomy of function dwpb_post_types_with_tax expects object\|string, (?:int|false|null|array\<int, string\>) given\.$#'
+            path: tests/php/HelperFunctionsTest.php
+
+        # Disable_Blog_Functions::redirect() is documented @return void and never returns
+        # a value on any path. assertNull() on its call result is how these two tests prove
+        # the loop-guard/invalid-url branches return normally (not via the wp_safe_redirect()
+        # + exit; path, which is asserted separately via a thrown exception) -- phpunit.xml's
+        # failOnRisky="true" means the test needs an assertion, and a void call has no other
+        # observable result to assert on.
+        -
+            message: '#^Result of method Disable_Blog_Functions::redirect\(\) \(void\) is used\.$#'
+            path: tests/php/DisableBlogFunctionsTest.php
+
+        # WC() must be declared as a real global function (not a closure assigned to a
+        # variable) for function_exists('WC') to observe it, and it must stay nested inside
+        # this @runInSeparateProcess test method rather than move to file scope -- a
+        # file-scope declaration would run unconditionally on every process, including
+        # non-isolated tests, permanently breaking the "function missing" cases elsewhere in
+        # this file. PHPStan cannot analyse a conditionally-declared inner named function
+        # (see https://github.com/phpstan/phpstan/issues/165); there is no supported
+        # alternative that preserves the isolation this test depends on.
+        -
+            message: '#^Inner named functions are not supported by PHPStan\.#'
+            path: tests/php/IntegrationsTest.php

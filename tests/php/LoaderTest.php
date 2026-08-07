@@ -234,8 +234,15 @@ class LoaderTest extends TestCase {
 	 */
 
 	public function test_run_flushes_buffered_hooks_through_wordpress() {
-		$filter_component = new stdClass();
-		$action_component = new stdClass();
+		// Real objects with real methods, because the [object, method] tuples passed to
+		// WP_Mock::expectFilterAdded()/expectActionAdded() below must be genuine callables
+		// per their docblock type; WP_Mock never actually invokes them.
+		$filter_component = new class() {
+			public function filter_cb() {}
+		};
+		$action_component = new class() {
+			public function action_cb() {}
+		};
 
 		$this->loader->add_filter( 'the_content', $filter_component, 'filter_cb', 20, 2 );
 		$this->loader->add_action( 'init', $action_component, 'action_cb' );

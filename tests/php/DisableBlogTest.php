@@ -431,8 +431,13 @@ class DisableBlogTest extends TestCase {
 		$loader       = $this->get_property( $disable_blog, 'loader' );
 
 		// A hook buffered directly on the real loader, so run() can be proven to flush it
-		// through to WordPress for real, not just call some mock's run() method.
-		$component = new stdClass();
+		// through to WordPress for real, not just call some mock's run() method. A real
+		// object with a real method, because the tuple passed to
+		// WP_Mock::expectActionAdded() below must be a genuine callable per its docblock
+		// type; WP_Mock never actually invokes it.
+		$component = new class() {
+			public function noop() {}
+		};
 		$loader->add_action( 'init', $component, 'noop' );
 
 		WP_Mock::expectActionAdded( 'init', array( $component, 'noop' ), 10, 1 );
