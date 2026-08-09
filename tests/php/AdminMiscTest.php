@@ -93,10 +93,27 @@ class AdminMiscTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_tax_lookup_plumbing() {
-		WP_Mock::userFunction( 'get_post_types' )->with( array(), 'names' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_post_types' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'names'
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::userFunction( 'maybe_serialize' )->with( array() )->andReturn( 'a:0:{}' );
+		WP_Mock::userFunction( 'maybe_serialize' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				)
+			)
+			->andReturn( 'a:0:{}' );
 	}
 
 	/**
@@ -112,7 +129,38 @@ class AdminMiscTest extends TestCase {
 		WP_Mock::userFunction( 'esc_attr' )->with( $taxonomy )->andReturn( $taxonomy );
 		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
 			->with( null, $taxonomy, array(), array(), 'names' )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $null, $tax, $post_types, $args, $output ) use ( $return_value ) {
+						$this->assertSame( array(), $post_types, 'dwpb_taxonomy_support must receive the exact $post_types array it documents.' );
+						$this->assertSame( array(), $args, 'dwpb_taxonomy_support must receive the exact $args array it documents.' );
+
+						return $return_value;
+					}
+				)
+			);
+	}
+
+	/**
+	 * Stubs a single-argument filter, asserting via InvokedFilterValue that the real
+	 * argument WP_Mock routed on strictly (===) matches $expected_arg, rather than merely
+	 * matching loosely (==) as safe_offset()'s string-cast routing key would otherwise
+	 * allow -- e.g. bool false, an empty array and '' all safe_offset() to the same key.
+	 *
+	 * @param string $hook         The filter hook name.
+	 * @param mixed  $expected_arg The exact value apply_filters() must be called with.
+	 * @param mixed  $return_value The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_strict_filter( $hook, $expected_arg, $return_value ) {
+		WP_Mock::onFilter( $hook )->with( $expected_arg )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $actual_arg ) use ( $expected_arg, $return_value ) {
+					$this->assertSame( $expected_arg, $actual_arg );
+					return $return_value;
+				}
+			)
+		);
 	}
 
 	/**
@@ -533,7 +581,7 @@ class AdminMiscTest extends TestCase {
 	public function test_available_permalink_structure_tags_removes_category_when_unsupported() {
 		$this->stub_tax_lookup_plumbing();
 		$this->stub_post_types_with_tax_result( 'category', false );
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags(
@@ -550,7 +598,7 @@ class AdminMiscTest extends TestCase {
 	public function test_available_permalink_structure_tags_keeps_category_when_supported() {
 		$this->stub_tax_lookup_plumbing();
 		$this->stub_post_types_with_tax_result( 'category', array( 'book' ) );
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags( array( 'category' => '%category%' ) );
@@ -559,7 +607,7 @@ class AdminMiscTest extends TestCase {
 	}
 
 	public function test_available_permalink_structure_tags_removes_author_when_author_archives_disabled() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, true );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags( array( 'author' => '%author%' ) );
@@ -568,7 +616,7 @@ class AdminMiscTest extends TestCase {
 	}
 
 	public function test_available_permalink_structure_tags_keeps_author_when_author_archives_enabled() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags( array( 'author' => '%author%' ) );
@@ -680,9 +728,19 @@ class AdminMiscTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_get_test_rest_availability_common() {
-		WP_Mock::userFunction( 'wp_unslash' )->with( array() )->andReturn( array() );
+		// array() == false, so a plain ->with( array() ) would also accept a regression
+		// that passed false to wp_unslash() -- Mockery::on() forces ===.
+		WP_Mock::userFunction( 'wp_unslash' )
+			->with(
+				Mockery::on(
+					function ( $value ) {
+						return array() === $value;
+					}
+				)
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_create_nonce' )->once()->with( 'wp_rest' )->andReturn( 'a-nonce' );
-		WP_Mock::onFilter( 'https_local_ssl_verify' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'https_local_ssl_verify', false, false );
 		WP_Mock::userFunction( 'rest_url' )->once()->with( 'wp/v2/types/page' )->andReturn( 'https://example.test/wp-json/wp/v2/types/page' );
 		WP_Mock::userFunction( 'add_query_arg' )
 			->once()
@@ -770,11 +828,21 @@ class AdminMiscTest extends TestCase {
 		$_SERVER['PHP_AUTH_PW']   = 'secret';
 		// phpcs:enable WordPressVIPMinimum.Variables.ServerVariables.BasicAuthentication
 
-		WP_Mock::userFunction( 'wp_unslash' )->with( array() )->andReturn( array() );
+		// array() == false, so a plain ->with( array() ) would also accept a regression
+		// that passed false to wp_unslash() -- Mockery::on() forces ===.
+		WP_Mock::userFunction( 'wp_unslash' )
+			->with(
+				Mockery::on(
+					function ( $value ) {
+						return array() === $value;
+					}
+				)
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_unslash' )->with( 'admin' )->andReturn( 'admin' );
 		WP_Mock::userFunction( 'wp_unslash' )->with( 'secret' )->andReturn( 'secret' );
 		WP_Mock::userFunction( 'wp_create_nonce' )->once()->with( 'wp_rest' )->andReturn( 'a-nonce' );
-		WP_Mock::onFilter( 'https_local_ssl_verify' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'https_local_ssl_verify', false, false );
 		WP_Mock::userFunction( 'rest_url' )->once()->with( 'wp/v2/types/page' )->andReturn( 'https://example.test/wp-json/wp/v2/types/page' );
 		WP_Mock::userFunction( 'add_query_arg' )
 			->once()

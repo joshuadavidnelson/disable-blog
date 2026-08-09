@@ -98,7 +98,19 @@ class AdminCommentsTest extends TestCase {
 	 * dwpb_post_types_with_feature() is concerned -- it skips get_post_types()/
 	 * post_type_supports() entirely and passes the cached value straight to the
 	 * dwpb_post_types_supporting_{$feature} filter, whose reply IS the function's return
-	 * value regardless of what was "cached".
+	 * value regardless of what was "cached". Because the "cached" value here is always an
+	 * empty array, dwpb_post_types_with_feature()'s own negative-result normalization
+	 * always runs, so the filter always receives the normalized sentinel `false` (not
+	 * `array()`) as its first argument -- regardless of $return_value.
+	 *
+	 * dwpb_post_types_supporting_{$feature} is a two-argument filter ($post_types,
+	 * $args), so this cannot use TestCase::stub_filter_strict() (single-expected-arg):
+	 * onFilter()->with() builds its match key per positional argument, and the second
+	 * position ($args, always array() here) needs a key of its own for the responder to
+	 * ever be reached. The first position is still the collision-prone one -- false and
+	 * '' (and array()) all collide under safe_offset() -- so the responder callback below
+	 * pulls the REAL invoked value via func_get_args() and asserts it strictly, same as
+	 * stub_filter_strict() does.
 	 *
 	 * @param string     $feature      The feature slug (e.g. 'comments').
 	 * @param array|bool $return_value The value dwpb_post_types_with_feature() should return.
@@ -110,8 +122,19 @@ class AdminCommentsTest extends TestCase {
 			->with( "post-types-supporting-{$feature}", 'post-types-by-feature' )
 			->andReturn( array() );
 		WP_Mock::onFilter( "dwpb_post_types_supporting_{$feature}" )
-			->with( array(), array() )
-			->reply( $return_value );
+			->with( false, array() )
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $post_types_with_feature ) use ( $feature, $return_value ) {
+						$this->assertFalse(
+							$post_types_with_feature,
+							"dwpb_post_types_supporting_{$feature} must receive the normalized false sentinel it documents."
+						);
+
+						return $return_value;
+					}
+				)
+			);
 	}
 
 	/**

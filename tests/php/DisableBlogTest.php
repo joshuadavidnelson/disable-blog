@@ -176,6 +176,35 @@ class DisableBlogTest extends TestCase {
 	}
 
 	/**
+	 * Registers the dwpb_post_types_supporting_comments filter (2 arguments:
+	 * $post_types_with_feature, $args) so both positions are asserted strictly.
+	 * safe_offset() flattens both for ->with() routing -- false, '', array(), and null all
+	 * collide there -- so a plain ->with() match cannot tell a corrupted false/array()/''
+	 * apart from the documented value. The InvokedFilterValue responder receives the real
+	 * invoked arguments via func_get_args() regardless of which key matched, so both are
+	 * asserted with assertSame().
+	 *
+	 * @param mixed $post_types_with_feature The exact position-1 value the filter must receive.
+	 * @param mixed $args                    The exact position-2 value the filter must receive.
+	 * @param mixed $reply                   The value the filter should return.
+	 * @return void
+	 */
+	private function stub_post_types_supporting_comments_filter( $post_types_with_feature, $args, $reply ) {
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
+			->with( $post_types_with_feature, $args )
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $received_post_types_with_feature, $received_args ) use ( $post_types_with_feature, $args, $reply ) {
+						$this->assertSame( $post_types_with_feature, $received_post_types_with_feature, 'dwpb_post_types_supporting_comments must receive the exact post types value it documents.' );
+						$this->assertSame( $args, $received_args, 'dwpb_post_types_supporting_comments must receive the exact $args value it documents.' );
+
+						return $reply;
+					}
+				)
+			);
+	}
+
+	/**
 	 * __construct() / boot()
 	 */
 
@@ -291,9 +320,7 @@ class DisableBlogTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
 			->andReturn( array( 'page' ) );
-		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
-			->with( array( 'page' ), array() )
-			->reply( array( 'page' ) );
+		$this->stub_post_types_supporting_comments_filter( array( 'page' ), array(), array( 'page' ) );
 
 		WP_Mock::expectFilterAdded( 'enable_update_services_configuration', '__return_false' );
 		WP_Mock::expectFilterAdded( 'enable_post_by_email_configuration', '__return_false' );
@@ -386,10 +413,20 @@ class DisableBlogTest extends TestCase {
 	public function test_define_admin_hooks_skips_comment_related_hooks_when_no_post_type_supports_comments() {
 		WP_Mock::userFunction( 'esc_attr' )->with( 'comments' )->andReturn( 'comments' );
 		WP_Mock::userFunction( 'wp_cache_get' )->once()->andReturn( false );
-		WP_Mock::userFunction( 'get_post_types' )->once()->with( array(), 'names' )->andReturn( array( 'post' ) );
+		WP_Mock::userFunction( 'get_post_types' )
+			->once()
+			->with(
+				Mockery::on(
+					static function ( $value ) {
+						return array() === $value;
+					}
+				),
+				'names'
+			)
+			->andReturn( array( 'post' ) );
 		WP_Mock::userFunction( 'post_type_supports' )->with( 'post', 'comments' )->andReturn( true );
 		WP_Mock::userFunction( 'wp_cache_set' )->once();
-		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )->with( false, array() )->reply( false );
+		$this->stub_post_types_supporting_comments_filter( false, array(), false );
 
 		WP_Mock::expectFilterAdded( 'enable_update_services_configuration', '__return_false' );
 		WP_Mock::expectFilterAdded( 'enable_post_by_email_configuration', '__return_false' );
@@ -443,9 +480,7 @@ class DisableBlogTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
 			->andReturn( array( 'page' ) );
-		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
-			->with( array( 'page' ), array() )
-			->reply( array( 'page' ) );
+		$this->stub_post_types_supporting_comments_filter( array( 'page' ), array(), array( 'page' ) );
 
 		$disable_blog = $this->make_disable_blog();
 
