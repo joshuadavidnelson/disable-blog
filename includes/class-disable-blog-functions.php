@@ -90,7 +90,7 @@ class Disable_Blog_Functions {
 
 		// Setup an array of the current query string variables.
 		$query_vars = array();
-		wp_parse_str( $_SERVER['QUERY_STRING'], $query_vars ); // phpcs:ignore
+		wp_parse_str( $_SERVER['QUERY_STRING'], $query_vars ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wp_parse_str() itself parses the raw query string into an array; the parsed $query_vars are filtered against an allow-list below before use, not the raw string.
 
 		// Only allow specific query vars.
 		$allowed_query_vars = $this->get_allowed_query_vars();
