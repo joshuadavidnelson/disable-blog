@@ -1035,21 +1035,21 @@ class Disable_Blog_Admin {
 	public function get_test_rest_availability() {
 
 		$result = array(
-			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 			'status'      => 'good',
 			'badge'       => array(
-				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 				'color' => 'blue',
 			),
 			'description' => sprintf(
 				'<p>%s</p>',
-				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 			),
 			'actions'     => '',
 			'test'        => 'rest_availability',
 		);
 
-		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
+		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- forwards the current request's cookies to a same-site loopback request; this runs only inside the admin Site Health check, which is never full-page cached.
 		$timeout = 10;
 		$headers = array(
 			'Cache-Control' => 'no-cache',
@@ -1082,16 +1082,16 @@ class Disable_Blog_Admin {
 		if ( is_wp_error( $r ) ) {
 			$result['status'] = 'critical';
 
-			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 
 			$result['description'] .= sprintf(
 				'<p>%s</p>',
 				sprintf(
 					'%s<br>%s',
-					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 					sprintf(
 						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
-						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 						$r->get_error_message(),
 						$r->get_error_code()
 					)
@@ -1100,13 +1100,13 @@ class Disable_Blog_Admin {
 		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
 			$result['status'] = 'recommended';
 
-			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 
 			$result['description'] .= sprintf(
 				'<p>%s</p>',
 				sprintf(
 					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
-					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 					wp_remote_retrieve_response_code( $r ),
 					esc_html( wp_remote_retrieve_body( $r ) )
 				)
@@ -1117,13 +1117,13 @@ class Disable_Blog_Admin {
 			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
 				$result['status'] = 'recommended';
 
-				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 
 				$result['description'] .= sprintf(
 					'<p>%s</p>',
 					sprintf(
 						/* translators: %s: The name of the query parameter being tested. */
-						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 						'<code>context</code>'
 					)
 				);
@@ -1210,7 +1210,7 @@ class Disable_Blog_Admin {
 			'post_type'              => $post_type,
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
-			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- counting posts in a term requires a tax_query; the result is memoized per request in a non-persistent group.
 				array(
 					'taxonomy' => $taxonomy,
 					'field'    => 'id',
