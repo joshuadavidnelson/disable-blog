@@ -60,7 +60,18 @@ class Disable_Blog_Functions {
 			$redirect_url = $this->parse_query_string( $redirect_url );
 		}
 
-		wp_safe_redirect( esc_url_raw( $redirect_url ), $this->get_redirect_status_code( $current_url, $redirect_url ) );
+		wp_safe_redirect( esc_url_raw( $redirect_url ), $this->get_redirect_status_code( $current_url, $redirect_url ) ); // phpcs:ignore WordPressVIPMinimum.Security.ExitAfterRedirect.NoExit -- terminate() below calls exit.
+		$this->terminate();
+	}
+
+	/**
+	 * Wraps `exit` so a test subclass can override it to observe termination
+	 * without actually ending the process.
+	 *
+	 * @since 0.5.6
+	 * @return void
+	 */
+	protected function terminate() {
 		exit;
 	}
 

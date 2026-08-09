@@ -607,6 +607,22 @@ class Disable_Blog_Public {
 			return;
 		}
 
+		$this->do_remove_pingback_header();
+	}
+
+	/**
+	 * Perform the actual X-Pingback header removal.
+	 *
+	 * Split out from remove_pingback_header_fallback() so the early-return
+	 * guard above has an observable effect: a test subclass can override this
+	 * method to record whether the removal path was taken, without needing to
+	 * stub the PHP internals `headers_sent()`/`header_remove()`.
+	 *
+	 * @since 0.5.6
+	 * @return void
+	 */
+	protected function do_remove_pingback_header() {
+
 		if ( ! headers_sent() ) {
 			header_remove( 'X-Pingback' );
 		}
