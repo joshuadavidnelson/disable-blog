@@ -469,6 +469,64 @@ class DisableBlogFunctionsTest extends TestCase {
 	}
 
 	/**
+	 * terminate() is protected specifically so a test subclass can override it and observe
+	 * whether -- and when relative to wp_safe_redirect() -- it runs, without the process
+	 * actually exiting. Recording both calls into a shared, ordered log proves it's called
+	 * exactly once and only after wp_safe_redirect(), not before or in place of it.
+	 */
+	public function test_redirect_calls_terminate_exactly_once_after_wp_safe_redirect() {
+		$_SERVER['REQUEST_URI'] = '/current-page/';
+
+		$functions = new class() extends Disable_Blog_Functions {
+			/**
+			 * @var string[]
+			 */
+			public $call_log = array();
+
+			protected function terminate() {
+				$this->call_log[] = 'terminate';
+			}
+		};
+
+		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( false );
+		WP_Mock::userFunction( 'wp_unslash' )->with( '/current-page/' )->andReturn( '/current-page/' );
+		WP_Mock::userFunction( 'esc_url_raw' )->with( '/current-page/' )->andReturn( '/current-page/' );
+		WP_Mock::userFunction( 'home_url' )
+			->once()
+			->with( '/current-page/' )
+			->andReturn( 'https://example.test/current-page/' );
+
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
+		$redirect_url = 'https://example.test/target/';
+
+		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
+		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, 'https://example.test/current-page/', $redirect_url )
+			->reply( 301 );
+		$this->stub_real_absint();
+
+		WP_Mock::userFunction( 'wp_safe_redirect' )
+			->once()
+			->with( $redirect_url, 301 )
+			->andReturnUsing(
+				function () use ( $functions ) {
+					$functions->call_log[] = 'wp_safe_redirect';
+				}
+			);
+
+		$this->assertNull( $functions->redirect( $redirect_url ) );
+
+		$this->assertSame( array( 'wp_safe_redirect', 'terminate' ), $functions->call_log );
+	}
+
+	/**
 	 * parse_query_string() (private)
 	 */
 

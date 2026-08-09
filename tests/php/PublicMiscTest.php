@@ -336,16 +336,29 @@ class PublicMiscTest extends TestCase {
 	 * remove_pingback_header_fallback()
 	 */
 
+	/**
+	 * The guard is a return: the filter disabling removal must stop the fallback before it
+	 * reaches do_remove_pingback_header() at all. Asserted via that seam rather than the
+	 * headers_sent()/header_remove() body it guards, since those are genuine internal PHP
+	 * functions WP_Mock/Patchwork refuses to override ("Cannot override internal PHP
+	 * functions!").
+	 */
 	public function test_remove_pingback_header_fallback_returns_early_when_filter_disables_it() {
 		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( false );
 
-		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
+		$public = new class( 'disable-blog', '0.5.6' ) extends Disable_Blog_Public {
+			/**
+			 * @var int
+			 */
+			public $do_remove_pingback_header_calls = 0;
 
-		// The early return means headers_sent()/header_remove() below it are never reached; both
-		// are genuine internal PHP functions WP_Mock/Patchwork refuses to override ("Cannot
-		// override internal PHP functions!"), so unlike every other WP function in this suite,
-		// they can't be stubbed with a ->never() expectation to prove that directly.
+			protected function do_remove_pingback_header() {
+				++$this->do_remove_pingback_header_calls;
+			}
+		};
+
 		$this->assertNull( $public->remove_pingback_header_fallback() );
+		$this->assertSame( 0, $public->do_remove_pingback_header_calls );
 	}
 
 	/**
@@ -367,24 +380,30 @@ class PublicMiscTest extends TestCase {
 	}
 
 	/**
-	 * Isolated: a fresh process has produced no output yet, so headers_sent() genuinely starts
-	 * false here -- unlike the shared-process test above, this reaches the real
-	 * header_remove( 'X-Pingback' ) call rather than skipping it. header_remove() is a real
-	 * internal PHP function with no observable return value or (in the CLI SAPI used by this
-	 * suite) any readable header list, so there is nothing further to assert about its effect;
-	 * this test's purpose is exercising that line for real, not proving its side effect.
+	 * The counterpart to the early-return test above: when the filter allows removal, the
+	 * fallback must actually reach do_remove_pingback_header(), not just return null (a void
+	 * method returns null either way, so assertNull() alone can't distinguish "reached" from
+	 * "guarded out").
 	 *
 	 * @runInSeparateProcess
 	 * @preserveGlobalState disabled
 	 */
 	public function test_remove_pingback_header_fallback_calls_header_remove_when_headers_not_yet_sent() {
-		$this->assertFalse( headers_sent(), 'Expected a fresh process to not have sent headers yet.' );
-
 		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( true );
 
-		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
+		$public = new class( 'disable-blog', '0.5.6' ) extends Disable_Blog_Public {
+			/**
+			 * @var int
+			 */
+			public $do_remove_pingback_header_calls = 0;
+
+			protected function do_remove_pingback_header() {
+				++$this->do_remove_pingback_header_calls;
+			}
+		};
 
 		$this->assertNull( $public->remove_pingback_header_fallback() );
+		$this->assertSame( 1, $public->do_remove_pingback_header_calls );
 	}
 
 	/**
@@ -558,7 +577,7 @@ class PublicMiscTest extends TestCase {
 	}
 
 	/**
-	 * Isolated, with a real registry in place (so a mutated guard would fall through all the
+	 * Isolated, with a real registry in place (so a broken guard would fall through all the
 	 * way to the provider check below): 'index' is never a registered provider name, so if the
 	 * 'index' exclusion itself were dropped, isset( $providers['index'] ) would be false and
 	 * this would 404 instead of returning early. Proves the 'index' check specifically, rather

@@ -15,6 +15,43 @@ require_once __DIR__ . '/../../includes/class-disable-blog-public.php';
 require_once __DIR__ . '/../../includes/class-disable-blog.php';
 
 /**
+ * Records the order boot()'s six setup calls run in, without performing any of their real
+ * work. upgrade_check() is protected static, so the recorder has to be a static property:
+ * a static method has no $this to push onto an instance array.
+ */
+class Disable_Blog_Boot_Recorder extends Disable_Blog {
+
+	/**
+	 * @var string[]
+	 */
+	public static $calls = array();
+
+	protected static function upgrade_check() {
+		self::$calls[] = 'upgrade_check';
+	}
+
+	protected function load_dependencies() {
+		self::$calls[] = 'load_dependencies';
+	}
+
+	protected function set_locale() {
+		self::$calls[] = 'set_locale';
+	}
+
+	public function plugin_integrations() {
+		self::$calls[] = 'plugin_integrations';
+	}
+
+	protected function define_admin_hooks() {
+		self::$calls[] = 'define_admin_hooks';
+	}
+
+	protected function define_public_hooks() {
+		self::$calls[] = 'define_public_hooks';
+	}
+}
+
+/**
  * @covers Disable_Blog
  */
 class DisableBlogTest extends TestCase {
@@ -135,6 +172,104 @@ class DisableBlogTest extends TestCase {
 				);
 			},
 			$hooks
+		);
+	}
+
+	/**
+	 * __construct() / boot()
+	 */
+
+	/**
+	 * Uses two clearly distinct values so a swap between the two assignments in
+	 * __construct() shows up as one getter returning the other's value.
+	 */
+	public function test_construct_assigns_plugin_name_and_version_to_the_correct_properties() {
+		$disable_blog = new Disable_Blog( 'disable-blog', '0.5.6', false );
+
+		$this->assertSame( 'disable-blog', $disable_blog->get_plugin_name() );
+		$this->assertSame( '0.5.6', $disable_blog->get_version() );
+	}
+
+	/**
+	 * boot() fires 'dwpb_init' before running any of its six setup calls -- third parties
+	 * hooking dwpb_init depend on it running ahead of load_dependencies() and the rest.
+	 * Asserting the full sequence (not just that all seven happened) is what catches a
+	 * reordering, not only a deletion.
+	 */
+	public function test_boot_runs_dwpb_init_then_the_six_setup_methods_in_order() {
+		Disable_Blog_Boot_Recorder::$calls = array();
+
+		// do_action() is defined by WP_Mock itself (not stubbable via userFunction()) and
+		// dispatches through the event manager; with( null ) matches the no-extra-args call
+		// boot() makes.
+		WP_Mock::onAction( 'dwpb_init' )->with( null )->perform(
+			static function () {
+				Disable_Blog_Boot_Recorder::$calls[] = 'dwpb_init';
+			}
+		);
+
+		$disable_blog = new Disable_Blog_Boot_Recorder( 'disable-blog', '0.5.6', false );
+		$disable_blog->boot();
+
+		$this->assertSame(
+			array(
+				'dwpb_init',
+				'upgrade_check',
+				'load_dependencies',
+				'set_locale',
+				'plugin_integrations',
+				'define_admin_hooks',
+				'define_public_hooks',
+			),
+			Disable_Blog_Boot_Recorder::$calls
+		);
+	}
+
+	/**
+	 * load_dependencies()
+	 */
+
+	/**
+	 * Runs load_dependencies() for real, with a spy loader injected first so the method's
+	 * null-check leaves it in place instead of constructing a Disable_Blog_Loader. Wrong
+	 * directory or file names make the require_once calls fatal (they resolve to real,
+	 * already-loaded files under correct paths, so nothing observable would otherwise
+	 * distinguish a corrupted path from a correct one). The spy also records the exact
+	 * classes handed to the loader's autoloader, in order.
+	 */
+	public function test_load_dependencies_resolves_real_files_and_registers_expected_classes_in_order() {
+		$repo_root        = dirname( __DIR__, 2 );
+		$expected_dir_arg = $repo_root . '/includes';
+
+		WP_Mock::userFunction( 'plugin_dir_path' )
+			->once()
+			->with( $expected_dir_arg )
+			->andReturn( $repo_root . '/' );
+
+		$spy_loader = new class() extends Disable_Blog_Loader {
+			/**
+			 * @var string[]
+			 */
+			public $autoloaded = array();
+
+			public function autoloader( $requested_class ) {
+				$this->autoloaded[] = $requested_class;
+			}
+		};
+
+		$disable_blog = $this->make_disable_blog( 'disable-blog', '0.5.6', $spy_loader );
+
+		$this->invoke_private( $disable_blog, 'load_dependencies' );
+
+		$this->assertSame(
+			array(
+				'Disable_Blog_I18n',
+				'Disable_Blog_Functions',
+				'Disable_Blog_Admin',
+				'Disable_Blog_Public',
+				'Disable_Blog_Integrations',
+			),
+			$spy_loader->autoloaded
 		);
 	}
 
