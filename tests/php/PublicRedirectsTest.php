@@ -780,6 +780,32 @@ class PublicRedirectsTest extends TestCase {
 		$this->assertNull( $public->modify_query( $query ) );
 	}
 
+	/**
+	 * The tag branch requires BOTH is_tag() AND a non-empty $tag_post_types -- proven
+	 * independently of is_tag() by holding it true while forcing $tag_post_types empty, so a
+	 * relaxed `||` (which would enter the branch and wrongly strip 'post' from its own tag
+	 * archive) is distinguishable from the real `&&`. Mirrors
+	 * test_modify_query_author_branch_skipped_when_author_post_types_empty() below.
+	 */
+	public function test_modify_query_tag_branch_skipped_when_tag_post_types_empty() {
+		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( false );
+		$this->stub_tax_lookup_plumbing();
+		$this->stub_post_types_with_tax_result( 'post_tag', false );
+		$this->stub_post_types_with_tax_result( 'category', false );
+
+		$query = Mockery::mock( 'Disable_Blog_Public_Query_Double' );
+		$query->shouldReceive( 'is_main_query' )->once()->andReturn( true );
+		$query->shouldReceive( 'is_tag' )->once()->andReturn( true );
+		$query->shouldReceive( 'is_category' )->once()->andReturn( false );
+		$query->shouldReceive( 'is_author' )->once()->andReturn( false );
+		$query->shouldNotReceive( 'set' );
+
+		$functions = new Disable_Blog_Public_Functions_Double();
+		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
+
+		$this->assertNull( $public->modify_query( $query ) );
+	}
+
 	public function test_modify_query_sets_category_post_types_when_category_archive_and_other_post_types_use_category() {
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( false );
 		$this->stub_tax_lookup_plumbing();
@@ -813,6 +839,32 @@ class PublicRedirectsTest extends TestCase {
 		$query->shouldReceive( 'set' )->once()->with( 'post_type', array( 'custom_cpt' ) );
 
 		WP_Mock::onFilter( 'dwpb_category_post_types' )->with( array( 'page' ), $query )->reply( array( 'custom_cpt' ) );
+
+		$functions = new Disable_Blog_Public_Functions_Double();
+		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
+
+		$this->assertNull( $public->modify_query( $query ) );
+	}
+
+	/**
+	 * The category branch requires BOTH is_category() AND a non-empty $category_post_types --
+	 * proven independently of is_category() by holding it true while forcing
+	 * $category_post_types empty, so a relaxed `||` (which would enter the branch and wrongly
+	 * strip 'post' from its own category archive) is distinguishable from the real `&&`.
+	 * Mirrors test_modify_query_author_branch_skipped_when_author_post_types_empty() below.
+	 */
+	public function test_modify_query_category_branch_skipped_when_category_post_types_empty() {
+		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( false );
+		$this->stub_tax_lookup_plumbing();
+		$this->stub_post_types_with_tax_result( 'post_tag', false );
+		$this->stub_post_types_with_tax_result( 'category', false );
+
+		$query = Mockery::mock( 'Disable_Blog_Public_Query_Double' );
+		$query->shouldReceive( 'is_main_query' )->once()->andReturn( true );
+		$query->shouldReceive( 'is_tag' )->once()->andReturn( false );
+		$query->shouldReceive( 'is_category' )->once()->andReturn( true );
+		$query->shouldReceive( 'is_author' )->once()->andReturn( false );
+		$query->shouldNotReceive( 'set' );
 
 		$functions = new Disable_Blog_Public_Functions_Double();
 		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
