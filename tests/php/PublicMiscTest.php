@@ -410,11 +410,8 @@ class PublicMiscTest extends TestCase {
 	 * fallback must actually reach do_remove_pingback_header(), not just return null (a void
 	 * method returns null either way, so assertNull() alone can't distinguish "reached" from
 	 * "guarded out").
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
-	public function test_remove_pingback_header_fallback_calls_header_remove_when_headers_not_yet_sent() {
+	public function test_remove_pingback_header_fallback_reaches_do_remove_pingback_header_when_filter_allows_it() {
 		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, true );
 
 		$public = new class( 'disable-blog', '0.5.6' ) extends Disable_Blog_Public {
