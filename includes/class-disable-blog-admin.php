@@ -115,9 +115,7 @@ class Disable_Blog_Admin {
 
 			foreach ( $arguments_to_remove as $arg ) {
 				if ( isset( $wp_post_types['post']->$arg ) ) {
-					// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
 					$wp_post_types['post']->$arg = false;
-					// @codingStandardsIgnoreEnd
 				}
 			}
 
@@ -178,9 +176,7 @@ class Disable_Blog_Admin {
 
 					foreach ( $arguments_to_remove as $arg ) {
 						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
-							// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
 							$wp_taxonomies[ $tax ]->$arg = false;
-							// @codingStandardsIgnoreEnd
 						}
 					}
 				}
@@ -312,9 +308,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_post() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		return ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) );
-		// @codingStandardsIgnoreEnd
+		return ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only redirect-target check, not a state-changing form submission, so no nonce applies; $_GET['post'] only reaches get_post_type(), which resolves it via get_post() rather than a query or output, so it needs no extra sanitizing.
 	}
 
 	/**
@@ -325,9 +319,8 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_edit() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect-target check, not a state-changing form submission, so no nonce applies.
 		if ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) {
-		// @codingStandardsIgnoreEnd
 
 			return admin_url( 'edit.php?post_type=page' );
 
@@ -344,9 +337,8 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_post_new() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect-target check, not a state-changing form submission, so no nonce applies.
 		if ( ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
-		// @codingStandardsIgnoreEnd
 
 			return admin_url( 'post-new.php?post_type=page' );
 
@@ -365,9 +357,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_term() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
-		// @codingStandardsIgnoreEnd
+		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only redirect-target check, not a state-changing form submission, so no nonce applies; $_GET['taxonomy'] only reaches dwpb_post_types_with_tax(), which compares it against registered taxonomy names and hashes it into a wp_cache key, never a query or output.
 	}
 
 	/**
@@ -378,9 +368,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_edit_tags() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
-		// @codingStandardsIgnoreEnd
+		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only redirect-target check, not a state-changing form submission, so no nonce applies; $_GET['taxonomy'] only reaches dwpb_post_types_with_tax(), which compares it against registered taxonomy names and hashes it into a wp_cache key, never a query or output.
 	}
 
 	/**
@@ -442,9 +430,7 @@ class Disable_Blog_Admin {
 		 * The isset( $_GET['page'] ) check is to confirm the page
 		 * isn't a 3rd party plugin's option page built into the tools page.
 		 */
-		// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
-		return ! isset( $_GET['page'] );
-		// @codingStandardsIgnoreEnd
+		return ! isset( $_GET['page'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check for a 3rd-party plugin's tools sub-page, not a state-changing form submission, so no nonce applies.
 	}
 
 	/**
@@ -930,7 +916,7 @@ class Disable_Blog_Admin {
 		$in_post_types = implode( "','", $sanitized_post_types );
 
 		// Grab the comments that are associated with supported post types only.
-		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- no wpdb schema method covers this comments/posts join, so a direct query is unavoidable; the absence of caching is not, and this result is recomputed on every call; $in_post_types is esc_sql()'d above and comes from dwpb_post_types_with_feature() (get_post_types() output), never request input, so the interpolation is not an injection vector.
 		$totals = (array) $wpdb->get_results(
 			"SELECT comment_approved, COUNT( * ) AS total
 			FROM {$wpdb->comments}
@@ -942,7 +928,7 @@ class Disable_Blog_Admin {
 			GROUP BY comment_approved",
 			ARRAY_A
 		);
-		// @codingStandardsIgnoreEnd
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		foreach ( $totals as $row ) {
 			switch ( $row['comment_approved'] ) {
@@ -1074,11 +1060,11 @@ class Disable_Blog_Admin {
 		$sslverify = apply_filters( 'https_local_ssl_verify', false );
 
 		// Include Basic auth in loopback requests.
-		// @codingStandardsIgnoreStart
+		// phpcs:disable WordPressVIPMinimum.Variables.ServerVariables.BasicAuthentication, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- mirrors core's WP_Site_Health::get_test_rest_availability(), relaying the site's own already-validated Basic Auth credentials to this same-site loopback REST request so password-protected sites still pass the check; there is no external input to sanitize.
 		if ( isset( $_SERVER['PHP_AUTH_USER'] ) && isset( $_SERVER['PHP_AUTH_PW'] ) ) {
 			$headers['Authorization'] = 'Basic ' . base64_encode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) . ':' . wp_unslash( $_SERVER['PHP_AUTH_PW'] ) );
 		}
-		// @codingStandardsIgnoreEnd
+		// phpcs:enable WordPressVIPMinimum.Variables.ServerVariables.BasicAuthentication, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		// -- here's the money, change this from 'post' to  'page'.
 		$url = rest_url( 'wp/v2/types/page' );
@@ -1091,7 +1077,7 @@ class Disable_Blog_Admin {
 			$url
 		);
 
-		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) );
 
 		if ( is_wp_error( $r ) ) {
 			$result['status'] = 'critical';
@@ -1343,20 +1329,18 @@ class Disable_Blog_Admin {
 
 				// Note that we have to explicitly add the query variable for post type in order
 				// to avoid it being stripped by the admin redirect on the edit.php page.
-				// @codingStandardsIgnoreStart - phpcs doesn't like the mismatched placeholders, but it works.
 				$output = sprintf(
 					'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
 					"edit.php?post_type={$post_type}&author={$user_id}",
 					$page_count,
 					sprintf(
 						// translators: %1$s: Number of pieces of content by this author. %2$s and %3$s are the singular and plural names, respectively, for the content type. For example: "1 page by this author" and "2 pages by this author".
-						_n( '%1$s %2$s by this author', '%1$s %3$s by this author', $page_count, 'disable-blog' ),
+						_n( '%1$s %2$s by this author', '%1$s %3$s by this author', $page_count, 'disable-blog' ), // phpcs:ignore WordPress.WP.I18n.MismatchedPlaceholders -- the singular and plural strings intentionally reference different placeholders (%2$s the singular label, %3$s the plural label), since only one of the two names applies per branch; this is correct _n() usage, not a mismatch.
 						number_format_i18n( $page_count ),
 						$post_type_obj->labels->singular_name,
 						$post_type_obj->labels->name
 					)
 				);
-				// @codingStandardsIgnoreEnd
 			}
 		}
 
@@ -1474,7 +1458,7 @@ class Disable_Blog_Admin {
 	public function posts_page_notice() {
 
 		// translators: this notice informs the user why the blog page editor is disabled and that it is redirected to the homepage.
-		echo '<div class="notice notice-warning inline"><p>' . __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>'; // phpcs:ignore
+		echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>';
 	}
 
 	/**
