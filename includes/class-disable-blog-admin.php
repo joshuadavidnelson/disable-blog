@@ -1161,13 +1161,13 @@ class Disable_Blog_Admin {
 	 * Memoized per (term_id, taxonomy, post_type) for the life of the request: this hooks
 	 * onto core's `{$taxonomy}_row_actions`, which fires once per term row rendered on
 	 * edit-tags.php, so without memoizing, a full page of terms means a full uncached
-	 * WP_Query per row.
+	 * WP_Query per row. The cache group is registered non-persistent, since term post
+	 * counts change whenever a post is edited and must never survive past the request that
+	 * computed them.
 	 *
-	 * The wp_cache_*() calls are guarded by function_exists(): they are core WordPress API
-	 * and always present once WordPress has bootstrapped, but this method is also exercised
-	 * directly by unit tests that construct this class outside of a WordPress runtime, where
-	 * those functions do not exist. The guard is a no-op in production and simply disables
-	 * memoization in that unit-test context.
+	 * The query only needs a total, not the matching posts themselves, so it asks WP_Query
+	 * for a single row and reads found_posts rather than paging through (and counting)
+	 * every matching id.
 	 *
 	 * @since 0.5.0
 	 * @since 0.5.6 memoized per request.
@@ -1178,7 +1178,6 @@ class Disable_Blog_Admin {
 	 */
 	public function get_term_post_count_by_type( $term_id, $taxonomy, $post_type ) {
 
-		$can_cache   = function_exists( 'wp_cache_get' ) && function_exists( 'wp_cache_set' ) && function_exists( 'wp_cache_add_non_persistent_groups' );
 		$cache_group = 'dwpb-term-post-count-by-type';
 
 		// Each component is hashed separately (rather than concatenated raw) so that no
@@ -1186,29 +1185,23 @@ class Disable_Blog_Admin {
 		// collide with a different combination.
 		$cache_key = md5( (string) $term_id ) . '-' . md5( $taxonomy ) . '-' . md5( $post_type );
 
-		if ( $can_cache ) {
-			// Term post counts change whenever a post is edited, so this cache must never
-			// persist across requests (a persistent backend like Redis/Memcached would show
-			// stale counts indefinitely). It exists only to dedupe repeat lookups for the
-			// same term within a single page render. wp_cache_add_non_persistent_groups() is
-			// idempotent, so registering it on every call (rather than tracking "already
-			// registered" state) is safe and keeps the guard co-located with its first use.
-			wp_cache_add_non_persistent_groups( $cache_group );
+		// wp_cache_add_non_persistent_groups() is idempotent, so registering it on every
+		// call (rather than tracking "already registered" state) is safe and keeps it
+		// co-located with its first use.
+		wp_cache_add_non_persistent_groups( $cache_group );
 
-			// The $found out-parameter distinguishes a real cached 0 (a term with no
-			// matching posts) from a cache miss, since a plain falsy check can't -- 0 is
-			// falsy too.
-			$count = wp_cache_get( $cache_key, $cache_group, false, $found );
-			if ( $found ) {
-				return $count;
-			}
+		// The $found out-parameter distinguishes a real cached 0 (a term with no matching
+		// posts) from a cache miss, since a plain falsy check can't -- 0 is falsy too.
+		$count = wp_cache_get( $cache_key, $cache_group, false, $found );
+		if ( $found ) {
+			return $count;
 		}
 
 		$args  = array(
 			'fields'                 => 'ids',
-			'posts_per_page'         => 100,
+			'posts_per_page'         => 1,
 			'post_type'              => $post_type,
-			'no_found_rows'          => true,
+			'no_found_rows'          => false,
 			'update_post_meta_cache' => false,
 			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- counting posts in a term requires a tax_query; the result is memoized per request in a non-persistent group.
 				array(
@@ -1219,11 +1212,9 @@ class Disable_Blog_Admin {
 			),
 		);
 		$query = new WP_Query( $args );
-		$count = count( $query->posts );
+		$count = (int) $query->found_posts;
 
-		if ( $can_cache ) {
-			wp_cache_set( $cache_key, $count, $cache_group );
-		}
+		wp_cache_set( $cache_key, $count, $cache_group );
 
 		return $count;
 	}
