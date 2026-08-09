@@ -80,6 +80,7 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
  *
  * @since 0.2.0
  * @since 0.4.0 pulled out of class, unique function.
+ * @since 0.5.6 added caching.
  * @see register_post_types(), get_post_types(), get_object_taxonomies()
  * @uses get_post_types(), get_object_taxonomies(), apply_filters()
  * @param string|object $taxonomy Required. The taxonomy object or taxonomy slug.
@@ -98,28 +99,46 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		$taxonomy = $taxonomy->name;
 	}
 
-	// Get all the post types.
+	// Get all the post types matching $args -- computed unconditionally, cache hit or not,
+	// because the dwpb_taxonomy_support filter below documents this as one of its
+	// arguments on every call.
 	$post_types = get_post_types( $args, $output );
 
-	// setup the finished product.
-	$post_types_with_tax = array();
-	foreach ( $post_types as $post_type ) {
+	// Check the cache. The key must incorporate $args and $output too, since either
+	// changes the result for the same taxonomy. Each component is hashed separately
+	// (rather than concatenated raw) so that no combination of $taxonomy/$output values
+	// can straddle the '-' delimiter and collide with a different combination.
+	$cache_name          = 'post-types-with-tax-' . md5( esc_attr( $taxonomy ) ) . '-' . md5( $output ) . '-' . md5( maybe_serialize( $args ) );
+	$post_types_with_tax = wp_cache_get( $cache_name, 'post-types-by-tax' );
 
-		// If post types are objects.
-		if ( is_object( $post_type ) ) {
-			$type = $post_type->name;
-			// If post types are strings.
-		} else {
-			$type = (string) $post_type;
-		}
+	// If the cache is empty, then work out which of the post types above use the taxonomy.
+	if ( false === $post_types_with_tax || ! is_array( $post_types_with_tax ) ) {
 
-		// is the post included in this post type, but not 'post' type.
-		if ( ! empty( $type ) && 'post' !== $type ) {
-			$taxonomies = get_object_taxonomies( $type, 'names' );
-			if ( in_array( $taxonomy, $taxonomies, true ) ) {
-				$post_types_with_tax[] = $post_type;
+		// setup the finished product.
+		$post_types_with_tax = array();
+		foreach ( $post_types as $post_type ) {
+
+			// If post types are objects.
+			if ( is_object( $post_type ) ) {
+				$type = $post_type->name;
+				// If post types are strings.
+			} else {
+				$type = (string) $post_type;
+			}
+
+			// is the post included in this post type, but not 'post' type.
+			if ( ! empty( $type ) && 'post' !== $type ) {
+				$taxonomies = get_object_taxonomies( $type, 'names' );
+				if ( in_array( $taxonomy, $taxonomies, true ) ) {
+					$post_types_with_tax[] = $post_type;
+				}
 			}
 		}
+
+		// Keep the array if there are any, otherwise make it return false.
+		$post_types_with_tax = empty( $post_types_with_tax ) ? false : $post_types_with_tax;
+
+		wp_cache_set( $cache_name, $post_types_with_tax, 'post-types-by-tax' );
 	}
 
 	/**

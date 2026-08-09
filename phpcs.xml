@@ -9,7 +9,7 @@
 	<exclude-pattern>/.github/</exclude-pattern>
 	<exclude-pattern>/.wordpress-org/</exclude-pattern>
 	<exclude-pattern>/languages/</exclude-pattern>
-	<exclude-pattern>/tests/(?!e2e/fixtures/)</exclude-pattern>
+	<exclude-pattern>/tests/(?!e2e/fixtures/|php/)</exclude-pattern>
 	<exclude-pattern>/bin/</exclude-pattern>
 	<exclude-pattern>/assets/</exclude-pattern>
 
@@ -45,9 +45,12 @@
 	<rule ref="VariableAnalysis"/>
 
 	<!-- The e2e fixtures document the plugin methods they mirror, and a
-		 `Class::method()` reference reads as commented-out code to this sniff. -->
+		 `Class::method()` reference reads as commented-out code to this sniff. Same
+		 reasoning applies to the `// define_admin_hooks().` / `// define_public_hooks().`
+		 section labels inside DisableBlogTest's expected-hooks arrays. -->
 	<rule ref="Squiz.PHP.CommentedOutCode">
 		<exclude-pattern>/tests/e2e/fixtures/</exclude-pattern>
+		<exclude-pattern>/tests/php/DisableBlogTest.php</exclude-pattern>
 	</rule>
 
 	<!-- Override prefix rules to accept our prefixes -->
@@ -61,6 +64,16 @@
 				<element value="DWPB"/>
 			</property>
 		</properties>
+		<!-- Test classes, fixture classes, and test-only constants (e.g. the ABSPATH
+			 bootstrap.php defines to point WP_Mock at tests/php/Support/fixtures/) are not
+			 part of the plugin's public surface and are never loaded in production. -->
+		<exclude-pattern>/tests/php/</exclude-pattern>
+	</rule>
+
+	<!-- tests/php sets $_REQUEST and $_SERVER directly as fixtures for the code under test
+		 to read; there is no real request to verify a nonce against. -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<exclude-pattern>/tests/php/</exclude-pattern>
 	</rule>
 
 	<!-- Text domain -->
