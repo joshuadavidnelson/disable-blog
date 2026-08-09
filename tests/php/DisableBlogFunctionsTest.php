@@ -77,6 +77,63 @@ class DisableBlogFunctionsTest extends TestCase {
 	}
 
 	/**
+	 * Stubs the dwpb_redirect_status_code filter, asserting the real invoked arguments are
+	 * strictly (===) the literal int default and the two url strings -- safe_offset() casts
+	 * scalars via (string), so a plain ->with( 301, $current_url, $redirect_url ) would still
+	 * route here if the source passed a loosely-equal value (e.g. the string '301') instead
+	 * of the literal int this filter documents.
+	 *
+	 * @param string $current_url  The url being redirected FROM.
+	 * @param string $redirect_url The url being redirected TO.
+	 * @param mixed  $reply        The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_redirect_status_code_filter( $current_url, $redirect_url, $reply ) {
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, $current_url, $redirect_url )
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $default, $actual_current_url, $actual_redirect_url ) use ( $current_url, $redirect_url, $reply ) {
+						$this->assertSame( 301, $default );
+						$this->assertSame( $current_url, $actual_current_url );
+						$this->assertSame( $redirect_url, $actual_redirect_url );
+
+						return $reply;
+					}
+				)
+			);
+	}
+
+	/**
+	 * Stubs the dwpb_disable_feed filter, asserting the real invoked default and comment-feed
+	 * flag are strictly (===) what's expected -- safe_offset() casts scalars via (string), so
+	 * a plain ->with( true, $post, $is_comment_feed ) would still route here if the source
+	 * passed a loosely-equal value (e.g. int 1) instead of the literal booleans this filter
+	 * documents. $post itself is already matched by object identity (spl_object_hash()), so
+	 * this only needs to assert the two boolean positions.
+	 *
+	 * @param object $post            Global post object.
+	 * @param bool   $is_comment_feed The exact comment-feed flag the filter must receive.
+	 * @param bool   $reply           The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_disable_feed_filter( $post, $is_comment_feed, $reply ) {
+		WP_Mock::onFilter( 'dwpb_disable_feed' )
+			->with( true, $post, $is_comment_feed )
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $default, $actual_post, $actual_is_comment_feed ) use ( $post, $is_comment_feed, $reply ) {
+						$this->assertTrue( $default );
+						$this->assertSame( $post, $actual_post );
+						$this->assertSame( $is_comment_feed, $actual_is_comment_feed );
+
+						return $reply;
+					}
+				)
+			);
+	}
+
+	/**
 	 * redirect()
 	 */
 
@@ -95,7 +152,14 @@ class DisableBlogFunctionsTest extends TestCase {
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'add_query_arg' )
 			->once()
-			->with( array(), 'wp-admin/edit.php' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'wp-admin/edit.php'
+			)
 			->andReturn( 'wp-admin/edit.php' );
 		WP_Mock::userFunction( 'admin_url' )
 			->once()
@@ -112,10 +176,8 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/wp-admin/options-general.php';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/wp-admin/edit.php', $redirect_url )
-			->reply( 301 );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, false );
+		$this->stub_redirect_status_code_filter( 'https://example.test/wp-admin/edit.php', $redirect_url, 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -157,10 +219,8 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/other-page/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/current-page/?foo=bar', $redirect_url )
-			->reply( 301 );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, false );
+		$this->stub_redirect_status_code_filter( 'https://example.test/current-page/?foo=bar', $redirect_url, 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -188,7 +248,13 @@ class DisableBlogFunctionsTest extends TestCase {
 		WP_Mock::userFunction( 'wp_unslash' )->never();
 		WP_Mock::userFunction( 'home_url' )
 			->once()
-			->with( '' )
+			->with(
+				Mockery::on(
+					function ( $request_uri ) {
+						return '' === $request_uri;
+					}
+				)
+			)
 			->andReturn( 'https://example.test/' );
 
 		WP_Mock::expectFilterAdded(
@@ -303,8 +369,8 @@ class DisableBlogFunctionsTest extends TestCase {
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url_with_qs )->andReturn( $redirect_url_with_qs );
 
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( true );
-		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array( 'foo' ) );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, true );
+		$this->stub_filter_strict( 'dwpb_allowed_query_vars', array(), array( 'foo' ) );
 		WP_Mock::userFunction( 'sanitize_key' )->with( 'foo' )->andReturn( 'foo' );
 
 		WP_Mock::userFunction( 'add_query_arg' )
@@ -312,9 +378,7 @@ class DisableBlogFunctionsTest extends TestCase {
 			->with( array( 'foo' => 'bar' ), $redirect_url )
 			->andReturn( $redirect_url_with_qs );
 
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/current-page/', $redirect_url_with_qs )
-			->reply( 301 );
+		$this->stub_redirect_status_code_filter( 'https://example.test/current-page/', $redirect_url_with_qs, 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -357,12 +421,10 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/target/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, false );
 		WP_Mock::userFunction( 'add_query_arg' )->never();
 
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/current-page/', $redirect_url )
-			->reply( 301 );
+		$this->stub_redirect_status_code_filter( 'https://example.test/current-page/', $redirect_url, 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -403,11 +465,9 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/target/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, false );
 
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/current-page/', $redirect_url )
-			->reply( 302 );
+		$this->stub_redirect_status_code_filter( 'https://example.test/current-page/', $redirect_url, 302 );
 
 		$this->stub_real_absint();
 
@@ -451,10 +511,8 @@ class DisableBlogFunctionsTest extends TestCase {
 		$escaped_redirect_url = 'https://example.test/target/?x=1&#038;y=2';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $raw_redirect_url )->andReturn( $escaped_redirect_url );
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/current-page/', $raw_redirect_url )
-			->reply( 301 );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, false );
+		$this->stub_redirect_status_code_filter( 'https://example.test/current-page/', $raw_redirect_url, 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -506,10 +564,8 @@ class DisableBlogFunctionsTest extends TestCase {
 		$redirect_url = 'https://example.test/target/';
 
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $redirect_url )->andReturn( $redirect_url );
-		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, 'https://example.test/current-page/', $redirect_url )
-			->reply( 301 );
+		$this->stub_filter_strict( 'dwpb_pass_query_string_on_redirect', false, false );
+		$this->stub_redirect_status_code_filter( 'https://example.test/current-page/', $redirect_url, 301 );
 		$this->stub_real_absint();
 
 		WP_Mock::userFunction( 'wp_safe_redirect' )
@@ -565,7 +621,7 @@ class DisableBlogFunctionsTest extends TestCase {
 
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array() );
+		$this->stub_filter_strict( 'dwpb_allowed_query_vars', array(), array() );
 		WP_Mock::userFunction( 'add_query_arg' )->never();
 
 		$this->assertSame(
@@ -583,7 +639,7 @@ class DisableBlogFunctionsTest extends TestCase {
 
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array( 'foo', 'empty' ) );
+		$this->stub_filter_strict( 'dwpb_allowed_query_vars', array(), array( 'foo', 'empty' ) );
 		WP_Mock::userFunction( 'sanitize_key' )->with( 'foo' )->andReturn( 'foo' );
 		WP_Mock::userFunction( 'sanitize_key' )->with( 'empty' )->andReturn( 'empty' );
 
@@ -606,7 +662,7 @@ class DisableBlogFunctionsTest extends TestCase {
 
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array( 'zzz' ) );
+		$this->stub_filter_strict( 'dwpb_allowed_query_vars', array(), array( 'zzz' ) );
 		WP_Mock::userFunction( 'sanitize_key' )->with( 'zzz' )->andReturn( 'zzz' );
 
 		WP_Mock::userFunction( 'add_query_arg' )->never();
@@ -623,7 +679,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_get_allowed_query_vars_returns_empty_array_by_default() {
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array() );
+		$this->stub_filter_strict( 'dwpb_allowed_query_vars', array(), array() );
 		WP_Mock::userFunction( 'sanitize_key' )->never();
 
 		$this->assertSame( array(), $this->invoke_private( $functions, 'get_allowed_query_vars' ) );
@@ -636,7 +692,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_get_allowed_query_vars_sanitizes_keys_and_drops_empty_values() {
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_allowed_query_vars' )->with( array() )->reply( array( 'Foo', '', 'Bar_Baz' ) );
+		$this->stub_filter_strict( 'dwpb_allowed_query_vars', array(), array( 'Foo', '', 'Bar_Baz' ) );
 		WP_Mock::userFunction( 'sanitize_key' )->with( 'Foo' )->andReturn( 'foo' );
 		WP_Mock::userFunction( 'sanitize_key' )->with( '' )->andReturn( '' );
 		WP_Mock::userFunction( 'sanitize_key' )->with( 'Bar_Baz' )->andReturn( 'bar_baz' );
@@ -663,9 +719,7 @@ class DisableBlogFunctionsTest extends TestCase {
 		$current_url  = 'https://example.test/current/';
 		$redirect_url = 'https://example.test/redirect/';
 
-		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
-			->with( 301, $current_url, $redirect_url )
-			->reply( $filtered_value );
+		$this->stub_redirect_status_code_filter( $current_url, $redirect_url, $filtered_value );
 
 		$this->stub_real_absint();
 
@@ -743,7 +797,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_author_archive_post_types_returns_filtered_post_types_when_non_empty() {
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array( 'book' ) );
+		$this->stub_filter_strict( 'dwpb_author_archive_post_types', array(), array( 'book' ) );
 
 		$this->assertSame( array( 'book' ), $functions->author_archive_post_types() );
 	}
@@ -751,7 +805,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_author_archive_post_types_returns_false_when_empty_by_default() {
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array() );
+		$this->stub_filter_strict( 'dwpb_author_archive_post_types', array(), array() );
 
 		$this->assertFalse( $functions->author_archive_post_types() );
 	}
@@ -763,7 +817,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_disable_author_archives_defaults_to_false() {
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_disable_author_archives', false, false );
 
 		$this->assertFalse( $functions->disable_author_archives() );
 	}
@@ -771,7 +825,7 @@ class DisableBlogFunctionsTest extends TestCase {
 	public function test_disable_author_archives_true_when_filtered() {
 		$functions = new Disable_Blog_Functions();
 
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_author_archives', false, true );
 
 		$this->assertTrue( $functions->disable_author_archives() );
 	}
@@ -787,7 +841,7 @@ class DisableBlogFunctionsTest extends TestCase {
 		$functions = new Disable_Blog_Functions();
 		$post      = (object) array( 'ID' => 1 );
 
-		WP_Mock::onFilter( 'dwpb_disable_feed' )->with( true, $post, false )->reply( false );
+		$this->stub_disable_feed_filter( $post, false, false );
 
 		$this->assertFalse( $functions->disable_feeds( $post ) );
 	}
@@ -796,7 +850,7 @@ class DisableBlogFunctionsTest extends TestCase {
 		$functions = new Disable_Blog_Functions();
 		$post      = (object) array( 'ID' => 1 );
 
-		WP_Mock::onFilter( 'dwpb_disable_feed' )->with( true, $post, true )->reply( true );
+		$this->stub_disable_feed_filter( $post, true, true );
 
 		$this->assertTrue( $functions->disable_feeds( $post, true ) );
 	}
@@ -805,7 +859,7 @@ class DisableBlogFunctionsTest extends TestCase {
 		$functions = new Disable_Blog_Functions();
 		$post      = (object) array( 'ID' => 1 );
 
-		WP_Mock::onFilter( 'dwpb_disable_feed' )->with( true, $post, false )->reply( false );
+		$this->stub_disable_feed_filter( $post, false, false );
 
 		$this->assertFalse( $functions->disable_feeds( $post, false ) );
 	}

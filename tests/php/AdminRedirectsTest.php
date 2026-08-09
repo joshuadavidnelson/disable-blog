@@ -89,7 +89,33 @@ class AdminRedirectsTest extends TestCase {
 	 */
 	private function stub_final_filters_passthrough( $redirect_url ) {
 		WP_Mock::onFilter( 'dwpb_admin_redirect_url' )->with( $redirect_url )->reply( $redirect_url );
-		WP_Mock::onFilter( 'dwpb_redirect_admin' )->with( true, $redirect_url )->reply( true );
+		$this->stub_redirect_admin_filter( $redirect_url, true );
+	}
+
+	/**
+	 * Stubs the dwpb_redirect_admin filter, asserting via InvokedFilterValue that the real
+	 * leading argument is strictly (===) the boolean true, rather than merely matching
+	 * loosely (==) as safe_offset()'s string-cast routing key would otherwise allow -- e.g.
+	 * bool true and int 1 both safe_offset() to the same key. The second ($redirect_url)
+	 * argument is left out of the strict check on purpose: it is a distinct, non-empty url
+	 * string every time this is called, so it can't collide with another value under
+	 * safe_offset(), and it still has to appear in ->with() to route the two-argument
+	 * filter invocation to this responder at all.
+	 *
+	 * @param string $redirect_url The url expected to reach the filter as the 2nd argument.
+	 * @param bool   $reply        The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_redirect_admin_filter( $redirect_url, $reply ) {
+		WP_Mock::onFilter( 'dwpb_redirect_admin' )->with( true, $redirect_url )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $enabled ) use ( $reply ) {
+					$this->assertTrue( $enabled );
+
+					return $reply;
+				}
+			)
+		);
 	}
 
 	/**
@@ -101,10 +127,27 @@ class AdminRedirectsTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_tax_lookup_plumbing() {
-		WP_Mock::userFunction( 'get_post_types' )->with( array(), 'names' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_post_types' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'names'
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::userFunction( 'maybe_serialize' )->with( array() )->andReturn( 'a:0:{}' );
+		WP_Mock::userFunction( 'maybe_serialize' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				)
+			)
+			->andReturn( 'a:0:{}' );
 	}
 
 	/**
@@ -120,7 +163,16 @@ class AdminRedirectsTest extends TestCase {
 		WP_Mock::userFunction( 'esc_attr' )->with( $taxonomy )->andReturn( $taxonomy );
 		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
 			->with( null, $taxonomy, array(), array(), 'names' )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $null, $tax, $post_types, $args, $output ) use ( $return_value ) {
+						$this->assertSame( array(), $post_types, 'dwpb_taxonomy_support must receive the exact $post_types array it documents.' );
+						$this->assertSame( array(), $args, 'dwpb_taxonomy_support must receive the exact $args array it documents.' );
+
+						return $return_value;
+					}
+				)
+			);
 	}
 
 	/**
@@ -143,7 +195,40 @@ class AdminRedirectsTest extends TestCase {
 			->andReturn( array() );
 		WP_Mock::onFilter( "dwpb_post_types_supporting_{$feature}" )
 			->with( array(), array() )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $post_types_with_feature, $args ) use ( $return_value ) {
+						// The cached empty array is normalized to false before it reaches
+						// this filter -- safe_offset() string-casts both to '', so WP_Mock's
+						// ->with( array(), array() ) above (needed to route here at all)
+						// cannot by itself tell the two apart. assertSame() can.
+						$this->assertFalse( $post_types_with_feature );
+						$this->assertSame( array(), $args );
+						return $return_value;
+					}
+				)
+			);
+	}
+
+	/**
+	 * Forces redirect_admin_options_writing()'s dwpb_remove_options_writing filter to
+	 * $return_value.
+	 *
+	 * @param bool $return_value The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_remove_writing_options( $return_value ) {
+		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $default ) use ( $return_value ) {
+					// safe_offset( false ) === safe_offset( '' ), so the ->with( false )
+					// above routes here for either value; assertSame() confirms the real
+					// argument really is the boolean default, not a loosely-equal string.
+					$this->assertFalse( $default );
+					return $return_value;
+				}
+			)
+		);
 	}
 
 	/**
@@ -201,7 +286,7 @@ class AdminRedirectsTest extends TestCase {
 
 		$dashboard_url = 'https://example.test/wp-admin/index.php';
 		WP_Mock::userFunction( 'admin_url' )->with( 'index.php' )->andReturn( $dashboard_url );
-		WP_Mock::onFilter( 'dwpb_admin_redirect_url' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_admin_redirect_url', false, false );
 
 		$functions = new Disable_Blog_Admin_Functions_Double();
 		$admin     = new Disable_Blog_Admin( 'disable-blog', '0.5.6', $functions );
@@ -222,7 +307,7 @@ class AdminRedirectsTest extends TestCase {
 		$dashboard_url = 'https://example.test/wp-admin/index.php';
 		$this->stub_dashboard_guards_pass( $dashboard_url );
 		WP_Mock::userFunction( 'is_admin' )->andReturn( true );
-		WP_Mock::onFilter( 'dwpb_admin_redirect_url' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_admin_redirect_url', false, false );
 
 		$functions = new Disable_Blog_Admin_Functions_Double();
 		$admin     = new Disable_Blog_Admin( 'disable-blog', '0.5.6', $functions );
@@ -331,7 +416,7 @@ class AdminRedirectsTest extends TestCase {
 
 		$global_override_url = 'https://example.test/wp-admin/global-override/';
 		WP_Mock::onFilter( 'dwpb_admin_redirect_url' )->with( $dashboard_url )->reply( $global_override_url );
-		WP_Mock::onFilter( 'dwpb_redirect_admin' )->with( true, $global_override_url )->reply( true );
+		$this->stub_redirect_admin_filter( $global_override_url, true );
 
 		$functions = new Disable_Blog_Admin_Functions_Double();
 		$admin     = new Disable_Blog_Admin( 'disable-blog', '0.5.6', $functions );
@@ -360,7 +445,7 @@ class AdminRedirectsTest extends TestCase {
 			->andReturn( $dashboard_url );
 
 		WP_Mock::onFilter( 'dwpb_admin_redirect_url' )->with( $dashboard_url )->reply( $dashboard_url );
-		WP_Mock::onFilter( 'dwpb_redirect_admin' )->with( true, $dashboard_url )->reply( false );
+		$this->stub_redirect_admin_filter( $dashboard_url, false );
 
 		$functions = new Disable_Blog_Admin_Functions_Double();
 		$admin     = new Disable_Blog_Admin( 'disable-blog', '0.5.6', $functions );
@@ -710,7 +795,7 @@ class AdminRedirectsTest extends TestCase {
 		$options_general_url = 'https://example.test/wp-admin/options-general.php';
 		$this->stub_dashboard_guards_pass( $dashboard_url );
 		WP_Mock::userFunction( 'is_admin' )->andReturn( true );
-		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply( true );
+		$this->stub_remove_writing_options( true );
 		WP_Mock::userFunction( 'admin_url' )->with( 'options-general.php' )->andReturn( $options_general_url );
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $options_general_url )->andReturn( $options_general_url );
 
@@ -733,7 +818,7 @@ class AdminRedirectsTest extends TestCase {
 		$options_general_url  = 'https://example.test/wp-admin/options-general.php';
 		$this->stub_dashboard_guards_pass( $dashboard_url );
 		WP_Mock::userFunction( 'is_admin' )->andReturn( true );
-		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply( true );
+		$this->stub_remove_writing_options( true );
 		WP_Mock::userFunction( 'admin_url' )->with( 'options-general.php' )->andReturn( $options_general_url );
 		WP_Mock::userFunction( 'esc_url_raw' )->with( $options_general_url )->andReturn( $options_general_url );
 
@@ -1081,7 +1166,7 @@ class AdminRedirectsTest extends TestCase {
 
 	public function test_redirect_admin_options_writing_redirects_when_writing_options_removed() {
 		$url = 'https://example.test/wp-admin/options-general.php';
-		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply( true );
+		$this->stub_remove_writing_options( true );
 		WP_Mock::userFunction( 'admin_url' )->once()->with( 'options-general.php' )->andReturn( $url );
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
@@ -1090,7 +1175,7 @@ class AdminRedirectsTest extends TestCase {
 	}
 
 	public function test_redirect_admin_options_writing_false_when_writing_options_kept() {
-		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply( false );
+		$this->stub_remove_writing_options( false );
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 

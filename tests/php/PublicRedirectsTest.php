@@ -107,7 +107,15 @@ class PublicRedirectsTest extends TestCase {
 			$overrides
 		);
 
-		WP_Mock::userFunction( 'is_singular' )->with( 'post' )->andReturn( $c['is_singular_post'] );
+		WP_Mock::userFunction( 'is_singular' )
+			->with(
+				Mockery::on(
+					function ( $type ) {
+						return 'post' === $type;
+					}
+				)
+			)
+			->andReturn( $c['is_singular_post'] );
 		WP_Mock::userFunction( 'is_tag' )->andReturn( $c['is_tag'] );
 		WP_Mock::userFunction( 'is_category' )->andReturn( $c['is_category'] );
 		WP_Mock::userFunction( 'is_feed' )->andReturn( $c['is_feed'] );
@@ -130,10 +138,27 @@ class PublicRedirectsTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_tax_lookup_plumbing() {
-		WP_Mock::userFunction( 'get_post_types' )->with( array(), 'names' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_post_types' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'names'
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::userFunction( 'maybe_serialize' )->with( array() )->andReturn( 'a:0:{}' );
+		WP_Mock::userFunction( 'maybe_serialize' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				)
+			)
+			->andReturn( 'a:0:{}' );
 	}
 
 	/**
@@ -149,7 +174,16 @@ class PublicRedirectsTest extends TestCase {
 		WP_Mock::userFunction( 'esc_attr' )->with( $taxonomy )->andReturn( $taxonomy );
 		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
 			->with( null, $taxonomy, array(), array(), 'names' )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $null, $tax, $post_types, $args, $output ) use ( $return_value ) {
+						$this->assertSame( array(), $post_types, 'dwpb_taxonomy_support must receive the exact $post_types array it documents.' );
+						$this->assertSame( array(), $args, 'dwpb_taxonomy_support must receive the exact $args array it documents.' );
+
+						return $return_value;
+					}
+				)
+			);
 	}
 
 	/**
@@ -162,7 +196,7 @@ class PublicRedirectsTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_front_end_redirect_passthrough( $redirect_url ) {
-		WP_Mock::onFilter( 'dwpb_redirect_front_end' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_redirect_front_end', true, true );
 		WP_Mock::onFilter( 'dwpb_front_end_redirect_url' )->with( $redirect_url )->reply( $redirect_url );
 	}
 
@@ -556,7 +590,7 @@ class PublicRedirectsTest extends TestCase {
 		$this->stub_redirect_conditions( array( 'is_home' => true ) );
 
 		WP_Mock::onFilter( 'dwpb_redirect_blog_page' )->with( 'https://example.test/' )->reply( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_redirect_front_end' )->with( true )->reply( false );
+		$this->stub_filter_strict( 'dwpb_redirect_front_end', true, false );
 
 		$functions = new Disable_Blog_Public_Functions_Double();
 		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
@@ -575,7 +609,7 @@ class PublicRedirectsTest extends TestCase {
 		$this->stub_redirect_conditions( array( 'is_home' => true ) );
 
 		WP_Mock::onFilter( 'dwpb_redirect_blog_page' )->with( 'https://example.test/' )->reply( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_redirect_front_end' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_redirect_front_end', true, true );
 		WP_Mock::onFilter( 'dwpb_front_end_redirect_url' )->with( 'https://example.test/' )->reply( 'https://example.test/global-override/' );
 
 		$functions = new Disable_Blog_Public_Functions_Double();
@@ -753,7 +787,20 @@ class PublicRedirectsTest extends TestCase {
 		$query->shouldReceive( 'is_tag' )->once()->andReturn( true );
 		$query->shouldReceive( 'set' )->once()->with( 'post_type', array( 'book' ) );
 
-		WP_Mock::onFilter( 'dwpb_tag_post_types' )->with( array( 'book' ), $query )->reply( array( 'book' ) );
+		// safe_offset( array( 'book' ) ) === safe_offset( 'book' ), so a plain ->with()
+		// match would also route (and silently pass) if the source ever collapsed the
+		// one-element array to the bare string. The InvokedFilterValue responder receives
+		// the real invoked argument regardless of which key matched, so assertSame() below
+		// catches that.
+		WP_Mock::onFilter( 'dwpb_tag_post_types' )->with( array( 'book' ), $query )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $tag_post_types ) {
+					$this->assertSame( array( 'book' ), $tag_post_types );
+
+					return array( 'book' );
+				}
+			)
+		);
 
 		$functions = new Disable_Blog_Public_Functions_Double();
 		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
@@ -772,7 +819,15 @@ class PublicRedirectsTest extends TestCase {
 		$query->shouldReceive( 'is_tag' )->once()->andReturn( true );
 		$query->shouldReceive( 'set' )->once()->with( 'post_type', array( 'custom_cpt' ) );
 
-		WP_Mock::onFilter( 'dwpb_tag_post_types' )->with( array( 'book' ), $query )->reply( array( 'custom_cpt' ) );
+		WP_Mock::onFilter( 'dwpb_tag_post_types' )->with( array( 'book' ), $query )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $tag_post_types ) {
+					$this->assertSame( array( 'book' ), $tag_post_types );
+
+					return array( 'custom_cpt' );
+				}
+			)
+		);
 
 		$functions = new Disable_Blog_Public_Functions_Double();
 		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
@@ -818,7 +873,20 @@ class PublicRedirectsTest extends TestCase {
 		$query->shouldReceive( 'is_category' )->once()->andReturn( true );
 		$query->shouldReceive( 'set' )->once()->with( 'post_type', array( 'page' ) );
 
-		WP_Mock::onFilter( 'dwpb_category_post_types' )->with( array( 'page' ), $query )->reply( array( 'page' ) );
+		// safe_offset( array( 'page' ) ) === safe_offset( 'page' ), so a plain ->with()
+		// match would also route (and silently pass) if the source ever collapsed the
+		// one-element array to the bare string. The InvokedFilterValue responder receives
+		// the real invoked argument regardless of which key matched, so assertSame() below
+		// catches that.
+		WP_Mock::onFilter( 'dwpb_category_post_types' )->with( array( 'page' ), $query )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $category_post_types ) {
+					$this->assertSame( array( 'page' ), $category_post_types );
+
+					return array( 'page' );
+				}
+			)
+		);
 
 		$functions = new Disable_Blog_Public_Functions_Double();
 		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
@@ -838,7 +906,15 @@ class PublicRedirectsTest extends TestCase {
 		$query->shouldReceive( 'is_category' )->once()->andReturn( true );
 		$query->shouldReceive( 'set' )->once()->with( 'post_type', array( 'custom_cpt' ) );
 
-		WP_Mock::onFilter( 'dwpb_category_post_types' )->with( array( 'page' ), $query )->reply( array( 'custom_cpt' ) );
+		WP_Mock::onFilter( 'dwpb_category_post_types' )->with( array( 'page' ), $query )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $category_post_types ) {
+					$this->assertSame( array( 'page' ), $category_post_types );
+
+					return array( 'custom_cpt' );
+				}
+			)
+		);
 
 		$functions = new Disable_Blog_Public_Functions_Double();
 		$public    = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
@@ -947,7 +1023,20 @@ class PublicRedirectsTest extends TestCase {
 		$query = Mockery::mock( 'Disable_Blog_Public_Query_Double' );
 		$query->shouldReceive( 'set' )->once()->with( 'post_type', array( 'overridden' ) );
 
-		WP_Mock::onFilter( 'my_filter' )->with( array( 'book' ), $query )->reply( array( 'overridden' ) );
+		// safe_offset( array( 'book' ) ) === safe_offset( 'book' ), so a plain ->with()
+		// match would also route (and silently pass) if the source ever collapsed the
+		// one-element array to the bare string. The InvokedFilterValue responder receives
+		// the real invoked argument regardless of which key matched, so assertSame() below
+		// catches that.
+		WP_Mock::onFilter( 'my_filter' )->with( array( 'book' ), $query )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $post_types ) {
+					$this->assertSame( array( 'book' ), $post_types );
+
+					return array( 'overridden' );
+				}
+			)
+		);
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
 
@@ -979,7 +1068,15 @@ class PublicRedirectsTest extends TestCase {
 		$query = Mockery::mock( 'Disable_Blog_Public_Query_Double' );
 		$query->shouldNotReceive( 'set' );
 
-		WP_Mock::onFilter( 'my_filter' )->with( array( 'book' ), $query )->reply( 'oops' );
+		WP_Mock::onFilter( 'my_filter' )->with( array( 'book' ), $query )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $post_types ) {
+					$this->assertSame( array( 'book' ), $post_types );
+
+					return 'oops';
+				}
+			)
+		);
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
 

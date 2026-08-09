@@ -70,6 +70,12 @@ class PublicFeedsTest extends TestCase {
 	 * Forces dwpb_post_types_with_feature( $feature ) to return $return_value, via the
 	 * dwpb_post_types_supporting_{$feature} filter that always applies to its computed result.
 	 *
+	 * Asserts the real invoked arguments are strictly (===) the normalized-to-false default
+	 * and the empty $args array -- safe_offset() casts scalars via (string) and flattens
+	 * arrays, so a plain ->with( false, array() ) would still route here if the source passed
+	 * a loosely-equal value (e.g. an empty array) instead of the literal false the "no post
+	 * types found" branch documents.
+	 *
 	 * @param string     $feature      The feature slug (e.g. 'comments').
 	 * @param array|bool $return_value The value dwpb_post_types_with_feature() should return.
 	 * @return void
@@ -79,7 +85,69 @@ class PublicFeedsTest extends TestCase {
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'get_post_types' )->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::onFilter( "dwpb_post_types_supporting_{$feature}" )->with( false, array() )->reply( $return_value );
+		WP_Mock::onFilter( "dwpb_post_types_supporting_{$feature}" )->with( false, array() )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $post_types_with_feature, $args ) use ( $return_value ) {
+					$this->assertFalse( $post_types_with_feature );
+					$this->assertSame( array(), $args );
+
+					return $return_value;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Stubs the dwpb_redirect_feeds filter, asserting the real invoked comment-feed flag is
+	 * strictly (===) $is_comment_feed -- safe_offset() casts scalars via (string), so a plain
+	 * ->with( $url, $post, $is_comment_feed ) would still route here if the source passed a
+	 * loosely-equal value (e.g. an empty array) instead of the literal boolean this filter
+	 * documents. $url and $post are already matched exactly (a literal string and object
+	 * identity via spl_object_hash()), so this asserts them too for a single point of truth.
+	 *
+	 * @param string $url             The unfiltered home_url() the filter should receive.
+	 * @param mixed  $post            The global $post (null or a WP_Post) the filter should receive.
+	 * @param bool   $is_comment_feed The exact comment-feed flag the filter must receive.
+	 * @param string $reply           The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_redirect_feeds_filter( $url, $post, $is_comment_feed, $reply ) {
+		WP_Mock::onFilter( 'dwpb_redirect_feeds' )->with( $url, $post, $is_comment_feed )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $actual_url, $actual_post, $actual_is_comment_feed ) use ( $url, $post, $is_comment_feed, $reply ) {
+					$this->assertSame( $url, $actual_url );
+					$this->assertSame( $post, $actual_post );
+					$this->assertSame( $is_comment_feed, $actual_is_comment_feed );
+
+					return $reply;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Stubs the dwpb_feed_message filter, asserting the real invoked default and comment-feed
+	 * flag are strictly (===) what's expected -- safe_offset() casts scalars via (string), so
+	 * a plain ->with( false, $post, $is_comment_feed ) would still route here if the source
+	 * passed a loosely-equal value instead of the literal booleans this filter documents.
+	 *
+	 * @param mixed $post            The global $post (null or a WP_Post) the filter should receive.
+	 * @param bool  $is_comment_feed The exact comment-feed flag the filter must receive.
+	 * @param bool  $reply           The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_feed_message_filter( $post, $is_comment_feed, $reply ) {
+		WP_Mock::onFilter( 'dwpb_feed_message' )->with( false, $post, $is_comment_feed )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $default, $actual_post, $actual_is_comment_feed ) use ( $post, $is_comment_feed, $reply ) {
+					$this->assertFalse( $default );
+					$this->assertSame( $post, $actual_post );
+					$this->assertSame( $is_comment_feed, $actual_is_comment_feed );
+
+					return $reply;
+				}
+			)
+		);
 	}
 
 	/**
@@ -167,8 +235,8 @@ class PublicFeedsTest extends TestCase {
 		$wp = (object) array( 'query_vars' => array( 'feed' => 'feed' ) );
 
 		WP_Mock::userFunction( 'home_url' )->once()->andReturn( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_redirect_feeds' )->with( 'https://example.test/', null, false )->reply( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_feed_message' )->with( false, null, false )->reply( false );
+		$this->stub_redirect_feeds_filter( 'https://example.test/', null, false, 'https://example.test/' );
+		$this->stub_feed_message_filter( null, false, false );
 
 		$functions                     = new Disable_Blog_Public_Functions_Double();
 		$functions->disable_feeds_return = true;
@@ -190,10 +258,8 @@ class PublicFeedsTest extends TestCase {
 		$wp   = (object) array( 'query_vars' => array( 'feed' => 'feed' ) );
 
 		WP_Mock::userFunction( 'home_url' )->once()->andReturn( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_redirect_feeds' )
-			->with( 'https://example.test/', $post, true )
-			->reply( 'https://example.test/custom-feed-redirect/' );
-		WP_Mock::onFilter( 'dwpb_feed_message' )->with( false, $post, true )->reply( false );
+		$this->stub_redirect_feeds_filter( 'https://example.test/', $post, true, 'https://example.test/custom-feed-redirect/' );
+		$this->stub_feed_message_filter( $post, true, false );
 
 		$functions                     = new Disable_Blog_Public_Functions_Double();
 		$functions->disable_feeds_return = true;
@@ -213,8 +279,8 @@ class PublicFeedsTest extends TestCase {
 		$wp = (object) array( 'query_vars' => array( 'feed' => 'feed' ) );
 
 		WP_Mock::userFunction( 'home_url' )->once()->andReturn( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_redirect_feeds' )->with( 'https://example.test/', null, false )->reply( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_feed_message' )->with( false, null, false )->reply( true );
+		$this->stub_redirect_feeds_filter( 'https://example.test/', null, false, 'https://example.test/' );
+		$this->stub_feed_message_filter( null, false, true );
 		WP_Mock::userFunction( 'esc_url_raw' )->with( 'https://example.test/' )->andReturn( 'https://example.test/' );
 
 		$expected_message = 'No feed available, please visit our homepage:: <a href="https://example.test/">https://example.test/</a>';
@@ -244,8 +310,8 @@ class PublicFeedsTest extends TestCase {
 		$wp = (object) array( 'query_vars' => array( 'feed' => 'feed' ) );
 
 		WP_Mock::userFunction( 'home_url' )->once()->andReturn( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_redirect_feeds' )->with( 'https://example.test/', null, false )->reply( 'https://example.test/' );
-		WP_Mock::onFilter( 'dwpb_feed_message' )->with( false, null, false )->reply( true );
+		$this->stub_redirect_feeds_filter( 'https://example.test/', null, false, 'https://example.test/' );
+		$this->stub_feed_message_filter( null, false, true );
 		WP_Mock::userFunction( 'esc_url_raw' )->with( 'https://example.test/' )->andReturn( 'https://example.test/' );
 
 		$default_message  = 'No feed available, please visit our homepage:: <a href="https://example.test/">https://example.test/</a>';

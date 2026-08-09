@@ -56,6 +56,51 @@ class AdminUsersTest extends TestCase {
 	}
 
 	/**
+	 * Stubs a single-argument filter, asserting via InvokedFilterValue that the real
+	 * argument WP_Mock routed on strictly (===) matches $expected_arg, rather than merely
+	 * matching loosely (==) as safe_offset()'s string-cast routing key would otherwise
+	 * allow -- e.g. bool false, an empty array and '' all safe_offset() to the same key, as
+	 * do a one-element array of a string and that bare string.
+	 *
+	 * @param string $hook         The filter hook name.
+	 * @param mixed  $expected_arg The exact value apply_filters() must be called with.
+	 * @param mixed  $return_value The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_strict_filter( $hook, $expected_arg, $return_value ) {
+		WP_Mock::onFilter( $hook )->with( $expected_arg )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $actual_arg ) use ( $expected_arg, $return_value ) {
+					$this->assertSame( $expected_arg, $actual_arg );
+					return $return_value;
+				}
+			)
+		);
+	}
+
+	/**
+	 * A Mockery matcher asserting the argument is exactly array( $value ), pinning $value
+	 * by identity (===) rather than Mockery's default loose (==) comparison. This is
+	 * distinct from onFilter()'s safe_offset() collision that stub_strict_filter() guards
+	 * against: apply_filters_deprecated() is a plain userFunction(), so its ->with()
+	 * expectation IS Mockery-backed and matches with ==, under which array( true ) ==
+	 * array( 1 ) and array( false ) == array( '' ) both hold -- a plain
+	 * ->with( array( true ) ) therefore still matches a caller that passed array( 1 ) (or
+	 * any other loosely-equal value) instead of the literal boolean it documents.
+	 *
+	 * @param bool $value The exact boolean the single-element array must contain.
+	 * @return Mockery\Matcher\Closure
+	 */
+	private function strict_bool_array( $value ) {
+		return Mockery::on(
+			function ( $actual ) use ( $value ) {
+				$this->assertSame( array( $value ), $actual );
+				return true;
+			}
+		);
+	}
+
+	/**
 	 * Forces user_column_post_types() to resolve to array( 'page' ): an empty
 	 * dwpb_author_archive_post_types reply (real Disable_Blog_Functions::author_archive_post_types()
 	 * default), merged with 'page', passed through dwpb_admin_user_post_types unchanged.
@@ -63,8 +108,8 @@ class AdminUsersTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_default_user_column_post_types() {
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array() );
-		WP_Mock::onFilter( 'dwpb_admin_user_post_types' )->with( array( 'page' ) )->reply( array( 'page' ) );
+		$this->stub_strict_filter( 'dwpb_author_archive_post_types', array(), array() );
+		$this->stub_strict_filter( 'dwpb_admin_user_post_types', array( 'page' ), array( 'page' ) );
 	}
 
 	/**
@@ -72,10 +117,10 @@ class AdminUsersTest extends TestCase {
 	 */
 
 	public function test_manage_users_columns_removes_posts_column_and_adds_page_column_by_default() {
-		WP_Mock::onFilter( 'dwpb_disable_user_post_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_user_post_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_disable_user_post_column', array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
+			->with( 'dpwb_disable_user_post_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
 			->andReturn( true );
 
 		global $current_screen;
@@ -85,10 +130,10 @@ class AdminUsersTest extends TestCase {
 
 		$this->stub_default_user_column_post_types();
 
-		WP_Mock::onFilter( 'dwpb_create_user_page_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_create_user_page_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_create_user_page_column', array( true ), '0.5.6', 'dwpb_create_user_page_column' )
+			->with( 'dpwb_create_user_page_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_create_user_page_column' )
 			->andReturn( true );
 
 		$page_type          = new stdClass();
@@ -113,10 +158,10 @@ class AdminUsersTest extends TestCase {
 	 * overriding the primary filter's reply back to false keeps the posts column.
 	 */
 	public function test_manage_users_columns_deprecated_disable_alias_can_keep_posts_column() {
-		WP_Mock::onFilter( 'dwpb_disable_user_post_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_user_post_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_disable_user_post_column', array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
+			->with( 'dpwb_disable_user_post_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
 			->andReturn( false );
 
 		global $current_screen;
@@ -126,10 +171,10 @@ class AdminUsersTest extends TestCase {
 
 		$this->stub_default_user_column_post_types();
 
-		WP_Mock::onFilter( 'dwpb_create_user_page_column' )->with( true )->reply( false );
+		$this->stub_strict_filter( 'dwpb_create_user_page_column', true, false );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_create_user_page_column', array( false ), '0.5.6', 'dwpb_create_user_page_column' )
+			->with( 'dpwb_create_user_page_column', $this->strict_bool_array( false ), '0.5.6', 'dwpb_create_user_page_column' )
 			->andReturn( false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
@@ -144,10 +189,10 @@ class AdminUsersTest extends TestCase {
 	 * effect: the primary filter says yes, but the deprecated alias overrides to no.
 	 */
 	public function test_manage_users_columns_deprecated_create_alias_can_disable_page_column() {
-		WP_Mock::onFilter( 'dwpb_disable_user_post_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_user_post_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_disable_user_post_column', array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
+			->with( 'dpwb_disable_user_post_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
 			->andReturn( true );
 
 		global $current_screen;
@@ -157,10 +202,10 @@ class AdminUsersTest extends TestCase {
 
 		$this->stub_default_user_column_post_types();
 
-		WP_Mock::onFilter( 'dwpb_create_user_page_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_create_user_page_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_create_user_page_column', array( true ), '0.5.6', 'dwpb_create_user_page_column' )
+			->with( 'dpwb_create_user_page_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_create_user_page_column' )
 			->andReturn( false );
 
 		// get_post_type_object() must never be reached: nothing further is stubbed.
@@ -171,10 +216,10 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_manage_users_columns_skips_column_on_site_users_network_screen() {
-		WP_Mock::onFilter( 'dwpb_disable_user_post_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_user_post_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_disable_user_post_column', array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
+			->with( 'dpwb_disable_user_post_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
 			->andReturn( true );
 
 		global $current_screen;
@@ -184,10 +229,10 @@ class AdminUsersTest extends TestCase {
 
 		$this->stub_default_user_column_post_types();
 
-		WP_Mock::onFilter( 'dwpb_create_user_page_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_create_user_page_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_create_user_page_column', array( true ), '0.5.6', 'dwpb_create_user_page_column' )
+			->with( 'dpwb_create_user_page_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_create_user_page_column' )
 			->andReturn( true );
 
 		// get_post_type_object() must never be reached: nothing further is stubbed.
@@ -198,10 +243,10 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_manage_users_columns_skips_column_when_post_type_labels_missing() {
-		WP_Mock::onFilter( 'dwpb_disable_user_post_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_user_post_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_disable_user_post_column', array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
+			->with( 'dpwb_disable_user_post_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
 			->andReturn( true );
 
 		global $current_screen;
@@ -211,10 +256,10 @@ class AdminUsersTest extends TestCase {
 
 		$this->stub_default_user_column_post_types();
 
-		WP_Mock::onFilter( 'dwpb_create_user_page_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_create_user_page_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_create_user_page_column', array( true ), '0.5.6', 'dwpb_create_user_page_column' )
+			->with( 'dpwb_create_user_page_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_create_user_page_column' )
 			->andReturn( true );
 
 		// No 'labels' property at all -- isset( $post_type_obj->labels->name ) is false.
@@ -227,10 +272,10 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_manage_users_columns_adds_columns_for_additional_author_archive_post_types() {
-		WP_Mock::onFilter( 'dwpb_disable_user_post_column' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_user_post_column', true, true );
 		WP_Mock::userFunction( 'apply_filters_deprecated' )
 			->once()
-			->with( 'dpwb_disable_user_post_column', array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
+			->with( 'dpwb_disable_user_post_column', $this->strict_bool_array( true ), '0.5.6', 'dwpb_disable_user_post_column' )
 			->andReturn( true );
 
 		global $current_screen;
@@ -238,16 +283,16 @@ class AdminUsersTest extends TestCase {
 		$current_screen->id = 'users';
 		WP_Mock::userFunction( 'get_current_screen' )->once()->andReturn( $current_screen );
 
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array( 'book' ) );
+		$this->stub_strict_filter( 'dwpb_author_archive_post_types', array(), array( 'book' ) );
 		WP_Mock::onFilter( 'dwpb_admin_user_post_types' )
 			->with( array( 'page', 'book' ) )
 			->reply( array( 'page', 'book' ) );
 
 		foreach ( array( 'page', 'book' ) as $post_type ) {
-			WP_Mock::onFilter( "dwpb_create_user_{$post_type}_column" )->with( true )->reply( true );
+			$this->stub_strict_filter( "dwpb_create_user_{$post_type}_column", true, true );
 			WP_Mock::userFunction( 'apply_filters_deprecated' )
 				->once()
-				->with( "dpwb_create_user_{$post_type}_column", array( true ), '0.5.6', "dwpb_create_user_{$post_type}_column" )
+				->with( "dpwb_create_user_{$post_type}_column", $this->strict_bool_array( true ), '0.5.6', "dwpb_create_user_{$post_type}_column" )
 				->andReturn( true );
 
 			$type_obj                 = new stdClass();
@@ -343,7 +388,7 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_manage_users_custom_column_skips_when_post_type_labels_missing() {
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array( 'book' ) );
+		$this->stub_strict_filter( 'dwpb_author_archive_post_types', array(), array( 'book' ) );
 		WP_Mock::onFilter( 'dwpb_admin_user_post_types' )
 			->with( array( 'page', 'book' ) )
 			->reply( array( 'page', 'book' ) );
@@ -372,7 +417,7 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_user_column_post_types_merges_author_archive_post_types_with_page() {
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array( 'book' ) );
+		$this->stub_strict_filter( 'dwpb_author_archive_post_types', array(), array( 'book' ) );
 		WP_Mock::onFilter( 'dwpb_admin_user_post_types' )
 			->with( array( 'page', 'book' ) )
 			->reply( array( 'page', 'book' ) );
@@ -383,8 +428,8 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_user_column_post_types_filter_can_override_the_whole_list() {
-		WP_Mock::onFilter( 'dwpb_author_archive_post_types' )->with( array() )->reply( array() );
-		WP_Mock::onFilter( 'dwpb_admin_user_post_types' )->with( array( 'page' ) )->reply( array( 'custom-cpt' ) );
+		$this->stub_strict_filter( 'dwpb_author_archive_post_types', array(), array() );
+		$this->stub_strict_filter( 'dwpb_admin_user_post_types', array( 'page' ), array( 'custom-cpt' ) );
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 
@@ -396,7 +441,7 @@ class AdminUsersTest extends TestCase {
 	 */
 
 	public function test_user_row_actions_removes_view_link_when_author_archives_disabled() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, true );
 
 		$admin   = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$actions = array( 'view' => '<a>View</a>' );
@@ -405,7 +450,7 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_user_row_actions_keeps_view_link_when_author_archives_enabled() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin   = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$actions = array( 'view' => '<a>View</a>' );
@@ -414,7 +459,7 @@ class AdminUsersTest extends TestCase {
 	}
 
 	public function test_user_row_actions_no_op_when_view_link_already_absent() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, true );
 
 		$admin   = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$actions = array( 'edit' => '<a>Edit</a>' );

@@ -84,7 +84,7 @@ class ConstructorInjectionTest extends TestCase {
 		$public   = new Disable_Blog_Public( 'disable-blog', '0.5.6', $double );
 		$provider = new stdClass();
 
-		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_disable_user_sitemap', false, false );
 
 		$this->assertSame( $provider, $public->wp_author_sitemaps( $provider, 'users' ) );
 	}

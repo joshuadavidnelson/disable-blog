@@ -81,10 +81,27 @@ class AdminHooksTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_tax_lookup_plumbing() {
-		WP_Mock::userFunction( 'get_post_types' )->with( array(), 'names' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_post_types' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'names'
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::userFunction( 'maybe_serialize' )->with( array() )->andReturn( 'a:0:{}' );
+		WP_Mock::userFunction( 'maybe_serialize' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				)
+			)
+			->andReturn( 'a:0:{}' );
 	}
 
 	/**
@@ -100,7 +117,16 @@ class AdminHooksTest extends TestCase {
 		WP_Mock::userFunction( 'esc_attr' )->with( $taxonomy )->andReturn( $taxonomy );
 		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
 			->with( null, $taxonomy, array(), array(), 'names' )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $null, $tax, $post_types, $args, $output ) use ( $return_value ) {
+						$this->assertSame( array(), $post_types, 'dwpb_taxonomy_support must receive the exact $post_types array it documents.' );
+						$this->assertSame( array(), $args, 'dwpb_taxonomy_support must receive the exact $args array it documents.' );
+
+						return $return_value;
+					}
+				)
+			);
 	}
 
 	/**
@@ -123,7 +149,19 @@ class AdminHooksTest extends TestCase {
 			->andReturn( array() );
 		WP_Mock::onFilter( "dwpb_post_types_supporting_{$feature}" )
 			->with( array(), array() )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $post_types_with_feature, $args ) use ( $return_value ) {
+						// The cached empty array is normalized to false before it reaches
+						// this filter -- safe_offset() string-casts both to '', so WP_Mock's
+						// ->with( array(), array() ) above (needed to route here at all)
+						// cannot by itself tell the two apart. assertSame() can.
+						$this->assertFalse( $post_types_with_feature );
+						$this->assertSame( array(), $args );
+						return $return_value;
+					}
+				)
+			);
 	}
 
 	/**
@@ -133,7 +171,81 @@ class AdminHooksTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_remove_writing_options( $return_value ) {
-		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply( $return_value );
+		WP_Mock::onFilter( 'dwpb_remove_options_writing' )->with( false )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $default ) use ( $return_value ) {
+					// safe_offset( false ) === safe_offset( '' ), so the ->with( false )
+					// above routes here for either value; assertSame() confirms the real
+					// argument really is the boolean default, not a loosely-equal string.
+					$this->assertFalse( $default );
+					return $return_value;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Forces remove_menu_pages()'s dwpb_menu_pages_to_remove filter, asserting the real
+	 * argument is the full array WP_Mock routed on and not merely a value that flattens to
+	 * the same safe_offset() string (a one-element array of a string collides with that bare
+	 * string under safe_offset()).
+	 *
+	 * @param array $expected_pages The exact pages array $remove_pages must equal.
+	 * @param array $return_value   The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_menu_pages_to_remove( array $expected_pages, array $return_value ) {
+		WP_Mock::onFilter( 'dwpb_menu_pages_to_remove' )->with( $expected_pages )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $pages ) use ( $expected_pages, $return_value ) {
+					$this->assertSame( $expected_pages, $pages );
+					return $return_value;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Stubs a single-argument filter, asserting via InvokedFilterValue that the real
+	 * argument WP_Mock routed on strictly (===) matches $expected_arg, rather than merely
+	 * matching loosely (==) as safe_offset()'s string-cast routing key would otherwise
+	 * allow -- e.g. bool true and int 1 both safe_offset() to the same key.
+	 *
+	 * @param string $hook         The filter hook name.
+	 * @param mixed  $expected_arg The exact value apply_filters() must be called with.
+	 * @param mixed  $return_value The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_strict_filter( $hook, $expected_arg, $return_value ) {
+		WP_Mock::onFilter( $hook )->with( $expected_arg )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $actual_arg ) use ( $expected_arg, $return_value ) {
+					$this->assertSame( $expected_arg, $actual_arg );
+					return $return_value;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Stubs remove_widgets()'s dwpb_unregister_widgets filter for a single widget class,
+	 * asserting the real first argument is strictly the boolean default (bool true and int 1
+	 * both safe_offset() to the same routing key).
+	 *
+	 * @param string $widget       The widget class name.
+	 * @param bool   $return_value The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_unregister_widget_filter( $widget, $return_value ) {
+		WP_Mock::onFilter( 'dwpb_unregister_widgets' )->with( true, $widget )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $default, $actual_widget ) use ( $widget, $return_value ) {
+					$this->assertTrue( $default );
+					$this->assertSame( $widget, $actual_widget );
+					return $return_value;
+				}
+			)
+		);
 	}
 
 	/**
@@ -148,7 +260,7 @@ class AdminHooksTest extends TestCase {
 		$this->stub_feature_cache_hit( 'comments', array( 'page' ) );
 		$this->stub_remove_writing_options( false );
 
-		WP_Mock::onFilter( 'dwpb_menu_pages_to_remove' )->with( array( 'edit.php' ) )->reply( array( 'edit.php' ) );
+		$this->stub_menu_pages_to_remove( array( 'edit.php' ), array( 'edit.php' ) );
 		WP_Mock::userFunction( 'remove_menu_page' )->once()->with( 'edit.php' );
 
 		$expected_subpages = array(
@@ -198,7 +310,7 @@ class AdminHooksTest extends TestCase {
 		$this->stub_feature_cache_hit( 'comments', array( 'page' ) );
 		$this->stub_remove_writing_options( true );
 
-		WP_Mock::onFilter( 'dwpb_menu_pages_to_remove' )->with( array( 'edit.php' ) )->reply( array( 'edit.php' ) );
+		$this->stub_menu_pages_to_remove( array( 'edit.php' ), array( 'edit.php' ) );
 		WP_Mock::userFunction( 'remove_menu_page' )->once()->with( 'edit.php' );
 
 		$expected_subpages = array(
@@ -222,9 +334,7 @@ class AdminHooksTest extends TestCase {
 		$this->stub_feature_cache_hit( 'comments', array( 'page' ) );
 		$this->stub_remove_writing_options( false );
 
-		WP_Mock::onFilter( 'dwpb_menu_pages_to_remove' )
-			->with( array( 'edit.php' ) )
-			->reply( array( 'edit.php', 'extra-page.php' ) );
+		$this->stub_menu_pages_to_remove( array( 'edit.php' ), array( 'edit.php', 'extra-page.php' ) );
 		WP_Mock::userFunction( 'remove_menu_page' )->once()->with( 'edit.php' );
 		WP_Mock::userFunction( 'remove_menu_page' )->once()->with( 'extra-page.php' );
 
@@ -249,7 +359,7 @@ class AdminHooksTest extends TestCase {
 		$this->stub_feature_cache_hit( 'comments', array( 'page' ) );
 		$this->stub_remove_writing_options( false );
 
-		WP_Mock::onFilter( 'dwpb_menu_pages_to_remove' )->with( array( 'edit.php' ) )->reply( array( 'edit.php' ) );
+		$this->stub_menu_pages_to_remove( array( 'edit.php' ), array( 'edit.php' ) );
 		WP_Mock::userFunction( 'remove_menu_page' )->once()->with( 'edit.php' );
 
 		$default_subpages = array(
@@ -271,8 +381,8 @@ class AdminHooksTest extends TestCase {
 	 */
 
 	public function test_remove_dashboard_widgets_removes_both_widgets_by_default() {
-		WP_Mock::onFilter( 'dwpb_disable_dashboard_quick_press' )->with( true )->reply( true );
-		WP_Mock::onFilter( 'dwpb_disable_dashboard_activity' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_dashboard_quick_press', true, true );
+		$this->stub_strict_filter( 'dwpb_disable_dashboard_activity', true, true );
 		WP_Mock::userFunction( 'remove_meta_box' )->once()->with( 'dashboard_quick_press', 'dashboard', 'side' );
 		WP_Mock::userFunction( 'remove_meta_box' )->once()->with( 'dashboard_activity', 'dashboard', 'normal' );
 
@@ -283,8 +393,8 @@ class AdminHooksTest extends TestCase {
 	}
 
 	public function test_remove_dashboard_widgets_keeps_quick_press_when_its_filter_returns_false() {
-		WP_Mock::onFilter( 'dwpb_disable_dashboard_quick_press' )->with( true )->reply( false );
-		WP_Mock::onFilter( 'dwpb_disable_dashboard_activity' )->with( true )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_dashboard_quick_press', true, false );
+		$this->stub_strict_filter( 'dwpb_disable_dashboard_activity', true, true );
 		WP_Mock::userFunction( 'remove_meta_box' )->never()->with( 'dashboard_quick_press', 'dashboard', 'side' );
 		WP_Mock::userFunction( 'remove_meta_box' )->once()->with( 'dashboard_activity', 'dashboard', 'normal' );
 
@@ -295,8 +405,8 @@ class AdminHooksTest extends TestCase {
 	}
 
 	public function test_remove_dashboard_widgets_keeps_activity_when_its_filter_returns_false() {
-		WP_Mock::onFilter( 'dwpb_disable_dashboard_quick_press' )->with( true )->reply( true );
-		WP_Mock::onFilter( 'dwpb_disable_dashboard_activity' )->with( true )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_dashboard_quick_press', true, true );
+		$this->stub_strict_filter( 'dwpb_disable_dashboard_activity', true, false );
 		WP_Mock::userFunction( 'remove_meta_box' )->once()->with( 'dashboard_quick_press', 'dashboard', 'side' );
 		WP_Mock::userFunction( 'remove_meta_box' )->never()->with( 'dashboard_activity', 'dashboard', 'normal' );
 
@@ -331,7 +441,7 @@ class AdminHooksTest extends TestCase {
 
 	public function test_remove_widgets_unregisters_every_supported_widget_by_default() {
 		foreach ( $this->widget_class_names() as $widget ) {
-			WP_Mock::onFilter( 'dwpb_unregister_widgets' )->with( true, $widget )->reply( true );
+			$this->stub_unregister_widget_filter( $widget, true );
 			WP_Mock::userFunction( 'unregister_widget' )->once()->with( $widget );
 		}
 
@@ -348,7 +458,7 @@ class AdminHooksTest extends TestCase {
 	public function test_remove_widgets_dwpb_unregister_widgets_filter_can_keep_one_widget() {
 		foreach ( $this->widget_class_names() as $widget ) {
 			$unregister = 'WP_Widget_Categories' !== $widget;
-			WP_Mock::onFilter( 'dwpb_unregister_widgets' )->with( true, $widget )->reply( $unregister );
+			$this->stub_unregister_widget_filter( $widget, $unregister );
 			if ( $unregister ) {
 				WP_Mock::userFunction( 'unregister_widget' )->once()->with( $widget );
 			} else {
