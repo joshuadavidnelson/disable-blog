@@ -6,6 +6,30 @@
  */
 
 /**
+ * Spies on terminate() so the referer-check branch in deactivate() can be exercised without
+ * the real exit; ending the test process. deactivate() invokes `static::terminate()`, so late
+ * static binding dispatches to this override instead of the parent's.
+ */
+class DeactivatorTerminateSpy extends Disable_Blog_Deactivator {
+
+	/**
+	 * Whether terminate() was invoked during the current test.
+	 *
+	 * @var bool
+	 */
+	public static $terminate_called = false;
+
+	/**
+	 * Records the call instead of exiting.
+	 *
+	 * @return void
+	 */
+	protected static function terminate() {
+		self::$terminate_called = true;
+	}
+}
+
+/**
  * @covers Disable_Blog_Deactivator
  */
 class DeactivatorTest extends PluginLifecycleTestCase {
@@ -135,5 +159,75 @@ class DeactivatorTest extends PluginLifecycleTestCase {
 		$this->expectExceptionMessage( 'halted' );
 
 		Disable_Blog_Deactivator::deactivate();
+	}
+
+	/**
+	 * deactivate()'s single-plugin branch guards terminate() with
+	 * `if ( ! check_admin_referer( ... ) )`. When the referer check fails (returns false),
+	 * the `!` makes the condition true and terminate() must run.
+	 */
+	public function test_deactivate_terminates_when_single_plugin_referer_check_fails() {
+		DeactivatorTerminateSpy::$terminate_called = false;
+
+		$this->set_static_request( array( 'plugin' => 'disable-blog' ) );
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'deactivate',
+			'plugin'   => 'disable-blog',
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'deactivate-plugin_disable-blog' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'deactivate-plugin_disable-blog' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->once()->with( 'comments-0', 'counts' );
+		WP_Mock::userFunction( 'delete_transient' )->once()->with( 'wc_count_comments' );
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->once();
+
+		DeactivatorTerminateSpy::deactivate();
+
+		$this->assertTrue( DeactivatorTerminateSpy::$terminate_called );
+	}
+
+	/**
+	 * Same branch as above with the referer check passing (returns true): `! true` is false,
+	 * so terminate() must NOT run. Paired with the failing-check test above, this pins down
+	 * both directions of the `!`, so inverting it fails one test or the other.
+	 */
+	public function test_deactivate_does_not_terminate_when_single_plugin_referer_check_passes() {
+		DeactivatorTerminateSpy::$terminate_called = false;
+
+		$this->set_static_request( array( 'plugin' => 'disable-blog' ) );
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'deactivate',
+			'plugin'   => 'disable-blog',
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'deactivate-plugin_disable-blog' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'deactivate-plugin_disable-blog' )
+			->andReturn( true );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->once()->with( 'comments-0', 'counts' );
+		WP_Mock::userFunction( 'delete_transient' )->once()->with( 'wc_count_comments' );
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->once();
+
+		DeactivatorTerminateSpy::deactivate();
+
+		$this->assertFalse( DeactivatorTerminateSpy::$terminate_called );
 	}
 }
