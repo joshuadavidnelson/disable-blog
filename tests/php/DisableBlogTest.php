@@ -15,6 +15,43 @@ require_once __DIR__ . '/../../includes/class-disable-blog-public.php';
 require_once __DIR__ . '/../../includes/class-disable-blog.php';
 
 /**
+ * Records the order boot()'s six setup calls run in, without performing any of their real
+ * work. upgrade_check() is protected static, so the recorder has to be a static property:
+ * a static method has no $this to push onto an instance array.
+ */
+class Disable_Blog_Boot_Recorder extends Disable_Blog {
+
+	/**
+	 * @var string[]
+	 */
+	public static $calls = array();
+
+	protected static function upgrade_check() {
+		self::$calls[] = 'upgrade_check';
+	}
+
+	protected function load_dependencies() {
+		self::$calls[] = 'load_dependencies';
+	}
+
+	protected function set_locale() {
+		self::$calls[] = 'set_locale';
+	}
+
+	public function plugin_integrations() {
+		self::$calls[] = 'plugin_integrations';
+	}
+
+	protected function define_admin_hooks() {
+		self::$calls[] = 'define_admin_hooks';
+	}
+
+	protected function define_public_hooks() {
+		self::$calls[] = 'define_public_hooks';
+	}
+}
+
+/**
  * @covers Disable_Blog
  */
 class DisableBlogTest extends TestCase {
@@ -139,6 +176,133 @@ class DisableBlogTest extends TestCase {
 	}
 
 	/**
+	 * Registers the dwpb_post_types_supporting_comments filter (2 arguments:
+	 * $post_types_with_feature, $args) so both positions are asserted strictly.
+	 * safe_offset() flattens both for ->with() routing -- false, '', array(), and null all
+	 * collide there -- so a plain ->with() match cannot tell a corrupted false/array()/''
+	 * apart from the documented value. The InvokedFilterValue responder receives the real
+	 * invoked arguments via func_get_args() regardless of which key matched, so both are
+	 * asserted with assertSame().
+	 *
+	 * @param mixed $post_types_with_feature The exact position-1 value the filter must receive.
+	 * @param mixed $args                    The exact position-2 value the filter must receive.
+	 * @param mixed $reply                   The value the filter should return.
+	 * @return void
+	 */
+	private function stub_post_types_supporting_comments_filter( $post_types_with_feature, $args, $reply ) {
+		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
+			->with( $post_types_with_feature, $args )
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $received_post_types_with_feature, $received_args ) use ( $post_types_with_feature, $args, $reply ) {
+						$this->assertSame( $post_types_with_feature, $received_post_types_with_feature, 'dwpb_post_types_supporting_comments must receive the exact post types value it documents.' );
+						$this->assertSame( $args, $received_args, 'dwpb_post_types_supporting_comments must receive the exact $args value it documents.' );
+
+						return $reply;
+					}
+				)
+			);
+	}
+
+	/**
+	 * __construct() / boot()
+	 */
+
+	/**
+	 * Uses two clearly distinct values so a swap between the two assignments in
+	 * __construct() shows up as one getter returning the other's value.
+	 */
+	public function test_construct_assigns_plugin_name_and_version_to_the_correct_properties() {
+		$disable_blog = new Disable_Blog( 'disable-blog', '0.5.6', false );
+
+		$this->assertSame( 'disable-blog', $disable_blog->get_plugin_name() );
+		$this->assertSame( '0.5.6', $disable_blog->get_version() );
+	}
+
+	/**
+	 * boot() fires 'dwpb_init' before running any of its six setup calls -- third parties
+	 * hooking dwpb_init depend on it running ahead of load_dependencies() and the rest.
+	 * Asserting the full sequence (not just that all seven happened) is what catches a
+	 * reordering, not only a deletion.
+	 */
+	public function test_boot_runs_dwpb_init_then_the_six_setup_methods_in_order() {
+		Disable_Blog_Boot_Recorder::$calls = array();
+
+		// do_action() is defined by WP_Mock itself (not stubbable via userFunction()) and
+		// dispatches through the event manager; with( null ) matches the no-extra-args call
+		// boot() makes.
+		WP_Mock::onAction( 'dwpb_init' )->with( null )->perform(
+			static function () {
+				Disable_Blog_Boot_Recorder::$calls[] = 'dwpb_init';
+			}
+		);
+
+		$disable_blog = new Disable_Blog_Boot_Recorder( 'disable-blog', '0.5.6', false );
+		$disable_blog->boot();
+
+		$this->assertSame(
+			array(
+				'dwpb_init',
+				'upgrade_check',
+				'load_dependencies',
+				'set_locale',
+				'plugin_integrations',
+				'define_admin_hooks',
+				'define_public_hooks',
+			),
+			Disable_Blog_Boot_Recorder::$calls
+		);
+	}
+
+	/**
+	 * load_dependencies()
+	 */
+
+	/**
+	 * Runs load_dependencies() for real, with a spy loader injected first so the method's
+	 * null-check leaves it in place instead of constructing a Disable_Blog_Loader. Wrong
+	 * directory or file names make the require_once calls fatal (they resolve to real,
+	 * already-loaded files under correct paths, so nothing observable would otherwise
+	 * distinguish a corrupted path from a correct one). The spy also records the exact
+	 * classes handed to the loader's autoloader, in order.
+	 */
+	public function test_load_dependencies_resolves_real_files_and_registers_expected_classes_in_order() {
+		$repo_root        = dirname( __DIR__, 2 );
+		$expected_dir_arg = $repo_root . '/includes';
+
+		WP_Mock::userFunction( 'plugin_dir_path' )
+			->once()
+			->with( $expected_dir_arg )
+			->andReturn( $repo_root . '/' );
+
+		$spy_loader = new class() extends Disable_Blog_Loader {
+			/**
+			 * @var string[]
+			 */
+			public $autoloaded = array();
+
+			public function autoloader( $requested_class ) {
+				$this->autoloaded[] = $requested_class;
+			}
+		};
+
+		$disable_blog = $this->make_disable_blog( 'disable-blog', '0.5.6', $spy_loader );
+
+		$this->invoke_private( $disable_blog, 'load_dependencies' );
+
+		$this->assertSame(
+			array(
+				'Disable_Blog_I18n',
+				'Disable_Blog_Functions',
+				'Disable_Blog_Admin',
+				'Disable_Blog_Public',
+				'Disable_Blog_Integrations',
+			),
+			$spy_loader->autoloaded
+		);
+	}
+
+	/**
 	 * define_admin_hooks() / define_public_hooks()
 	 */
 
@@ -156,9 +320,7 @@ class DisableBlogTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
 			->andReturn( array( 'page' ) );
-		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
-			->with( array( 'page' ), array() )
-			->reply( array( 'page' ) );
+		$this->stub_post_types_supporting_comments_filter( array( 'page' ), array(), array( 'page' ) );
 
 		WP_Mock::expectFilterAdded( 'enable_update_services_configuration', '__return_false' );
 		WP_Mock::expectFilterAdded( 'enable_post_by_email_configuration', '__return_false' );
@@ -251,10 +413,20 @@ class DisableBlogTest extends TestCase {
 	public function test_define_admin_hooks_skips_comment_related_hooks_when_no_post_type_supports_comments() {
 		WP_Mock::userFunction( 'esc_attr' )->with( 'comments' )->andReturn( 'comments' );
 		WP_Mock::userFunction( 'wp_cache_get' )->once()->andReturn( false );
-		WP_Mock::userFunction( 'get_post_types' )->once()->with( array(), 'names' )->andReturn( array( 'post' ) );
+		WP_Mock::userFunction( 'get_post_types' )
+			->once()
+			->with(
+				Mockery::on(
+					static function ( $value ) {
+						return array() === $value;
+					}
+				),
+				'names'
+			)
+			->andReturn( array( 'post' ) );
 		WP_Mock::userFunction( 'post_type_supports' )->with( 'post', 'comments' )->andReturn( true );
 		WP_Mock::userFunction( 'wp_cache_set' )->once();
-		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )->with( false, array() )->reply( false );
+		$this->stub_post_types_supporting_comments_filter( false, array(), false );
 
 		WP_Mock::expectFilterAdded( 'enable_update_services_configuration', '__return_false' );
 		WP_Mock::expectFilterAdded( 'enable_post_by_email_configuration', '__return_false' );
@@ -308,9 +480,7 @@ class DisableBlogTest extends TestCase {
 			->once()
 			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
 			->andReturn( array( 'page' ) );
-		WP_Mock::onFilter( 'dwpb_post_types_supporting_comments' )
-			->with( array( 'page' ), array() )
-			->reply( array( 'page' ) );
+		$this->stub_post_types_supporting_comments_filter( array( 'page' ), array(), array( 'page' ) );
 
 		$disable_blog = $this->make_disable_blog();
 
@@ -356,11 +526,19 @@ class DisableBlogTest extends TestCase {
 	}
 
 	/**
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
+	 * PHP cannot un-define a constant, so DWPB_VERSION is defined at most once per process via
+	 * this guarded helper, shared by every upgrade_check() test below that needs it.
+	 *
+	 * @return void
 	 */
+	private function ensure_dwpb_version_defined() {
+		if ( ! defined( 'DWPB_VERSION' ) ) {
+			define( 'DWPB_VERSION', '0.5.6' );
+		}
+	}
+
 	public function test_upgrade_check_sets_version_option_on_fresh_install() {
-		define( 'DWPB_VERSION', '0.5.6' );
+		$this->ensure_dwpb_version_defined();
 
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'get_option' )->once()->with( 'dwpb_version', false )->andReturn( false );
@@ -369,12 +547,8 @@ class DisableBlogTest extends TestCase {
 		$this->assertNull( $this->invoke_private_static( 'upgrade_check' ) );
 	}
 
-	/**
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 */
 	public function test_upgrade_check_does_nothing_when_version_matches() {
-		define( 'DWPB_VERSION', '0.5.6' );
+		$this->ensure_dwpb_version_defined();
 
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'get_option' )->once()->with( 'dwpb_version', false )->andReturn( '0.5.6' );
@@ -383,12 +557,8 @@ class DisableBlogTest extends TestCase {
 		$this->assertNull( $this->invoke_private_static( 'upgrade_check' ) );
 	}
 
-	/**
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 */
 	public function test_upgrade_check_records_previous_version_and_updates_when_upgrading() {
-		define( 'DWPB_VERSION', '0.5.6' );
+		$this->ensure_dwpb_version_defined();
 
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'get_option' )->once()->with( 'dwpb_version', false )->andReturn( '0.5.4' );

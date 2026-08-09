@@ -6,6 +6,30 @@
  */
 
 /**
+ * Spies on terminate() so the referer-check branches in activate() can be exercised without
+ * the real exit; ending the test process. activate() invokes `static::terminate()`, so late
+ * static binding dispatches to this override instead of the parent's.
+ */
+class ActivatorTerminateSpy extends Disable_Blog_Activator {
+
+	/**
+	 * Whether terminate() was invoked during the current test.
+	 *
+	 * @var bool
+	 */
+	public static $terminate_called = false;
+
+	/**
+	 * Records the call instead of exiting.
+	 *
+	 * @return void
+	 */
+	protected static function terminate() {
+		self::$terminate_called = true;
+	}
+}
+
+/**
  * @covers Disable_Blog_Activator
  */
 class ActivatorTest extends PluginLifecycleTestCase {
@@ -28,5 +52,245 @@ class ActivatorTest extends PluginLifecycleTestCase {
 
 	protected function bulk_action_value(): string {
 		return 'activate-selected';
+	}
+
+	/**
+	 * Directly sets Disable_Blog_Activator::$request via Reflection, bypassing get_request(),
+	 * to simulate static state left over from an earlier, successful call.
+	 *
+	 * @param array $value The value to assign.
+	 * @return void
+	 */
+	private function set_static_request( array $value ) {
+		$class    = new ReflectionClass( Disable_Blog_Activator::class );
+		$property = $class->getProperty( 'request' );
+		$property->setAccessible( true );
+		$property->setValue( null, $value );
+	}
+
+	/**
+	 * activate()'s outer guard is `false === self::get_request() || ...`. get_request() only
+	 * ever returns `false` or an array, never boolean `true`, so `true === self::get_request()`
+	 * can never be satisfied by any input -- it would make the first OR clause permanently
+	 * dead, silently changing the guard from "get_request() failed" (true whenever it returns
+	 * false) to always-false, falling through to whatever validate_request()/check_caps()
+	 * decide instead.
+	 *
+	 * This primes static::$request with data that would satisfy validate_request() and stubs
+	 * check_caps() to succeed, then drives $_REQUEST down a path where get_request() itself
+	 * fails (bad nonce) without touching static::$request. Under the real guard, get_request()
+	 * failing alone is enough to enter the check_admin_referer() branch: the guard is an OR,
+	 * so stale primed state that would satisfy validate_request() and check_caps() must not
+	 * suppress the nonce check.
+	 */
+	public function test_activate_enters_referer_check_when_get_request_fails_even_if_stale_state_would_validate() {
+		$this->set_static_request(
+			array(
+				'plugin' => 'disable-blog',
+				'action' => 'activate',
+			)
+		);
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'activate',
+			'plugin'   => 'disable-blog',
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'activate-plugin_disable-blog' )
+			->andReturn( false );
+
+		// Present so check_caps() resolves on the path where the guard wrongly defers to it.
+		WP_Mock::userFunction( 'current_user_can' )
+			->with( 'activate_plugins' )
+			->andReturn( true );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'activate-plugin_disable-blog' )
+			->andThrow( new Exception( 'halted' ) );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->never();
+		WP_Mock::userFunction( 'delete_transient' )->never();
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->never();
+
+		$this->expectException( Exception::class );
+		$this->expectExceptionMessage( 'halted' );
+
+		Disable_Blog_Activator::activate();
+	}
+
+	/**
+	 * validate_request()'s bulk branch calls
+	 * `in_array( $plugin, self::$request['plugins'], true )`. If the strict flag is relaxed to
+	 * false, a non-empty string like 'disable-blog' loosely equals boolean true, so a
+	 * $_REQUEST['checked'] entry of `true` would (wrongly) validate as if 'disable-blog' were
+	 * among the checked plugins.
+	 */
+	public function test_activate_runs_referer_check_when_bulk_selection_only_loosely_matches_plugin() {
+		$_REQUEST = array(
+			'_wpnonce' => 'nonce-value',
+			'action'   => 'activate-selected',
+			'checked'  => array( true ),
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'nonce-value', 'bulk-plugins' )
+			->andReturn( 1 );
+
+		// Present so check_caps() resolves if the bulk selection wrongly validates.
+		WP_Mock::userFunction( 'current_user_can' )
+			->with( 'activate_plugins' )
+			->andReturn( true );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'bulk-plugins' )
+			->andThrow( new Exception( 'halted' ) );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->never();
+		WP_Mock::userFunction( 'delete_transient' )->never();
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->never();
+
+		$this->expectException( Exception::class );
+		$this->expectExceptionMessage( 'halted' );
+
+		Disable_Blog_Activator::activate();
+	}
+
+	/**
+	 * activate()'s single-plugin branch guards terminate() with
+	 * `if ( ! check_admin_referer( ... ) )`. When the referer check fails (returns false),
+	 * the `!` makes the condition true and terminate() must run.
+	 */
+	public function test_activate_terminates_when_single_plugin_referer_check_fails() {
+		ActivatorTerminateSpy::$terminate_called = false;
+
+		$this->set_static_request( array( 'plugin' => 'disable-blog' ) );
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'activate',
+			'plugin'   => 'disable-blog',
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'activate-plugin_disable-blog' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'activate-plugin_disable-blog' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->once()->with( 'comments-0', 'counts' );
+		WP_Mock::userFunction( 'delete_transient' )->once()->with( 'wc_count_comments' );
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->once();
+
+		ActivatorTerminateSpy::activate();
+
+		$this->assertTrue( ActivatorTerminateSpy::$terminate_called );
+	}
+
+	/**
+	 * Same branch as above with the referer check passing (returns true): `! true` is false,
+	 * so terminate() must NOT run. Paired with the failing-check test above, this pins down
+	 * both directions of the `!`, so inverting it fails one test or the other.
+	 */
+	public function test_activate_does_not_terminate_when_single_plugin_referer_check_passes() {
+		ActivatorTerminateSpy::$terminate_called = false;
+
+		$this->set_static_request( array( 'plugin' => 'disable-blog' ) );
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'activate',
+			'plugin'   => 'disable-blog',
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'activate-plugin_disable-blog' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'activate-plugin_disable-blog' )
+			->andReturn( true );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->once()->with( 'comments-0', 'counts' );
+		WP_Mock::userFunction( 'delete_transient' )->once()->with( 'wc_count_comments' );
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->once();
+
+		ActivatorTerminateSpy::activate();
+
+		$this->assertFalse( ActivatorTerminateSpy::$terminate_called );
+	}
+
+	/**
+	 * Same guard on the bulk-plugins branch: a failing referer check must terminate.
+	 */
+	public function test_activate_terminates_when_bulk_referer_check_fails() {
+		ActivatorTerminateSpy::$terminate_called = false;
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'activate-selected',
+			'checked'  => array( 'some-other-plugin' ),
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'bulk-plugins' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'bulk-plugins' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->once()->with( 'comments-0', 'counts' );
+		WP_Mock::userFunction( 'delete_transient' )->once()->with( 'wc_count_comments' );
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->once();
+
+		ActivatorTerminateSpy::activate();
+
+		$this->assertTrue( ActivatorTerminateSpy::$terminate_called );
+	}
+
+	/**
+	 * Bulk-plugins branch, referer check passing: terminate() must NOT run. Paired with the
+	 * failing-check test above, this pins down both directions of the `!` on this branch.
+	 */
+	public function test_activate_does_not_terminate_when_bulk_referer_check_passes() {
+		ActivatorTerminateSpy::$terminate_called = false;
+
+		$_REQUEST = array(
+			'_wpnonce' => 'bad-nonce',
+			'action'   => 'activate-selected',
+			'checked'  => array( 'some-other-plugin' ),
+		);
+
+		WP_Mock::userFunction( 'wp_verify_nonce' )
+			->once()
+			->with( 'bad-nonce', 'bulk-plugins' )
+			->andReturn( false );
+
+		WP_Mock::userFunction( 'check_admin_referer' )
+			->once()
+			->with( 'bulk-plugins' )
+			->andReturn( true );
+
+		WP_Mock::userFunction( 'wp_cache_delete' )->once()->with( 'comments-0', 'counts' );
+		WP_Mock::userFunction( 'delete_transient' )->once()->with( 'wc_count_comments' );
+		WP_Mock::userFunction( 'flush_rewrite_rules' )->once();
+
+		ActivatorTerminateSpy::activate();
+
+		$this->assertFalse( ActivatorTerminateSpy::$terminate_called );
 	}
 }

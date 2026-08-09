@@ -93,10 +93,27 @@ class AdminMiscTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_tax_lookup_plumbing() {
-		WP_Mock::userFunction( 'get_post_types' )->with( array(), 'names' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_post_types' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'names'
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::userFunction( 'maybe_serialize' )->with( array() )->andReturn( 'a:0:{}' );
+		WP_Mock::userFunction( 'maybe_serialize' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				)
+			)
+			->andReturn( 'a:0:{}' );
 	}
 
 	/**
@@ -112,7 +129,38 @@ class AdminMiscTest extends TestCase {
 		WP_Mock::userFunction( 'esc_attr' )->with( $taxonomy )->andReturn( $taxonomy );
 		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
 			->with( null, $taxonomy, array(), array(), 'names' )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $null, $tax, $post_types, $args, $output ) use ( $return_value ) {
+						$this->assertSame( array(), $post_types, 'dwpb_taxonomy_support must receive the exact $post_types array it documents.' );
+						$this->assertSame( array(), $args, 'dwpb_taxonomy_support must receive the exact $args array it documents.' );
+
+						return $return_value;
+					}
+				)
+			);
+	}
+
+	/**
+	 * Stubs a single-argument filter, asserting via InvokedFilterValue that the real
+	 * argument WP_Mock routed on strictly (===) matches $expected_arg, rather than merely
+	 * matching loosely (==) as safe_offset()'s string-cast routing key would otherwise
+	 * allow -- e.g. bool false, an empty array and '' all safe_offset() to the same key.
+	 *
+	 * @param string $hook         The filter hook name.
+	 * @param mixed  $expected_arg The exact value apply_filters() must be called with.
+	 * @param mixed  $return_value The value the filter should reply with.
+	 * @return void
+	 */
+	private function stub_strict_filter( $hook, $expected_arg, $return_value ) {
+		WP_Mock::onFilter( $hook )->with( $expected_arg )->reply(
+			new WP_Mock\InvokedFilterValue(
+				function ( $actual_arg ) use ( $expected_arg, $return_value ) {
+					$this->assertSame( $expected_arg, $actual_arg );
+					return $return_value;
+				}
+			)
+		);
 	}
 
 	/**
@@ -233,6 +281,30 @@ class AdminMiscTest extends TestCase {
 		$this->assertTrue( $category->public );
 	}
 
+	/**
+	 * The taxonomy list is `array( 'category', 'post_tag' )` -- a taxonomy keyed under any
+	 * other slug (e.g. a typo'd 'post_tags') is silently skipped by the `isset()` guard, so
+	 * this must exercise 'post_tag' specifically rather than only 'category' as the other
+	 * tests in this group do.
+	 */
+	public function test_modify_taxonomies_arguments_processes_post_tag_slug_exactly() {
+		global $wp_taxonomies;
+
+		$post_tag              = new stdClass();
+		$post_tag->object_type = array( 'post' );
+		$post_tag->public      = true;
+		$wp_taxonomies          = array( 'post_tag' => $post_tag );
+
+		$this->stub_tax_lookup_plumbing();
+		$this->stub_post_types_with_tax_result( 'post_tag', false );
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+		$admin->modify_taxonomies_arguments();
+
+		$this->assertNotContains( 'post', $post_tag->object_type );
+		$this->assertFalse( $post_tag->public );
+	}
+
 	public function test_modify_taxonomies_arguments_skips_when_taxonomy_not_set() {
 		global $wp_taxonomies;
 
@@ -301,6 +373,27 @@ class AdminMiscTest extends TestCase {
 	public function test_admin_notices_returns_early_when_screen_base_not_set() {
 		WP_Mock::userFunction( 'get_current_screen' )->once()->andReturn( new stdClass() );
 
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+
+		ob_start();
+		$admin->admin_notices();
+		$this->assertSame( '', ob_get_clean() );
+	}
+
+	/**
+	 * `in_array( ..., true )` must use strict comparison: a screen base of `true` is loosely
+	 * equal to every string in $screens (a non-empty string always == true) but strictly
+	 * equal to none of them. With strict comparison the early return fires and nothing past
+	 * get_current_screen() runs; with loose comparison it would fall through into
+	 * has_front_page(), whose get_option() calls are deliberately left unstubbed here so a
+	 * WP_Mock strict-mode failure demonstrates the guard was bypassed.
+	 */
+	public function test_admin_notices_returns_early_for_screen_base_only_loosely_equal_to_listed_value() {
+		$current_screen       = new stdClass();
+		$current_screen->base = true;
+		WP_Mock::userFunction( 'get_current_screen' )->once()->andReturn( $current_screen );
+
+		// has_front_page() must never be reached: nothing further is stubbed.
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 
 		ob_start();
@@ -488,7 +581,7 @@ class AdminMiscTest extends TestCase {
 	public function test_available_permalink_structure_tags_removes_category_when_unsupported() {
 		$this->stub_tax_lookup_plumbing();
 		$this->stub_post_types_with_tax_result( 'category', false );
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags(
@@ -505,7 +598,7 @@ class AdminMiscTest extends TestCase {
 	public function test_available_permalink_structure_tags_keeps_category_when_supported() {
 		$this->stub_tax_lookup_plumbing();
 		$this->stub_post_types_with_tax_result( 'category', array( 'book' ) );
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags( array( 'category' => '%category%' ) );
@@ -514,7 +607,7 @@ class AdminMiscTest extends TestCase {
 	}
 
 	public function test_available_permalink_structure_tags_removes_author_when_author_archives_disabled() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( true );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, true );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags( array( 'author' => '%author%' ) );
@@ -523,7 +616,7 @@ class AdminMiscTest extends TestCase {
 	}
 
 	public function test_available_permalink_structure_tags_keeps_author_when_author_archives_enabled() {
-		WP_Mock::onFilter( 'dwpb_disable_author_archives' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'dwpb_disable_author_archives', false, false );
 
 		$admin  = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$result = $admin->available_permalink_structure_tags( array( 'author' => '%author%' ) );
@@ -586,11 +679,9 @@ class AdminMiscTest extends TestCase {
 
 	/**
 	 * Documents behavior, not a distinct branch: the guard's `! is_string( $metadata['name'] )`
-	 * half is unreachable-as-observable. Proven by mutation -- deleting that half of the
-	 * guard and rerunning this test still passes, because the subsequent
-	 * `'core/query' === $metadata['name']` strict comparison already evaluates to false for
-	 * any non-string $metadata['name'] under PHP's strict-equality type rules, independent
-	 * of the guard. This test asserts the function's actual (correct) output for a
+	 * half has no observable effect. The subsequent `'core/query' === $metadata['name']`
+	 * strict comparison already evaluates to false for any non-string $metadata['name']
+	 * under PHP's strict-equality type rules, so the guard cannot change the outcome. This test asserts the function's actual (correct) output for a
 	 * non-string name; it does not, and cannot, isolate the is_string() check itself.
 	 */
 	public function test_filter_block_type_metadata_bails_when_name_not_a_string() {
@@ -637,9 +728,19 @@ class AdminMiscTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_get_test_rest_availability_common() {
-		WP_Mock::userFunction( 'wp_unslash' )->with( array() )->andReturn( array() );
+		// array() == false, so a plain ->with( array() ) would also accept a regression
+		// that passed false to wp_unslash() -- Mockery::on() forces ===.
+		WP_Mock::userFunction( 'wp_unslash' )
+			->with(
+				Mockery::on(
+					function ( $value ) {
+						return array() === $value;
+					}
+				)
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_create_nonce' )->once()->with( 'wp_rest' )->andReturn( 'a-nonce' );
-		WP_Mock::onFilter( 'https_local_ssl_verify' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'https_local_ssl_verify', false, false );
 		WP_Mock::userFunction( 'rest_url' )->once()->with( 'wp/v2/types/page' )->andReturn( 'https://example.test/wp-json/wp/v2/types/page' );
 		WP_Mock::userFunction( 'add_query_arg' )
 			->once()
@@ -727,11 +828,21 @@ class AdminMiscTest extends TestCase {
 		$_SERVER['PHP_AUTH_PW']   = 'secret';
 		// phpcs:enable WordPressVIPMinimum.Variables.ServerVariables.BasicAuthentication
 
-		WP_Mock::userFunction( 'wp_unslash' )->with( array() )->andReturn( array() );
+		// array() == false, so a plain ->with( array() ) would also accept a regression
+		// that passed false to wp_unslash() -- Mockery::on() forces ===.
+		WP_Mock::userFunction( 'wp_unslash' )
+			->with(
+				Mockery::on(
+					function ( $value ) {
+						return array() === $value;
+					}
+				)
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_unslash' )->with( 'admin' )->andReturn( 'admin' );
 		WP_Mock::userFunction( 'wp_unslash' )->with( 'secret' )->andReturn( 'secret' );
 		WP_Mock::userFunction( 'wp_create_nonce' )->once()->with( 'wp_rest' )->andReturn( 'a-nonce' );
-		WP_Mock::onFilter( 'https_local_ssl_verify' )->with( false )->reply( false );
+		$this->stub_strict_filter( 'https_local_ssl_verify', false, false );
 		WP_Mock::userFunction( 'rest_url' )->once()->with( 'wp/v2/types/page' )->andReturn( 'https://example.test/wp-json/wp/v2/types/page' );
 		WP_Mock::userFunction( 'add_query_arg' )
 			->once()

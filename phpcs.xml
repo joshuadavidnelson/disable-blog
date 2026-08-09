@@ -30,7 +30,6 @@
 	<config name="minimum_supported_wp_version" value="5.9"/>
 	<rule ref="WordPress-VIP-Go">
 		<!-- Exclude overly strict prefix rules that don't recognize -->
-		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
 		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound"/>
 		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound"/>
 		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound"/>
