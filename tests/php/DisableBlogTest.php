@@ -526,11 +526,19 @@ class DisableBlogTest extends TestCase {
 	}
 
 	/**
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
+	 * PHP cannot un-define a constant, so DWPB_VERSION is defined at most once per process via
+	 * this guarded helper, shared by every upgrade_check() test below that needs it.
+	 *
+	 * @return void
 	 */
+	private function ensure_dwpb_version_defined() {
+		if ( ! defined( 'DWPB_VERSION' ) ) {
+			define( 'DWPB_VERSION', '0.5.6' );
+		}
+	}
+
 	public function test_upgrade_check_sets_version_option_on_fresh_install() {
-		define( 'DWPB_VERSION', '0.5.6' );
+		$this->ensure_dwpb_version_defined();
 
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'get_option' )->once()->with( 'dwpb_version', false )->andReturn( false );
@@ -539,12 +547,8 @@ class DisableBlogTest extends TestCase {
 		$this->assertNull( $this->invoke_private_static( 'upgrade_check' ) );
 	}
 
-	/**
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 */
 	public function test_upgrade_check_does_nothing_when_version_matches() {
-		define( 'DWPB_VERSION', '0.5.6' );
+		$this->ensure_dwpb_version_defined();
 
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'get_option' )->once()->with( 'dwpb_version', false )->andReturn( '0.5.6' );
@@ -553,12 +557,8 @@ class DisableBlogTest extends TestCase {
 		$this->assertNull( $this->invoke_private_static( 'upgrade_check' ) );
 	}
 
-	/**
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 */
 	public function test_upgrade_check_records_previous_version_and_updates_when_upgrading() {
-		define( 'DWPB_VERSION', '0.5.6' );
+		$this->ensure_dwpb_version_defined();
 
 		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( true );
 		WP_Mock::userFunction( 'get_option' )->once()->with( 'dwpb_version', false )->andReturn( '0.5.4' );
