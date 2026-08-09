@@ -175,6 +175,38 @@ class DisableBlogFunctionsTest extends TestCase {
 	}
 
 	/**
+	 * When REQUEST_URI is absent from $_SERVER, the isset() ternary must fall back to an
+	 * empty string (not skip the fallback, and not some other placeholder), so home_url()
+	 * receives '' and wp_unslash()/esc_url_raw() are never reached for it.
+	 */
+	public function test_redirect_falls_back_to_empty_string_when_request_uri_is_absent() {
+		unset( $_SERVER['REQUEST_URI'] );
+
+		$functions = new Disable_Blog_Functions();
+
+		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( false );
+		WP_Mock::userFunction( 'wp_unslash' )->never();
+		WP_Mock::userFunction( 'home_url' )
+			->once()
+			->with( '' )
+			->andReturn( 'https://example.test/' );
+
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
+		WP_Mock::userFunction( 'wp_safe_redirect' )->never();
+
+		// The redirect url matches the derived current url, so the loop guard returns
+		// before esc_url_raw() is ever called on it -- home_url()'s '' argument alone is
+		// what's under test here.
+		$this->assertNull( $functions->redirect( 'https://example.test/' ) );
+	}
+
+	/**
 	 * The loop guard: when the redirect url matches the current url, redirect() must
 	 * return without calling wp_safe_redirect() at all. The fallback filter is added
 	 * unconditionally before this guard runs (it's the first statement in the non-admin
@@ -391,6 +423,52 @@ class DisableBlogFunctionsTest extends TestCase {
 	}
 
 	/**
+	 * wp_safe_redirect() must receive the esc_url_raw()-escaped form of the redirect url,
+	 * not the raw value -- even though the raw value already passed the earlier loop-guard
+	 * truthiness check and is what's passed into get_redirect_status_code().
+	 */
+	public function test_redirect_passes_escaped_url_to_wp_safe_redirect() {
+		$_SERVER['REQUEST_URI'] = '/current-page/';
+
+		$functions = new Disable_Blog_Functions();
+
+		WP_Mock::userFunction( 'is_admin' )->once()->andReturn( false );
+		WP_Mock::userFunction( 'wp_unslash' )->with( '/current-page/' )->andReturn( '/current-page/' );
+		WP_Mock::userFunction( 'esc_url_raw' )->with( '/current-page/' )->andReturn( '/current-page/' );
+		WP_Mock::userFunction( 'home_url' )
+			->once()
+			->with( '/current-page/' )
+			->andReturn( 'https://example.test/current-page/' );
+
+		WP_Mock::expectFilterAdded(
+			'wp_safe_redirect_fallback',
+			array( $functions, 'wp_safe_redirect_fallback' ),
+			9,
+			1
+		);
+
+		$raw_redirect_url     = 'https://example.test/target/?x=1&y=2';
+		$escaped_redirect_url = 'https://example.test/target/?x=1&#038;y=2';
+
+		WP_Mock::userFunction( 'esc_url_raw' )->with( $raw_redirect_url )->andReturn( $escaped_redirect_url );
+		WP_Mock::onFilter( 'dwpb_pass_query_string_on_redirect' )->with( false )->reply( false );
+		WP_Mock::onFilter( 'dwpb_redirect_status_code' )
+			->with( 301, 'https://example.test/current-page/', $raw_redirect_url )
+			->reply( 301 );
+		$this->stub_real_absint();
+
+		WP_Mock::userFunction( 'wp_safe_redirect' )
+			->once()
+			->with( $escaped_redirect_url, 301 )
+			->andThrow( new Exception( 'halted' ) );
+
+		$this->expectException( Exception::class );
+		$this->expectExceptionMessage( 'halted' );
+
+		$functions->redirect( $raw_redirect_url );
+	}
+
+	/**
 	 * parse_query_string() (private)
 	 */
 
@@ -563,6 +641,16 @@ class DisableBlogFunctionsTest extends TestCase {
 	}
 
 	/**
+	 * A valid in-range value must come back through absint() as an int, not pass through
+	 * as whatever type the filter returned -- a numeric string here would satisfy the
+	 * range checks unmodified, so only the absint() cast on the return value tells them
+	 * apart. assertSame() (strict) makes the type mismatch fail.
+	 */
+	public function test_get_redirect_status_code_returns_absint_not_raw_filtered_value() {
+		$this->assert_redirect_status_code( '350', 350 );
+	}
+
+	/**
 	 * wp_safe_redirect_fallback()
 	 */
 
@@ -633,6 +721,18 @@ class DisableBlogFunctionsTest extends TestCase {
 	/**
 	 * disable_feeds()
 	 */
+
+	/**
+	 * $is_comment_feed defaults to false when the argument is omitted.
+	 */
+	public function test_disable_feeds_defaults_is_comment_feed_to_false_when_omitted() {
+		$functions = new Disable_Blog_Functions();
+		$post      = (object) array( 'ID' => 1 );
+
+		WP_Mock::onFilter( 'dwpb_disable_feed' )->with( true, $post, false )->reply( false );
+
+		$this->assertFalse( $functions->disable_feeds( $post ) );
+	}
 
 	public function test_disable_feeds_defaults_to_true_and_passes_post_and_comment_feed_flag_to_filter() {
 		$functions = new Disable_Blog_Functions();

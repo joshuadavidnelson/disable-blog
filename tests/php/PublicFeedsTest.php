@@ -325,6 +325,20 @@ class PublicFeedsTest extends TestCase {
 		$this->assertTrue( $this->invoke_is_post_feed_request( $public ) );
 	}
 
+	/**
+	 * `true` is loosely == 'post' (a non-empty string is truthy) but never strictly === it, so
+	 * this distinguishes the real strict in_array() check from a loose one without relying on
+	 * PHP-version-sensitive numeric-string coercion.
+	 */
+	public function test_is_post_feed_request_false_when_post_type_array_contains_only_loosely_equal_value() {
+		global $wp;
+		$wp = (object) array( 'query_vars' => array( 'post_type' => array( true ) ) );
+
+		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
+
+		$this->assertFalse( $this->invoke_is_post_feed_request( $public ) );
+	}
+
 	public function test_is_post_feed_request_false_when_post_type_array_does_not_contain_post() {
 		global $wp;
 		$wp = (object) array( 'query_vars' => array( 'post_type' => array( 'page', 'book' ) ) );

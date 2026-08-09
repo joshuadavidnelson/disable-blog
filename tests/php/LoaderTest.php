@@ -199,6 +199,25 @@ class LoaderTest extends TestCase {
 		);
 	}
 
+	public function test_add_filter_buffers_the_tuple_with_default_priority_and_args() {
+		$component = new stdClass();
+
+		$this->loader->add_filter( 'the_content', $component, 'my_filter' );
+
+		$this->assertSame(
+			array(
+				array(
+					'hook'          => 'the_content',
+					'component'     => $component,
+					'callback'      => 'my_filter',
+					'priority'      => 10,
+					'accepted_args' => 1,
+				),
+			),
+			$this->get_loader_property( 'filters' )
+		);
+	}
+
 	public function test_add_filter_buffers_the_tuple_with_explicit_priority_and_args() {
 		$component = new stdClass();
 
@@ -342,6 +361,51 @@ class LoaderTest extends TestCase {
 
 		$this->assertFalse( $result );
 		$this->assertSame( array(), $hook->remove_filter_calls );
+	}
+
+	/**
+	 * The array key that stores each priority's callbacks is an int (PHP normalizes numeric
+	 * array keys), so a caller-supplied priority of the string '10' loosely equals it but must
+	 * not match under the strict comparison the source uses.
+	 */
+	public function test_remove_filter_requires_strict_priority_match_not_loose() {
+		$component = new LoaderTestFakeComponent();
+		$hook      = new LoaderTestFakeWpHook( true );
+		$hook->callbacks[10] = array(
+			array( 'function' => array( $component, 'my_method' ) ),
+		);
+
+		global $wp_filter;
+		$wp_filter = array( 'some_tag' => $hook );
+
+		// Routed through get_object_vars() (rather than passed as a '10' literal) so PHPStan sees
+		// an untracked mixed value: the source's @param int docblock would otherwise flag this
+		// deliberate int/string mismatch as a static error rather than exercising it at runtime.
+		$carrier            = new stdClass();
+		$carrier->priority  = '10';
+		$carrier_vars       = get_object_vars( $carrier );
+
+		$result = $this->loader->remove_filter( 'some_tag', LoaderTestFakeComponent::class, 'my_method', $carrier_vars['priority'] );
+
+		$this->assertFalse( $result );
+		$this->assertSame( array(), $hook->remove_filter_calls );
+	}
+
+	public function test_remove_action_defaults_to_priority_ten() {
+		$component = new LoaderTestFakeComponent();
+		$hook      = new LoaderTestFakeWpHook( true );
+		$hook->callbacks[10] = array(
+			array( 'function' => array( $component, 'my_method' ) ),
+		);
+
+		global $wp_filter;
+		$wp_filter = array( 'some_tag' => $hook );
+
+		// Priority omitted: must still match the default-priority-10 callback.
+		$result = $this->loader->remove_action( 'some_tag', LoaderTestFakeComponent::class, 'my_method' );
+
+		$this->assertTrue( $result );
+		$this->assertCount( 1, $hook->remove_filter_calls );
 	}
 
 	public function test_remove_action_delegates_to_remove_filter_with_the_same_arguments() {

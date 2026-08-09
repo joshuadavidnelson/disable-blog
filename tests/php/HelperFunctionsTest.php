@@ -529,4 +529,153 @@ class HelperFunctionsTest extends TestCase {
 
 		$this->assertCount( 2, array_unique( $seen_keys ) );
 	}
+
+	/**
+	 * The no-match case must return strictly `false`, not the empty array that gets
+	 * cached, on both a cache miss (the negative result is freshly computed) and the
+	 * following cache hit (that same empty array is read back from the cache) -- the
+	 * false-normalisation has to run on both paths for the documented array|bool
+	 * contract to hold. assertSame() is required here: `array() == false`, so
+	 * assertEquals() would not catch a regression that skips the normalisation.
+	 *
+	 * This also asserts what the filter actually RECEIVES as its first argument.
+	 * onFilter()->with() alone cannot tell false from array() apart -- safe_offset()
+	 * casts both to the same '' key -- so a WP_Mock\InvokedFilterValue responder is used
+	 * instead: it still gets invoked with the real arguments regardless of which key
+	 * matched, so the captured value reveals whatever the source actually passed in.
+	 *
+	 * @return void
+	 */
+	public function test_post_types_with_feature_no_matches_returns_false_not_array_on_cold_and_warm_cache() {
+		$feature             = 'comments';
+		$args                = array();
+		$seen_filter_values  = array();
+
+		WP_Mock::userFunction( 'esc_attr' )->with( $feature )->andReturn( $feature );
+
+		// False (a real cache miss) on the first call, then the empty array the first
+		// call's wp_cache_set() stored (a real cache hit) on the second.
+		WP_Mock::userFunction( 'wp_cache_get' )
+			->twice()
+			->with( 'post-types-supporting-comments', 'post-types-by-feature' )
+			->andReturn( false, array() );
+
+		WP_Mock::userFunction( 'get_post_types' )
+			->once()
+			->with( $args, 'names' )
+			->andReturn( array( 'post' ) );
+
+		WP_Mock::userFunction( 'post_type_supports' )->with( 'post', $feature )->andReturn( true );
+
+		WP_Mock::userFunction( 'wp_cache_set' )
+			->once()
+			->with( 'post-types-supporting-comments', array(), 'post-types-by-feature' );
+
+		WP_Mock::onFilter( "dwpb_post_types_supporting_{$feature}" )
+			->with( false, $args )
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $value ) use ( &$seen_filter_values ) {
+						$seen_filter_values[] = $value;
+
+						return $value;
+					}
+				)
+			);
+
+		$cold_result = dwpb_post_types_with_feature( $feature, $args );
+		$warm_result = dwpb_post_types_with_feature( $feature, $args );
+
+		$this->assertFalse( $cold_result );
+		$this->assertFalse( $warm_result );
+		$this->assertSame( array( false, false ), $seen_filter_values );
+	}
+
+	/**
+	 * Mirrors test_post_types_with_feature_no_matches_returns_false_not_array_on_cold_and_warm_cache():
+	 * the no-match case must return strictly `false`, not the empty array that gets
+	 * cached, on both a cache miss and the cache hit that reads that empty array back.
+	 *
+	 * @return void
+	 */
+	public function test_post_types_with_tax_no_matches_returns_false_not_array_on_cold_and_warm_cache() {
+		$taxonomy  = 'category';
+		$cache_key = $this->tax_cache_key( $taxonomy );
+
+		$this->stub_tax_cache_key_helpers( $taxonomy );
+
+		// False (a real cache miss) on the first call, then the empty array the first
+		// call's wp_cache_set() stored (a real cache hit) on the second.
+		WP_Mock::userFunction( 'wp_cache_get' )
+			->twice()
+			->with( $cache_key, 'post-types-by-tax' )
+			->andReturn( false, array() );
+
+		// Computed unconditionally on every call regardless of cache state (see the
+		// comment above get_post_types() in the source).
+		WP_Mock::userFunction( 'get_post_types' )
+			->twice()
+			->with( array(), 'names' )
+			->andReturn( array( 'page' ) );
+
+		WP_Mock::userFunction( 'get_object_taxonomies' )
+			->once()
+			->with( 'page', 'names' )
+			->andReturn( array( 'post_tag' ) );
+
+		WP_Mock::userFunction( 'wp_cache_set' )
+			->once()
+			->with( $cache_key, array(), 'post-types-by-tax' );
+
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, $taxonomy, array( 'page' ), array(), 'names' )
+			->reply( null );
+
+		$cold_result = dwpb_post_types_with_tax( $taxonomy );
+		$warm_result = dwpb_post_types_with_tax( $taxonomy );
+
+		$this->assertFalse( $cold_result );
+		$this->assertFalse( $warm_result );
+	}
+
+	/**
+	 * `in_array( $taxonomy, $taxonomies, true )` must compare strictly: a post type whose
+	 * taxonomies list contains a value that is only loosely equal to the requested
+	 * taxonomy -- here `true`, which loosely equals any non-empty string including
+	 * 'category', but is never identical to it -- must not be treated as carrying that
+	 * taxonomy.
+	 *
+	 * @return void
+	 */
+	public function test_post_types_with_tax_strict_comparison_excludes_loosely_equal_value() {
+		$taxonomy = 'category';
+
+		$this->stub_tax_cache_key_helpers( $taxonomy );
+
+		WP_Mock::userFunction( 'wp_cache_get' )->once()->andReturn( false );
+
+		// The array's exact contents depend on whether the comparison below is strict,
+		// which is the very thing under test -- only the type is pinned down here.
+		WP_Mock::userFunction( 'wp_cache_set' )
+			->once()
+			->with( $this->tax_cache_key( $taxonomy ), Mockery::type( 'array' ), 'post-types-by-tax' );
+
+		WP_Mock::userFunction( 'get_post_types' )
+			->once()
+			->with( array(), 'names' )
+			->andReturn( array( 'page' ) );
+
+		WP_Mock::userFunction( 'get_object_taxonomies' )
+			->once()
+			->with( 'page', 'names' )
+			->andReturn( array( true ) );
+
+		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
+			->with( null, $taxonomy, array( 'page' ), array(), 'names' )
+			->reply( null );
+
+		$result = dwpb_post_types_with_tax( $taxonomy );
+
+		$this->assertFalse( $result );
+	}
 }

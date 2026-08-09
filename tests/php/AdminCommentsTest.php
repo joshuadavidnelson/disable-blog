@@ -15,6 +15,31 @@ require_once __DIR__ . '/../../includes/class-disable-blog-functions.php';
 require_once __DIR__ . '/Support/fixtures/class-admin-wpdb-double.php';
 
 /**
+ * Records the SQL string get_comment_counts() passes to get_results(), so tests can assert
+ * on it directly. Defined here (rather than in Support/fixtures/) since only this file needs
+ * the capture behavior.
+ */
+class Disable_Blog_Admin_Wpdb_Query_Capturing_Double extends Disable_Blog_Admin_Wpdb_Double {
+
+	/**
+	 * The query string passed to the most recent get_results() call.
+	 *
+	 * @var string|null
+	 */
+	public $captured_query;
+
+	/**
+	 * @param string      $query  The SQL query.
+	 * @param string|null $output The output type.
+	 * @return array
+	 */
+	public function get_results( $query, $output = null ) {
+		$this->captured_query = $query;
+		return parent::get_results( $query, $output );
+	}
+}
+
+/**
  * @covers Disable_Blog_Admin::get_comment_counts
  * @covers Disable_Blog_Admin::filter_wp_count_comments
  * @covers Disable_Blog_Admin::filter_admin_table_comment_count
@@ -330,6 +355,29 @@ class AdminCommentsTest extends TestCase {
 			'all'                 => 13,
 		);
 		$this->assertSame( $expected, $admin->get_comment_counts() );
+	}
+
+	/**
+	 * The post types are joined with `implode( "','", ... )` so each becomes its own quoted
+	 * SQL string literal inside the `IN (...)` list. Asserts the exact resulting clause,
+	 * since a plain `implode( ',', ... )` would still produce a query that "looks" similar
+	 * but silently collapses every post type into a single unquoted/mis-quoted literal.
+	 */
+	public function test_get_comment_counts_quotes_each_post_type_separately_in_the_in_clause() {
+		$this->stub_feature_cache_hit( 'comments', array( 'book', 'recipe', 'event' ) );
+
+		global $wpdb;
+		$wpdb = new Disable_Blog_Admin_Wpdb_Query_Capturing_Double( array() );
+		WP_Mock::userFunction( 'esc_sql' )->andReturnUsing(
+			function ( $value ) {
+				return $value;
+			}
+		);
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+		$admin->get_comment_counts();
+
+		$this->assertStringContainsString( "post_type in ('book','recipe','event')", $wpdb->captured_query );
 	}
 
 	/**
@@ -706,6 +754,7 @@ class AdminCommentsTest extends TestCase {
 		$this->assertSame( 'page', $captured_args['post_type'] );
 		$this->assertSame( 'ids', $captured_args['fields'] );
 		$this->assertSame( 'post_tag', $captured_args['tax_query'][0]['taxonomy'] );
+		$this->assertSame( 'id', $captured_args['tax_query'][0]['field'] );
 		$this->assertSame( 7, $captured_args['tax_query'][0]['terms'] );
 	}
 }
