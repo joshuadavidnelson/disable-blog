@@ -64,11 +64,30 @@ class Disable_Blog {
 	 * @access public
 	 * @param string $plugin_name The name of this plugin.
 	 * @param string $version     The version of this plugin.
+	 * @param bool   $boot        Optional. Whether to run boot() immediately. Defaults to true;
+	 *                            pass false to construct without side effects, e.g. in tests.
 	 */
-	public function __construct( $plugin_name, $version ) {
+	public function __construct( $plugin_name, $version, $boot = true ) {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
+
+		if ( $boot ) {
+			$this->boot();
+		}
+	}
+
+	/**
+	 * Run the plugin's setup: dependencies, locale, integrations, and hooks.
+	 *
+	 * Split out from __construct() so a test can construct the class with
+	 * $boot = false and call the individual setup methods directly.
+	 *
+	 * @since 0.5.6
+	 * @access public
+	 * @return void
+	 */
+	public function boot() {
 
 		do_action( 'dwpb_init' );
 
@@ -84,9 +103,9 @@ class Disable_Blog {
 	 * Upgrade check.
 	 *
 	 * @since 0.4.0
-	 * @access private
+	 * @access protected
 	 */
-	private static function upgrade_check() {
+	protected static function upgrade_check() {
 
 		// let's only run these checks on the admin page load.
 		if ( ! is_admin() ) {
@@ -125,9 +144,11 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @since 0.5.3 Added Integrations class.
-	 * @access private
+	 * @since 0.5.6 only construct the loader if one isn't already set, so a test
+	 *              can inject a spy before calling this method.
+	 * @access protected
 	 */
-	private function load_dependencies() {
+	protected function load_dependencies() {
 
 		// Includes directory.
 		$includes_dir = plugin_dir_path( __DIR__ ) . 'includes';
@@ -146,7 +167,9 @@ class Disable_Blog {
 		/**
 		 * Make it so.
 		 */
-		$this->loader = new Disable_Blog_Loader();
+		if ( null === $this->loader ) {
+			$this->loader = new Disable_Blog_Loader();
+		}
 
 		$classes = array(
 			'Disable_Blog_I18n',
@@ -167,9 +190,9 @@ class Disable_Blog {
 	 * with WordPress.
 	 *
 	 * @since 0.4.0
-	 * @access private
+	 * @access protected
 	 */
-	private function set_locale() {
+	protected function set_locale() {
 
 		$plugin_i18n = new Disable_Blog_I18n();
 
@@ -182,9 +205,9 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @since 0.5.3 Separated comment functions to run only if comments are supported.
-	 * @access private
+	 * @access protected
 	 */
-	private function define_admin_hooks() {
+	protected function define_admin_hooks() {
 
 		$plugin_admin = new Disable_Blog_Admin( $this->get_plugin_name(), $this->get_version() );
 
@@ -297,9 +320,9 @@ class Disable_Blog {
 	 * @since 0.4.0
 	 * @since 0.5.6 added disable_removed_sitemaps() on template_redirect.
 	 * @since 0.5.6 added remove_pingback_header_fallback() on the 'wp' action, for older WP.
-	 * @access private
+	 * @access protected
 	 */
-	private function define_public_hooks() {
+	protected function define_public_hooks() {
 
 		$plugin_public = new Disable_Blog_Public( $this->get_plugin_name(), $this->get_version() );
 

@@ -115,9 +115,7 @@ class Disable_Blog_Admin {
 
 			foreach ( $arguments_to_remove as $arg ) {
 				if ( isset( $wp_post_types['post']->$arg ) ) {
-					// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
 					$wp_post_types['post']->$arg = false;
-					// @codingStandardsIgnoreEnd
 				}
 			}
 
@@ -178,9 +176,7 @@ class Disable_Blog_Admin {
 
 					foreach ( $arguments_to_remove as $arg ) {
 						if ( isset( $wp_taxonomies[ $tax ]->$arg ) ) {
-							// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
 							$wp_taxonomies[ $tax ]->$arg = false;
-							// @codingStandardsIgnoreEnd
 						}
 					}
 				}
@@ -312,9 +308,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_post() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		return ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) );
-		// @codingStandardsIgnoreEnd
+		return ( isset( $_GET['post'] ) && 'post' == get_post_type( $_GET['post'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only redirect-target check, not a state-changing form submission, so no nonce applies; $_GET['post'] only reaches get_post_type(), which resolves it via get_post() rather than a query or output, so it needs no extra sanitizing.
 	}
 
 	/**
@@ -325,9 +319,8 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_edit() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect-target check, not a state-changing form submission, so no nonce applies.
 		if ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) {
-		// @codingStandardsIgnoreEnd
 
 			return admin_url( 'edit.php?post_type=page' );
 
@@ -344,9 +337,8 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_post_new() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect-target check, not a state-changing form submission, so no nonce applies.
 		if ( ( ! isset( $_GET['post_type'] ) || isset( $_GET['post_type'] ) && $_GET['post_type'] == 'post' ) ) {
-		// @codingStandardsIgnoreEnd
 
 			return admin_url( 'post-new.php?post_type=page' );
 
@@ -365,9 +357,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_term() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
-		// @codingStandardsIgnoreEnd
+		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only redirect-target check, not a state-changing form submission, so no nonce applies; $_GET['taxonomy'] only reaches dwpb_post_types_with_tax(), which compares it against registered taxonomy names and hashes it into a wp_cache key, never a query or output.
 	}
 
 	/**
@@ -378,9 +368,7 @@ class Disable_Blog_Admin {
 	 */
 	public function redirect_admin_edit_tags() {
 
-		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
-		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
-		// @codingStandardsIgnoreEnd
+		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only redirect-target check, not a state-changing form submission, so no nonce applies; $_GET['taxonomy'] only reaches dwpb_post_types_with_tax(), which compares it against registered taxonomy names and hashes it into a wp_cache key, never a query or output.
 	}
 
 	/**
@@ -442,9 +430,7 @@ class Disable_Blog_Admin {
 		 * The isset( $_GET['page'] ) check is to confirm the page
 		 * isn't a 3rd party plugin's option page built into the tools page.
 		 */
-		// @codingStandardsIgnoreStart - phpcs wants to nounce this, but that's not needed.
-		return ! isset( $_GET['page'] );
-		// @codingStandardsIgnoreEnd
+		return ! isset( $_GET['page'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check for a 3rd-party plugin's tools sub-page, not a state-changing form submission, so no nonce applies.
 	}
 
 	/**
@@ -930,7 +916,7 @@ class Disable_Blog_Admin {
 		$in_post_types = implode( "','", $sanitized_post_types );
 
 		// Grab the comments that are associated with supported post types only.
-		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- no wpdb schema method covers this comments/posts join, so a direct query is unavoidable; the absence of caching is not, and this result is recomputed on every call; $in_post_types is esc_sql()'d above and comes from dwpb_post_types_with_feature() (get_post_types() output), never request input, so the interpolation is not an injection vector.
 		$totals = (array) $wpdb->get_results(
 			"SELECT comment_approved, COUNT( * ) AS total
 			FROM {$wpdb->comments}
@@ -942,7 +928,7 @@ class Disable_Blog_Admin {
 			GROUP BY comment_approved",
 			ARRAY_A
 		);
-		// @codingStandardsIgnoreEnd
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		foreach ( $totals as $row ) {
 			switch ( $row['comment_approved'] ) {
@@ -1049,21 +1035,21 @@ class Disable_Blog_Admin {
 	public function get_test_rest_availability() {
 
 		$result = array(
-			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 			'status'      => 'good',
 			'badge'       => array(
-				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 				'color' => 'blue',
 			),
 			'description' => sprintf(
 				'<p>%s</p>',
-				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 			),
 			'actions'     => '',
 			'test'        => 'rest_availability',
 		);
 
-		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
+		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- forwards the current request's cookies to a same-site loopback request; this runs only inside the admin Site Health check, which is never full-page cached.
 		$timeout = 10;
 		$headers = array(
 			'Cache-Control' => 'no-cache',
@@ -1074,11 +1060,11 @@ class Disable_Blog_Admin {
 		$sslverify = apply_filters( 'https_local_ssl_verify', false );
 
 		// Include Basic auth in loopback requests.
-		// @codingStandardsIgnoreStart
+		// phpcs:disable WordPressVIPMinimum.Variables.ServerVariables.BasicAuthentication, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- mirrors core's WP_Site_Health::get_test_rest_availability(), relaying the site's own already-validated Basic Auth credentials to this same-site loopback REST request so password-protected sites still pass the check; there is no external input to sanitize.
 		if ( isset( $_SERVER['PHP_AUTH_USER'] ) && isset( $_SERVER['PHP_AUTH_PW'] ) ) {
 			$headers['Authorization'] = 'Basic ' . base64_encode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) . ':' . wp_unslash( $_SERVER['PHP_AUTH_PW'] ) );
 		}
-		// @codingStandardsIgnoreEnd
+		// phpcs:enable WordPressVIPMinimum.Variables.ServerVariables.BasicAuthentication, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		// -- here's the money, change this from 'post' to  'page'.
 		$url = rest_url( 'wp/v2/types/page' );
@@ -1091,21 +1077,21 @@ class Disable_Blog_Admin {
 			$url
 		);
 
-		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) );
 
 		if ( is_wp_error( $r ) ) {
 			$result['status'] = 'critical';
 
-			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 
 			$result['description'] .= sprintf(
 				'<p>%s</p>',
 				sprintf(
 					'%s<br>%s',
-					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 					sprintf(
 						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
-						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 						$r->get_error_message(),
 						$r->get_error_code()
 					)
@@ -1114,13 +1100,13 @@ class Disable_Blog_Admin {
 		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
 			$result['status'] = 'recommended';
 
-			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 
 			$result['description'] .= sprintf(
 				'<p>%s</p>',
 				sprintf(
 					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
-					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 					wp_remote_retrieve_response_code( $r ),
 					esc_html( wp_remote_retrieve_body( $r ) )
 				)
@@ -1131,13 +1117,13 @@ class Disable_Blog_Admin {
 			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
 				$result['status'] = 'recommended';
 
-				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 
 				$result['description'] .= sprintf(
 					'<p>%s</p>',
 					sprintf(
 						/* translators: %s: The name of the query parameter being tested. */
-						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- reuses core's own Site Health string verbatim so it inherits core's translation; adding a domain here would orphan it.
 						'<code>context</code>'
 					)
 				);
@@ -1172,7 +1158,19 @@ class Disable_Blog_Admin {
 	/**
 	 * Return the post count for a term based by post type.
 	 *
+	 * Memoized per (term_id, taxonomy, post_type) for the life of the request: this hooks
+	 * onto core's `{$taxonomy}_row_actions`, which fires once per term row rendered on
+	 * edit-tags.php, so without memoizing, a full page of terms means a full uncached
+	 * WP_Query per row.
+	 *
+	 * The wp_cache_*() calls are guarded by function_exists(): they are core WordPress API
+	 * and always present once WordPress has bootstrapped, but this method is also exercised
+	 * directly by unit tests that construct this class outside of a WordPress runtime, where
+	 * those functions do not exist. The guard is a no-op in production and simply disables
+	 * memoization in that unit-test context.
+	 *
 	 * @since 0.5.0
+	 * @since 0.5.6 memoized per request.
 	 * @param int    $term_id   the current term id.
 	 * @param string $taxonomy  the taxonomy slug.
 	 * @param string $post_type the post type slug.
@@ -1180,13 +1178,39 @@ class Disable_Blog_Admin {
 	 */
 	public function get_term_post_count_by_type( $term_id, $taxonomy, $post_type ) {
 
+		$can_cache   = function_exists( 'wp_cache_get' ) && function_exists( 'wp_cache_set' ) && function_exists( 'wp_cache_add_non_persistent_groups' );
+		$cache_group = 'dwpb-term-post-count-by-type';
+
+		// Each component is hashed separately (rather than concatenated raw) so that no
+		// combination of taxonomy/post type values can straddle the '-' delimiter and
+		// collide with a different combination.
+		$cache_key = md5( (string) $term_id ) . '-' . md5( $taxonomy ) . '-' . md5( $post_type );
+
+		if ( $can_cache ) {
+			// Term post counts change whenever a post is edited, so this cache must never
+			// persist across requests (a persistent backend like Redis/Memcached would show
+			// stale counts indefinitely). It exists only to dedupe repeat lookups for the
+			// same term within a single page render. wp_cache_add_non_persistent_groups() is
+			// idempotent, so registering it on every call (rather than tracking "already
+			// registered" state) is safe and keeps the guard co-located with its first use.
+			wp_cache_add_non_persistent_groups( $cache_group );
+
+			// The $found out-parameter distinguishes a real cached 0 (a term with no
+			// matching posts) from a cache miss, since a plain falsy check can't -- 0 is
+			// falsy too.
+			$count = wp_cache_get( $cache_key, $cache_group, false, $found );
+			if ( $found ) {
+				return $count;
+			}
+		}
+
 		$args  = array(
 			'fields'                 => 'ids',
 			'posts_per_page'         => 100,
 			'post_type'              => $post_type,
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
-			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- counting posts in a term requires a tax_query; the result is memoized per request in a non-persistent group.
 				array(
 					'taxonomy' => $taxonomy,
 					'field'    => 'id',
@@ -1195,12 +1219,13 @@ class Disable_Blog_Admin {
 			),
 		);
 		$query = new WP_Query( $args );
+		$count = count( $query->posts );
 
-		if ( count( $query->posts ) > 0 ) {
-			return count( $query->posts );
-		} else {
-			return 0;
+		if ( $can_cache ) {
+			wp_cache_set( $cache_key, $count, $cache_group );
 		}
+
+		return $count;
 	}
 
 	/**
@@ -1304,20 +1329,18 @@ class Disable_Blog_Admin {
 
 				// Note that we have to explicitly add the query variable for post type in order
 				// to avoid it being stripped by the admin redirect on the edit.php page.
-				// @codingStandardsIgnoreStart - phpcs doesn't like the mismatched placeholders, but it works.
 				$output = sprintf(
 					'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
 					"edit.php?post_type={$post_type}&author={$user_id}",
 					$page_count,
 					sprintf(
 						// translators: %1$s: Number of pieces of content by this author. %2$s and %3$s are the singular and plural names, respectively, for the content type. For example: "1 page by this author" and "2 pages by this author".
-						_n( '%1$s %2$s by this author', '%1$s %3$s by this author', $page_count, 'disable-blog' ),
+						_n( '%1$s %2$s by this author', '%1$s %3$s by this author', $page_count, 'disable-blog' ), // phpcs:ignore WordPress.WP.I18n.MismatchedPlaceholders -- the singular and plural strings intentionally reference different placeholders (%2$s the singular label, %3$s the plural label), since only one of the two names applies per branch; this is correct _n() usage, not a mismatch.
 						number_format_i18n( $page_count ),
 						$post_type_obj->labels->singular_name,
 						$post_type_obj->labels->name
 					)
 				);
-				// @codingStandardsIgnoreEnd
 			}
 		}
 
@@ -1435,7 +1458,7 @@ class Disable_Blog_Admin {
 	public function posts_page_notice() {
 
 		// translators: this notice informs the user why the blog page editor is disabled and that it is redirected to the homepage.
-		echo '<div class="notice notice-warning inline"><p>' . __( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>'; // phpcs:ignore
+		echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'You are currently editing the page that shows your latest posts, which is redirected to the homepage because the blog is disabled.', 'disable-blog' ) . '</p></div>';
 	}
 
 	/**

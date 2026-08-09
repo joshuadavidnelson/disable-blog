@@ -48,10 +48,17 @@ function dwpb_post_types_with_feature( $feature, $args = array() ) {
 			}
 		}
 
-		// Keep the array if there are any, otherwise make it return false.
-		$post_types_with_feature = empty( $post_types_with_feature ) ? false : $post_types_with_feature;
-
+		// Cache the array as-is, including when empty. An empty array is a valid,
+		// distinguishable "nothing found" result, unlike false, which wp_cache_get()
+		// also returns on a cache miss; storing false here would make every negative
+		// result indistinguishable from an uncached one and defeat the cache.
 		wp_cache_set( $cache_name, $post_types_with_feature, 'post-types-by-feature' );
+	}
+
+	// Normalize the empty-array negative-cache sentinel back to the documented
+	// array|bool contract before it reaches the public filter below.
+	if ( empty( $post_types_with_feature ) ) {
+		$post_types_with_feature = false;
 	}
 
 	/**
@@ -135,9 +142,8 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 			}
 		}
 
-		// Keep the array if there are any, otherwise make it return false.
-		$post_types_with_tax = empty( $post_types_with_tax ) ? false : $post_types_with_tax;
-
+		// Cache the array as-is, including when empty (see dwpb_post_types_with_feature()
+		// for why false cannot be the negative-cache value).
 		wp_cache_set( $cache_name, $post_types_with_tax, 'post-types-by-tax' );
 	}
 

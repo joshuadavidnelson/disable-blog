@@ -54,11 +54,11 @@ class Disable_Blog_Activator {
 		) {
 			if ( isset( $_REQUEST['plugin'] ) ) {
 				if ( ! check_admin_referer( 'activate-plugin_' . self::$request['plugin'] ) ) {
-					exit;
+					static::terminate();
 				}
 			} elseif ( isset( $_REQUEST['checked'] ) ) {
 				if ( ! check_admin_referer( 'bulk-plugins' ) ) {
-					exit;
+					static::terminate();
 				}
 			}
 		}
@@ -70,6 +70,20 @@ class Disable_Blog_Activator {
 		wp_cache_delete( 'comments-0', 'counts' );
 		delete_transient( 'wc_count_comments' );
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Wraps `exit` so a test subclass can override it to observe termination
+	 * without actually ending the process.
+	 *
+	 * Uses late static binding (`static::`) rather than `self::` so subclasses
+	 * can override this method; called via `static::terminate()`.
+	 *
+	 * @since 0.5.6
+	 * @return void
+	 */
+	protected static function terminate() {
+		exit;
 	}
 
 	/**

@@ -60,7 +60,18 @@ class Disable_Blog_Functions {
 			$redirect_url = $this->parse_query_string( $redirect_url );
 		}
 
-		wp_safe_redirect( esc_url_raw( $redirect_url ), $this->get_redirect_status_code( $current_url, $redirect_url ) );
+		wp_safe_redirect( esc_url_raw( $redirect_url ), $this->get_redirect_status_code( $current_url, $redirect_url ) ); // phpcs:ignore WordPressVIPMinimum.Security.ExitAfterRedirect.NoExit -- terminate() below calls exit.
+		$this->terminate();
+	}
+
+	/**
+	 * Wraps `exit` so a test subclass can override it to observe termination
+	 * without actually ending the process.
+	 *
+	 * @since 0.5.6
+	 * @return void
+	 */
+	protected function terminate() {
 		exit;
 	}
 
@@ -79,7 +90,7 @@ class Disable_Blog_Functions {
 
 		// Setup an array of the current query string variables.
 		$query_vars = array();
-		wp_parse_str( $_SERVER['QUERY_STRING'], $query_vars ); // phpcs:ignore
+		wp_parse_str( $_SERVER['QUERY_STRING'], $query_vars ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wp_parse_str() itself parses the raw query string into an array; the parsed $query_vars are filtered against an allow-list below before use, not the raw string.
 
 		// Only allow specific query vars.
 		$allowed_query_vars = $this->get_allowed_query_vars();

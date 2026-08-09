@@ -559,7 +559,7 @@ class Disable_Blog_Public {
 		$methods_to_remove = apply_filters( 'dwpb_disabled_xmlrpc_methods', $methods_to_remove );
 
 		// filter any invalid entries out before returning the array.
-		return is_array( $methods_to_remove ) ? array_filter( $methods_to_remove, 'is_string' ) : false; // phpcs:ignore
+		return is_array( $methods_to_remove ) ? array_filter( $methods_to_remove, 'is_string' ) : false;
 	}
 
 	/**
@@ -606,6 +606,22 @@ class Disable_Blog_Public {
 		if ( ! apply_filters( 'dwpb_remove_pingback_header', true ) ) {
 			return;
 		}
+
+		$this->do_remove_pingback_header();
+	}
+
+	/**
+	 * Perform the actual X-Pingback header removal.
+	 *
+	 * Split out from remove_pingback_header_fallback() so the early-return
+	 * guard above has an observable effect: a test subclass can override this
+	 * method to record whether the removal path was taken, without needing to
+	 * stub the PHP internals `headers_sent()`/`header_remove()`.
+	 *
+	 * @since 0.5.6
+	 * @return void
+	 */
+	protected function do_remove_pingback_header() {
 
 		if ( ! headers_sent() ) {
 			header_remove( 'X-Pingback' );
