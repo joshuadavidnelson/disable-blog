@@ -677,8 +677,48 @@ class AdminCommentsTest extends TestCase {
 	 */
 
 	/**
+	 * Declares real wp_cache_get()/wp_cache_set() functions backed by
+	 * $GLOBALS['dwpb_test_cache_store'], keyed by "{$group}|{$key}".
+	 *
+	 * WP_Mock::userFunction()'s dynamically generated stubs collect arguments with
+	 * func_get_args(), which always copies, so nothing written to a 4th argument is ever
+	 * visible to the caller -- wp_cache_get()'s $found parameter is by reference and can
+	 * only be exercised by a function declared with the real signature (the identical
+	 * limitation documented for wp_parse_str() in tests/php/Support/WpPolyfills.php).
+	 *
+	 * Only safe to call from an @runInSeparateProcess test: PHP cannot un-declare a
+	 * function, so this would otherwise leak into every later test sharing the process.
+	 *
+	 * @return void
+	 */
+	private function stub_object_cache() {
+
+		if ( function_exists( 'wp_cache_get' ) ) {
+			return;
+		}
+
+		$GLOBALS['dwpb_test_cache_store'] = array();
+
+		function wp_cache_get( $key, $group = '', $force = false, &$found = null ) {
+			$composite = $group . '|' . $key;
+			if ( array_key_exists( $composite, $GLOBALS['dwpb_test_cache_store'] ) ) {
+				$found = true;
+				return $GLOBALS['dwpb_test_cache_store'][ $composite ];
+			}
+			$found = false;
+			return false;
+		}
+
+		function wp_cache_set( $key, $value, $group = '' ) {
+			$GLOBALS['dwpb_test_cache_store'][ $group . '|' . $key ] = $value;
+			return true;
+		}
+	}
+
+	/**
 	 * Makes the next `new WP_Query( $args )` call return an instance whose ->posts is
-	 * $posts, and records the constructor args into $captured_args by reference.
+	 * $posts and ->found_posts is $found_posts, and records the constructor args into
+	 * $captured_args by reference.
 	 *
 	 * Uses Mockery::mock( 'overload:WP_Query' ) rather than a same-named fixture class: a
 	 * real `class WP_Query` declared in tests/php/ would be picked up by phpstan.neon.dist's
@@ -689,23 +729,31 @@ class AdminCommentsTest extends TestCase {
 	 * it -- but that also means the instance handed back for the ->posts assignment below is
 	 * only known to phpstan as Mockery\MockInterface, which declares no ->posts property.
 	 * There is no supported way to type that without the disallowed phpstan-mockery
-	 * extension; see this file's scoped phpstan.neon.dist ignores for the resulting errors.
+	 * extension; see this file's scoped phpstan.neon.dist ignore for the resulting error.
+	 * ->found_posts is instead written through a separately @var-typed stdClass alias of
+	 * the same instance (stdClass permits dynamic properties, so PHPStan raises nothing to
+	 * ignore) rather than adding a second, unignored property-access error of its own.
 	 *
 	 * @param array      $posts         The posts array the query should report.
+	 * @param int        $found_posts   The found_posts total the query should report.
 	 * @param array|null $captured_args Set by reference to the args WP_Query was constructed with.
 	 * @return void
 	 */
-	private function stub_wp_query_returns_posts( array $posts, &$captured_args = null ) {
+	private function stub_wp_query_returns_posts( array $posts, $found_posts, &$captured_args = null ) {
 		$container = Mockery::getContainer();
 		$container->mock( 'overload:WP_Query' )
 			->shouldReceive( '__construct' )
 			->once()
 			->andReturnUsing(
-				function ( $args ) use ( $container, $posts, &$captured_args ) {
-					$captured_args    = $args;
-					$mocks            = $container->getMocks();
-					$instance         = end( $mocks );
-					$instance->posts  = $posts;
+				function ( $args ) use ( $container, $posts, $found_posts, &$captured_args ) {
+					$captured_args   = $args;
+					$mocks           = $container->getMocks();
+					$instance        = end( $mocks );
+					$instance->posts = $posts;
+
+					/** @var stdClass $stdclass_alias */
+					$stdclass_alias              = $instance;
+					$stdclass_alias->found_posts = $found_posts;
 				}
 			);
 	}
@@ -718,7 +766,12 @@ class AdminCommentsTest extends TestCase {
 	 * @preserveGlobalState disabled
 	 */
 	public function test_get_term_post_count_by_type_returns_post_count_when_posts_found() {
-		$this->stub_wp_query_returns_posts( array( 101, 102, 103 ) );
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
+		// found_posts (3) deliberately differs from count( $posts ) (1): the return value
+		// must come from found_posts, not from counting the ids WP_Query happened to return.
+		$this->stub_wp_query_returns_posts( array( 101 ), 3 );
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 
@@ -730,7 +783,10 @@ class AdminCommentsTest extends TestCase {
 	 * @preserveGlobalState disabled
 	 */
 	public function test_get_term_post_count_by_type_returns_zero_when_no_posts_found() {
-		$this->stub_wp_query_returns_posts( array() );
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
+		$this->stub_wp_query_returns_posts( array(), 0 );
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 
@@ -738,23 +794,207 @@ class AdminCommentsTest extends TestCase {
 	}
 
 	/**
-	 * Proves the query args passed to `new WP_Query()` are wired correctly: the taxonomy,
-	 * term id and post type all land in the expected places.
+	 * A term with more matches than one page of results reports its true total. The count
+	 * comes from found_posts, not from the number of rows the query returns.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_get_term_post_count_by_type_returns_count_above_the_old_cap() {
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
+		$this->stub_wp_query_returns_posts( array( 101 ), 250 );
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+
+		$this->assertSame( 250, $admin->get_term_post_count_by_type( 5, 'category', 'page' ) );
+	}
+
+	/**
+	 * Proves the query args passed to `new WP_Query()` are wired exactly as expected --
+	 * every key and value, not just the taxonomy/term id/post type -- so any future change
+	 * to the query (e.g. posts_per_page creeping back up, or no_found_rows flipping back to
+	 * true) is caught.
 	 *
 	 * @runInSeparateProcess
 	 * @preserveGlobalState disabled
 	 */
 	public function test_get_term_post_count_by_type_builds_expected_query_args() {
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
 		$captured_args = null;
-		$this->stub_wp_query_returns_posts( array(), $captured_args );
+		$this->stub_wp_query_returns_posts( array(), 0, $captured_args );
 
 		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
 		$admin->get_term_post_count_by_type( 7, 'post_tag', 'page' );
 
-		$this->assertSame( 'page', $captured_args['post_type'] );
-		$this->assertSame( 'ids', $captured_args['fields'] );
-		$this->assertSame( 'post_tag', $captured_args['tax_query'][0]['taxonomy'] );
-		$this->assertSame( 'id', $captured_args['tax_query'][0]['field'] );
-		$this->assertSame( 7, $captured_args['tax_query'][0]['terms'] );
+		$expected = array(
+			'fields'                 => 'ids',
+			'posts_per_page'         => 1,
+			'post_type'              => 'page',
+			'no_found_rows'          => false,
+			'update_post_meta_cache' => false,
+			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- pins the exact args get_term_post_count_by_type() passes to WP_Query; the slow-query caveat is the production code's concern (already flagged and justified there), not this comparison array's.
+				array(
+					'taxonomy' => 'post_tag',
+					'field'    => 'id',
+					'terms'    => 7,
+				),
+			),
+		);
+		$this->assertSame( $expected, $captured_args );
+	}
+
+	/**
+	 * A second call for the same (term_id, taxonomy, post_type) must be answered from the
+	 * cache without building a second WP_Query.
+	 *
+	 * Counts constructions itself rather than via shouldReceive( '__construct' )->once():
+	 * Mockery's overload-mock call count is unreliable once a test's overloaded class is
+	 * instantiated more than once (confirmed with a minimal repro against a throwaway
+	 * overloaded class, entirely outside this plugin's code -- `new Probe( 1 ); new
+	 * Probe( 2 );` against a `shouldReceive( '__construct' )->once()` expectation, then
+	 * Mockery::close() -- which reports "called 1 times" and passes even though the
+	 * constructor genuinely ran twice). A plain incremented counter is not subject to that.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_get_term_post_count_by_type_second_call_uses_cache_without_second_query() {
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
+		$construct_count = 0;
+		$container       = Mockery::getContainer();
+		$container->mock( 'overload:WP_Query' )
+			->shouldReceive( '__construct' )
+			->andReturnUsing(
+				function ( $args ) use ( $container, &$construct_count ) {
+					++$construct_count;
+					$mocks    = $container->getMocks();
+					$instance = end( $mocks );
+
+					/** @var stdClass $stdclass_alias */
+					$stdclass_alias              = $instance;
+					$stdclass_alias->found_posts = 2;
+				}
+			);
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+
+		$this->assertSame( 2, $admin->get_term_post_count_by_type( 5, 'category', 'page' ) );
+		$this->assertSame( 2, $admin->get_term_post_count_by_type( 5, 'category', 'page' ) );
+		$this->assertSame( 1, $construct_count );
+	}
+
+	/**
+	 * A cached count of 0 must short-circuit the same as any other cached count.
+	 * wp_cache_get() returns false on a miss, and 0 is falsy too, so a naive
+	 * `if ( $cached = wp_cache_get(...) )` implementation would treat a real cached 0
+	 * identically to a miss and recompute forever -- constructing a second WP_Query.
+	 *
+	 * Counts constructions itself rather than via shouldReceive( '__construct' )->once():
+	 * see test_get_term_post_count_by_type_second_call_uses_cache_without_second_query()'s
+	 * docblock for why that expectation can't be trusted to catch a second construction.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_get_term_post_count_by_type_cached_zero_short_circuits() {
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
+		$construct_count = 0;
+		$container       = Mockery::getContainer();
+		$container->mock( 'overload:WP_Query' )
+			->shouldReceive( '__construct' )
+			->andReturnUsing(
+				function ( $args ) use ( $container, &$construct_count ) {
+					++$construct_count;
+					$mocks    = $container->getMocks();
+					$instance = end( $mocks );
+
+					/** @var stdClass $stdclass_alias */
+					$stdclass_alias              = $instance;
+					$stdclass_alias->found_posts = 0;
+				}
+			);
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+
+		$this->assertSame( 0, $admin->get_term_post_count_by_type( 5, 'category', 'page' ) );
+		$this->assertSame( 0, $admin->get_term_post_count_by_type( 5, 'category', 'page' ) );
+		$this->assertSame( 1, $construct_count );
+	}
+
+	/**
+	 * (5, 'genre', 'fiction-book') and (5, 'genre-fiction', 'book') would both concatenate
+	 * to "5-genre-fiction-book" under a naive cache key, so each must return its own
+	 * distinct count rather than one colliding into the other's cache entry. Also proves
+	 * each triple is itself cached: a third and fourth call for the same two triples must
+	 * not trigger any further WP_Query construction.
+	 *
+	 * Counts constructions itself rather than via shouldReceive( '__construct' )->times():
+	 * see test_get_term_post_count_by_type_second_call_uses_cache_without_second_query()'s
+	 * docblock for why that expectation can't be trusted here.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_get_term_post_count_by_type_distinguishes_similar_triples() {
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' );
+
+		$construct_count = 0;
+		$container       = Mockery::getContainer();
+		$container->mock( 'overload:WP_Query' )
+			->shouldReceive( '__construct' )
+			->andReturnUsing(
+				function ( $args ) use ( $container, &$construct_count ) {
+					++$construct_count;
+					$mocks    = $container->getMocks();
+					$instance = end( $mocks );
+
+					/** @var stdClass $stdclass_alias */
+					$stdclass_alias = $instance;
+					if ( 'fiction-book' === $args['post_type'] ) {
+						$stdclass_alias->found_posts = 11;
+					} else {
+						$stdclass_alias->found_posts = 22;
+					}
+				}
+			);
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+
+		$this->assertSame( 11, $admin->get_term_post_count_by_type( 5, 'genre', 'fiction-book' ) );
+		$this->assertSame( 22, $admin->get_term_post_count_by_type( 5, 'genre-fiction', 'book' ) );
+
+		// Repeat calls for both triples must be answered from the cache, not a 3rd/4th query.
+		$this->assertSame( 11, $admin->get_term_post_count_by_type( 5, 'genre', 'fiction-book' ) );
+		$this->assertSame( 22, $admin->get_term_post_count_by_type( 5, 'genre-fiction', 'book' ) );
+		$this->assertSame( 2, $construct_count );
+	}
+
+	/**
+	 * Term post counts change whenever a post is edited, so the cache group must never be
+	 * allowed to persist across requests.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_get_term_post_count_by_type_registers_non_persistent_group() {
+		$this->stub_object_cache();
+		WP_Mock::userFunction( 'wp_cache_add_non_persistent_groups' )
+			->once()
+			->with( 'dwpb-term-post-count-by-type' );
+
+		$this->stub_wp_query_returns_posts( array( 101 ), 1 );
+
+		$admin = new Disable_Blog_Admin( 'disable-blog', '0.5.6' );
+
+		$this->assertSame( 1, $admin->get_term_post_count_by_type( 5, 'category', 'page' ) );
 	}
 }

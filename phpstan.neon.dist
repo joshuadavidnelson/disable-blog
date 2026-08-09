@@ -80,6 +80,17 @@ parameters:
             message: '#^Inner named functions are not supported by PHPStan\.#'
             path: tests/php/PublicMiscTest.php
 
+        # Same reasoning as the two entries above, for wp_cache_get()/wp_cache_set(). These
+        # must be real global functions declared with wp_cache_get()'s by-reference $found
+        # parameter: WP_Mock::userFunction()'s generated stubs collect arguments through
+        # func_get_args(), which copies, so a stub can never write back to $found -- the
+        # same limitation WpPolyfills.php documents for wp_parse_str(). They stay nested
+        # inside the @runInSeparateProcess tests that need them, since PHP cannot un-declare
+        # a function and a file-scope declaration would mask missing stubs everywhere else.
+        -
+            message: '#^Inner named functions are not supported by PHPStan\.#'
+            path: tests/php/AdminCommentsTest.php
+
         # get_term_post_count_by_type()'s tests mock WP_Query itself (see
         # stub_wp_query_returns_posts()'s docblock in AdminCommentsTest.php for why an
         # overload mock is used instead of a same-named fixture class). end() on
