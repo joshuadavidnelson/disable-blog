@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.6
+
+- Tested up to WordPress 7.1.3
+- Tested up to PHP 8.5
+- Update development dependencies (Composer and npm), resolving all Composer security advisories and every critical and high npm advisory
+- Upgrade `@wordpress/env` to v12, which needs Node 22.13 or newer and an `npm install` before the next `wp-env start`
+
 ## 0.5.5
 
 - Tested up to WordPress 6.9.1

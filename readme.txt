@@ -4,8 +4,8 @@ Donate link: https://joshuadnelson.com/donate/
 Tags: disable blog, disable posts, disable blogging, disable settings, remove blog
 Requires at least: 5.9
 Requires PHP: 7.4
-Tested up to: 6.9
-Stable tag: 0.5.5
+Tested up to: 7.1
+Stable tag: 0.5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,6 +86,12 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 
 == Changelog ==
+
+= 0.5.6 =
+- Tested up to WordPress 7.1.3
+- Tested up to PHP 8.5
+- Update development dependencies (Composer and npm), resolving all Composer security advisories and every critical and high npm advisory
+- Upgrade `@wordpress/env` to v12, which needs Node 22.13 or newer and an `npm install` before the next `wp-env start`
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
@@ -305,6 +311,9 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.6 =
+Tested up to WordPress 7.1 and PHP 8.5. Development dependency updates only, with no change to plugin behavior.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
