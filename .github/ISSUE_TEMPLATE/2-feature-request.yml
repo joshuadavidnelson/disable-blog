@@ -1,0 +1,56 @@
+name: ✨ Feature request
+description: Suggest a new feature or an improvement to an existing one.
+title: "[Feature]: "
+labels: ["enhancement", "feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Before filing, please check [open feature requests](../issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement%2Cfeature-request) and the [roadmap items](../issues?q=is%3Aissue+is%3Aopen+label%3Aon-roadmap). If your idea is already there, a 👍 reaction or a comment on that issue helps more than a duplicate.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched existing issues and did not find this request already filed.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the situation, not the solution. Who is affected, and how often?
+      placeholder: As a site editor, I need to … but currently I have to ….
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen? Mockups, screenshots, or example code are welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Other approaches, workarounds you use today, or how other plugins handle this.
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Can you help with this?
+      description: Totally optional. Knowing helps with planning.
+      options:
+        - I can open a pull request
+        - I can test a pull request
+        - I can help with documentation
+        - No, just suggesting
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?

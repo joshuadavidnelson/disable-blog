@@ -1,0 +1,135 @@
+name: 🐞 Bug report
+description: Something isn't working as expected.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. A few quick notes before you start:
+
+        - **Support questions** ("how do I…?") belong in the plugin's WordPress.org support forum, linked from the issue chooser.
+        - **Security vulnerabilities** must not be reported here. Use the private report form linked from the issue chooser instead.
+        - Please search [open and closed issues](../issues?q=is%3Aissue) first. If one already covers your bug, add a comment there instead.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched existing open and closed issues and did not find this bug already reported.
+          required: true
+        - label: I am running the latest released version of this plugin.
+          required: true
+        - label: I reproduced the bug with all other plugins deactivated and a default WordPress theme active (or I explain below why I could not).
+          required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear, concise description of the bug.
+      placeholder: When I …, the plugin … instead of ….
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps so a maintainer can see the bug on a fresh install.
+      placeholder: |
+        1. Go to …
+        2. Click …
+        3. Observe …
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it happen?
+      description: Select all that apply.
+      multiple: true
+      options:
+        - Block editor (Gutenberg)
+        - Classic editor
+        - Another admin screen
+        - Front end of the site
+        - REST API
+        - WP-CLI
+        - Not sure
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: Found under Plugins → Installed Plugins.
+      placeholder: "e.g. 0.5.5"
+    validations:
+      required: true
+
+  - type: input
+    id: wp-version
+    attributes:
+      label: WordPress version
+      placeholder: "e.g. 6.9.1"
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      description: Found under Tools → Site Health → Info → Server.
+      placeholder: "e.g. 8.3.4"
+
+  - type: input
+    id: theme
+    attributes:
+      label: Active theme
+      placeholder: "e.g. Twenty Twenty-Five 1.2"
+
+  - type: textarea
+    id: other-plugins
+    attributes:
+      label: Other active plugins
+      description: Especially any plugin you suspect is involved. Include versions where you can.
+      placeholder: |
+        - Yoast SEO 24.1
+        - WooCommerce 9.4
+
+  - type: textarea
+    id: site-health
+    attributes:
+      label: Site Health info (optional)
+      description: |
+        Go to **Tools → Site Health → Info**, click **Copy site info to clipboard**, and paste it here. It is automatically rendered as a code block.
+        Remove anything you consider private before pasting.
+      render: text
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, error messages, or logs
+      description: |
+        Drag and drop images or recordings here. Paste PHP errors or `debug.log` lines inside a code block.
+        Enabling `WP_DEBUG` and `WP_DEBUG_LOG` in `wp-config.php` often surfaces the cause.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Workarounds you found, when the bug started (e.g. after an update), or other context.

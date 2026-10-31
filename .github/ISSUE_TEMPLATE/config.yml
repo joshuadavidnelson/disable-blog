@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ❓ Support question
+    url: https://wordpress.org/support/plugin/disable-blog/
+    about: Questions about using or extending the plugin belong in the WordPress.org support forum, not the issue tracker.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/joshuadavidnelson/disable-blog/security/advisories/new
+    about: Please report security issues privately. Do not open a public issue or forum post. See SECURITY.md for details.
+  - name: 🌐 Translations
+    url: https://translate.wordpress.org/projects/wp-plugins/disable-blog/
+    about: Translation fixes and new languages are handled on translate.wordpress.org, not in this repository.
