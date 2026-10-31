@@ -98,6 +98,10 @@ If Settings > Reading > Front Page Displays is not set to show on a page, then s
 
 This plugin is maintained for free but **please reach out** and I will assist you as soon as possible. You can visit the [WordPress.org support forums](https://wordpress.org/support/plugin/disable-blog/) or create an [issue](https://github.com/joshuadavidnelson/disable-blog/issues/) on the [GitHub repository](https://github.com/joshuadavidnelson/disable-blog/).
 
+## Security
+
+Security fixes are released against the latest version, published on [WordPress.org](https://wordpress.org/plugins/disable-blog/) and in this repository. Please report vulnerabilities privately using **Report a vulnerability** on the [Security tab](https://github.com/joshuadavidnelson/disable-blog/security/advisories/new), not through public issues or the support forum. See the [general security policy](https://github.com/joshuadavidnelson/.github/blob/main/SECURITY.md) for response times. If the plugin appears abandoned or unresponsive, the [WordPress.org plugin review team](https://developer.wordpress.org/plugins/wordpress-org/plugin-security/reporting-plugin-security-issues/) can be contacted at plugins@wordpress.org.
+
 ## Contributing
 
 All contributions are welcomed and considered, please refer to [contributing.md](contributing.md).
