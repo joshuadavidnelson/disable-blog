@@ -5,7 +5,7 @@ Tags: disable blog, disable posts, disable blogging, disable settings, remove bl
 Requires at least: 5.9
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 0.5.5
+Stable tag: 0.5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,6 +86,15 @@ There are numerous filters available to change the way this plugin works. Refer 
 
 
 == Changelog ==
+
+= 0.5.6 =
+- Tested up to WordPress 7.1.3
+- Tested up to PHP 8.5
+- Add `Requires at least` and `Requires PHP` to the plugin header, so WordPress checks them on activation
+- Update development dependencies (Composer and npm) to resolve security advisories
+- Upgrade `@wordpress/env` to v12, which needs Node 24.18 or newer and npm 11.16 or newer; run `npm install` before the next `wp-env start`
+- Exclude development files from the plugin zip and from GitHub source downloads
+- Update the CI and deploy workflows to `actions/checkout@v6`, and add an npm audit job and Dependabot version updates
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
@@ -305,6 +314,9 @@ A bunch of stuff:
 * Hide other post-related reading options, except Search Engine Visibility
 
 == Upgrade Notice ==
+
+= 0.5.6 =
+Tested up to WordPress 7.1 and PHP 8.5, with the minimum WordPress and PHP versions now declared in the plugin header. No other change to plugin behavior.
 
 = 0.5.5 =
 - Tested up to WordPress 6.9.1
