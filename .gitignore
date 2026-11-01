@@ -11,3 +11,6 @@
 # PHPUnit artifacts
 .phpunit.cache/
 /coverage/
+
+# Quality reports
+/reports/

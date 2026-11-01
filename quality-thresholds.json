@@ -1,0 +1,21 @@
+{
+  "_comment": "Single source of truth for coverage floors and code-metric ceilings, read by the shared CI (joshuadavidnelson/ci) coverage check and PR report. Floors sit a few points below current values (lines 99.05%, methods 93.81%): enough slack for changes that legitimately add uncovered lines, tight enough that a real regression fails. There is no coverage.js: the two admin scripts in assets/js have no unit-test harness, so the JS workflow does not apply.",
+  "coverage": {
+    "php": {
+      "lines": 96,
+      "methods": 90
+    }
+  },
+  "metrics": {
+    "_comment": "Only metrics listed in max are reported in the PR comment. Every one is a ceiling, so worse always means higher. Keys in gate fail CI; the rest annotate the comment. error is 4 today, from the class and method complexity of Disable_Blog_Admin and Disable_Blog_Public; the ceiling holds it there and should drop as those classes are split. Measured: avgCyclomaticComplexityByClass 31.89, logicalLinesByMethod 12, lackCohesionOfMethods 6.33, avgEfferentCoupling 1.11.",
+    "max": {
+      "critical": 0,
+      "error": 4,
+      "avgCyclomaticComplexityByClass": 34,
+      "logicalLinesByMethod": 13,
+      "lackCohesionOfMethods": 7,
+      "avgEfferentCoupling": 1.5
+    },
+    "gate": [ "critical", "error" ]
+  }
+}

@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<ruleset name="Disable Blog PHPMD Rules"
+         xmlns="http://pmd.sf.net/ruleset/1.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd"
+         xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd">
+    <description>
+        PHPMD rules for the Disable Blog WordPress plugin, modelled on Archived
+        Post Status's ruleset. Size and complexity limits sit just above the
+        largest current value, so they act as a ratchet: nothing gets worse,
+        and each limit is lowered as Disable_Blog_Admin and Disable_Blog_Public
+        are broken up. Style-only rules that fight WordPress conventions are
+        left out (see the notes beside each one).
+    </description>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/languages/*</exclude-pattern>
+    <exclude-pattern>*.js</exclude-pattern>
+    <exclude-pattern>*.css</exclude-pattern>
+
+    <!-- Code size. Ratchet values: current maximum in brackets. -->
+    <rule ref="rulesets/codesize.xml/CyclomaticComplexity">
+        <properties>
+            <!-- [14] Disable_Blog_Admin::redirect_admin_pages(), dwpb_post_types_with_tax() -->
+            <property name="reportLevel" value="15" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/NPathComplexity">
+        <properties>
+            <!-- [352] dwpb_post_types_with_tax() -->
+            <property name="minimum" value="400" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveMethodLength">
+        <properties>
+            <property name="minimum" value="120" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveClassLength">
+        <properties>
+            <!-- [1480] Disable_Blog_Admin -->
+            <property name="minimum" value="1550" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveParameterList">
+        <properties>
+            <property name="minimum" value="10" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessivePublicCount">
+        <properties>
+            <!-- [47] Disable_Blog_Admin: every hook callback must be public. -->
+            <property name="minimum" value="50" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/TooManyFields">
+        <properties>
+            <property name="maxfields" value="15" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/TooManyMethods">
+        <properties>
+            <!-- [43] Disable_Blog_Admin -->
+            <property name="maxmethods" value="45" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveClassComplexity">
+        <properties>
+            <!-- [170] Disable_Blog_Admin -->
+            <property name="maximum" value="175" />
+        </properties>
+    </rule>
+
+    <!-- Design -->
+    <rule ref="rulesets/design.xml/EvalExpression" />
+    <rule ref="rulesets/design.xml/GotoStatement" />
+    <!-- ExitExpression is left out: exit after wp_safe_redirect() is the
+         WordPress idiom, and each class keeps it in one terminate() seam. -->
+    <rule ref="rulesets/design.xml/NumberOfChildren">
+        <properties>
+            <property name="minimum" value="15" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/design.xml/DepthOfInheritance">
+        <properties>
+            <property name="minimum" value="6" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/design.xml/CouplingBetweenObjects">
+        <properties>
+            <property name="maximum" value="15" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/design.xml/DevelopmentCodeFragment" />
+
+    <!-- Clean code. ElseExpression and BooleanArgumentFlag are style-only and
+         left out: the existing else branches and flag arguments are readable
+         and rewriting them is churn with no defect behind it. -->
+    <rule ref="rulesets/cleancode.xml/StaticAccess">
+        <properties>
+            <!-- WordPress core classes, plus the activation/deactivation hooks,
+                 which WordPress calls as static callbacks. -->
+            <property name="exceptions" value="WP_Query,WP_Error,WP_CLI,Disable_Blog_Activator,Disable_Blog_Deactivator" />
+        </properties>
+    </rule>
+
+    <!-- Unused code. UnusedFormalParameter is left out: hook callbacks must
+         accept the arguments WordPress passes even when they ignore them. -->
+    <rule ref="rulesets/unusedcode.xml/UnusedPrivateField" />
+    <rule ref="rulesets/unusedcode.xml/UnusedLocalVariable">
+        <properties>
+            <!-- foreach ( $views as $view => $text ) uses only the key. -->
+            <property name="allow-unused-foreach-variables" value="true" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/unusedcode.xml/UnusedPrivateMethod" />
+
+    <!-- Naming. LongVariable is left out: WordPress favours descriptive
+         snake_case names such as $disable_author_archives. -->
+    <rule ref="rulesets/naming.xml/ShortVariable">
+        <properties>
+            <property name="minimum" value="3" />
+            <!-- $wp is the WordPress global; $r is wp_remote_get()'s documented name. -->
+            <property name="exceptions" value="wp,r,id" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/naming.xml/ShortMethodName">
+        <properties>
+            <property name="minimum" value="3" />
+        </properties>
+    </rule>
+    <rule ref="rulesets/naming.xml/ConstructorWithNameAsEnclosingClass" />
+    <rule ref="rulesets/naming.xml/ConstantNamingConventions" />
+    <rule ref="rulesets/naming.xml/BooleanGetMethodName" />
+</ruleset>

@@ -20,3 +20,7 @@ package-lock.json
 .wp-env.json
 playwright.config.ts
 .wp-env.override.json
+phpmd.xml
+quality-thresholds.json
+/coverage/
+/reports/
