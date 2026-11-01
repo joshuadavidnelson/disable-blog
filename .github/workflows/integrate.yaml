@@ -12,14 +12,22 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        php-versions: ['7.4', '8.1', '8.2', '8.3', '8.4']
+        php-versions: ['7.4', '8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v4"
+      uses: "actions/checkout@v6"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: ${{ matrix.php-versions }}
+    - name: "Cache Composer dependencies"
+      uses: "actions/cache@v6"
+      with:
+        path: "vendor"
+        key: "composer-${{ matrix.php-versions }}-${{ hashFiles('composer.lock') }}"
+        restore-keys: |
+          composer-${{ matrix.php-versions }}-
+          composer-
     - name: "Install dependencies"
       run: "composer install --ignore-platform-reqs"
     - name: "PHP lint"
@@ -30,11 +38,19 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v4"
+      uses: "actions/checkout@v6"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: "8.4"
+    - name: "Cache Composer dependencies"
+      uses: "actions/cache@v6"
+      with:
+        path: "vendor"
+        key: "composer-8.4-${{ hashFiles('composer.lock') }}"
+        restore-keys: |
+          composer-8.4-
+          composer-
     - name: "Install PHPCS"
       run: |
         composer install
@@ -46,12 +62,39 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v4"
+      uses: "actions/checkout@v6"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: "8.4"
+    - name: "Cache Composer dependencies"
+      uses: "actions/cache@v6"
+      with:
+        path: "vendor"
+        key: "composer-8.4-${{ hashFiles('composer.lock') }}"
+        restore-keys: |
+          composer-8.4-
+          composer-
     - name: "Install PHPStan"
       run: "composer install"
     - name: "Run PHPStan"
       run: "composer phpstan"
+
+  npm-audit:
+    name: "npm install and audit on Node 24"
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v6"
+    - name: "Install Node"
+      uses: "actions/setup-node@v6"
+      with:
+        node-version: "24"
+        check-latest: true
+        cache: "npm"
+    - name: "Install npm dependencies"
+      run: "npm ci"
+    - name: "Audit npm dependencies"
+      run: "npm audit --audit-level=high"
+    - name: "Check that wp-env loads"
+      run: "npx --no-install wp-env --version"
