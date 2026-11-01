@@ -1,0 +1,64 @@
+name: "Integrate"
+
+on:
+  pull_request: null
+  push:
+    branches:
+      - "stable"
+      - "develop"
+
+permissions:
+  contents: "read"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  # Lint matrix, PHPCS/PHPStan/PHPMD, PHPUnit with coverage, and PHPMetrics,
+  # each compared with the PR's base branch. Floors and ceilings come from
+  # quality-thresholds.json. See https://github.com/joshuadavidnelson/ci.
+  #
+  # The matrix runs from the plugin's declared floor (composer.json
+  # "php": ">=7.4") through the newest release. config.platform.php is
+  # pinned to 7.4, so the lock installs on every leg without
+  # --ignore-platform-reqs.
+  php:
+    uses: "joshuadavidnelson/ci/.github/workflows/php-plugin.yml@v1"
+    with:
+      php-versions: '["7.4", "8.0", "8.1", "8.2", "8.3", "8.4", "8.5"]'
+      source-paths: "disable-blog.php includes/"
+
+  # Complexity only. The admin scripts in assets/js have no unit-test
+  # harness, so there is nothing to measure coverage from, and with no
+  # js.complexity block in quality-thresholds.json the numbers are reported
+  # without gating.
+  js:
+    uses: "joshuadavidnelson/ci/.github/workflows/js.yml@v1"
+    with:
+      js-source-paths: "assets/js/"
+      coverage: false
+
+  # The shared workflow runs PHPUnit on its quality PHP version (8.4) only.
+  # The suite also runs on the floor and the newest release, because the
+  # plugin claims to work on both.
+  phpunit:
+    name: "PHPUnit on PHP ${{ matrix.php }}"
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["7.4", "8.5"]
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v7"
+        with:
+          persist-credentials: false
+
+      - name: "Set up PHP and Composer"
+        uses: "joshuadavidnelson/ci/actions/setup-php@v1"
+        with:
+          php-version: "${{ matrix.php }}"
+
+      - name: "Run PHPUnit"
+        run: "composer phpunit"

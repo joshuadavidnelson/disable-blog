@@ -1,0 +1,18 @@
+name: "PR Report"
+
+# Posts the one sticky CI report comment (header ci-report) from the
+# sections Integrate uploaded. It never checks out or runs PR code, so fork
+# PRs get a comment too. workflow_run only fires from the default branch,
+# so this starts commenting once it has merged to stable.
+on:
+  workflow_run:
+    workflows: [Integrate]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  actions: read
+
+jobs:
+  report:
+    uses: "joshuadavidnelson/ci/.github/workflows/pr-report.yml@v1"

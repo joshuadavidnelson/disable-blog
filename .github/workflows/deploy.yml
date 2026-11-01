@@ -1,19 +1,26 @@
 name: "Deploy to WordPress.org"
+
 on:
   push:
     tags:
-    - "*"
-jobs:
-  tag:
-    name: "New tag"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Checkout"
-      uses: actions/checkout@master
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+.[0-9]+"
 
-    - name: "WordPress Plugin Deploy"
-      uses: 10up/action-wordpress-plugin-deploy@stable
-      env:
-        SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-        SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-        SLUG: disable-blog
+permissions:
+  contents: read
+
+jobs:
+  # Deploys only once Integrate has succeeded on the tagged commit, and runs
+  # in the wordpress-org environment, which should have a required reviewer.
+  # E2E Tests is not required: it runs on pull requests only, so a commit
+  # tagged on stable never has an E2E run of its own.
+  deploy:
+    uses: "joshuadavidnelson/ci/.github/workflows/wp-deploy.yml@v1"
+    permissions:
+      actions: read
+      contents: read
+    with:
+      slug: "disable-blog"
+      required-workflows: |
+        Integrate
+    secrets: inherit
