@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for coverage floors and code-metric ceilings, read by the shared CI (joshuadavidnelson/ci) coverage check and PR report. Floors sit a few points below current values (lines 99.05%, methods 93.81%): enough slack for changes that legitimately add uncovered lines, tight enough that a real regression fails. There is no coverage.js: the two admin scripts in assets/js have no unit-test harness, so the JS workflow does not apply.",
+  "_comment": "Single source of truth for coverage floors and code-metric ceilings, read by the shared CI (joshuadavidnelson/ci) coverage check and PR report. Floors sit a few points below current values (lines 99.05%, methods 93.81%): enough slack for changes that legitimately add uncovered lines, tight enough that a real regression fails. There is no coverage.js: the two admin scripts in assets/js have no unit-test harness, so Integrate calls js.yml with coverage off. There is no js.complexity block either, so JS complexity is reported without gating.",
   "coverage": {
     "php": {
       "lines": 96,
