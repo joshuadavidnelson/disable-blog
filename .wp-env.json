@@ -1,4 +1,5 @@
 {
+	"core": "https://wordpress.org/wordpress-6.9.zip",
 	"config": {
 		"WP_DEBUG": true,
 		"WP_DEBUG_LOG": true
