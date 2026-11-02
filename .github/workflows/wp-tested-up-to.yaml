@@ -1,0 +1,102 @@
+name: "WordPress Tested Up To"
+
+on:
+  schedule:
+    # Daily at 06:00 UTC. Scheduled runs only fire from the default branch.
+    - cron: "0 6 * * *"
+  workflow_dispatch: null
+
+permissions:
+  contents: "write"
+  pull-requests: "write"
+
+concurrency:
+  group: "${{ github.workflow }}"
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: "Bump tested up to version"
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: "Checkout repository"
+      uses: "actions/checkout@v4"
+      with:
+        ref: "stable"
+
+    - name: "Resolve latest WordPress version"
+      id: "wp"
+      run: |
+        set -euo pipefail
+
+        full="$(curl -sSf https://api.wordpress.org/core/stable-check/1.0/ \
+          | jq -r 'to_entries | map(select(.value == "latest")) | .[0].key // empty')"
+
+        # Refuse to touch any file on an empty or malformed response rather than
+        # writing a bad value into the readmes.
+        if ! [[ "${full}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+          echo "Unusable version from the WordPress.org API: '${full}'" >&2
+          exit 1
+        fi
+
+        # readme.txt states the minor release; README.md carries the full version.
+        echo "full=${full}" >>"${GITHUB_OUTPUT}"
+        echo "minor=$(echo "${full}" | cut -d. -f1,2)" >>"${GITHUB_OUTPUT}"
+
+        echo "Latest WordPress release: ${full}"
+
+    - name: "Update version references"
+      env:
+        FULL: "${{ steps.wp.outputs.full }}"
+        MINOR: "${{ steps.wp.outputs.minor }}"
+      run: |
+        set -euo pipefail
+
+        # The version group matches two- and three-part releases alike (7.1 and 7.1.2),
+        # since WordPress ships both.
+        sed -E -i "s|^(Tested up to:[[:space:]]*)[0-9]+\.[0-9]+(\.[0-9]+)?[[:space:]]*$|\1${MINOR}|" readme.txt
+        sed -E -i "s|(\*\*Tested up to WordPress:\*\*[[:space:]]*)[0-9]+\.[0-9]+(\.[0-9]+)?|\1${FULL}|" README.md
+        sed -E -i "s|(https://wordpress\.org/wordpress-)[0-9]+\.[0-9]+(\.[0-9]+)?(\.zip)|\1${FULL}\3|" .wp-env.json
+
+    - name: "Verify the edits landed"
+      env:
+        FULL: "${{ steps.wp.outputs.full }}"
+        MINOR: "${{ steps.wp.outputs.minor }}"
+      run: |
+        set -euo pipefail
+
+        # A regex that stops matching is the failure mode this workflow is most prone
+        # to, and it looks identical to "already up to date". Fail loudly instead.
+        grep -qxF "Tested up to: ${MINOR}" readme.txt \
+          || { echo "readme.txt does not state 'Tested up to: ${MINOR}'" >&2; exit 1; }
+        grep -qF "**Tested up to WordPress:** ${FULL}" README.md \
+          || { echo "README.md does not state 'Tested up to WordPress: ${FULL}'" >&2; exit 1; }
+        grep -qF "wordpress-${FULL}.zip" .wp-env.json \
+          || { echo ".wp-env.json core is not pinned to ${FULL}" >&2; exit 1; }
+
+    - name: "Create pull request"
+      uses: "peter-evans/create-pull-request@v7"
+      with:
+        # A PR opened with GITHUB_TOKEN will not trigger the Integrate workflow.
+        # Set a WORKFLOW_PAT repo secret to have the checks run on these PRs.
+        token: "${{ secrets.WORKFLOW_PAT || secrets.GITHUB_TOKEN }}"
+        add-paths: |
+          readme.txt
+          README.md
+          .wp-env.json
+        base: "stable"
+        # A fixed branch means an already-open PR is updated in place instead of a
+        # second one being opened, and it rolls forward onto later releases.
+        branch: "bot/wp-tested-up-to"
+        delete-branch: true
+        commit-message: "Update tested up to WordPress ${{ steps.wp.outputs.full }}"
+        title: "Update tested up to WordPress ${{ steps.wp.outputs.full }}"
+        body: |
+          WordPress ${{ steps.wp.outputs.full }} is the current stable release.
+
+          - `readme.txt` — `Tested up to: ${{ steps.wp.outputs.minor }}` (WordPress.org reads the minor release)
+          - `README.md` — `**Tested up to WordPress:** ${{ steps.wp.outputs.full }}`
+          - `.wp-env.json` — `core` pinned to WordPress ${{ steps.wp.outputs.full }}
+
+          Opened automatically by the `WordPress Tested Up To` workflow. Confirm the
+          plugin passes against this release before merging.
