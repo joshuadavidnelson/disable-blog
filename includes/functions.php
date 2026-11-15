@@ -12,6 +12,17 @@
  */
 
 /**
+ * Exit if accessed directly.
+ *
+ * Prevent direct access to this file.
+ *
+ * @since 0.5.6
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	die;
+}
+
+/**
  * Get all the post types that support a featured (like 'comments')
  *
  * @link http://codex.wordpress.org/Function_Reference/register_post_type#Arguments
