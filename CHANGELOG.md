@@ -10,6 +10,7 @@
 - Upgrade `@wordpress/env` to v12, which needs Node 24.18 or newer and npm 11.16 or newer; run `npm install` before the next `wp-env start`
 - Exclude development files from the plugin zip and from GitHub source downloads
 - Update the CI and deploy workflows to `actions/checkout@v6`, and add Plugin Check, a CI job that audits npm dependencies and starts wp-env, and Dependabot version updates
+- Update the WordPress.org icon and banner
 
 ## 0.5.5
 
