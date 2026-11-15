@@ -80,8 +80,8 @@ jobs:
     - name: "Run PHPStan"
       run: "composer phpstan"
 
-  npm-audit:
-    name: "npm install and audit on Node 24"
+  dev-environment:
+    name: "Dev environment on Node 24"
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
@@ -96,5 +96,9 @@ jobs:
       run: "npm ci"
     - name: "Audit npm dependencies"
       run: "npm audit --audit-level=high"
-    - name: "Check that wp-env loads"
-      run: "npx --no-install wp-env --version"
+    # Start the environment the way a contributor does, so a wp-env update that
+    # breaks `npm run env:start` fails here instead of on someone's machine.
+    - name: "Start wp-env"
+      run: "npm run env:start"
+    - name: "Check the plugin is active in wp-env"
+      run: "npx --no-install wp-env run cli wp plugin is-active disable-blog"

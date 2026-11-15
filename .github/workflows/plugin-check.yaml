@@ -1,0 +1,52 @@
+name: "Plugin Check"
+
+on:
+  pull_request: null
+  push:
+    branches:
+      - "stable"
+
+permissions:
+  contents: "read"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  plugin-check:
+    name: "Run Plugin Check"
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v6"
+
+    # Plugin Check scans the checkout, not the WordPress.org zip, so exclude
+    # what .distignore keeps out of the zip and keep the two lists in step.
+    # .wp-env.json is listed because the action only excludes the file when it
+    # created it, and this repository has its own.
+    - name: "Run Plugin Check"
+      uses: "wordpress/plugin-check-action@v1"
+      with:
+        exclude-directories: |-
+          /.github
+          /.wordpress-org
+          /vendor
+          /node_modules
+          /tests
+        exclude-files: |-
+          /.gitattributes
+          /.gitignore
+          /.distignore
+          /.editorconfig
+          /.wp-env.json
+          /composer.json
+          /composer.lock
+          /package.json
+          /package-lock.json
+          /phpcs.xml
+          /phpstan.neon.dist
+          /README.md
+          /CHANGELOG.md
+          /code-of-conduct.md
+          /contributing.md
