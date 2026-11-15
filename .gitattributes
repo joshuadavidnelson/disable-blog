@@ -1,0 +1,28 @@
+# Keep git archives (GitHub source downloads, Composer installs from this
+# repository) to the plugin, like the WordPress.org zip that .distignore
+# builds. composer.json stays in the archive so Composer can install it.
+
+# Version control and CI
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.distignore export-ignore
+
+# WordPress.org assets
+/.wordpress-org export-ignore
+
+# Development tooling
+/.editorconfig export-ignore
+/.wp-env.json export-ignore
+/composer.lock export-ignore
+/package.json export-ignore
+/package-lock.json export-ignore
+/phpcs.xml export-ignore
+/phpstan.neon.dist export-ignore
+/tests export-ignore
+
+# Repository documentation; readme.txt is the WordPress.org readme
+/README.md export-ignore
+/CHANGELOG.md export-ignore
+/code-of-conduct.md export-ignore
+/contributing.md export-ignore

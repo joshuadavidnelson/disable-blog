@@ -1,16 +1,30 @@
-/.github
+# Version control and CI
 /.git
+/.github
+/.gitattributes
+/.gitignore
+/.distignore
+
+# WordPress.org assets, deployed separately to SVN assets/
 /.wordpress-org
+
+# Dependencies
 /vendor/
+/node_modules/
+
+# Development tooling
+/.editorconfig
+/.wp-env.json
+/composer.json
+/composer.lock
+/package.json
+/package-lock.json
+/phpcs.xml
+/phpstan.neon.dist
 /tests/
-.editorconfig
-.gitignore
-.distignore
-composer.json
-composer.lock
-code-of-conduct.md
-contributing.md
-phpstan.neon.dist
-package.json
-package-lock.json
-.wp-env.json
+
+# Repository documentation; readme.txt is the WordPress.org readme
+/README.md
+/CHANGELOG.md
+/code-of-conduct.md
+/contributing.md
