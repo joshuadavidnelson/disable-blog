@@ -130,10 +130,27 @@ class PublicMiscTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_tax_lookup_plumbing() {
-		WP_Mock::userFunction( 'get_post_types' )->with( array(), 'names' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_post_types' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				),
+				'names'
+			)
+			->andReturn( array() );
 		WP_Mock::userFunction( 'wp_cache_get' )->andReturn( false );
 		WP_Mock::userFunction( 'wp_cache_set' )->andReturn( null );
-		WP_Mock::userFunction( 'maybe_serialize' )->with( array() )->andReturn( 'a:0:{}' );
+		WP_Mock::userFunction( 'maybe_serialize' )
+			->with(
+				Mockery::on(
+					function ( $args ) {
+						return array() === $args;
+					}
+				)
+			)
+			->andReturn( 'a:0:{}' );
 	}
 
 	/**
@@ -149,7 +166,16 @@ class PublicMiscTest extends TestCase {
 		WP_Mock::userFunction( 'esc_attr' )->with( $taxonomy )->andReturn( $taxonomy );
 		WP_Mock::onFilter( 'dwpb_taxonomy_support' )
 			->with( null, $taxonomy, array(), array(), 'names' )
-			->reply( $return_value );
+			->reply(
+				new WP_Mock\InvokedFilterValue(
+					function ( $null, $tax, $post_types, $args, $output ) use ( $return_value ) {
+						$this->assertSame( array(), $post_types, 'dwpb_taxonomy_support must receive the exact $post_types array it documents.' );
+						$this->assertSame( array(), $args, 'dwpb_taxonomy_support must receive the exact $args array it documents.' );
+
+						return $return_value;
+					}
+				)
+			);
 	}
 
 	/**
@@ -300,7 +326,7 @@ class PublicMiscTest extends TestCase {
 	 */
 
 	public function test_filter_wp_headers_removes_pingback_header_by_default() {
-		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, true );
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
 
@@ -313,7 +339,7 @@ class PublicMiscTest extends TestCase {
 	}
 
 	public function test_filter_wp_headers_dwpb_remove_pingback_header_filter_false_keeps_header() {
-		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( false );
+		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, false );
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
 
@@ -323,7 +349,7 @@ class PublicMiscTest extends TestCase {
 	}
 
 	public function test_filter_wp_headers_noop_when_pingback_header_absent() {
-		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, true );
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
 
@@ -336,16 +362,29 @@ class PublicMiscTest extends TestCase {
 	 * remove_pingback_header_fallback()
 	 */
 
+	/**
+	 * The guard is a return: the filter disabling removal must stop the fallback before it
+	 * reaches do_remove_pingback_header() at all. Asserted via that seam rather than the
+	 * headers_sent()/header_remove() body it guards, since those are genuine internal PHP
+	 * functions WP_Mock/Patchwork refuses to override ("Cannot override internal PHP
+	 * functions!").
+	 */
 	public function test_remove_pingback_header_fallback_returns_early_when_filter_disables_it() {
-		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( false );
+		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, false );
 
-		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
+		$public = new class( 'disable-blog', '0.5.6' ) extends Disable_Blog_Public {
+			/**
+			 * @var int
+			 */
+			public $do_remove_pingback_header_calls = 0;
 
-		// The early return means headers_sent()/header_remove() below it are never reached; both
-		// are genuine internal PHP functions WP_Mock/Patchwork refuses to override ("Cannot
-		// override internal PHP functions!"), so unlike every other WP function in this suite,
-		// they can't be stubbed with a ->never() expectation to prove that directly.
+			protected function do_remove_pingback_header() {
+				++$this->do_remove_pingback_header_calls;
+			}
+		};
+
 		$this->assertNull( $public->remove_pingback_header_fallback() );
+		$this->assertSame( 0, $public->do_remove_pingback_header_calls );
 	}
 
 	/**
@@ -359,7 +398,7 @@ class PublicMiscTest extends TestCase {
 	public function test_remove_pingback_header_fallback_skips_header_remove_once_headers_have_actually_been_sent() {
 		$this->assertTrue( headers_sent(), "Expected PHPUnit's own CLI output to have already marked headers as sent." );
 
-		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, true );
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
 
@@ -367,24 +406,27 @@ class PublicMiscTest extends TestCase {
 	}
 
 	/**
-	 * Isolated: a fresh process has produced no output yet, so headers_sent() genuinely starts
-	 * false here -- unlike the shared-process test above, this reaches the real
-	 * header_remove( 'X-Pingback' ) call rather than skipping it. header_remove() is a real
-	 * internal PHP function with no observable return value or (in the CLI SAPI used by this
-	 * suite) any readable header list, so there is nothing further to assert about its effect;
-	 * this test's purpose is exercising that line for real, not proving its side effect.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
+	 * The counterpart to the early-return test above: when the filter allows removal, the
+	 * fallback must actually reach do_remove_pingback_header(), not just return null (a void
+	 * method returns null either way, so assertNull() alone can't distinguish "reached" from
+	 * "guarded out").
 	 */
-	public function test_remove_pingback_header_fallback_calls_header_remove_when_headers_not_yet_sent() {
-		$this->assertFalse( headers_sent(), 'Expected a fresh process to not have sent headers yet.' );
+	public function test_remove_pingback_header_fallback_reaches_do_remove_pingback_header_when_filter_allows_it() {
+		$this->stub_filter_strict( 'dwpb_remove_pingback_header', true, true );
 
-		WP_Mock::onFilter( 'dwpb_remove_pingback_header' )->with( true )->reply( true );
+		$public = new class( 'disable-blog', '0.5.6' ) extends Disable_Blog_Public {
+			/**
+			 * @var int
+			 */
+			public $do_remove_pingback_header_calls = 0;
 
-		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
+			protected function do_remove_pingback_header() {
+				++$this->do_remove_pingback_header_calls;
+			}
+		};
 
 		$this->assertNull( $public->remove_pingback_header_fallback() );
+		$this->assertSame( 1, $public->do_remove_pingback_header_calls );
 	}
 
 	/**
@@ -484,7 +526,7 @@ class PublicMiscTest extends TestCase {
 		$functions->disable_author_archives_return = true;
 		$public                                       = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
 
-		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_user_sitemap', true, true );
 
 		$this->assertFalse( $public->wp_author_sitemaps( new stdClass(), 'users' ) );
 	}
@@ -495,7 +537,7 @@ class PublicMiscTest extends TestCase {
 		$functions->author_archive_post_types_return = false;
 		$public                                         = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
 
-		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_user_sitemap', true, true );
 
 		$this->assertFalse( $public->wp_author_sitemaps( new stdClass(), 'users' ) );
 	}
@@ -506,7 +548,7 @@ class PublicMiscTest extends TestCase {
 		$functions->author_archive_post_types_return = array( 'book' );
 		$public                                         = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
 
-		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( false )->reply( false );
+		$this->stub_filter_strict( 'dwpb_disable_user_sitemap', false, false );
 
 		$provider = new stdClass();
 
@@ -523,7 +565,7 @@ class PublicMiscTest extends TestCase {
 		$functions->author_archive_post_types_return = array( 'book' );
 		$public                                         = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
 
-		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( false )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_user_sitemap', false, true );
 
 		$this->assertFalse( $public->wp_author_sitemaps( new stdClass(), 'users' ) );
 	}
@@ -537,7 +579,7 @@ class PublicMiscTest extends TestCase {
 		$functions->disable_author_archives_return = true;
 		$public                                       = new Disable_Blog_Public( 'disable-blog', '0.5.6', $functions );
 
-		WP_Mock::onFilter( 'dwpb_disable_user_sitemap' )->with( true )->reply( false );
+		$this->stub_filter_strict( 'dwpb_disable_user_sitemap', true, false );
 
 		$provider = new stdClass();
 
@@ -558,7 +600,7 @@ class PublicMiscTest extends TestCase {
 	}
 
 	/**
-	 * Isolated, with a real registry in place (so a mutated guard would fall through all the
+	 * Isolated, with a real registry in place (so a broken guard would fall through all the
 	 * way to the provider check below): 'index' is never a registered provider name, so if the
 	 * 'index' exclusion itself were dropped, isset( $providers['index'] ) would be false and
 	 * this would 404 instead of returning early. Proves the 'index' check specifically, rather
@@ -588,7 +630,7 @@ class PublicMiscTest extends TestCase {
 	 */
 	public function test_disable_removed_sitemaps_returns_early_when_wp_sitemaps_get_server_undefined() {
 		WP_Mock::userFunction( 'get_query_var' )->with( 'sitemap', '' )->andReturn( 'posts' );
-		WP_Mock::onFilter( 'dwpb_disable_removed_sitemaps' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_removed_sitemaps', true, true );
 		$this->assert_no_404_side_effects();
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
@@ -610,7 +652,7 @@ class PublicMiscTest extends TestCase {
 		}
 
 		WP_Mock::userFunction( 'get_query_var' )->with( 'sitemap', '' )->andReturn( 'users' );
-		WP_Mock::onFilter( 'dwpb_disable_removed_sitemaps' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_removed_sitemaps', true, true );
 		$this->assert_no_404_side_effects();
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
@@ -642,7 +684,7 @@ class PublicMiscTest extends TestCase {
 		}
 
 		WP_Mock::userFunction( 'get_query_var' )->with( 'sitemap', '' )->andReturn( 'users' );
-		WP_Mock::onFilter( 'dwpb_disable_removed_sitemaps' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_removed_sitemaps', true, true );
 		$this->assert_no_404_side_effects();
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
@@ -664,13 +706,21 @@ class PublicMiscTest extends TestCase {
 		}
 
 		WP_Mock::userFunction( 'get_query_var' )->with( 'sitemap', '' )->andReturn( 'users' );
-		WP_Mock::onFilter( 'dwpb_disable_removed_sitemaps' )->with( true )->reply( true );
+		$this->stub_filter_strict( 'dwpb_disable_removed_sitemaps', true, true );
 
 		global $wp_query;
 		$wp_query = Mockery::mock( 'Disable_Blog_Public_Query_Double' );
 		$wp_query->shouldReceive( 'set_404' )->once();
 
-		WP_Mock::userFunction( 'status_header' )->once()->with( 404 );
+		WP_Mock::userFunction( 'status_header' )
+			->once()
+			->with(
+				Mockery::on(
+					function ( $code ) {
+						return 404 === $code;
+					}
+				)
+			);
 		WP_Mock::userFunction( 'nocache_headers' )->once();
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );
@@ -694,7 +744,7 @@ class PublicMiscTest extends TestCase {
 		}
 
 		WP_Mock::userFunction( 'get_query_var' )->with( 'sitemap', '' )->andReturn( 'users' );
-		WP_Mock::onFilter( 'dwpb_disable_removed_sitemaps' )->with( true )->reply( false );
+		$this->stub_filter_strict( 'dwpb_disable_removed_sitemaps', true, false );
 		$this->assert_no_404_side_effects();
 
 		$public = new Disable_Blog_Public( 'disable-blog', '0.5.6' );

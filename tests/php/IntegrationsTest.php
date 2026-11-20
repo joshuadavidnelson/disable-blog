@@ -223,6 +223,28 @@ class IntegrationsTest extends TestCase {
 	}
 
 	/**
+	 * The `0 === $post_id` guard must use strict comparison: `null` is loosely equal to `0`
+	 * but not identical to it, so a loose guard would (wrongly) treat a null post ID as the
+	 * front page and proceed to the version check.
+	 *
+	 * Invoked via Reflection, bypassing the public method's `@param int $post_id` signature,
+	 * so the deliberately-wrong-type `null` used to probe the guard doesn't itself trip static
+	 * analysis of this test file.
+	 */
+	public function test_filter_woocommerce_comment_count_skips_when_post_id_is_loosely_but_not_strictly_zero() {
+		$comments = (object) array( 'foo' => 'bar' );
+
+		$integrations = new Disable_Blog_Integrations();
+
+		WP_Mock::userFunction( 'is_plugin_active' )->never();
+
+		$method = new ReflectionMethod( $integrations, 'filter_woocommerce_comment_count' );
+		$result = $method->invokeArgs( $integrations, array( $comments, null ) );
+
+		$this->assertSame( $comments, $result );
+	}
+
+	/**
 	 * woocommerce_version_check() (private)
 	 */
 
