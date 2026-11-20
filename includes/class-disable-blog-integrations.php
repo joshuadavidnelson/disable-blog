@@ -47,6 +47,25 @@ class Disable_Blog_Integrations {
 	}
 
 	/**
+	 * Clear cached comment queries and counts when Disable Comments is switched
+	 * on or off.
+	 *
+	 * Disable Blog stands down while Disable Comments is active, and neither
+	 * cache key reflects that.
+	 *
+	 * @since 0.5.7
+	 * @param string $plugin Plugin basename.
+	 * @return void
+	 */
+	public function flush_comment_caches_on_toggle( $plugin ) {
+
+		if ( 'disable-comments/disable-comments.php' === $plugin ) {
+			wp_cache_set_comments_last_changed();
+			wp_cache_delete( 'comments-0', 'counts' );
+		}
+	}
+
+	/**
 	 * Check if WooCommerce is active.
 	 *
 	 * @since 0.5.3

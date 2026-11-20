@@ -120,6 +120,7 @@ export const KNOWN_HOOKS = [
 	'dwpb_author_archive_post_types',
 	'dwpb_disable_author_archives',
 	'dwpb_disable_feed',
+	'dwpb_filter_comment_queries',
 
 	// includes/class-disable-blog-public.php
 	'dwpb_redirect_post', // 'dwpb_redirect_' . 'post'

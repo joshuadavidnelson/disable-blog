@@ -132,7 +132,7 @@ export function versionAtLeast( version: string, minimum: string ): boolean {
 export async function adminFetch(
 	admin: RequestUtils,
 	url: string,
-	method: 'GET' | 'POST' = 'GET',
+	method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET',
 	data?: unknown
 ): Promise< APIResponse > {
 	if ( ! admin.storageState?.nonce ) {

@@ -103,6 +103,11 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Fix uninstalling via WP-CLI (`wp plugin uninstall disable-blog`) leaving the `dwpb_version` and `dwpb_previous_version` options in the database. The uninstall routine only recognized the admin Delete request and stopped silently in any other context.
 - Site Health's REST API check now runs WordPress's own test against the page type, so it shows core's current wording and error details.
 - Turn off the `embeddable`, `randomable` and `show_in_abilities` post type arguments for posts. On WordPress 7.2 this stops the random content redirect (`/?random=1`) from sending visitors to a post and keeps posts out of the `core/content-query` ability.
+- Hide comments on posts, for every comment type (comments, pingbacks, trackbacks, notes, and other plugins' types), including from administrators: in comment lists and counts, the comments feed, the REST API, XML-RPC, and the admin comment edit screen. A request for a single comment on a post gets WordPress's own "Invalid comment ID." error. This rule leaves comments on pages, other post types, and comments with no parent post alone.
+- Privacy exports and erasures still include a person's comments on posts, and trashing or deleting a note on a post still takes its replies and reactions with it.
+- Return discussion comments (comments, pingbacks and trackbacks) only for post types that support comments. Other comment types, such as notes, stay available on every post type except posts.
+- **New filter:** `dwpb_filter_comment_queries` (default `true`). Return `false` to leave comment queries, the comments feed and single comment requests to WordPress. The plugin also leaves them alone while Disable Comments is active.
+- **Removed:** `Disable_Blog_Admin::comment_filter()` and its `pre_get_comments` hook, which only covered the admin Comments screen. `filter_comment_clauses()` on `comments_clauses` covers every comment query.
 
 = 0.5.6 =
 - Tested up to WordPress 7.1.4

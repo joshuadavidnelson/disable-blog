@@ -45,6 +45,7 @@ class Disable_Blog_Deactivator {
 	 * @since 0.4.3
 	 * @since 0.4.9 add flush rewrite rules.
 	 * @since 0.5.1
+	 * @since 0.5.7 clear cached comment queries and counts.
 	 */
 	public static function deactivate() {
 
@@ -67,6 +68,7 @@ class Disable_Blog_Deactivator {
 		 * The plugin is now safely deactivated.
 		 */
 
+		wp_cache_set_comments_last_changed();
 		wp_cache_delete( 'comments-0', 'counts' );
 		delete_transient( 'wc_count_comments' );
 		flush_rewrite_rules();

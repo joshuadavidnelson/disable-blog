@@ -84,6 +84,7 @@ class Disable_Blog {
 	 * Upgrade check.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.7 clears cached comment queries and counts on update.
 	 * @access private
 	 */
 	private static function upgrade_check() {
@@ -104,6 +105,10 @@ class Disable_Blog {
 		// See if it's a previous version, which may not have set the version option.
 		if ( false === $current_version || DWPB_VERSION !== $current_version ) {
 			// do things on update.
+
+			// Comment queries and counts cached by an earlier version can include comments the rule hides.
+			wp_cache_set_comments_last_changed();
+			wp_cache_delete( 'comments-0', 'counts' );
 
 			// Save current version.
 			update_option( 'dwpb_version', DWPB_VERSION, false );
@@ -182,6 +187,9 @@ class Disable_Blog {
 	 *
 	 * @since 0.4.0
 	 * @since 0.5.3 Separated comment functions to run only if comments are supported.
+	 * @since 0.5.7 hooks filter_comment_clauses() and rest_block_post_comment() whether or not comments are supported.
+	 * @since 0.5.7 hooks separate_exempt_comment_cache(), hide_post_comment_from_comment_screen(),
+	 *              include_post_comments_in_privacy_requests() and track_comment_cascade().
 	 * @access private
 	 */
 	private function define_admin_hooks() {
@@ -269,6 +277,18 @@ class Disable_Blog {
 		// Remove the "post" post type from the query block in the metadata settings.
 		$this->loader->add_filter( 'block_type_metadata', $plugin_admin, 'filter_block_type_metadata', 10, 1 );
 
+		// Hide comments on posts from every comment query, and single comments on posts from REST.
+		$this->loader->add_filter( 'comments_clauses', $plugin_admin, 'filter_comment_clauses', 10, 2 );
+		$this->loader->add_filter( 'rest_request_before_callbacks', $plugin_admin, 'rest_block_post_comment', 10, 3 );
+		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'separate_exempt_comment_cache', 10, 1 );
+		$this->loader->add_action( 'load-comment.php', $plugin_admin, 'hide_post_comment_from_comment_screen' );
+
+		// Privacy exports and erasures, and the replies and reactions trashed or deleted with a comment, include comments on posts.
+		$this->loader->add_filter( 'wp_privacy_personal_data_exporters', $plugin_admin, 'include_post_comments_in_privacy_requests', 20, 1 );
+		$this->loader->add_filter( 'wp_privacy_personal_data_erasers', $plugin_admin, 'include_post_comments_in_privacy_requests', 20, 1 );
+		$this->loader->add_action( 'trash_comment', $plugin_admin, 'track_comment_cascade', 10, 1 );
+		$this->loader->add_action( 'delete_comment', $plugin_admin, 'track_comment_cascade', 10, 1 );
+
 		// Only run comment related functions if comments are supported.
 		if ( dwpb_post_types_with_feature( 'comments' ) ) {
 
@@ -280,9 +300,6 @@ class Disable_Blog {
 
 			// Filter wp_count_comments, which addresses comments in admin bar.
 			$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
-
-			// Filter Comments off Admin Page.
-			$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'comment_filter', 10, 1 );
 
 			// Clear comments from 'post' post type.
 			$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );
@@ -297,6 +314,7 @@ class Disable_Blog {
 	 * @since 0.4.0
 	 * @since 0.5.7 hooks disable_removed_sitemaps() on template_redirect.
 	 * @since 0.5.7 hooks remove_pingback_header_fallback() on the 'wp' action, for older WP.
+	 * @since 0.5.7 hooks wrap_xmlrpc_comment_methods() and filter_comment_feed_where().
 	 * @access private
 	 */
 	private function define_public_hooks() {
@@ -332,6 +350,10 @@ class Disable_Blog {
 
 		// Disable XML-RPC methods related to posts and built-in taxonomies.
 		$this->loader->add_filter( 'xmlrpc_methods', $plugin_public, 'xmlrpc_methods', 10, 1 );
+		$this->loader->add_filter( 'xmlrpc_methods', $plugin_public, 'wrap_xmlrpc_comment_methods', 11, 1 );
+
+		// Hide comments on posts from the comments feed.
+		$this->loader->add_filter( 'comment_feed_where', $plugin_public, 'filter_comment_feed_where', 10, 2 );
 
 		// Remove posts from xml sitemaps.
 		$this->loader->add_filter( 'wp_sitemaps_post_types', $plugin_public, 'wp_sitemaps_post_types', 10, 1 );
@@ -351,6 +373,7 @@ class Disable_Blog {
 	 * Integrate with other plugins.
 	 *
 	 * @since 0.5.3
+	 * @since 0.5.7 hooks flush_comment_caches_on_toggle() on plugin activation and deactivation.
 	 * @return void
 	 */
 	public function plugin_integrations() {
@@ -365,6 +388,10 @@ class Disable_Blog {
 			// the assumption being that the Disable Comments plugin is handling it.
 			add_filter( 'dwpb_post_types_supporting_comments', '__return_false' );
 		}
+
+		// Cached comment queries and counts depend on whether Disable Comments is active.
+		$this->loader->add_action( 'activated_plugin', $plugin_integrations, 'flush_comment_caches_on_toggle', 10, 1 );
+		$this->loader->add_action( 'deactivated_plugin', $plugin_integrations, 'flush_comment_caches_on_toggle', 10, 1 );
 
 		// WooCommerce.
 		if ( $plugin_integrations->is_woocommerce_active() && dwpb_post_types_with_feature( 'comments' ) ) {

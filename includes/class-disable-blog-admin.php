@@ -581,28 +581,162 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Hide all comments from 'post' post type
+	 * Whether the plugin narrows comment queries, counts and comment requests.
 	 *
-	 * @uses dwpb_post_types_with_feature()
-	 * @since 0.1.0
-	 * @param object $comments the comments query object.
-	 * @return object
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::should_filter_comments()
+	 * @return bool
 	 */
-	public function comment_filter( $comments ) {
+	public function should_filter_comments() {
+		return $this->functions->should_filter_comments();
+	}
 
-		global $pagenow;
+	/**
+	 * Hide comments on posts from every comment query.
+	 *
+	 * Adds the rule to the WHERE clause rather than setting `post_type`, which
+	 * would join the posts table and drop comments with no parent post.
+	 *
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::comment_rule_sql()
+	 * @param array            $clauses Comment query clauses.
+	 * @param WP_Comment_Query $query   The comment query.
+	 * @return array
+	 */
+	public function filter_comment_clauses( $clauses, $query ) {
 
-		if ( ! isset( $pagenow ) ) {
-			return $comments;
+		if ( ! $this->should_filter_comments() || $this->functions->is_cascade_query( $query ) ) {
+			return $clauses;
 		}
 
-		// Filter out comments from post.
-		$post_types = dwpb_post_types_with_feature( 'comments' );
-		if ( $post_types && $this->is_admin_page( 'edit-comments' ) ) {
-			$comments->query_vars['post_type'] = $post_types;
+		$rule  = $this->functions->comment_rule_sql();
+		$where = isset( $clauses['where'] ) ? trim( (string) $clauses['where'] ) : '';
+
+		$clauses['where'] = '' === $where ? $rule : "( {$where} ) AND {$rule}";
+
+		return $clauses;
+	}
+
+	/**
+	 * Keep a comment query that runs without the rule out of the cache entry
+	 * a filtered query with the same arguments reads.
+	 *
+	 * @since 0.5.7
+	 * @param WP_Comment_Query $query The comment query.
+	 * @return void
+	 */
+	public function separate_exempt_comment_cache( $query ) {
+
+		if ( ! $query instanceof WP_Comment_Query || ! $this->functions->is_exempt_comment_query( $query ) ) {
+			return;
 		}
 
-		return $comments;
+		$domain = isset( $query->query_vars['cache_domain'] ) ? (string) $query->query_vars['cache_domain'] : 'core';
+
+		$query->query_vars['cache_domain'] = $domain . '-dwpb-unfiltered';
+	}
+
+	/**
+	 * Run core's comment exporter or eraser with the comment rule switched
+	 * off, so a request covers the person's comments on posts too.
+	 *
+	 * @since 0.5.7
+	 * @param array $entries Registered exporters or erasers.
+	 * @return array
+	 */
+	public function include_post_comments_in_privacy_requests( $entries ) {
+
+		if ( ! isset( $entries['wordpress-comments']['callback'] ) || ! is_callable( $entries['wordpress-comments']['callback'] ) ) {
+			return $entries;
+		}
+
+		$callback = $entries['wordpress-comments']['callback'];
+
+		$entries['wordpress-comments']['callback'] = static function ( $email_address, $page = 1 ) use ( $callback ) {
+			return Disable_Blog_Functions::run_unfiltered( $callback, array( $email_address, $page ) );
+		};
+
+		return $entries;
+	}
+
+	/**
+	 * Remember a comment on a post that is being trashed or deleted, so the
+	 * replies and reactions core takes with it are found.
+	 *
+	 * @since 0.5.7
+	 * @param int|string $comment_id Comment ID.
+	 * @return void
+	 */
+	public function track_comment_cascade( $comment_id ) {
+		$this->functions->track_comment_cascade( $comment_id );
+	}
+
+	/**
+	 * Have the comment screens treat a comment on a post as a missing one.
+	 *
+	 * `comment.php` looks the comment up by its `c` argument, so hiding that
+	 * one comment from `get_comment()` gives core's own response for a bad ID:
+	 * the "Invalid comment ID." page, or a redirect with `error=1`.
+	 *
+	 * @since 0.5.7
+	 * @return void
+	 */
+	public function hide_post_comment_from_comment_screen() {
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read only to choose a comment to hide; core checks the nonce for any change.
+		$comment_id = isset( $_REQUEST['c'] ) ? absint( $_REQUEST['c'] ) : 0;
+		$action     = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		// Saving an edit reads the comment as an array, which a hidden comment would break.
+		if ( 'editedcomment' === $action ) {
+			return;
+		}
+
+		if ( 0 === $comment_id || ! $this->should_filter_comments() || ! $this->functions->is_post_comment( $comment_id ) ) {
+			return;
+		}
+
+		add_filter(
+			'get_comment',
+			static function ( $comment ) use ( $comment_id ) {
+				return $comment instanceof WP_Comment && (int) $comment->comment_ID === $comment_id ? null : $comment;
+			}
+		);
+	}
+
+	/**
+	 * Answer a request for a single comment on a post as though it does not exist.
+	 *
+	 * Covers every method the single comment route serves. The error is core's
+	 * own for a missing comment.
+	 *
+	 * @since 0.5.7
+	 * @param mixed           $response Response so far. Anything but null passes through.
+	 * @param array           $handler  Route handler.
+	 * @param WP_REST_Request $request  The request.
+	 * @return mixed
+	 */
+	public function rest_block_post_comment( $response, $handler, $request ) {
+
+		if ( null !== $response || ! $request instanceof WP_REST_Request || ! $this->should_filter_comments() ) {
+			return $response;
+		}
+
+		// Core matches routes without regard to case.
+		if ( ! preg_match( '#^/wp/v2/comments/(?P<id>[\d]+)$#i', $request->get_route() ) ) {
+			return $response;
+		}
+
+		$params = $request->get_url_params();
+		$id     = isset( $params['id'] ) ? (int) $params['id'] : 0;
+
+		if ( $this->functions->is_post_comment( $id ) ) {
+			// phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- core's own string, so the error matches core's.
+			return new WP_Error( 'rest_comment_invalid_id', __( 'Invalid comment ID.' ), array( 'status' => 404 ) );
+		}
+
+		return $response;
 	}
 
 	/**

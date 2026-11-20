@@ -2,37 +2,6 @@
 	{
 		"surface": "rest",
 		"actor": "admin",
-		"urlPattern": "/wp/v2/comments?search=",
-		"reason": "admin comment list returns post comments"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "/wp/v2/comments?include=",
-		"reason": "admin comment list by ID returns post comments"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "/wp/v2/comments?type=all&",
-		"reason": "admin comment list of every type returns post comments"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "/wp/v2/comments?type=dwpb_custom&per_page=",
-		"reason": "admin comment list of a custom type returns post comments"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "/wp/v2/comments?type=note&per_page=",
-		"reason": "admin note list returns notes on posts",
-		"minWp": "6.9"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
 		"urlPattern": "/wp/v2/block-renderer/core/latest-posts",
 		"reason": "Latest Posts block renders post titles in the editor preview"
 	},
@@ -45,18 +14,6 @@
 	{
 		"surface": "front",
 		"actor": "anon",
-		"urlPattern": "/comments/feed/",
-		"reason": "comments feed lists comments on posts"
-	},
-	{
-		"surface": "front",
-		"actor": "admin",
-		"urlPattern": "/comments/feed/",
-		"reason": "comments feed lists comments on posts"
-	},
-	{
-		"surface": "front",
-		"actor": "anon",
 		"urlPattern": "/?author=",
 		"reason": "author archives list posts unless dwpb_author_archive_post_types names other post types"
 	},
@@ -65,43 +22,6 @@
 		"actor": "admin",
 		"urlPattern": "/?author=",
 		"reason": "author archives list posts unless dwpb_author_archive_post_types names other post types"
-	},
-	{
-		"surface": "xmlrpc",
-		"actor": "admin",
-		"urlPattern": "wp.getComments",
-		"reason": "XML-RPC comment list returns post comments"
-	},
-	{
-		"surface": "xmlrpc",
-		"actor": "admin",
-		"urlPattern": "wp.getComment/",
-		"reason": "XML-RPC single comment returns a comment on a post"
-	},
-	{
-		"surface": "count",
-		"actor": "anon",
-		"urlPattern": "rest.anon.default",
-		"reason": "logged-out REST comment total counts comments on posts that the list hides"
-	},
-	{
-		"surface": "count",
-		"actor": "admin",
-		"urlPattern": "rest.admin.default",
-		"reason": "admin REST comment total counts comments on posts"
-	},
-	{
-		"surface": "count",
-		"actor": "admin",
-		"urlPattern": "rest.admin.all",
-		"reason": "admin REST comment total of every type counts comments on posts"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "&type=reaction&",
-		"reason": "admin reaction list returns reactions on notes on posts",
-		"minWp": "7.2"
 	},
 	{
 		"surface": "front",

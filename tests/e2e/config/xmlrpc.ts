@@ -27,13 +27,13 @@ export function escapeXml( value: string ): string {
 }
 
 /**
- * An XML-RPC param value: a string, an int, or a struct of them.
+ * An XML-RPC param value: a string, an int, an array or a struct.
  */
-export type XmlRpcValue = string | number | { [ member: string ]: string | number };
+export type XmlRpcValue = string | number | XmlRpcValue[] | { [ member: string ]: XmlRpcValue };
 
 /**
- * Render a single XML-RPC value, as `<string>`, `<int>` or `<struct>`
- * depending on type.
+ * Render a single XML-RPC value, as `<string>`, `<int>`, `<array>` or
+ * `<struct>` depending on type.
  *
  * @param value Param value.
  */
@@ -44,6 +44,10 @@ function xmlRpcValue( value: XmlRpcValue ): string {
 
 	if ( 'string' === typeof value ) {
 		return `<value><string>${ escapeXml( value ) }</string></value>`;
+	}
+
+	if ( Array.isArray( value ) ) {
+		return `<value><array><data>${ value.map( xmlRpcValue ).join( '' ) }</data></array></value>`;
 	}
 
 	const members = Object.entries( value )

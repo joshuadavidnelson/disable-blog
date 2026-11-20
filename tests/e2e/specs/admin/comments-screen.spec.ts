@@ -1,9 +1,10 @@
 /**
  * The admin comments list table (`edit-comments.php`), default plugin state.
  *
- * `comment_filter()` (on `pre_get_comments`) scopes the query's post_type to
+ * `filter_comment_clauses()` (on `comments_clauses`) excludes every comment
+ * on a 'post' and limits discussion comments to
  * `dwpb_post_types_with_feature( 'comments' )` -- 'page'/'attachment' by
- * default -- excluding every comment on a 'post'.
+ * default.
  * `filter_admin_table_comment_count()` rewrites each view's count with the
  * same post-type-scoped SQL rather than trusting `wp_count_comments()`'s
  * cache.
@@ -113,7 +114,7 @@ test.describe( 'admin: comments list table (default state)', () => {
 			requestUtils,
 		} ) => {
 			// Force-delete the page's comment, leaving only the 'post' comment,
-			// which comment_filter() excludes from every view's query entirely.
+			// which filter_comment_clauses() excludes from every view's query entirely.
 			await requestUtils.rest( {
 				method: 'DELETE',
 				path: `/wp/v2/comments/${ pageCommentId }?force=true`,
