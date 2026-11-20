@@ -7,7 +7,7 @@
 	 *
 	 * Returns null instead of throwing when the selector or an ancestor is
 	 * missing, so one absent element can't kill the rest of the calling
-	 * switch statement (previously an uncaught TypeError here would).
+	 * switch statement.
 	 *
 	 * @param {string} selector CSS selector to look up.
 	 * @param {number} [levels] Number of parentNode levels to walk up before hiding. Default 0.

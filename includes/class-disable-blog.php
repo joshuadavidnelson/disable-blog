@@ -295,8 +295,8 @@ class Disable_Blog {
 	 * of the plugin.
 	 *
 	 * @since 0.4.0
-	 * @since 0.5.6 added disable_removed_sitemaps() on template_redirect.
-	 * @since 0.5.6 added remove_pingback_header_fallback() on the 'wp' action, for older WP.
+	 * @since 0.5.7 hooks disable_removed_sitemaps() on template_redirect.
+	 * @since 0.5.7 hooks remove_pingback_header_fallback() on the 'wp' action, for older WP.
 	 * @access private
 	 */
 	private function define_public_hooks() {

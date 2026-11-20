@@ -1,9 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.5.7
 
 - **New:** Disables RSS/Atom feeds requested via query string (e.g. `/?feed=rss2`), which previously returned live post content.
-- **New:** Disable post content from appearing on user sitemaps (e.g. `/wp-sitemap-users-1.xml`) on WordPress versions before 7.1.1, which 404 these requests on their own. **New filter:** `dwpb_disable_removed_sitemaps` (default `true`) toggles this behavior.
+- **New:** Removed user sitemaps (e.g. `/wp-sitemap-users-1.xml`) return a 404 instead of post content. On WordPress before 7.1.1 the plugin sends the 404; from 7.1.1 core does. **New filter:** `dwpb_disable_removed_sitemaps` (default `true`) toggles this behavior.
 - Fix `term.php` and `tools.php` never redirecting, caused by typos.
 - **Filter renamed:** the redirect url for this screen is now filtered via `dwpb_redirect_admin_tools` (previously documented as `dwpb_redirect_admin_options_tools`).
 - Fix the `dwpb_redirect_admin_*` filters receiving `"http://1"` instead of the dashboard url on screens whose check returns `true`. The destination was unaffected, but a custom redirect url built from the filtered value would not have worked.

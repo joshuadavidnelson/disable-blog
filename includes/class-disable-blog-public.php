@@ -161,7 +161,7 @@ class Disable_Blog_Public {
 	 * Feed requests are excluded so `do_feed()`'s later `dwpb_redirect_feeds`
 	 * filter still gets a chance to run.
 	 *
-	 * @since 0.5.6
+	 * @since 0.5.7
 	 * @return bool
 	 */
 	private function is_category_archive_request() {
@@ -187,7 +187,7 @@ class Disable_Blog_Public {
 	 * miss, but since `is_tag()` already resolves true on a tag feed, that
 	 * branch is effectively unreachable for real tag requests.
 	 *
-	 * @since 0.5.6
+	 * @since 0.5.7
 	 * @return bool
 	 */
 	private function is_tag_archive_request() {
@@ -295,9 +295,8 @@ class Disable_Blog_Public {
 	 *
 	 * @since 0.1.0
 	 * @since 0.4.0 add $is_comment_feed variable to feeds and check $is_comment_feed prior to redirect.
-	 * @since 0.5.6 use is_post_feed_request() instead of checking $post->post_type; with a
-	 *              static front page, $post resolves to the Home page and the old check let
-	 *              query-string feed URLs through.
+	 * @since 0.5.7 identify post feeds with is_post_feed_request(), which also catches
+	 *              query-string feed URLs on a site with a static front page.
 	 * @param bool $is_comment_feed true if a comment feed.
 	 * @return void
 	 */
@@ -375,9 +374,11 @@ class Disable_Blog_Public {
 	 * feed (e.g. `/feed/` or `/?feed=rss2`), as opposed to a feed scoped to
 	 * a specific singular object or another post type.
 	 *
-	 * @since 0.5.6 checks $wp->query_vars (the raw request) rather than $post or
-	 *              $wp_query, because a static front page makes WP_Query substitute
-	 *              that page into $post even for a plain query-string feed request.
+	 * Reads $wp->query_vars (the raw request) rather than $post or $wp_query,
+	 * because a static front page makes WP_Query substitute that page into
+	 * $post even for a plain query-string feed request.
+	 *
+	 * @since 0.5.7
 	 * @global WP $wp The WordPress environment instance for the current request.
 	 * @return bool True if this is a 'post' feed for the site's main/archive feed.
 	 */
@@ -490,8 +491,8 @@ class Disable_Blog_Public {
 	 * Get the XML-RPC methods to disable.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 fixed the 'wp.deleteCategory' typo and removed the 'system.*'
-	 *              methods below, which this filter cannot actually disable.
+	 * @since 0.5.7 includes 'wp.deleteCategory' and omits the 'system.*' methods,
+	 *              which this filter cannot disable.
 	 * @return array|bool
 	 */
 	private function get_disabled_xmlrpc_methods() {
@@ -588,9 +589,11 @@ class Disable_Blog_Public {
 	 * Fallback removal of the X-Pingback header for WordPress versions where
 	 * it bypasses the 'wp_headers' filter used by filter_wp_headers().
 	 *
-	 * @since 0.5.6 core < 6.2's `WP::handle_404()` sends X-Pingback via a direct
-	 *              header() call; hooked on 'wp' (not 'send_headers') so this
-	 *              runs after handle_404() to strip it after the fact.
+	 * Core before 6.2 sends X-Pingback from `WP::handle_404()` with a direct
+	 * header() call. Hooked on 'wp' (not 'send_headers') so this runs after
+	 * handle_404() and can remove it.
+	 *
+	 * @since 0.5.7
 	 * @see Disable_Blog_Public::filter_wp_headers()
 	 * @return void
 	 */
@@ -693,11 +696,12 @@ class Disable_Blog_Public {
 	/**
 	 * 404 sitemap sub-file requests for providers this plugin has removed entirely.
 	 *
-	 * @since 0.5.6 without this, a removed provider (e.g. 'users', via
-	 *              wp_author_sitemaps()) leaves core nothing registered to 404
-	 *              against, so the request would fall through to the normal
-	 *              template and serve the blog index as HTML. WordPress
-	 *              7.1.1+ 404s a missing provider itself; this covers older core.
+	 * Before WordPress 7.1.1, core returns without a 404 when a requested
+	 * provider is not registered (e.g. 'users', removed via
+	 * wp_author_sitemaps()), so the request falls through to the normal
+	 * template. From 7.1.1 core 404s it itself.
+	 *
+	 * @since 0.5.7
 	 * @return void
 	 */
 	public function disable_removed_sitemaps() {
@@ -713,7 +717,7 @@ class Disable_Blog_Public {
 		/**
 		 * Toggle 404-ing sitemap sub-files for providers this plugin has removed.
 		 *
-		 * @since 0.5.6
+		 * @since 0.5.7
 		 * @param bool $bool True to 404 removed sitemap providers, defaults to true.
 		 */
 		if ( ! apply_filters( 'dwpb_disable_removed_sitemaps', true ) ) {

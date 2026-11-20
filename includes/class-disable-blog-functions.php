@@ -19,9 +19,8 @@ class Disable_Blog_Functions {
 	 * Redirect function, checks that a redirect looks safe and then runs it.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 derive the front-end loop guard's current url from the actual
-	 *              request URI, not $wp->request, which is path-only and could
-	 *              cancel legitimate redirects differing only by query string.
+	 * @since 0.5.7 the front-end loop guard compares against the full request
+	 *              URI, query string included.
 	 * @param string $redirect_url the url to redirect to.
 	 * @return void
 	 */
@@ -33,7 +32,8 @@ class Disable_Blog_Functions {
 			$current_url = admin_url( add_query_arg( array(), $wp->request ) );
 		} else {
 
-			// $wp->request is path-only (see @since 0.5.6 above).
+			// $wp->request is path-only, so a redirect differing only by query
+			// string would otherwise look like a loop.
 			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 			$current_url = home_url( $request_uri );
 

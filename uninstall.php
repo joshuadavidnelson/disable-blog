@@ -38,7 +38,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
  * authority. Running these checks against a command-line uninstall stops it
  * before it cleans anything up.
  *
- * @since 0.5.6
+ * @since 0.5.7
  * @uses  WP_CLI
  */
 if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {

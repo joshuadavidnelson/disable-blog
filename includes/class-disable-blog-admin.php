@@ -273,9 +273,9 @@ class Disable_Blog_Admin {
 				 */
 				$redirect_url = apply_filters( $filter, $url );
 
-				// Back-compat: keep firing the pre-0.5.6 filter name for existing hooks.
+				// Deprecated alias of dwpb_redirect_admin_tools, kept for back-compat.
 				if ( 'tools' === $pagename ) {
-					$redirect_url = apply_filters_deprecated( 'dwpb_redirect_admin_options_tools', array( $redirect_url ), '0.5.6', 'dwpb_redirect_admin_tools' );
+					$redirect_url = apply_filters_deprecated( 'dwpb_redirect_admin_options_tools', array( $redirect_url ), '0.5.7', 'dwpb_redirect_admin_tools' );
 				}
 
 				break; // no need to keep looping.
@@ -358,8 +358,7 @@ class Disable_Blog_Admin {
 	 * The admin redirect arguments checked to redirect the term.php screen.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 fixed method name typo (was `reidrect_admin_term()`), which
-	 *              had silently prevented term.php from ever being redirected.
+	 * @since 0.5.7 named to match what redirect_admin_pages() calls.
 	 * @return bool|string
 	 */
 	public function redirect_admin_term() {
@@ -430,9 +429,7 @@ class Disable_Blog_Admin {
 	 * The admin redirect arguments checked to redirect the tools.php screen.
 	 *
 	 * @since 0.5.0
-	 * @since 0.5.6 renamed from `redirect_admin_options_tools()` to match the
-	 *              method name `redirect_admin_pages()` actually looks for; the
-	 *              old name was never called.
+	 * @since 0.5.7 named to match what redirect_admin_pages() calls.
 	 * @return bool
 	 */
 	public function redirect_admin_tools() {
@@ -608,9 +605,9 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.1.0
 	 * @since 0.4.1 dry out the code with a foreach loop
-	 * @since 0.5.6 removed 'dashboard_recent_drafts' (renders inline inside Quick
-	 *              Press, never its own metabox) and 'dashboard_incoming_links'
-	 *              (removed from core in WP 3.8) -- both were no-ops.
+	 * @since 0.5.7 covers only the widgets core registers as metaboxes. Recent
+	 *              Drafts renders inside Quick Press, and Incoming Links left
+	 *              core in WordPress 3.8.
 	 * @return void
 	 */
 	public function remove_dashboard_widgets() {
@@ -1215,7 +1212,7 @@ class Disable_Blog_Admin {
 		 * Disable the user post column.
 		 *
 		 * @since 0.5.0
-		 * @since 0.5.6 Corrected the filter name to match the plugin's `dwpb_` prefix.
+		 * @since 0.5.7 uses the plugin's `dwpb_` prefix.
 		 * @param bool $bool True to remove the column, defaults to true.
 		 * @return bool
 		 */
@@ -1224,11 +1221,11 @@ class Disable_Blog_Admin {
 		/**
 		 * Disable the user post column.
 		 *
-		 * @deprecated 0.5.6 Use `dwpb_disable_user_post_column` instead.
+		 * @deprecated 0.5.7 Use `dwpb_disable_user_post_column` instead.
 		 * @param bool $bool True to remove the column, defaults to true.
 		 * @return bool
 		 */
-		$disable_user_posts_column = apply_filters_deprecated( 'dpwb_disable_user_post_column', array( $disable_user_posts_column ), '0.5.6', 'dwpb_disable_user_post_column' );
+		$disable_user_posts_column = apply_filters_deprecated( 'dpwb_disable_user_post_column', array( $disable_user_posts_column ), '0.5.7', 'dwpb_disable_user_post_column' );
 
 		if ( isset( $columns['posts'] ) && true === (bool) $disable_user_posts_column ) {
 			unset( $columns['posts'] );
@@ -1244,7 +1241,7 @@ class Disable_Blog_Admin {
 			 * Create a new column for 'pages' similar to the original 'post' column.
 			 *
 			 * @since 0.5.0
-			 * @since 0.5.6 Corrected the filter name to match the plugin's `dwpb_` prefix.
+			 * @since 0.5.7 uses the plugin's `dwpb_` prefix.
 			 * @param bool $bool True to remove the column, defaults to true.
 			 * @return bool
 			 */
@@ -1253,11 +1250,11 @@ class Disable_Blog_Admin {
 			/**
 			 * Create a new column for 'pages' similar to the original 'post' column.
 			 *
-			 * @deprecated 0.5.6 Use `dwpb_create_user_{$post_type}_column` instead.
+			 * @deprecated 0.5.7 Use `dwpb_create_user_{$post_type}_column` instead.
 			 * @param bool $bool True to remove the column, defaults to true.
 			 * @return bool
 			 */
-			$create_user_post_type_column = apply_filters_deprecated( "dpwb_create_user_{$post_type}_column", array( $create_user_post_type_column ), '0.5.6', "dwpb_create_user_{$post_type}_column" );
+			$create_user_post_type_column = apply_filters_deprecated( "dpwb_create_user_{$post_type}_column", array( $create_user_post_type_column ), '0.5.7', "dwpb_create_user_{$post_type}_column" );
 
 			if ( $create_user_post_type_column
 				// Taken from core functions for users page, don't display the posts column on site-users-network core page.

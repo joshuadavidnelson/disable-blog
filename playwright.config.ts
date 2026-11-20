@@ -25,9 +25,8 @@ process.env.STORAGE_STATE_PATH ??= ADMIN_STORAGE_STATE;
 /**
  * E2E configuration for the Disable Blog plugin.
  *
- * Follows the WordPress core Playwright defaults (the shared config in
- * `@wordpress/scripts`), with this plugin's own test tree, global setup and
- * the wp-env tests instance as the web server.
+ * Follows the WordPress core Playwright defaults, with this plugin's own
+ * test tree, global setup and the wp-env tests instance as the web server.
  */
 export default defineConfig( {
 	reporter: process.env.CI ? [ [ 'github' ] ] : [ [ 'list' ] ],
