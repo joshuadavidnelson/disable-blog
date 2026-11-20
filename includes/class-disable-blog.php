@@ -61,6 +61,7 @@ class Disable_Blog {
 	 * the public-facing side of the site.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.7 loads the dependencies before upgrade_check(), which uses them.
 	 * @access public
 	 * @param string $plugin_name The name of this plugin.
 	 * @param string $version     The version of this plugin.
@@ -72,8 +73,8 @@ class Disable_Blog {
 
 		do_action( 'dwpb_init' );
 
-		$this->upgrade_check();
 		$this->load_dependencies();
+		$this->upgrade_check();
 		$this->set_locale();
 		$this->plugin_integrations();
 		$this->define_admin_hooks();
@@ -107,8 +108,7 @@ class Disable_Blog {
 			// do things on update.
 
 			// Comment queries and counts cached by an earlier version can include comments the rule hides.
-			wp_cache_set_comments_last_changed();
-			wp_cache_delete( 'comments-0', 'counts' );
+			dwpb_flush_comment_caches();
 
 			// Save current version.
 			update_option( 'dwpb_version', DWPB_VERSION, false );
@@ -190,8 +190,10 @@ class Disable_Blog {
 	 * @since 0.5.7 hooks filter_comment_clauses() and rest_block_post_comment() whether or not comments are supported.
 	 * @since 0.5.7 hooks separate_exempt_comment_cache(), hide_post_comment_from_comment_screen(),
 	 *              include_post_comments_in_privacy_requests() and track_comment_cascade().
-	 * @since 0.5.7 hooks filter_wp_count_comments() and filter_admin_table_comment_count() whether or not
-	 *              comments are supported, and hooks unregister_blocks() and hide_blocks_from_inserter().
+	 * @since 0.5.7 hooks filter_wp_count_comments() whether or not comments are supported, and hooks
+	 *              unregister_blocks(), hide_blocks_from_inserter(), flush_comment_caches_on_update()
+	 *              and filter_dashboard_activity_query_args().
+	 * @since 0.5.7 removes filter_admin_table_comment_count() from views_edit-comments.
 	 * @access private
 	 */
 	private function define_admin_hooks() {
@@ -289,7 +291,7 @@ class Disable_Blog {
 		$this->loader->add_action( 'pre_get_comments', $plugin_admin, 'separate_exempt_comment_cache', 10, 1 );
 		$this->loader->add_action( 'load-comment.php', $plugin_admin, 'hide_post_comment_from_comment_screen' );
 
-		// Privacy exports and erasures, and the replies and reactions trashed or deleted with a comment, include comments on posts.
+		// Privacy exports and erasures, and the replies and reactions trashed or deleted with a note, include comments on posts.
 		$this->loader->add_filter( 'wp_privacy_personal_data_exporters', $plugin_admin, 'include_post_comments_in_privacy_requests', 20, 1 );
 		$this->loader->add_filter( 'wp_privacy_personal_data_erasers', $plugin_admin, 'include_post_comments_in_privacy_requests', 20, 1 );
 		$this->loader->add_action( 'trash_comment', $plugin_admin, 'track_comment_cascade', 10, 1 );
@@ -297,7 +299,13 @@ class Disable_Blog {
 
 		// Leave comments on posts out of comment counts, including the admin bar and the Comments screen.
 		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
-		$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1 );
+
+		// Clear cached comment queries and counts once this plugin is updated, from any screen or WP-CLI.
+		$this->loader->add_action( 'upgrader_process_complete', $plugin_admin, 'flush_comment_caches_on_update', 10, 2 );
+
+		// Keep posts out of the Activity widget's lists.
+		$this->loader->add_filter( 'dashboard_recent_posts_query_args', $plugin_admin, 'filter_dashboard_activity_query_args', 10, 1 );
+		$this->loader->add_filter( 'wp_dashboard_on_this_day_query_args', $plugin_admin, 'filter_dashboard_activity_query_args', 10, 1 );
 
 		// Only run comment related functions if comments are supported.
 		if ( dwpb_post_types_with_feature( 'comments' ) ) {

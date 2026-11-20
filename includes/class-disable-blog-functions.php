@@ -27,16 +27,17 @@ class Disable_Blog_Functions {
 	private static $unfiltered = 0;
 
 	/**
-	 * IDs of comments on posts being trashed or deleted in this request.
+	 * The queries core is still to run for the replies and reactions of notes
+	 * on posts being trashed or deleted, as the note's ID and the comment type
+	 * each query asks for.
 	 *
-	 * Core finds the replies and reactions it takes with a comment by
-	 * querying for its children, some of them after the last hook it fires
-	 * for the parent, so the IDs are kept for the rest of the request.
+	 * Core runs some of them after the last hook it fires for the note, so
+	 * each entry is removed by the query it expects rather than by a hook.
 	 *
 	 * @since 0.5.7
-	 * @var array<int, true>
+	 * @var array<int, string[]>
 	 */
-	private static $cascade_parents = array();
+	private static $cascade_queries = array();
 
 	/**
 	 * Run a callback with the comment rule switched off.
@@ -58,52 +59,106 @@ class Disable_Blog_Functions {
 	}
 
 	/**
-	 * Remember a comment on a post that is being trashed or deleted, so the
-	 * queries core runs for its children are left alone.
+	 * Expect the queries core runs for the replies and reactions it trashes
+	 * or deletes with a note on a post.
+	 *
+	 * Core queries for a note's reactions when it trashes or deletes the note
+	 * (WordPress 7.2 and later), and for a top-level note's replies once it
+	 * has trashed the note. Both queries ask for IDs only, by a single
+	 * `parent` and `type`. When core deletes a note in place of trashing it,
+	 * it moves the replies up a level before querying for them, so that query
+	 * finds nothing either way and is not expected.
 	 *
 	 * @since 0.5.7
 	 * @param int|string $comment_id Comment ID.
+	 * @param string     $hook       `trash_comment` or `delete_comment`.
 	 * @return void
 	 */
-	public function track_comment_cascade( $comment_id ) {
+	public function track_comment_cascade( $comment_id, $hook ) {
 
-		if ( $this->is_post_comment( (int) $comment_id ) ) {
-			self::$cascade_parents[ (int) $comment_id ] = true;
+		$comment_id = (int) $comment_id;
+
+		if ( ! $this->is_post_comment( $comment_id ) ) {
+			return;
+		}
+
+		$comment = get_comment( $comment_id );
+
+		if ( ! $comment instanceof WP_Comment || 'note' !== $comment->comment_type ) {
+			return;
+		}
+
+		$types = array();
+
+		// A 7.2 prerelease cascades reactions too.
+		if ( version_compare( get_bloginfo( 'version' ), '7.2-alpha', '>=' ) ) {
+			$types[] = 'reaction';
+		}
+
+		if ( 'trash_comment' === $hook && 0 === (int) $comment->comment_parent ) {
+			$types[] = 'note';
+		}
+
+		if ( ! empty( $types ) ) {
+			self::$cascade_queries[ $comment_id ] = array_merge( self::$cascade_queries[ $comment_id ] ?? array(), $types );
 		}
 	}
 
 	/**
-	 * Whether a comment query only asks for the children of comments being
-	 * trashed or deleted.
+	 * Mark a comment query as one core runs for a note's replies or
+	 * reactions, and stop expecting it.
 	 *
 	 * @since 0.5.7
+	 * @param WP_Comment_Query $query Comment query.
+	 * @return bool Whether the query was expected.
+	 */
+	public function claim_cascade_query( $query ) {
+
+		if ( empty( self::$cascade_queries ) || ! $query instanceof WP_Comment_Query ) {
+			return false;
+		}
+
+		$vars = $query->query_vars;
+
+		if ( ! isset( $vars['fields'], $vars['parent'], $vars['type'] )
+			|| 'ids' !== $vars['fields']
+			|| ! is_numeric( $vars['parent'] )
+			|| ! is_string( $vars['type'] )
+			|| ! empty( $vars['parent__in'] )
+		) {
+			return false;
+		}
+
+		$parent = (int) $vars['parent'];
+		$key    = isset( self::$cascade_queries[ $parent ] ) ? array_search( $vars['type'], self::$cascade_queries[ $parent ], true ) : false;
+
+		if ( false === $key ) {
+			return false;
+		}
+
+		unset( self::$cascade_queries[ $parent ][ $key ] );
+
+		if ( empty( self::$cascade_queries[ $parent ] ) ) {
+			unset( self::$cascade_queries[ $parent ] );
+		}
+
+		$query->query_vars['dwpb_cascade'] = true;
+
+		return true;
+	}
+
+	/**
+	 * Whether a comment query is one core runs for a note's replies or
+	 * reactions.
+	 *
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::claim_cascade_query()
 	 * @param WP_Comment_Query $query Comment query.
 	 * @return bool
 	 */
 	public function is_cascade_query( $query ) {
 
-		if ( empty( self::$cascade_parents ) || ! $query instanceof WP_Comment_Query ) {
-			return false;
-		}
-
-		$parents = array();
-		foreach ( array( 'parent', 'parent__in' ) as $var ) {
-			if ( isset( $query->query_vars[ $var ] ) && '' !== $query->query_vars[ $var ] ) {
-				$parents = array_merge( $parents, wp_parse_id_list( $query->query_vars[ $var ] ) );
-			}
-		}
-
-		if ( empty( $parents ) ) {
-			return false;
-		}
-
-		foreach ( $parents as $parent ) {
-			if ( ! isset( self::$cascade_parents[ $parent ] ) ) {
-				return false;
-			}
-		}
-
-		return true;
+		return $query instanceof WP_Comment_Query && ! empty( $query->query_vars['dwpb_cascade'] );
 	}
 
 	/**
@@ -446,9 +501,14 @@ class Disable_Blog_Functions {
 	 */
 	public function is_post_comment( $comment_id ) {
 
-		$comment = get_comment( $comment_id );
+		// get_comment() falls back to the global comment for an empty ID.
+		if ( (int) $comment_id <= 0 ) {
+			return false;
+		}
 
-		// get_post() falls back to the global post for an empty ID.
+		$comment = get_comment( (int) $comment_id );
+
+		// get_post_type() falls back to the global post for an empty ID.
 		if ( ! $comment instanceof WP_Comment || (int) $comment->comment_post_ID <= 0 ) {
 			return false;
 		}

@@ -627,7 +627,13 @@ class Disable_Blog_Admin {
 	 */
 	public function separate_exempt_comment_cache( $query ) {
 
-		if ( ! $query instanceof WP_Comment_Query || ! $this->functions->is_exempt_comment_query( $query ) ) {
+		if ( ! $query instanceof WP_Comment_Query ) {
+			return;
+		}
+
+		$this->functions->claim_cascade_query( $query );
+
+		if ( ! $this->functions->is_exempt_comment_query( $query ) ) {
 			return;
 		}
 
@@ -660,15 +666,77 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Remember a comment on a post that is being trashed or deleted, so the
-	 * replies and reactions core takes with it are found.
+	 * Expect the queries core runs for the replies and reactions it trashes
+	 * or deletes with a note on a post.
 	 *
 	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::track_comment_cascade()
 	 * @param int|string $comment_id Comment ID.
 	 * @return void
 	 */
 	public function track_comment_cascade( $comment_id ) {
-		$this->functions->track_comment_cascade( $comment_id );
+		$this->functions->track_comment_cascade( $comment_id, current_action() );
+	}
+
+	/**
+	 * Clear cached comment queries and counts once this plugin is updated.
+	 *
+	 * Core runs the callback of the version loaded before the update, so this
+	 * covers updates from a version that has it. upgrade_check() covers the
+	 * next admin request whatever the earlier version.
+	 *
+	 * @since 0.5.7
+	 * @param WP_Upgrader $upgrader   The upgrader.
+	 * @param array       $hook_extra What was upgraded.
+	 * @return void
+	 */
+	public function flush_comment_caches_on_update( $upgrader, $hook_extra ) {
+
+		if ( ! is_array( $hook_extra )
+			|| ! isset( $hook_extra['type'], $hook_extra['action'] )
+			|| 'plugin' !== $hook_extra['type']
+			|| 'update' !== $hook_extra['action']
+		) {
+			return;
+		}
+
+		// A bulk update lists its plugins, a single one names its plugin.
+		$plugins = isset( $hook_extra['plugins'] ) ? (array) $hook_extra['plugins'] : array();
+		if ( isset( $hook_extra['plugin'] ) ) {
+			$plugins[] = $hook_extra['plugin'];
+		}
+
+		if ( in_array( DWPB_BASENAME, $plugins, true ) ) {
+			dwpb_flush_comment_caches();
+		}
+	}
+
+	/**
+	 * Keep posts out of the Activity widget's Recently Published, Publishing
+	 * Soon and Published On This Day lists.
+	 *
+	 * @since 0.5.7
+	 * @param array $query_args WP_Query arguments.
+	 * @return array
+	 */
+	public function filter_dashboard_activity_query_args( $query_args ) {
+
+		if ( ! is_array( $query_args ) ) {
+			return $query_args;
+		}
+
+		$post_types = isset( $query_args['post_type'] ) ? (array) $query_args['post_type'] : array();
+		$post_types = array_values( array_diff( $post_types, array( 'post' ) ) );
+
+		// WP_Query reads an empty post type as `post`, so a list left empty matches nothing instead.
+		if ( empty( $post_types ) ) {
+			$query_args['post__in'] = array( 0 );
+			return $query_args;
+		}
+
+		$query_args['post_type'] = $post_types;
+
+		return $query_args;
 	}
 
 	/**
@@ -683,13 +751,11 @@ class Disable_Blog_Admin {
 	 */
 	public function hide_post_comment_from_comment_screen() {
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read only to choose a comment to hide; core checks the nonce for any change.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read only to choose a comment to hide; core checks the nonce for any change.
 		$comment_id = isset( $_REQUEST['c'] ) ? absint( $_REQUEST['c'] ) : 0;
-		$action     = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Saving an edit reads the comment as an array, which a hidden comment would break.
-		if ( 'editedcomment' === $action ) {
+		if ( 'editedcomment' === $this->comment_screen_action() ) {
 			return;
 		}
 
@@ -703,6 +769,30 @@ class Disable_Blog_Admin {
 				return $comment instanceof WP_Comment && (int) $comment->comment_ID === $comment_id ? null : $comment;
 			}
 		);
+	}
+
+	/**
+	 * The action `comment.php` carries out, resolved the way core resolves it:
+	 * a `deletecomment` field or a `dt` argument overrides `action`.
+	 *
+	 * @since 0.5.7
+	 * @return string
+	 */
+	private function comment_screen_action() {
+
+		// phpcs:disable WordPress.Security.NonceVerification -- read only to match core's choice of action; core checks the nonce for any change.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) : '';
+
+		if ( isset( $_POST['deletecomment'] ) ) {
+			$action = 'deletecomment';
+		}
+
+		if ( isset( $_GET['dt'] ) && in_array( $_GET['dt'], array( 'spam', 'trash' ), true ) ) {
+			$action = sanitize_key( $_GET['dt'] );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification
+
+		return $action;
 	}
 
 	/**
@@ -977,7 +1067,7 @@ class Disable_Blog_Admin {
 
 	/**
 	 * The blocks to unregister. Neither has a post type setting, and both
-	 * query only posts.
+	 * list posts by default.
 	 *
 	 * @since 0.5.7
 	 * @return string[]
@@ -1097,41 +1187,6 @@ class Disable_Blog_Admin {
 		wp_cache_set( $cache_key, $count, 'counts' );
 
 		return $count;
-	}
-
-	/**
-	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
-	 *
-	 * @since 0.4.0
-	 * @since 0.5.7 reads wp_count_comments() for the post the table is filtered
-	 *              to, and keeps core's markup around each number.
-	 * @param array $views all the views.
-	 * @return array
-	 */
-	public function filter_admin_table_comment_count( $views ) {
-
-		global $current_screen;
-
-		if ( ! isset( $current_screen->id ) || 'edit-comments' !== $current_screen->id ) {
-			return $views;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read only, to count the same comments core's list table shows.
-		$post_id = isset( $_REQUEST['p'] ) ? absint( $_REQUEST['p'] ) : 0;
-		$counts  = (array) wp_count_comments( $post_id );
-
-		foreach ( $views as $view => $text ) {
-			if ( isset( $counts[ $view ] ) && is_string( $text ) ) {
-				$views[ $view ] = preg_replace(
-					'#(<span class="[\w-]+-count">)[^<]*(</span>)#',
-					'${1}' . number_format_i18n( (int) $counts[ $view ] ) . '${2}',
-					$text,
-					1
-				);
-			}
-		}
-
-		return $views;
 	}
 
 	/**

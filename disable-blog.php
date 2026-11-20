@@ -61,6 +61,7 @@ define( 'DWPB_DIR', __DIR__ );
 define( 'DWPB_URL', plugins_url( '/', __FILE__ ) );
 define( 'DWPB_PLUGIN_NAME', 'disable-blog' );
 define( 'DWPB_VERSION', '0.5.6' );
+define( 'DWPB_BASENAME', plugin_basename( __FILE__ ) );
 
 /**
  * The core plugin class that is used to define everything.

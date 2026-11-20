@@ -427,10 +427,11 @@ test.describe( 'compat: comment scope', () => {
 			"require_once DWPB_DIR . '/includes/class-disable-blog-deactivator.php';",
 			'$probe = function ( $change ) {',
 			"	wp_cache_set( 'comments-0', 'cached', 'counts' );",
+			"	wp_cache_set( 'wc_count_comments_approved', 7, 'wc_comment_counts' );",
 			"	$before = wp_cache_get_last_changed( 'comment' );",
 			'	usleep( 2000 );',
 			'	$change();',
-			"	return array( wp_cache_get_last_changed( 'comment' ) !== $before, false === wp_cache_get( 'comments-0', 'counts' ) );",
+			"	return array( wp_cache_get_last_changed( 'comment' ) !== $before, false === wp_cache_get( 'comments-0', 'counts' ), false === wp_cache_get( 'wc_count_comments_approved', 'wc_comment_counts' ) );",
 			'};',
 			'echo wp_json_encode( array(',
 			"	'disable comments on' => $probe( function () { do_action( 'activated_plugin', 'disable-comments/disable-comments.php', false ); } ),",
@@ -442,11 +443,11 @@ test.describe( 'compat: comment scope', () => {
 		] );
 
 		expect( result ).toEqual( {
-			'disable comments on': [ true, true ],
-			'disable comments off': [ true, true ],
-			'another plugin': [ false, false ],
-			activate: [ true, true ],
-			deactivate: [ true, true ],
+			'disable comments on': [ true, true, true ],
+			'disable comments off': [ true, true, true ],
+			'another plugin': [ false, false, false ],
+			activate: [ true, true, true ],
+			deactivate: [ true, true, true ],
 		} );
 	} );
 
@@ -536,6 +537,50 @@ test.describe( 'compat: comment scope', () => {
 		}
 	} );
 
+	test( 'the replies of a trashed comment on a post stay hidden once core has trashed them', async () => {
+		const result = await evalJson( [
+			'$add = function ( $type, $parent = 0 ) {',
+			`	return (int) wp_insert_comment( array( 'comment_post_ID' => ${ post.id }, 'comment_type' => $type, 'comment_parent' => $parent, 'comment_content' => $type, 'comment_approved' => 1 ) );`,
+			'};',
+			"$comment = $add( 'comment' );",
+			"$add( 'comment', $comment );",
+			'wp_trash_comment( $comment );',
+			'$found = array(',
+			"	'parent' => count( get_comments( array( 'parent' => $comment ) ) ),",
+			"	'parent__in' => count( get_comments( array( 'parent__in' => array( $comment ), 'status' => 'all' ) ) ),",
+			');',
+			...( notes
+				? [
+						"$note = $add( 'note' );",
+						"$add( 'note', $note );",
+						"$add( 'reaction', $note );",
+						'wp_trash_comment( $note );',
+						// The queries core runs for a note's replies and reactions, asked again.
+						"foreach ( array( 'note', 'reaction' ) as $type ) {",
+						"	$found[ $type ] = count( get_comments( array( 'parent' => $note, 'type' => $type, 'status' => 'any', 'fields' => 'ids' ) ) );",
+						'}',
+				  ]
+				: [] ),
+			'echo wp_json_encode( $found );',
+		] );
+
+		expect( result ).toEqual( {
+			parent: 0,
+			parent__in: 0,
+			...( notes ? { note: 0, reaction: 0 } : {} ),
+		} );
+	} );
+
+	test( 'an empty comment ID is not a comment on a post, whatever the global comment', async () => {
+		const result = await evalJson( [
+			'$functions = new Disable_Blog_Functions();',
+			`$GLOBALS['comment'] = get_comment( ${ postCommentIds[ 0 ] } );`,
+			`echo wp_json_encode( array( $functions->is_post_comment( ${ postCommentIds[ 0 ] } ), $functions->is_post_comment( 0 ) ) );`,
+		] );
+
+		expect( result ).toEqual( [ true, false ] );
+	} );
+
 	test( 'the admin edit screen treats a comment on a post as an invalid ID', async () => {
 		const editScreen = async ( id: number ) =>
 			admin.request.get( `/wp-admin/comment.php?action=editcomment&c=${ id }`, { maxRedirects: 0 } );
@@ -558,7 +603,7 @@ test.describe( 'compat: comment scope', () => {
 		expect( body ).toContain( 'Invalid comment ID.' );
 		expect( body ).not.toContain( postMarker );
 
-		for ( const query of [ 'action=trash', 'action=cdc', 'action=mac', 'dt=spam' ] ) {
+		for ( const query of [ 'action=trash', 'action=cdc', 'action=mac', 'dt=spam', 'action=editedcomment&dt=trash' ] ) {
 			const moderate = await admin.request.get( `/wp-admin/comment.php?${ query }&c=${ postCommentIds[ 0 ] }`, {
 				maxRedirects: 0,
 			} );
@@ -604,10 +649,11 @@ test.describe( 'compat: comment scope', () => {
 			'$check->setAccessible( true );',
 			'$probe = function () use ( $check ) {',
 			"	wp_cache_set( 'comments-0', 'cached', 'counts' );",
+			"	wp_cache_set( 'wc_count_comments_approved', 7, 'wc_comment_counts' );",
 			"	$before = wp_cache_get_last_changed( 'comment' );",
 			'	usleep( 2000 );',
 			'	$check->invoke( null );',
-			"	return array( wp_cache_get_last_changed( 'comment' ) !== $before, false === wp_cache_get( 'comments-0', 'counts' ) );",
+			"	return array( wp_cache_get_last_changed( 'comment' ) !== $before, false === wp_cache_get( 'comments-0', 'counts' ), false === wp_cache_get( 'wc_count_comments_approved', 'wc_comment_counts' ) );",
 			'};',
 			"update_option( 'dwpb_version', '0.5.5', false );",
 			'$result = array( $probe(), $probe() );',
@@ -619,9 +665,43 @@ test.describe( 'compat: comment scope', () => {
 
 		// The second check finds the version current and leaves the cache alone.
 		expect( result ).toEqual( [
-			[ true, true ],
-			[ false, false ],
+			[ true, true, true ],
+			[ false, false, false ],
 		] );
+	} );
+
+	test( 'updating the plugin clears cached comment queries and counts', async () => {
+		const result = await evalJson( [
+			// Core's own callbacks need the upgrader classes and the network.
+			"remove_action( 'upgrader_process_complete', array( 'Language_Pack_Upgrader', 'async_upgrade' ), 20 );",
+			"foreach ( array( 'wp_version_check', 'wp_update_plugins', 'wp_update_themes' ) as $callback ) {",
+			"	remove_action( 'upgrader_process_complete', $callback );",
+			'}',
+			'$probe = function ( $hook_extra ) {',
+			"	wp_cache_set( 'comments-0', 'cached', 'counts' );",
+			"	wp_cache_set( 'wc_count_comments_approved', 7, 'wc_comment_counts' );",
+			"	$before = wp_cache_get_last_changed( 'comment' );",
+			'	usleep( 2000 );',
+			"	do_action( 'upgrader_process_complete', null, $hook_extra );",
+			"	return array( wp_cache_get_last_changed( 'comment' ) !== $before, false === wp_cache_get( 'comments-0', 'counts' ), false === wp_cache_get( 'wc_count_comments_approved', 'wc_comment_counts' ) );",
+			'};',
+			"$self = plugin_basename( DWPB_DIR . '/disable-blog.php' );",
+			'echo wp_json_encode( array(',
+			"	'bulk' => $probe( array( 'action' => 'update', 'type' => 'plugin', 'bulk' => true, 'plugins' => array( 'hello-dolly/hello.php', $self ) ) ),",
+			"	'single' => $probe( array( 'action' => 'update', 'type' => 'plugin', 'plugin' => $self ) ),",
+			"	'another plugin' => $probe( array( 'action' => 'update', 'type' => 'plugin', 'bulk' => true, 'plugins' => array( 'hello-dolly/hello.php' ) ) ),",
+			"	'install' => $probe( array( 'action' => 'install', 'type' => 'plugin' ) ),",
+			"	'theme' => $probe( array( 'action' => 'update', 'type' => 'theme', 'themes' => array( 'twentytwentytwo' ) ) ),",
+			') );',
+		] );
+
+		expect( result ).toEqual( {
+			bulk: [ true, true, true ],
+			single: [ true, true, true ],
+			'another plugin': [ false, false, false ],
+			install: [ false, false, false ],
+			theme: [ false, false, false ],
+		} );
 	} );
 
 	test( 'a comment on a post moves no comment count, and one on a page moves each', async ( {

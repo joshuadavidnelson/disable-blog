@@ -1,13 +1,10 @@
 /**
  * The admin comments list table (`edit-comments.php`), default plugin state.
  *
- * `filter_comment_clauses()` (on `comments_clauses`) excludes every comment
- * on a 'post' and limits discussion comments to
- * `dwpb_post_types_with_feature( 'comments' )` -- 'page'/'attachment' by
- * default.
- * `filter_admin_table_comment_count()` rewrites each view's count with the
- * same post-type-scoped SQL rather than trusting `wp_count_comments()`'s
- * cache.
+ * `filter_comment_clauses()` (on `comments_clauses`) adds the comment rule to
+ * every comment query: no comment on a post, and discussion comments only on
+ * post types that support comments ('page' and 'attachment' by default). The
+ * status counts come from `wp_count_comments()`, which follows the same rule.
  */
 
 /**

@@ -60,8 +60,7 @@ class Disable_Blog_Integrations {
 	public function flush_comment_caches_on_toggle( $plugin ) {
 
 		if ( 'disable-comments/disable-comments.php' === $plugin ) {
-			wp_cache_set_comments_last_changed();
-			wp_cache_delete( 'comments-0', 'counts' );
+			dwpb_flush_comment_caches();
 		}
 	}
 
