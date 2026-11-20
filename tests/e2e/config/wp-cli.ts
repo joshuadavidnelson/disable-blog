@@ -100,3 +100,29 @@ export function expectCliSuccess( result: WpCliResult, label: string ): void {
 	).toBe( 0 );
 	expect( result.stdout + result.stderr ).not.toMatch( /fatal error/i );
 }
+
+/**
+ * Whether the tests site runs at least the given WordPress version. Only the
+ * numeric `x.y.z` prefix is compared, so `7.2-alpha-61000` counts as 7.2.
+ *
+ * @param minimum Version to compare against, e.g. `7.1.1`.
+ */
+export async function coreVersionAtLeast( minimum: string ): Promise< boolean > {
+	const parse = ( version: string ): number[] =>
+		( version.match( /^\d+(\.\d+)*/ )?.[ 0 ] ?? '0' )
+			.split( '.' )
+			.map( Number );
+
+	const actual = parse( await wpCliOk( [ 'core', 'version' ] ) );
+	const wanted = parse( minimum );
+
+	for ( let i = 0; i < Math.max( actual.length, wanted.length ); i++ ) {
+		const difference = ( actual[ i ] ?? 0 ) - ( wanted[ i ] ?? 0 );
+
+		if ( 0 !== difference ) {
+			return difference > 0;
+		}
+	}
+
+	return true;
+}

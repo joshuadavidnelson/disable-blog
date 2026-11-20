@@ -696,7 +696,8 @@ class Disable_Blog_Public {
 	 * @since 0.5.6 without this, a removed provider (e.g. 'users', via
 	 *              wp_author_sitemaps()) leaves core nothing registered to 404
 	 *              against, so the request would fall through to the normal
-	 *              template and serve the blog index as HTML.
+	 *              template and serve the blog index as HTML. WordPress
+	 *              7.1.1+ 404s a missing provider itself; this covers older core.
 	 * @return void
 	 */
 	public function disable_removed_sitemaps() {

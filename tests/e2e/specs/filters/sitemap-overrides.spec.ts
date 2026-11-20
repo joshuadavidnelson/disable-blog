@@ -4,9 +4,11 @@
  *
  * `dwpb_disable_removed_sitemaps` guards `disable_removed_sitemaps()`'s
  * manual 404 of sub-file requests for a provider the plugin removed
- * entirely. Forced false, the request falls through to the normal front-end
- * template, since core's own renderer (`WP_Sitemaps::render_sitemaps()`)
- * just `return`s on a missing provider without 404ing itself.
+ * entirely. Forced false, the plugin leaves the request to core. Before
+ * WordPress 7.1.1, core's renderer (`WP_Sitemaps::render_sitemaps()`) just
+ * `return`s on a missing provider, so the request falls through to the normal
+ * front-end template; from 7.1.1 core 404s it itself, and the override has no
+ * visible effect there.
  *
  * `dwpb_disable_user_sitemap` overrides the computed "should the users
  * sitemap be hidden" value inside `wp_author_sitemaps()`, independent of the
@@ -24,6 +26,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  * Internal dependencies
  */
 import { expectStatus } from '../../config/redirects';
+import { coreVersionAtLeast } from '../../config/wp-cli';
 import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
 
 test.describe( 'filters: removed-sitemap 404 override (dwpb_disable_removed_sitemaps)', () => {
@@ -39,11 +42,15 @@ test.describe( 'filters: removed-sitemap 404 override (dwpb_disable_removed_site
 		await resetFilterOverrides( requestUtils );
 	} );
 
-	test( 'a removed provider sub-file stops 404ing', async ( { request } ) => {
+	test( 'a removed provider sub-file is left to core', async ( { request } ) => {
+		if ( await coreVersionAtLeast( '7.1.1' ) ) {
+			await expectStatus( request, '/wp-sitemap-users-1.xml', 404 );
+			return;
+		}
+
 		const response = await expectStatus( request, '/wp-sitemap-users-1.xml', 200 );
 
-		// Confirms the fallthrough is the normal HTML template, not some other
-		// 200 -- see the file docblock on why core itself doesn't 404 here.
+		// The normal HTML template, not some other 200 -- see the file docblock.
 		expect( response.headers()[ 'content-type' ] ).not.toContain( 'xml' );
 	} );
 } );
