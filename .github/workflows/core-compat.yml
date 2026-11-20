@@ -16,13 +16,12 @@ on:
     - ".github/workflows/core-compat.yml"
     - ".github/actions/e2e-env/**"
     - "tests/bin/set-core-version.js"
-    - "tests/compat/**"
 
 permissions:
   contents: "read"
 
 concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}-${{ inputs.wp }}"
+  group: "${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}-${{ inputs.wp }}"
   cancel-in-progress: true
 
 jobs:
@@ -159,9 +158,10 @@ jobs:
         LC_ALL: "C.UTF-8"
       run: |
         # The title drops the nightly build number (7.3-alpha-61234 becomes
-        # 7.3-alpha) so one issue tracks a target from week to week.
+        # 7.3-alpha, 7.2-RC2-65716 becomes 7.2-RC2) so one issue tracks a
+        # target from week to week.
         normalize() {
-          sed -E 's/^([0-9]+\.[0-9]+(\.[0-9]+)?-[A-Za-z]+)-[0-9]+$/\1/' <<< "$1"
+          sed -E 's/^([0-9]+\.[0-9]+(\.[0-9]+)?-[A-Za-z]+[0-9]*)-[0-9]+$/\1/' <<< "$1"
         }
 
         if [ -n "${FULL_VERSION}" ]; then
@@ -172,6 +172,13 @@ jobs:
           NAME="${NAME#wordpress-}"
           NAME="${NAME%.zip}"
           TARGET="$(normalize "${NAME}")"
+          if [ "${MATRIX_WP}" = "master" ]; then
+            # A branch name has no version, so read it from trunk.
+            if TRUNK="$(curl -fsSL "https://raw.githubusercontent.com/WordPress/WordPress/master/wp-includes/version.php" \
+              | sed -nE "s/^\\\$wp_version = '([^']+)';.*/\\1/p")" && [ -n "${TRUNK}" ]; then
+              TARGET="$(normalize "${TRUNK}")"
+            fi
+          fi
         fi
         TITLE="Core compat: WordPress ${TARGET}"
 

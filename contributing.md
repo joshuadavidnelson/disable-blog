@@ -58,3 +58,4 @@ An entry that matches no hit fails the run, so remove entries when the leak goes
 
 - Every pull request runs the snapshot check on the pinned `latest` (PHP 8.3) leg of the E2E workflow. The core version is pinned in `.wp-env.json`, which is the version the baseline records.
 - `core-compat.yml` runs weekly (and on demand from the Actions tab) against the newest released core, the current beta or release candidate when one exists, and nightly `master`. It runs the snapshot check and the browser suite, and files or updates an issue labeled `core-compat` when anything fails.
+- `core-compat.yml` also runs on pull requests that change the workflow, the shared `e2e-env` action, or the core-version script. No issues are filed on that event, and the `master` and beta legs are expected to differ from the baseline there. GitHub runs the schedule and manual dispatch only from `stable`, so they start once this reaches `stable`.
