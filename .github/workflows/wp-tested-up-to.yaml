@@ -24,55 +24,30 @@ jobs:
       with:
         ref: "stable"
 
+    - name: "Set up Node"
+      uses: "actions/setup-node@v6"
+      with:
+        node-version: "24"
+
+    # Refuses an empty or malformed API response. Sets the full and minor outputs:
+    # readme.txt states the minor release, README.md and .wp-env.json the full one.
     - name: "Resolve latest WordPress version"
       id: "wp"
-      run: |
-        set -euo pipefail
-
-        full="$(curl -sSf https://api.wordpress.org/core/stable-check/1.0/ \
-          | jq -r 'to_entries | map(select(.value == "latest")) | .[0].key // empty')"
-
-        # Refuse to touch any file on an empty or malformed response rather than
-        # writing a bad value into the readmes.
-        if ! [[ "${full}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "Unusable version from the WordPress.org API: '${full}'" >&2
-          exit 1
-        fi
-
-        # readme.txt states the minor release; README.md carries the full version.
-        echo "full=${full}" >>"${GITHUB_OUTPUT}"
-        echo "minor=$(echo "${full}" | cut -d. -f1,2)" >>"${GITHUB_OUTPUT}"
-
-        echo "Latest WordPress release: ${full}"
+      run: "node .github/scripts/tested-up-to/main.ts resolve"
 
     - name: "Update version references"
       env:
         FULL: "${{ steps.wp.outputs.full }}"
         MINOR: "${{ steps.wp.outputs.minor }}"
-      run: |
-        set -euo pipefail
+      run: "node .github/scripts/tested-up-to/main.ts update"
 
-        # The version group matches two- and three-part releases alike (7.1 and 7.1.2),
-        # since WordPress ships both.
-        sed -E -i "s|^(Tested up to:[[:space:]]*)[0-9]+\.[0-9]+(\.[0-9]+)?[[:space:]]*$|\1${MINOR}|" readme.txt
-        sed -E -i "s|(\*\*Tested up to WordPress:\*\*[[:space:]]*)[0-9]+\.[0-9]+(\.[0-9]+)?|\1${FULL}|" README.md
-        sed -E -i "s|(https://wordpress\.org/wordpress-)[0-9]+\.[0-9]+(\.[0-9]+)?(\.zip)|\1${FULL}\3|" .wp-env.json
-
+    # A pattern that stops matching looks identical to "already up to date", so
+    # check each edit landed and fail loudly if not.
     - name: "Verify the edits landed"
       env:
         FULL: "${{ steps.wp.outputs.full }}"
         MINOR: "${{ steps.wp.outputs.minor }}"
-      run: |
-        set -euo pipefail
-
-        # A regex that stops matching is the failure mode this workflow is most prone
-        # to, and it looks identical to "already up to date". Fail loudly instead.
-        grep -qxF "Tested up to: ${MINOR}" readme.txt \
-          || { echo "readme.txt does not state 'Tested up to: ${MINOR}'" >&2; exit 1; }
-        grep -qF "**Tested up to WordPress:** ${FULL}" README.md \
-          || { echo "README.md does not state 'Tested up to WordPress: ${FULL}'" >&2; exit 1; }
-        grep -qF "wordpress-${FULL}.zip" .wp-env.json \
-          || { echo ".wp-env.json core is not pinned to ${FULL}" >&2; exit 1; }
+      run: "node .github/scripts/tested-up-to/main.ts verify"
 
     - name: "Create pull request"
       uses: "peter-evans/create-pull-request@v7"

@@ -1,0 +1,35 @@
+name: "CI scripts"
+
+on:
+  pull_request:
+    paths:
+      - ".github/scripts/**"
+      - ".github/workflows/ci-scripts.yml"
+  push:
+    branches:
+      - "develop"
+      - "stable"
+    paths:
+      - ".github/scripts/**"
+      - ".github/workflows/ci-scripts.yml"
+  workflow_dispatch: null
+
+permissions:
+  contents: "read"
+
+jobs:
+  test:
+    name: "Unit tests"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout repository"
+        uses: "actions/checkout@v7"
+
+      - name: "Set up Node"
+        uses: "actions/setup-node@v7"
+        with:
+          node-version: "24"
+
+      # Node 24 runs the TypeScript scripts and tests directly, with no build step.
+      - name: "Run the script tests"
+        run: node --test ".github/scripts/**/*.test.ts"
