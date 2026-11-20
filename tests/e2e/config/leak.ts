@@ -167,12 +167,14 @@ export async function listAbilities( admin: RequestUtils ): Promise< string[] > 
 
 interface RestIndexEndpoint {
 	methods: string[];
-	args?: Record< string, { required?: boolean } >;
+	args?: Record< string, { required?: boolean; maximum?: number } >;
 }
 
 /**
  * One probe per actor for every REST route that needs no ID and no
  * required argument, with a search for the marker where the route takes one.
+ * Lists ask for their largest page, so an old post is not pushed off the
+ * first page by newer ones.
  *
  * @param request Any request context; the index is the same for every user.
  * @param marker  Marker to search for.
@@ -198,7 +200,12 @@ export async function discoverRestProbes( request: APIRequestContext, marker: st
 		}
 
 		const searchable = gets.some( ( endpoint ) => undefined !== endpoint.args?.search );
-		const query = searchable ? `?search=${ searchTerm( marker ) }&per_page=100` : '';
+		const perPage = gets.map( ( endpoint ) => endpoint.args?.per_page ).find( ( arg ) => undefined !== arg );
+		const params = [
+			...( searchable ? [ `search=${ searchTerm( marker ) }` ] : [] ),
+			...( undefined !== perPage ? [ `per_page=${ Math.min( 100, perPage.maximum ?? 100 ) }` ] : [] ),
+		];
+		const query = params.length > 0 ? `?${ params.join( '&' ) }` : '';
 
 		for ( const actor of ACTORS ) {
 			probes.push( { surface: 'rest', actor, method: 'GET', url: `/wp-json${ route }${ query }` } );

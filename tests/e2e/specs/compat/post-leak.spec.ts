@@ -78,6 +78,9 @@ interface SeededTarget {
 const POST_DATE = '2001-02-03 04:05:06';
 const PAGE_DATE = '2002-03-04 05:06:07';
 
+// Posts the Latest Posts block shows when it sets no count.
+const LATEST_POSTS_DEFAULT = 5;
+
 test.describe.configure( { mode: 'serial' } );
 
 test.describe( 'compat: post leak crawl', () => {
@@ -173,6 +176,24 @@ test.describe( 'compat: post leak crawl', () => {
 
 		if ( ! postAuthor ) {
 			throw new Error( `No ${ ROLE_USERS.author.username } user; the auth project creates it.` );
+		}
+
+		// Feeds and the Latest Posts block show only the newest items, so the
+		// old target post reaches them only while the site has few posts.
+		const sizes = JSON.parse(
+			await wpCliOk( [
+				'eval',
+				'echo wp_json_encode( array( "posts" => (int) wp_count_posts( "post" )->publish, "rss" => (int) get_option( "posts_per_rss" ) ) );',
+			] )
+		) as { posts: number; rss: number };
+		const smallestList = Math.min( sizes.rss, LATEST_POSTS_DEFAULT );
+
+		if ( sizes.posts >= smallestList ) {
+			throw new Error(
+				`The site has ${ sizes.posts } published posts, but the crawl needs fewer than ${ smallestList } ` +
+					'(the smallest of posts_per_rss and the Latest Posts block default) so the seeded post is listed. ' +
+					'Delete the extra posts or reset the environment.'
+			);
 		}
 
 		const postMarker = makeMarker( 'dwpbleak' );
@@ -285,13 +306,22 @@ test.describe( 'compat: post leak crawl', () => {
 			expect( urls.some( match ), `${ label } in:\n${ urls.join( '\n' ) }` ).toBe( true );
 		};
 
-		found( 'pages route', ( url ) => url.includes( '/wp/v2/pages' ) );
-
 		for ( const actor of [ 'anon', 'admin' ] ) {
+			const search = `?search=${ searchTerm( control.marker ) }&per_page=100`;
+
+			found( `discovered page search as ${ actor }`, ( url ) => url === `rest ${ actor } /wp-json/wp/v2/pages${ search }` );
 			found( `discovered comment search as ${ actor }`, ( url ) =>
-				url === `rest ${ actor } /wp-json/wp/v2/comments?search=${ searchTerm( control.marker ) }&per_page=100`
+				url === `rest ${ actor } /wp-json/wp/v2/comments${ search }`
+			);
+			found( `default comment list for the page as ${ actor }`, ( url ) =>
+				url === `rest ${ actor } /wp-json/wp/v2/comments?post=${ control.post.id }&per_page=100`
 			);
 		}
+
+		// Logged-out requests may not filter comments by type.
+		found( 'custom comment type list', ( url ) =>
+			url === `rest admin /wp-json/wp/v2/comments?type=${ CUSTOM_COMMENT_TYPE }&per_page=100`
+		);
 
 		for ( const reader of xmlrpcReaders.filter( ( name ) => /^wp\.getPages?$/.test( name ) ) ) {
 			found( `XML-RPC ${ reader }`, ( url ) => url === `xmlrpc admin ${ reader }/${ control.post.id }` );
@@ -299,8 +329,7 @@ test.describe( 'compat: post leak crawl', () => {
 
 		found( 'front-end search', ( url ) => url.startsWith( 'front anon /?s=' ) );
 		found( 'permalink', ( url ) => url === `front anon ${ new URL( control.post.permalink ).pathname }` );
-		found( 'default comment list', ( url ) => url.includes( '/wp/v2/comments' ) && ! url.includes( 'type=' ) );
-		found( 'custom comment type', ( url ) => url.includes( `type=${ CUSTOM_COMMENT_TYPE }` ) );
+		found( 'page sitemap, reached from the sitemap index', ( url ) => url === 'front anon /wp-sitemap-posts-page-1.xml' );
 		found( 'XML-RPC comment list', ( url ) => url.endsWith( 'wp.getComments' ) );
 
 		for ( const id of control.commentIds ) {
