@@ -16,7 +16,8 @@
   "scripts": {
     "env": "wp-env",
     "env:start": "wp-env start",
-    "env:stop": "wp-env stop"
+    "env:stop": "wp-env stop",
+    "test:ci-scripts": "node --test \".github/scripts/**/*.test.ts\""
   },
   "devDependencies": {
     "@types/node": "^18.0.0",

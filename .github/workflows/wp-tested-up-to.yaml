@@ -1,0 +1,77 @@
+name: "WordPress Tested Up To"
+
+on:
+  schedule:
+    # Daily at 06:00 UTC. Scheduled runs only fire from the default branch.
+    - cron: "0 6 * * *"
+  workflow_dispatch: null
+
+permissions:
+  contents: "write"
+  pull-requests: "write"
+
+concurrency:
+  group: "${{ github.workflow }}"
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: "Bump tested up to version"
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: "Checkout repository"
+      uses: "actions/checkout@v4"
+      with:
+        ref: "stable"
+
+    - name: "Set up Node"
+      uses: "actions/setup-node@v6"
+      with:
+        node-version: "24"
+
+    # Refuses an empty or malformed API response. Sets the full and minor outputs:
+    # readme.txt states the minor release, README.md and .wp-env.json the full one.
+    - name: "Resolve latest WordPress version"
+      id: "wp"
+      run: "node .github/scripts/tested-up-to/main.ts resolve"
+
+    - name: "Update version references"
+      env:
+        FULL: "${{ steps.wp.outputs.full }}"
+        MINOR: "${{ steps.wp.outputs.minor }}"
+      run: "node .github/scripts/tested-up-to/main.ts update"
+
+    # A pattern that stops matching looks identical to "already up to date", so
+    # check each edit landed and fail loudly if not.
+    - name: "Verify the edits landed"
+      env:
+        FULL: "${{ steps.wp.outputs.full }}"
+        MINOR: "${{ steps.wp.outputs.minor }}"
+      run: "node .github/scripts/tested-up-to/main.ts verify"
+
+    - name: "Create pull request"
+      uses: "peter-evans/create-pull-request@v7"
+      with:
+        # A PR opened with GITHUB_TOKEN will not trigger the Integrate workflow.
+        # Set a WORKFLOW_PAT repo secret to have the checks run on these PRs.
+        token: "${{ secrets.WORKFLOW_PAT || secrets.GITHUB_TOKEN }}"
+        add-paths: |
+          readme.txt
+          README.md
+          .wp-env.json
+        base: "stable"
+        # A fixed branch means an already-open PR is updated in place instead of a
+        # second one being opened, and it rolls forward onto later releases.
+        branch: "bot/wp-tested-up-to"
+        delete-branch: true
+        commit-message: "Update tested up to WordPress ${{ steps.wp.outputs.full }}"
+        title: "Update tested up to WordPress ${{ steps.wp.outputs.full }}"
+        body: |
+          WordPress ${{ steps.wp.outputs.full }} is the current stable release.
+
+          - `readme.txt` — `Tested up to: ${{ steps.wp.outputs.minor }}` (WordPress.org reads the minor release)
+          - `README.md` — `**Tested up to WordPress:** ${{ steps.wp.outputs.full }}`
+          - `.wp-env.json` — `core` pinned to WordPress ${{ steps.wp.outputs.full }}
+
+          Opened automatically by the `WordPress Tested Up To` workflow. Confirm the
+          plugin passes against this release before merging.
