@@ -213,7 +213,7 @@ add_filter( 'dwpb_redirect_admin_tools', function( $url ) {
 {% endcode %}
 
 {% hint style="info" %}
-`dwpb_redirect_admin_tools` also fires the older `dwpb_redirect_admin_options_tools`
+**Changed in 0.5.7:** `dwpb_redirect_admin_tools` also fires the older `dwpb_redirect_admin_options_tools`
 name, for compatibility. See [Deprecated](#deprecated).
 {% endhint %}
 
@@ -468,9 +468,10 @@ add_filter( 'dwpb_disable_user_sitemap', '__return_true' );
 
 Toggles whether a request for a sitemap sub-file the plugin has removed entirely, such as
 `/wp-sitemap-users-1.xml` once the users provider is gone, returns a 404 instead of
-falling through to a normal page.
+falling through to a normal page. WordPress 7.1.1 and later send this 404 on their own,
+so the filter only matters on earlier versions.
 
-**Since:** 0.5.6
+**Since:** 0.5.7
 
 **Parameters:**
 
@@ -592,7 +593,7 @@ add_filter( 'dwpb_unregister_widgets', function( $bool, $widget ) {
 #### **`dwpb_disable_{$metabox_id}`**
 
 Toggles a single dashboard widget. `{$metabox_id}` is either `dashboard_quick_press` or
-`dashboard_activity`, the only two dashboard widgets the plugin removes in 0.5.6.
+`dashboard_activity`, the two dashboard widgets the plugin removes.
 
 **Since:** 0.4.1
 
@@ -656,7 +657,7 @@ add_filter( 'dwpb_disable_user_post_column', '__return_false' );
 {% endcode %}
 
 {% hint style="info" %}
-**Changed in 0.5.6:** the correct filter name is `dwpb_disable_user_post_column`. The
+**Changed in 0.5.7:** the correct filter name is `dwpb_disable_user_post_column`. The
 misspelled `dpwb_disable_user_post_column` still works. See [Deprecated](#deprecated).
 {% endhint %}
 
@@ -684,7 +685,7 @@ add_filter( 'dwpb_create_user_event_column', '__return_false' );
 {% endcode %}
 
 {% hint style="info" %}
-**Changed in 0.5.6:** the correct filter name is `dwpb_create_user_{$post_type}_column`.
+**Changed in 0.5.7:** the correct filter name is `dwpb_create_user_{$post_type}_column`.
 The misspelled `dpwb_create_user_{$post_type}_column` still works. See
 [Deprecated](#deprecated).
 {% endhint %}
@@ -880,7 +881,7 @@ add_action( 'dwpb_init', function() {
 
 ### Deprecated
 
-These filter names still work as of 0.5.6. Each one runs through
+These filter names were deprecated in 0.5.7 and still work. Each one runs through
 `apply_filters_deprecated()`, so hooking it also triggers a WordPress deprecation
 notice.
 

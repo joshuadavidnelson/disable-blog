@@ -80,8 +80,10 @@ Disable Blog updates WordPress's built-in XML sitemaps to match the rest of the 
   types to author archives with the `dwpb_author_archive_post_types` filter. Override
   this directly with `dwpb_disable_user_sitemap`.
 
-Requesting a sitemap the plugin has removed, such as `/wp-sitemap-users-1.xml`, returns
-a 404 instead of a live page. Turn this off with `dwpb_disable_removed_sitemaps`.
+Since 0.5.7, requesting a sitemap the plugin has removed, such as
+`/wp-sitemap-users-1.xml`, returns a 404 instead of a live page. WordPress 7.1.1 and
+later do this on their own. On earlier versions, turn it off with
+`dwpb_disable_removed_sitemaps`.
 
 ### REST API and XML-RPC
 
