@@ -234,7 +234,7 @@ function dwpb_test_api_reset_content() {
 		array(
 			'post_type'   => $content_types,
 			'post_status' => 'any',
-			'numberposts' => -1,
+			'numberposts' => -1, // phpcs:ignore WordPressVIPMinimum.Performance.NoPaging.posts_per_page_numberposts -- cleanup must reach every row on a fixed-size test site.
 			'fields'      => 'ids',
 		)
 	);
@@ -251,7 +251,7 @@ function dwpb_test_api_reset_content() {
 		array(
 			'post_type'    => 'page',
 			'post_status'  => 'any',
-			'numberposts'  => -1,
+			'numberposts'  => -1, // phpcs:ignore WordPressVIPMinimum.Performance.NoPaging.posts_per_page_numberposts -- cleanup must reach every row on a fixed-size test site.
 			'fields'       => 'ids',
 			'post__not_in' => array_values( array_filter( array( $home_id, $blog_id ) ) ), // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- fixed-size test site, not a VIP-scale query.
 		)
@@ -328,7 +328,7 @@ function dwpb_test_api_delete_all_posts() {
 		array(
 			'post_type'   => 'post',
 			'post_status' => 'any',
-			'numberposts' => -1,
+			'numberposts' => -1, // phpcs:ignore WordPressVIPMinimum.Performance.NoPaging.posts_per_page_numberposts -- cleanup must reach every row on a fixed-size test site.
 			'fields'      => 'ids',
 		)
 	);
