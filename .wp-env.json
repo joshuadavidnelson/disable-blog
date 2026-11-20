@@ -5,16 +5,17 @@
 	},
 	"phpVersion": "8.3",
 	"testsEnvironment": true,
-	"plugins": [
-		"."
-	],
 	"themes": [
 		"https://downloads.wordpress.org/theme/twentytwentytwo.zip"
 	],
 	"port": 8888,
 	"testsPort": 8889,
 	"mappings": {
+		"wp-content/plugins/disable-blog": ".",
 		"wp-content/mu-plugins": "./tests/e2e/fixtures"
+	},
+	"lifecycleScripts": {
+		"afterStart": "npx --no-install wp-env run cli wp plugin activate disable-blog && npx --no-install wp-env run tests-cli wp plugin activate disable-blog"
 	},
 	"env": {
 		"tests": {
