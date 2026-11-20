@@ -19,3 +19,44 @@ Thank you for considering contributing to the on-going development of this plugi
 - **Support** - We welcome solutions and constructive responses to [support forum](https://wordpress.org/support/plugin/disable-blog/) posts.
 
 However you choose to contribute, we ask that you follow the [Code of Conduct](code-of-conduct.md) and conduct yourself in a compassionate, professional manner. Thank you again for your contributions!
+
+## Branches
+
+Start branches from `develop` and open pull requests against `develop`. Only small, development-only changes go straight to `stable`.
+
+## Core compatibility checks
+
+Two checks watch for changes in WordPress core that could expose posts despite the plugin. Both run against a local `wp-env` site.
+
+### Core surface snapshot
+
+The snapshot records the parts of core Disable Blog depends on and compares them with a committed baseline. The code is in `tests/compat/` and the baseline is `tests/compat/baseline/surface.json`.
+
+- `npm run compat:dump` prints the current surface.
+- `npm run compat:check` compares it with the baseline, prints a report, writes it to `artifacts/surface-diff.md` and exits with an error on any difference.
+- `npm run compat:update` overwrites the baseline with the current surface.
+
+The report groups changes by section. Each line is `added`, `removed` or `changed`, followed by the key and, where it applies, the value (`changed` shows the old and new value).
+
+Run `npm run compat:update` and commit the new baseline when core added or changed something and the plugin already handles it, or when you have reviewed the change and it needs no plugin work. Do not update the baseline when the report shows a new post surface (a REST route, post type, feed, sitemap or similar) that the plugin does not yet hide. Fix the plugin first, then update the baseline.
+
+### Post leak crawl
+
+`tests/e2e/specs/compat/post-leak.spec.ts` probes REST routes, front-end URLs, XML-RPC methods, abilities and comment totals as a logged-out visitor and as an admin, and fails when a response contains a post. It runs with the rest of the browser suite (`npm run test:e2e`).
+
+Some responses are expected to include posts, such as the admin comment list. These are listed in `tests/compat/leak-allowlist.json`. To add an entry, fix the plugin first if the leak is a bug, then add an object with these fields:
+
+- `surface`: `rest`, `front`, `xmlrpc`, `ability` or `count`.
+- `actor`: `anon` or `admin`.
+- `urlPattern`: text the hit's URL contains (for counts and XML-RPC, the key or method name).
+- `reason`: why the leak is accepted. Every entry needs one, so a later reader can tell whether it still holds.
+- `minWp` (optional): the lowest WordPress version the entry applies to, such as `"7.2"`. Below it the entry is ignored and never reported as unused.
+
+An entry that matches no hit fails the run, so remove entries when the leak goes away.
+
+## Continuous integration
+
+- Every pull request runs the snapshot check on the pinned `latest` (PHP 8.3) leg of the E2E workflow. The core version is pinned in `.wp-env.json`, which is the version the baseline records.
+- `core-compat.yml` runs weekly (and on demand from the Actions tab) against the newest released core, the current beta or release candidate when one exists, and nightly `master`. It runs the snapshot check and the browser suite, and files or updates an issue labeled `core-compat` when anything fails.
+- `core-compat.yml` also runs on pull requests that change the workflow, the shared `e2e-env` action, the core-version script, or the scripts in `.github/scripts/`. No issues are filed on that event, and the `master` and beta legs are expected to differ from the baseline there. GitHub runs the schedule and manual dispatch only from `stable`, so they start once this reaches `stable`.
+- Workflow logic lives in TypeScript scripts in `.github/scripts/`, which Node 24 runs directly. Run their unit tests with `npm run test:ci-scripts`; the `CI scripts` workflow runs them on pull requests that change them.

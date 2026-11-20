@@ -9,7 +9,6 @@
 	<exclude-pattern>/.github/</exclude-pattern>
 	<exclude-pattern>/.wordpress-org/</exclude-pattern>
 	<exclude-pattern>/languages/</exclude-pattern>
-	<exclude-pattern>/tests/(?!e2e/fixtures/)</exclude-pattern>
 	<exclude-pattern>/bin/</exclude-pattern>
 	<exclude-pattern>/assets/</exclude-pattern>
 

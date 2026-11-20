@@ -2,9 +2,6 @@ name: "E2E Tests"
 
 on:
   pull_request:
-    branches:
-    - stable
-    - develop
   workflow_dispatch: null
 
 permissions:
@@ -15,6 +12,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  static:
+    name: "Typecheck and compat unit tests"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 10
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v7"
+
+    - name: "Setup Node.js"
+      uses: "actions/setup-node@v7"
+      with:
+        node-version: "24"
+        cache: "npm"
+
+    - name: "Install npm dependencies"
+      run: "npm ci"
+
+    - name: "Typecheck the e2e suite"
+      run: "npm run typecheck"
+
+    - name: "Unit tests for the compat tooling"
+      run: "npm run test:compat-unit"
+
   playwright:
     name: "WP ${{ matrix.wp }} / PHP ${{ matrix.php }} E2E"
     runs-on: "ubuntu-latest"
@@ -39,65 +59,23 @@ jobs:
         - wp: "master"
           php: "8.4"
 
-    env:
-      # wp-env reads this on every invocation, see
-      # tests/bin/set-core-version.js.
-      WP_ENV_PHP_VERSION: "${{ matrix.php }}"
-
     steps:
     - name: "Checkout"
       uses: "actions/checkout@v7"
 
-    - name: "Setup Node.js"
-      uses: "actions/setup-node@v7"
+    - name: "Set up the test environment"
+      uses: "./.github/actions/e2e-env"
       with:
-        node-version: "24"
-        cache: "npm"
+        wp: "${{ matrix.wp }}"
+        php: "${{ matrix.php }}"
 
-    - name: "Install npm dependencies"
-      run: "npm ci"
-
-    - name: "Typecheck the e2e suite"
-      run: "npm run typecheck"
-
-    - name: "Resolve the Playwright version"
-      id: "playwright"
-      run: |
-        VERSION="$(node -p "require('@playwright/test/package.json').version")"
-        echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-
-    - name: "Cache the Playwright browser"
-      id: "playwright-cache"
-      uses: "actions/cache@v4"
-      with:
-        path: "~/.cache/ms-playwright"
-        key: "playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}"
-
-    - name: "Install the Playwright browser"
-      run: |
-        if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-          # The cache holds the browser but not the apt packages it links against.
-          npx playwright install-deps chromium
-        else
-          npx playwright install --with-deps chromium
-        fi
-
-    - name: "Pin the WordPress core version"
-      env:
-        DWPB_WP_VERSION: "${{ matrix.wp }}"
-      run: |
-        npm run test:e2e:core-version -- "${DWPB_WP_VERSION}"
-        cat .wp-env.override.json || echo "No override written: latest stable."
-
-    - name: "Start wp-env"
-      id: wp-env
-      timeout-minutes: 30
-      run: "npm run env:start"
-
-    - name: "Report the environment under test"
-      run: |
-        npx wp-env run tests-cli -- wp core version
-        npx wp-env run tests-cli -- php -r 'echo PHP_VERSION, PHP_EOL;'
+    # "latest" runs the core zip pinned in .wp-env.json, which is the version
+    # the baseline records. The suite runs even when this check fails.
+    - name: "Core surface snapshot"
+      id: "snapshot"
+      if: "matrix.wp == 'latest' && matrix.php == '8.3'"
+      continue-on-error: true
+      run: "npm run compat:check"
 
     - name: "Browser suite"
       run: "npm run test:e2e"
@@ -114,19 +92,10 @@ jobs:
 
     - name: "Check the debug log for PHP diagnostics"
       if: always()
-      run: |
-        test -s artifacts/debug.log || exit 0
-
-        if grep -qE "PHP (Warning|Deprecated|Notice)" artifacts/debug.log; then
-          echo "::warning title=PHP diagnostics::WP ${{ matrix.wp }} / PHP ${{ matrix.php }} logged PHP diagnostics; see the debug.log artifact."
-          grep -E "PHP (Warning|Deprecated|Notice)" artifacts/debug.log | sort -u | head -40
-        fi
-
-        if grep -q "PHP Fatal error" artifacts/debug.log; then
-          echo "::error title=PHP fatal::A PHP fatal error was logged during the run."
-          grep "PHP Fatal error" artifacts/debug.log | sort -u | head -20
-          exit 1
-        fi
+      env:
+        DWPB_WP_LABEL: "${{ matrix.wp }}"
+        DWPB_PHP_VERSION: "${{ matrix.php }}"
+      run: "node .github/scripts/check-debug-log.ts"
 
     - name: "Upload artifacts"
       if: always()
@@ -135,3 +104,9 @@ jobs:
         name: "e2e-wp${{ matrix.wp }}-php${{ matrix.php }}-${{ github.run_id }}"
         path: "artifacts/"
         retention-days: 7
+
+    - name: "Fail when the snapshot check failed"
+      if: "always() && steps.snapshot.outcome == 'failure'"
+      run: |
+        echo "::error title=Core surface::The core surface differs from the baseline; see artifacts/surface-diff.md."
+        exit 1

@@ -1,0 +1,141 @@
+name: "Core Compat"
+
+# schedule and workflow_dispatch run only from the default branch. The
+# pull_request trigger covers changes to this workflow and its shared action.
+on:
+  schedule:
+  - cron: "17 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      wp:
+        description: "WordPress core to check: a version, master, or an https:// zip URL. Empty runs latest, the current beta or RC, and master."
+        required: false
+        type: "string"
+  pull_request:
+    paths:
+    - ".github/workflows/core-compat.yml"
+    - ".github/actions/e2e-env/**"
+    - "tests/bin/set-core-version.js"
+    - ".github/scripts/**"
+
+permissions:
+  contents: "read"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}-${{ inputs.wp }}"
+  cancel-in-progress: true
+
+jobs:
+  targets:
+    name: "Resolve targets"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 5
+    outputs:
+      matrix: "${{ steps.resolve.outputs.matrix }}"
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v7"
+
+    - name: "Setup Node.js"
+      uses: "actions/setup-node@v7"
+      with:
+        node-version: "24"
+
+    - name: "Resolve the WordPress targets"
+      id: "resolve"
+      env:
+        DWPB_WP_INPUT: "${{ inputs.wp }}"
+      run: "node .github/scripts/core-compat-targets.ts"
+
+  compat:
+    name: "Core compat (${{ matrix.name }})"
+    needs: "targets"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 60
+    permissions:
+      contents: "read"
+      issues: "write"
+    strategy:
+      fail-fast: false
+      matrix: "${{ fromJSON(needs.targets.outputs.matrix) }}"
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v7"
+
+    - name: "Set up the test environment"
+      id: "env"
+      uses: "./.github/actions/e2e-env"
+      with:
+        wp: "${{ matrix.wp }}"
+        php: "${{ matrix.php }}"
+
+    # Both checks run so one report covers the snapshot and the leak crawl.
+    - name: "Core surface snapshot"
+      id: "snapshot"
+      continue-on-error: true
+      run: "npm run compat:check"
+
+    - name: "Browser suite"
+      id: "suite"
+      continue-on-error: true
+      run: "npm run test:e2e"
+
+    # Always, not just on failure: see e2e-playwright.yml.
+    - name: "Collect the WordPress debug log"
+      if: "always() && steps.env.conclusion == 'success'"
+      continue-on-error: true
+      run: |
+        mkdir -p artifacts
+        npx wp-env run tests-cli -- cat /var/www/html/wp-content/debug.log > artifacts/debug.log 2>/dev/null || true
+
+    - name: "Check the debug log for PHP fatals"
+      id: "debuglog"
+      if: "always()"
+      continue-on-error: true
+      env:
+        DWPB_WP_LABEL: "${{ matrix.name }}"
+        DWPB_PHP_VERSION: "${{ matrix.php }}"
+      run: "node .github/scripts/check-debug-log.ts"
+
+    - name: "Write the job summary"
+      if: "always()"
+      run: |
+        if [ -s artifacts/surface-diff.md ]; then
+          cat artifacts/surface-diff.md >> "${GITHUB_STEP_SUMMARY}"
+        fi
+
+    - name: "Upload artifacts"
+      if: "always()"
+      uses: "actions/upload-artifact@v4"
+      with:
+        name: "core-compat-${{ matrix.name }}-${{ github.run_id }}"
+        path: "artifacts/"
+        retention-days: 7
+
+    # Pull requests never file issues: the check runs there to verify the
+    # workflow itself. Node is set up here too because the environment step
+    # can fail before it sets up Node.
+    - name: "Setup Node.js for the issue script"
+      if: "always() && github.event_name != 'pull_request' && (steps.env.conclusion == 'failure' || steps.snapshot.outcome == 'failure' || steps.suite.outcome == 'failure' || steps.debuglog.outcome == 'failure')"
+      uses: "actions/setup-node@v7"
+      with:
+        node-version: "24"
+
+    - name: "File or update the issue"
+      if: "always() && github.event_name != 'pull_request' && (steps.env.conclusion == 'failure' || steps.snapshot.outcome == 'failure' || steps.suite.outcome == 'failure' || steps.debuglog.outcome == 'failure')"
+      env:
+        GH_TOKEN: "${{ github.token }}"
+        FULL_VERSION: "${{ steps.env.outputs.version }}"
+        MATRIX_WP: "${{ matrix.wp }}"
+        ENV_OUTCOME: "${{ steps.env.outcome }}"
+        SNAPSHOT: "${{ steps.snapshot.outcome }}"
+        SUITE: "${{ steps.suite.outcome }}"
+        DEBUGLOG: "${{ steps.debuglog.outcome }}"
+        RUN_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      run: "node .github/scripts/core-compat-issue.ts"
+
+    - name: "Fail when a check failed"
+      if: "always() && (steps.snapshot.outcome == 'failure' || steps.suite.outcome == 'failure' || steps.debuglog.outcome == 'failure')"
+      run: |
+        echo "::error title=Core compat::The snapshot check, the browser suite, or the PHP fatal check failed; see the job summary and artifacts."
+        exit 1

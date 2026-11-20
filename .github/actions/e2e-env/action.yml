@@ -1,0 +1,80 @@
+name: "E2E environment"
+description: "Install dependencies, pin WordPress core and PHP, and start wp-env. The caller checks out the repository first."
+
+inputs:
+  wp:
+    description: "WordPress core: latest (the core zip pinned in .wp-env.json), a version, master, or an https:// zip URL."
+    required: true
+  php:
+    description: "PHP version for wp-env."
+    required: true
+
+outputs:
+  version:
+    description: "The WordPress version wp-env is running."
+    value: "${{ steps.report.outputs.version }}"
+
+runs:
+  using: "composite"
+  steps:
+  - name: "Setup Node.js"
+    uses: "actions/setup-node@v7"
+    with:
+      node-version: "24"
+      cache: "npm"
+
+  - name: "Install npm dependencies"
+    shell: "bash"
+    run: "npm ci"
+
+  - name: "Resolve the Playwright version"
+    id: "playwright"
+    shell: "bash"
+    run: |
+      VERSION="$(node -p "require('@playwright/test/package.json').version")"
+      echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+  - name: "Cache the Playwright browser"
+    id: "playwright-cache"
+    uses: "actions/cache@v4"
+    with:
+      path: "~/.cache/ms-playwright"
+      key: "playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}"
+
+  - name: "Install the Playwright browser"
+    shell: "bash"
+    env:
+      CACHE_HIT: "${{ steps.playwright-cache.outputs.cache-hit }}"
+    run: |
+      if [ "${CACHE_HIT}" = "true" ]; then
+        # The cache holds the browser but not the apt packages it links against.
+        npx playwright install-deps chromium
+      else
+        npx playwright install --with-deps chromium
+      fi
+
+  - name: "Pin the PHP version"
+    shell: "bash"
+    env:
+      DWPB_PHP_VERSION: "${{ inputs.php }}"
+    run: |
+      # wp-env reads this on every invocation, so it must reach later steps
+      # in the calling job.
+      echo "WP_ENV_PHP_VERSION=${DWPB_PHP_VERSION}" >> "${GITHUB_ENV}"
+
+  - name: "Pin the WordPress core version"
+    shell: "bash"
+    env:
+      DWPB_WP_VERSION: "${{ inputs.wp }}"
+    run: |
+      npm run test:e2e:core-version -- "${DWPB_WP_VERSION}"
+      cat .wp-env.override.json || echo "No override written: the core pinned in .wp-env.json applies."
+
+  - name: "Start wp-env"
+    shell: "bash"
+    run: "timeout 30m npm run env:start"
+
+  - name: "Report the environment under test"
+    id: "report"
+    shell: "bash"
+    run: "node .github/scripts/wp-env-report.ts"
