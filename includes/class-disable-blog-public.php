@@ -488,6 +488,148 @@ class Disable_Blog_Public {
 	}
 
 	/**
+	 * Route core's single comment XML-RPC methods through this class.
+	 *
+	 * A method another plugin has already replaced is left alone.
+	 *
+	 * @since 0.5.7
+	 * @param array $methods XML-RPC methods.
+	 * @return array
+	 */
+	public function wrap_xmlrpc_comment_methods( $methods ) {
+
+		$wrappers = array(
+			'wp.getComment'    => 'xmlrpc_get_comment',
+			'wp.editComment'   => 'xmlrpc_edit_comment',
+			'wp.deleteComment' => 'xmlrpc_delete_comment',
+		);
+
+		foreach ( $wrappers as $name => $wrapper ) {
+			if ( isset( $methods[ $name ] ) && 'this:' . $this->core_xmlrpc_method( $name ) === $methods[ $name ] ) {
+				$methods[ $name ] = array( $this, $wrapper );
+			}
+		}
+
+		return $methods;
+	}
+
+	/**
+	 * XML-RPC `wp.getComment`, with comments on posts reported as missing.
+	 *
+	 * @since 0.5.7
+	 * @param array $args Method arguments.
+	 * @return mixed
+	 */
+	public function xmlrpc_get_comment( $args ) {
+		return $this->xmlrpc_comment_call( 'wp.getComment', $args );
+	}
+
+	/**
+	 * XML-RPC `wp.editComment`, with comments on posts reported as missing.
+	 *
+	 * @since 0.5.7
+	 * @param array $args Method arguments.
+	 * @return mixed
+	 */
+	public function xmlrpc_edit_comment( $args ) {
+		return $this->xmlrpc_comment_call( 'wp.editComment', $args );
+	}
+
+	/**
+	 * XML-RPC `wp.deleteComment`, with comments on posts reported as missing.
+	 *
+	 * @since 0.5.7
+	 * @param array $args Method arguments.
+	 * @return mixed
+	 */
+	public function xmlrpc_delete_comment( $args ) {
+		return $this->xmlrpc_comment_call( 'wp.deleteComment', $args );
+	}
+
+	/**
+	 * Core's server method behind an XML-RPC method name, e.g. `wp_getComment`.
+	 *
+	 * @since 0.5.7
+	 * @param string $name XML-RPC method name.
+	 * @return string
+	 */
+	private function core_xmlrpc_method( $name ) {
+		return str_replace( '.', '_', $name );
+	}
+
+	/**
+	 * Run one of core's single comment XML-RPC methods, unless the comment is
+	 * on a post.
+	 *
+	 * For a comment on a post, the credentials are checked first, `xmlrpc_call`
+	 * fires where core fires it, and the fault is core's own for a missing
+	 * comment, so the reply matches core's for a comment that does not exist.
+	 *
+	 * @since 0.5.7
+	 * @param string $name XML-RPC method name.
+	 * @param array  $args Method arguments.
+	 * @return mixed
+	 */
+	private function xmlrpc_comment_call( $name, $args ) {
+
+		// xmlrpc.php assigns $wp_xmlrpc_server after the constructor applies xmlrpc_methods, so the global is set by the time a method is called.
+		global $wp_xmlrpc_server;
+
+		if ( ! $wp_xmlrpc_server instanceof wp_xmlrpc_server ) {
+			return new IXR_Error( -32601, 'server error. requested method ' . $name . ' does not exist.' );
+		}
+
+		if ( is_array( $args ) && isset( $args[3] )
+			&& $this->functions->should_filter_comments()
+			&& $this->functions->is_post_comment( (int) $args[3] )
+		) {
+			$escaped = $args;
+			$wp_xmlrpc_server->escape( $escaped );
+
+			if ( ! $wp_xmlrpc_server->login( isset( $escaped[1] ) ? $escaped[1] : '', isset( $escaped[2] ) ? $escaped[2] : '' ) ) {
+				return $wp_xmlrpc_server->error;
+			}
+
+			// Core fires this before looking the comment up only in wp.getComment.
+			if ( 'wp.getComment' === $name ) {
+				/** This action is documented in wp-includes/class-wp-xmlrpc-server.php */
+				do_action( 'xmlrpc_call', 'wp.getComment', $escaped, $wp_xmlrpc_server );
+			}
+
+			// phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- core's own string, so the fault matches core's.
+			return new IXR_Error( 404, __( 'Invalid comment ID.' ) );
+		}
+
+		$method = $this->core_xmlrpc_method( $name );
+
+		return $wp_xmlrpc_server->$method( $args );
+	}
+
+	/**
+	 * Hide comments on posts from the comments feed.
+	 *
+	 * The comments feed queries the comments table directly, not through
+	 * WP_Comment_Query, so it gets the same rule here.
+	 *
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::comment_rule_sql()
+	 * @param string   $where The feed's WHERE clause, including the keyword.
+	 * @param WP_Query $query The feed's query.
+	 * @return string
+	 */
+	public function filter_comment_feed_where( $where, $query ) {
+
+		if ( ! $this->functions->should_filter_comments() ) {
+			return $where;
+		}
+
+		$rule     = $this->functions->comment_rule_sql();
+		$existing = trim( (string) preg_replace( '/^\s*WHERE\b/i', '', (string) $where ) );
+
+		return '' === $existing ? "WHERE {$rule}" : "WHERE ( {$existing} ) AND {$rule}";
+	}
+
+	/**
 	 * Get the XML-RPC methods to disable.
 	 *
 	 * @since 0.5.0

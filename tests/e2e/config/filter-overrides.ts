@@ -112,6 +112,7 @@ export const KNOWN_HOOKS = [
 	'dwpb_disable_dashboard_quick_press', // "dwpb_disable_{$metabox_id}", metabox_id = 'dashboard_quick_press'
 	'dwpb_disable_dashboard_activity', // same loop, metabox_id = 'dashboard_activity'
 	'dwpb_unregister_widgets',
+	'dwpb_unregister_blocks',
 
 	// includes/class-disable-blog-functions.php
 	'dwpb_pass_query_string_on_redirect',
@@ -120,6 +121,7 @@ export const KNOWN_HOOKS = [
 	'dwpb_author_archive_post_types',
 	'dwpb_disable_author_archives',
 	'dwpb_disable_feed',
+	'dwpb_filter_comment_queries',
 
 	// includes/class-disable-blog-public.php
 	'dwpb_redirect_post', // 'dwpb_redirect_' . 'post'

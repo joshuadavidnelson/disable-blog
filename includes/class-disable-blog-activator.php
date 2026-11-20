@@ -45,6 +45,7 @@ class Disable_Blog_Activator {
 	 * @since 0.4.3
 	 * @since 0.4.9 flush rewrite rules.
 	 * @since 0.5.1 update to "Better WP Plugin Boilerplate" functions.
+	 * @since 0.5.7 clear cached comment queries and counts.
 	 */
 	public static function activate() {
 
@@ -67,7 +68,9 @@ class Disable_Blog_Activator {
 		 * The plugin is now safely activated.
 		 */
 
-		wp_cache_delete( 'comments-0', 'counts' );
+		// The plugin's own files are not loaded in the request that (de)activates it.
+		require_once __DIR__ . '/functions.php';
+		dwpb_flush_comment_caches();
 		delete_transient( 'wc_count_comments' );
 		flush_rewrite_rules();
 	}

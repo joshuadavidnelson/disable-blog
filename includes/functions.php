@@ -163,3 +163,21 @@ function dwpb_post_types_with_tax( $taxonomy, $args = array(), $output = 'names'
 		return $post_types_with_tax;
 	}
 }
+
+/**
+ * Clear cached comment queries and comment counts, including the counts
+ * WooCommerce keeps for each comment status.
+ *
+ * @since 0.5.7
+ * @return void
+ */
+function dwpb_flush_comment_caches() {
+
+	wp_cache_set_comments_last_changed();
+	wp_cache_delete( 'comments-0', 'counts' );
+
+	// WooCommerce keeps a count for each comment status under its own key.
+	foreach ( array( 'approved', 'unapproved', 'spam', 'trash', 'post-trashed' ) as $status ) {
+		wp_cache_delete( 'wc_count_comments_' . $status, 'wc_comment_counts' );
+	}
+}

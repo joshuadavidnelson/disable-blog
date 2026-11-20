@@ -92,6 +92,8 @@ class Disable_Blog_Admin {
 	 * @since 0.4.2
 	 * @since 0.4.9 removed rest api specific filter and updated function
 	 *              for disabling all public-facing aspects of the 'post' post type.
+	 * @since 0.5.7 Also turns off the embeddable, randomable and
+	 *              show_in_abilities arguments.
 	 * @return void
 	 */
 	public function modify_post_type_arguments() {
@@ -110,8 +112,12 @@ class Disable_Blog_Admin {
 				'show_in_nav_menus',
 				'show_in_menu',
 				'show_in_rest',
+				'embeddable',
+				'randomable',
+				'show_in_abilities',
 			);
 
+			// Arguments this WordPress version does not register are skipped.
 			foreach ( $arguments_to_remove as $arg ) {
 				if ( isset( $wp_post_types['post']->$arg ) ) {
 					// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
@@ -575,28 +581,252 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Hide all comments from 'post' post type
+	 * Whether the plugin narrows comment queries, counts and comment requests.
 	 *
-	 * @uses dwpb_post_types_with_feature()
-	 * @since 0.1.0
-	 * @param object $comments the comments query object.
-	 * @return object
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::should_filter_comments()
+	 * @return bool
 	 */
-	public function comment_filter( $comments ) {
+	public function should_filter_comments() {
+		return $this->functions->should_filter_comments();
+	}
 
-		global $pagenow;
+	/**
+	 * Hide comments on posts from every comment query.
+	 *
+	 * Adds the rule to the WHERE clause rather than setting `post_type`, which
+	 * would join the posts table and drop comments with no parent post.
+	 *
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::comment_rule_sql()
+	 * @param array            $clauses Comment query clauses.
+	 * @param WP_Comment_Query $query   The comment query.
+	 * @return array
+	 */
+	public function filter_comment_clauses( $clauses, $query ) {
 
-		if ( ! isset( $pagenow ) ) {
-			return $comments;
+		if ( ! $this->should_filter_comments() || $this->functions->is_cascade_query( $query ) ) {
+			return $clauses;
 		}
 
-		// Filter out comments from post.
-		$post_types = dwpb_post_types_with_feature( 'comments' );
-		if ( $post_types && $this->is_admin_page( 'edit-comments' ) ) {
-			$comments->query_vars['post_type'] = $post_types;
+		$rule  = $this->functions->comment_rule_sql();
+		$where = isset( $clauses['where'] ) ? trim( (string) $clauses['where'] ) : '';
+
+		$clauses['where'] = '' === $where ? $rule : "( {$where} ) AND {$rule}";
+
+		return $clauses;
+	}
+
+	/**
+	 * Keep a comment query that runs without the rule out of the cache entry
+	 * a filtered query with the same arguments reads.
+	 *
+	 * @since 0.5.7
+	 * @param WP_Comment_Query $query The comment query.
+	 * @return void
+	 */
+	public function separate_exempt_comment_cache( $query ) {
+
+		if ( ! $query instanceof WP_Comment_Query ) {
+			return;
 		}
 
-		return $comments;
+		$this->functions->claim_cascade_query( $query );
+
+		if ( ! $this->functions->is_exempt_comment_query( $query ) ) {
+			return;
+		}
+
+		$domain = isset( $query->query_vars['cache_domain'] ) ? (string) $query->query_vars['cache_domain'] : 'core';
+
+		$query->query_vars['cache_domain'] = $domain . '-dwpb-unfiltered';
+	}
+
+	/**
+	 * Run core's comment exporter or eraser with the comment rule switched
+	 * off, so a request covers the person's comments on posts too.
+	 *
+	 * @since 0.5.7
+	 * @param array $entries Registered exporters or erasers.
+	 * @return array
+	 */
+	public function include_post_comments_in_privacy_requests( $entries ) {
+
+		if ( ! isset( $entries['wordpress-comments']['callback'] ) || ! is_callable( $entries['wordpress-comments']['callback'] ) ) {
+			return $entries;
+		}
+
+		$callback = $entries['wordpress-comments']['callback'];
+
+		$entries['wordpress-comments']['callback'] = static function ( $email_address, $page = 1 ) use ( $callback ) {
+			return Disable_Blog_Functions::run_unfiltered( $callback, array( $email_address, $page ) );
+		};
+
+		return $entries;
+	}
+
+	/**
+	 * Expect the queries core runs for the replies and reactions it trashes
+	 * or deletes with a note on a post.
+	 *
+	 * @since 0.5.7
+	 * @see Disable_Blog_Functions::track_comment_cascade()
+	 * @param int|string $comment_id Comment ID.
+	 * @return void
+	 */
+	public function track_comment_cascade( $comment_id ) {
+		$this->functions->track_comment_cascade( $comment_id, current_action() );
+	}
+
+	/**
+	 * Clear cached comment queries and counts once this plugin is updated.
+	 *
+	 * Core runs the callback of the version loaded before the update, so this
+	 * covers updates from a version that has it. upgrade_check() covers the
+	 * next admin request whatever the earlier version.
+	 *
+	 * @since 0.5.7
+	 * @param WP_Upgrader $upgrader   The upgrader.
+	 * @param array       $hook_extra What was upgraded.
+	 * @return void
+	 */
+	public function flush_comment_caches_on_update( $upgrader, $hook_extra ) {
+
+		if ( ! is_array( $hook_extra )
+			|| ! isset( $hook_extra['type'], $hook_extra['action'] )
+			|| 'plugin' !== $hook_extra['type']
+			|| 'update' !== $hook_extra['action']
+		) {
+			return;
+		}
+
+		// A bulk update lists its plugins, a single one names its plugin.
+		$plugins = isset( $hook_extra['plugins'] ) ? (array) $hook_extra['plugins'] : array();
+		if ( isset( $hook_extra['plugin'] ) ) {
+			$plugins[] = $hook_extra['plugin'];
+		}
+
+		if ( in_array( DWPB_BASENAME, $plugins, true ) ) {
+			dwpb_flush_comment_caches();
+		}
+	}
+
+	/**
+	 * Keep posts out of the Activity widget's Recently Published, Publishing
+	 * Soon and Published On This Day lists.
+	 *
+	 * @since 0.5.7
+	 * @param array $query_args WP_Query arguments.
+	 * @return array
+	 */
+	public function filter_dashboard_activity_query_args( $query_args ) {
+
+		if ( ! is_array( $query_args ) ) {
+			return $query_args;
+		}
+
+		$post_types = isset( $query_args['post_type'] ) ? (array) $query_args['post_type'] : array();
+		$post_types = array_values( array_diff( $post_types, array( 'post' ) ) );
+
+		// WP_Query reads an empty post type as `post`, so a list left empty matches nothing instead.
+		if ( empty( $post_types ) ) {
+			$query_args['post__in'] = array( 0 );
+			return $query_args;
+		}
+
+		$query_args['post_type'] = $post_types;
+
+		return $query_args;
+	}
+
+	/**
+	 * Have the comment screens treat a comment on a post as a missing one.
+	 *
+	 * `comment.php` looks the comment up by its `c` argument, so hiding that
+	 * one comment from `get_comment()` gives core's own response for a bad ID:
+	 * the "Invalid comment ID." page, or a redirect with `error=1`.
+	 *
+	 * @since 0.5.7
+	 * @return void
+	 */
+	public function hide_post_comment_from_comment_screen() {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read only to choose a comment to hide; core checks the nonce for any change.
+		$comment_id = isset( $_REQUEST['c'] ) ? absint( $_REQUEST['c'] ) : 0;
+
+		// Saving an edit reads the comment as an array, which a hidden comment would break.
+		if ( 'editedcomment' === $this->comment_screen_action() ) {
+			return;
+		}
+
+		if ( 0 === $comment_id || ! $this->should_filter_comments() || ! $this->functions->is_post_comment( $comment_id ) ) {
+			return;
+		}
+
+		add_filter(
+			'get_comment',
+			static function ( $comment ) use ( $comment_id ) {
+				return $comment instanceof WP_Comment && (int) $comment->comment_ID === $comment_id ? null : $comment;
+			}
+		);
+	}
+
+	/**
+	 * The action `comment.php` carries out, resolved the way core resolves it:
+	 * a `deletecomment` field or a `dt` argument overrides `action`.
+	 *
+	 * @since 0.5.7
+	 * @return string
+	 */
+	private function comment_screen_action() {
+
+		// phpcs:disable WordPress.Security.NonceVerification -- read only to match core's choice of action; core checks the nonce for any change.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) : '';
+
+		if ( isset( $_POST['deletecomment'] ) ) {
+			$action = 'deletecomment';
+		}
+
+		if ( isset( $_GET['dt'] ) && in_array( $_GET['dt'], array( 'spam', 'trash' ), true ) ) {
+			$action = sanitize_key( $_GET['dt'] );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification
+
+		return $action;
+	}
+
+	/**
+	 * Answer a request for a single comment on a post as though it does not exist.
+	 *
+	 * Covers every method the single comment route serves. The error is core's
+	 * own for a missing comment.
+	 *
+	 * @since 0.5.7
+	 * @param mixed           $response Response so far. Anything but null passes through.
+	 * @param array           $handler  Route handler.
+	 * @param WP_REST_Request $request  The request.
+	 * @return mixed
+	 */
+	public function rest_block_post_comment( $response, $handler, $request ) {
+
+		if ( null !== $response || ! $request instanceof WP_REST_Request || ! $this->should_filter_comments() ) {
+			return $response;
+		}
+
+		// Core matches routes without regard to case.
+		if ( ! preg_match( '#^/wp/v2/comments/(?P<id>[\d]+)$#i', $request->get_route() ) ) {
+			return $response;
+		}
+
+		$params = $request->get_url_params();
+		$id     = isset( $params['id'] ) ? (int) $params['id'] : 0;
+
+		if ( $this->functions->is_post_comment( $id ) ) {
+			// phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- core's own string, so the error matches core's.
+			return new WP_Error( 'rest_comment_invalid_id', __( 'Invalid comment ID.' ), array( 'status' => 404 ) );
+		}
+
+		return $response;
 	}
 
 	/**
@@ -783,6 +1013,88 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * Unregister the blocks that only ever list posts.
+	 *
+	 * A page that already contains one renders without it.
+	 *
+	 * @since 0.5.7
+	 * @return void
+	 */
+	public function unregister_blocks() {
+
+		$registry = WP_Block_Type_Registry::get_instance();
+
+		foreach ( $this->blocks_to_unregister() as $block ) {
+			if ( $registry->is_registered( $block ) ) {
+				unregister_block_type( $block );
+			}
+		}
+	}
+
+	/**
+	 * Keep the unregistered blocks out of the editor's inserter.
+	 *
+	 * The editor registers core blocks from its own scripts, whatever the
+	 * server has registered, so the inserter is told separately. The filter
+	 * is added before the editor registers its blocks, which it does once the
+	 * page has loaded.
+	 *
+	 * @since 0.5.7
+	 * @return void
+	 */
+	public function hide_blocks_from_inserter() {
+
+		$blocks = $this->blocks_to_unregister();
+
+		if ( empty( $blocks ) ) {
+			return;
+		}
+
+		$handle = $this->plugin_name . '-blocks';
+
+		wp_register_script( $handle, false, array( 'wp-blocks', 'wp-hooks' ), $this->version, false );
+		wp_enqueue_script( $handle );
+		wp_add_inline_script(
+			$handle,
+			sprintf(
+				'wp.hooks.addFilter( "blocks.registerBlockType", "disable-blog/hide-blocks", function ( settings, name ) {
+					return -1 === %s.indexOf( name ) ? settings : Object.assign( {}, settings, { supports: Object.assign( {}, settings.supports, { inserter: false } ) } );
+				} );',
+				wp_json_encode( $blocks )
+			)
+		);
+	}
+
+	/**
+	 * The blocks to unregister. Neither has a post type setting, and both
+	 * list posts by default.
+	 *
+	 * @since 0.5.7
+	 * @return string[]
+	 */
+	private function blocks_to_unregister() {
+
+		$blocks = array();
+
+		foreach ( array( 'core/latest-posts', 'core/calendar' ) as $block ) {
+
+			/**
+			 * The ability to keep a block that lists posts.
+			 *
+			 * @since 0.5.7
+			 *
+			 * @param bool   $unregister True to unregister the block.
+			 * @param string $block      The block name.
+			 */
+			if ( apply_filters( 'dwpb_unregister_blocks', true, $block ) ) {
+				$blocks[] = $block;
+			}
+		}
+
+		return $blocks;
+	}
+
+	/**
 	 * Register the stylesheets for the admin area.
 	 *
 	 * @since  0.4.0
@@ -827,118 +1139,88 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Filter the comment counts to remove comments to 'post' post type.
+	 * Filter the comment counts to leave out comments on posts.
+	 *
+	 * WordPress 6.0 and later counts through `get_comments()`, which the
+	 * comment rule already narrows, so those counts are left to core. Earlier
+	 * versions count with SQL the rule does not reach, so the plugin counts
+	 * with the rule instead. A post's own counts are zero on every version,
+	 * since core keeps them cached per post and an entry from before the rule
+	 * applied would outlive it.
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Moved everything into the post id check and updated caching functions to match wp_get_comments.
+	 * @since 0.5.7 counts with the comment rule, and only on WordPress before
+	 *              6.0. Returns zero counts for a post. Leaves counts to core
+	 *              when should_filter_comments() is false.
 	 *
-	 * @see wp_get_comments()
-	 * @param object $comments the comment count object.
-	 * @param int    $post_id  the post id.
-	 * @return object
+	 * @see wp_count_comments()
+	 * @param array|object $comments The comment counts, or an empty array.
+	 * @param int          $post_id  The post id, or 0 for the whole site.
+	 * @return array|object
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
-		// if this is grabbing all the comments, filter out the 'post' comments.
-		if ( 0 === $post_id ) {
-
-			// Keep caching in place, note that on activation the plugin clears this cache.
-			// see class-disable-blog-activator.php.
-			$count = wp_cache_get( 'comments-0', 'counts' );
-			if ( false !== $count ) {
-				return $count;
-			}
-
-			$comments = $this->get_comment_counts();
-
-			$comments['moderated'] = $comments['awaiting_moderation'];
-			unset( $comments['awaiting_moderation'] );
-
-			$comments = (object) $comments;
-			wp_cache_set( 'comments-0', $comments, 'counts' );
-
+		if ( ! $this->should_filter_comments() ) {
+			return $comments;
 		}
 
-		return $comments;
+		$post_id = (int) $post_id;
+
+		if ( $post_id > 0 && 'post' === get_post_type( $post_id ) ) {
+			return $this->count_object( $this->empty_comment_counts() );
+		}
+
+		// A 6.0 prerelease counts here too, which is still correct.
+		if ( version_compare( get_bloginfo( 'version' ), '6.0', '>=' ) ) {
+			return $comments;
+		}
+
+		// Salted with the comment cache's last changed time, so anything that clears cached comment queries clears these too.
+		$cache_key = 'dwpb-comments-' . $post_id . '-' . wp_cache_get_last_changed( 'comment' );
+		$count     = wp_cache_get( $cache_key, 'counts' );
+		if ( false !== $count ) {
+			return $count;
+		}
+
+		$count = $this->count_object( $this->get_comment_counts( $post_id ) );
+		wp_cache_set( $cache_key, $count, 'counts' );
+
+		return $count;
 	}
 
 	/**
-	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
-	 *
-	 * @since 0.4.0
-	 * @param array $views all the views.
-	 * @return array
-	 */
-	public function filter_admin_table_comment_count( $views ) {
-
-		global $current_screen;
-
-		if ( 'edit-comments' === $current_screen->id ) {
-
-			$updated_counts = $this->get_comment_counts();
-			foreach ( $views as $view => $text ) {
-				if ( isset( $updated_counts[ $view ] ) ) {
-					$views[ $view ] = preg_replace( '/\([^)]+\)/', '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
-				}
-			}
-		}
-
-		return $views;
-	}
-
-	/**
-	 * Retrieve the comment counts without the 'post' comments.
+	 * Retrieve the comment counts without the comments the comment rule hides.
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
+	 * @since 0.5.7 counts with the comment rule, on parents of any status, and
+	 *              takes an optional post id.
 	 * @see get_comment_count()
-	 * @see https://developer.wordpress.org/reference/functions/esc_sql/
+	 * @see Disable_Blog_Functions::comment_rule_sql()
+	 * @param int $post_id Post id to count the comments of, or 0 for the whole site.
 	 * @return array
 	 */
-	public function get_comment_counts() {
+	public function get_comment_counts( $post_id = 0 ) {
 
 		global $wpdb;
 
-		// Set up the counts, we'll be adding to this array.
-		$comment_count = array(
-			'moderated'           => 0,
-			'approved'            => 0,
-			'awaiting_moderation' => 0,
-			'spam'                => 0,
-			'trash'               => 0,
-			'post-trashed'        => 0,
-			'total_comments'      => 0,
-			'all'                 => 0,
-		);
+		$comment_count = $this->empty_comment_counts();
 
-		// Get the post types that support comments.
-		$supported_post_types = dwpb_post_types_with_feature( 'comments' );
-
-		// Return an array of empty counts if there are no post types that support comments.
-		if ( empty( $supported_post_types ) || ! is_array( $supported_post_types ) ) {
-			return $comment_count;
+		$where = $this->functions->comment_rule_sql();
+		if ( (int) $post_id > 0 ) {
+			$where = $wpdb->prepare( "{$wpdb->comments}.comment_post_ID = %d AND ", (int) $post_id ) . $where;
 		}
 
-		// Sanitizing the post type strings.
-		$sanitized_post_types = (array) array_map( 'esc_sql', $supported_post_types );
-
-		// Implode the post types into a string for the query.
-		$in_post_types = implode( "','", $sanitized_post_types );
-
-		// Grab the comments that are associated with supported post types only.
-		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $where is prepared above; cached by filter_wp_count_comments().
 		$totals = (array) $wpdb->get_results(
 			"SELECT comment_approved, COUNT( * ) AS total
 			FROM {$wpdb->comments}
-			WHERE comment_post_ID in (
-					SELECT ID
-					FROM {$wpdb->posts}
-					WHERE post_type in ('{$in_post_types}')
-					AND post_status = 'publish')
+			WHERE {$where}
 			GROUP BY comment_approved",
 			ARRAY_A
 		);
-		// @codingStandardsIgnoreEnd
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 
 		foreach ( $totals as $row ) {
 			switch ( $row['comment_approved'] ) {
@@ -969,6 +1251,41 @@ class Disable_Blog_Admin {
 		}
 
 		return array_map( 'intval', $comment_count );
+	}
+
+	/**
+	 * Comment counts of zero, in the shape get_comment_counts() returns.
+	 *
+	 * @since 0.5.7
+	 * @return array<string, int>
+	 */
+	private function empty_comment_counts() {
+
+		return array(
+			'moderated'           => 0,
+			'approved'            => 0,
+			'awaiting_moderation' => 0,
+			'spam'                => 0,
+			'trash'               => 0,
+			'post-trashed'        => 0,
+			'total_comments'      => 0,
+			'all'                 => 0,
+		);
+	}
+
+	/**
+	 * Comment counts in the shape wp_count_comments() returns.
+	 *
+	 * @since 0.5.7
+	 * @param array<string, int> $counts Counts from get_comment_counts().
+	 * @return object
+	 */
+	private function count_object( $counts ) {
+
+		$counts['moderated'] = $counts['awaiting_moderation'];
+		unset( $counts['awaiting_moderation'] );
+
+		return (object) $counts;
 	}
 
 	/**
@@ -1017,7 +1334,6 @@ class Disable_Blog_Admin {
 	/**
 	 * Removes the Site Health check for the post REST API.
 	 *
-	 * @uses dwpb_get_test_rest_availability()
 	 * @since 0.5.0
 	 * @param array $tests the tests, of course.
 	 * @return array
@@ -1036,111 +1352,43 @@ class Disable_Blog_Admin {
 	 *
 	 * Used by the site_status_tests filter in class-disable-blog-admin.php.
 	 *
-	 * Copied directly from https://developer.wordpress.org/reference/classes/wp_site_health/get_test_rest_availability/ but with the 'post' type updated to 'page' in the rest url.
+	 * Runs core's own test, with its probe of the 'post' type REST route
+	 * pointed at the 'page' type route instead.
 	 *
 	 * @see https://make.wordpress.org/core/2019/04/25/site-health-check-in-5-2/
+	 * @see Disable_Blog_Admin::filter_site_health_rest_url()
 	 * @since 0.5.0
+	 * @since 0.5.7 Runs core's own test.
 	 * @return array
 	 */
 	public function get_test_rest_availability() {
 
-		$result = array(
-			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			'status'      => 'good',
-			'badge'       => array(
-				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'color' => 'blue',
-			),
-			'description' => sprintf(
-				'<p>%s</p>',
-				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			),
-			'actions'     => '',
-			'test'        => 'rest_availability',
-		);
+		add_filter( 'rest_url', array( $this, 'filter_site_health_rest_url' ), 10, 2 );
 
-		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
-		$timeout = 10;
-		$headers = array(
-			'Cache-Control' => 'no-cache',
-			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
-		);
-
-		/** This filter is documented in wp-includes/class-wp-http-streams.php */
-		$sslverify = apply_filters( 'https_local_ssl_verify', false );
-
-		// Include Basic auth in loopback requests.
-		// @codingStandardsIgnoreStart
-		if ( isset( $_SERVER['PHP_AUTH_USER'] ) && isset( $_SERVER['PHP_AUTH_PW'] ) ) {
-			$headers['Authorization'] = 'Basic ' . base64_encode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) . ':' . wp_unslash( $_SERVER['PHP_AUTH_PW'] ) );
+		try {
+			return WP_Site_Health::get_instance()->get_test_rest_availability();
+		} finally {
+			remove_filter( 'rest_url', array( $this, 'filter_site_health_rest_url' ), 10 );
 		}
-		// @codingStandardsIgnoreEnd
+	}
 
-		// -- here's the money, change this from 'post' to  'page'.
-		$url = rest_url( 'wp/v2/types/page' );
+	/**
+	 * Point the Site Health REST probe at the 'page' type route.
+	 *
+	 * Attached to rest_url only while get_test_rest_availability() runs.
+	 *
+	 * @since 0.5.7
+	 * @param string $url  the REST URL.
+	 * @param string $path the REST route, with a leading slash.
+	 * @return string
+	 */
+	public function filter_site_health_rest_url( $url, $path ) {
 
-		// The context for this is editing with the new block editor.
-		$url = add_query_arg(
-			array(
-				'context' => 'edit',
-			),
-			$url
-		);
-
-		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
-
-		if ( is_wp_error( $r ) ) {
-			$result['status'] = 'critical';
-
-			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-
-			$result['description'] .= sprintf(
-				'<p>%s</p>',
-				sprintf(
-					'%s<br>%s',
-					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					sprintf(
-						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
-						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-						$r->get_error_message(),
-						$r->get_error_code()
-					)
-				)
-			);
-		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
-			$result['status'] = 'recommended';
-
-			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-
-			$result['description'] .= sprintf(
-				'<p>%s</p>',
-				sprintf(
-					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
-					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					wp_remote_retrieve_response_code( $r ),
-					esc_html( wp_remote_retrieve_body( $r ) )
-				)
-			);
-		} else {
-			$json = json_decode( wp_remote_retrieve_body( $r ), true );
-
-			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
-				$result['status'] = 'recommended';
-
-				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-
-				$result['description'] .= sprintf(
-					'<p>%s</p>',
-					sprintf(
-						/* translators: %s: The name of the query parameter being tested. */
-						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-						'<code>context</code>'
-					)
-				);
-			}
+		if ( '/wp/v2/types/post' === $path ) {
+			return rest_url( 'wp/v2/types/page' );
 		}
 
-		return $result;
+		return $url;
 	}
 
 	/**

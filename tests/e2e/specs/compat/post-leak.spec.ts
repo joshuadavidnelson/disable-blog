@@ -352,11 +352,13 @@ test.describe( 'compat: post leak crawl', () => {
 		}
 
 		// The block renderer probes search for the post's marker, which a page
-		// never matches, so the control asserts that the routes render.
+		// never matches. The plugin unregisters both blocks, so the control
+		// asserts that the routes answer for an unknown block rather than fail.
 		for ( const block of [ 'core/latest-posts', 'core/calendar' ] ) {
 			const response = await adminFetch( requestUtils, `/wp-json/wp/v2/block-renderer/${ block }?context=edit` );
 
-			expect( response.status(), block ).toBe( 200 );
+			expect( response.status(), block ).toBe( 404 );
+			expect( ( ( await response.json() ) as { code?: string } ).code, block ).toBe( 'block_invalid' );
 		}
 	} );
 

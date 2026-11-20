@@ -7,3 +7,4 @@
  */
 
 define( 'DWPB_VERSION', '0.5.0' );
+define( 'DWPB_BASENAME', 'disable-blog/disable-blog.php' );
