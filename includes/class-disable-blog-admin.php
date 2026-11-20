@@ -250,36 +250,35 @@ class Disable_Blog_Admin {
 				// Check the function for redirect clearance, or custom url.
 				$redirect = $this->$function();
 
-				// Set a redirect url variable to check against.
-				$potential_redirect_url = esc_url_raw( $redirect );
-
-				// If it's set to `true` then redirect to the dashboard,
-				// if it's set to a url, redirect to that url.
-				if ( true === $redirect || ! empty( $potential_redirect_url ) ) {
-
-					// Either this is a custom redirect url or 'true', which defaults the url to the dashboard.
-					if ( ! empty( $potential_redirect_url ) ) {
-						$url = $potential_redirect_url;
-					} else {
-						$url = $dashboard_url;
-					}
-
-					/**
-					 * The redirect url used for this admin page.
-					 *
-					 * Example: use 'dwpb_redirect_admin_options_tools' to change the redirect url
-					 * used for the options-tools.php page. Note `-` strings are converted to `_`
-					 * in the filter name.
-					 *
-					 * @since 0.4.0
-					 * @since 0.5.0 combine common filters.
-					 * @param string $url the url to redirct to, defaults to dashboard.
-					 */
-					$redirect_url = apply_filters( $filter, $url );
-
-					break; // no need to keep looping.
-
+				// Boolean check must precede esc_url_raw(): esc_url_raw( true ) returns
+				// "http://1", which would wrongly be treated as a custom redirect url.
+				if ( true === $redirect ) {
+					$url = $dashboard_url;
+				} elseif ( is_string( $redirect ) && ! empty( $redirect ) ) {
+					$url = esc_url_raw( $redirect );
+				} else {
+					continue;
 				}
+
+				/**
+				 * The redirect url used for this admin page.
+				 *
+				 * Example: use 'dwpb_redirect_admin_tools' to change the redirect url
+				 * used for the tools.php page. Note `-` strings are converted to `_`
+				 * in the filter name.
+				 *
+				 * @since 0.4.0
+				 * @since 0.5.0 combine common filters.
+				 * @param string $url the url to redirect to, defaults to dashboard.
+				 */
+				$redirect_url = apply_filters( $filter, $url );
+
+				// Deprecated alias of dwpb_redirect_admin_tools, kept for back-compat.
+				if ( 'tools' === $pagename ) {
+					$redirect_url = apply_filters_deprecated( 'dwpb_redirect_admin_options_tools', array( $redirect_url ), '0.5.7', 'dwpb_redirect_admin_tools' );
+				}
+
+				break; // no need to keep looping.
 			}
 		}
 
@@ -359,9 +358,10 @@ class Disable_Blog_Admin {
 	 * The admin redirect arguments checked to redirect the term.php screen.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.7 named to match what redirect_admin_pages() calls.
 	 * @return bool|string
 	 */
-	public function reidrect_admin_term() {
+	public function redirect_admin_term() {
 
 		// @codingStandardsIgnoreStart - phpcs wants to sanitize this, but it's not necessary.
 		return ( isset( $_GET['taxonomy'] ) && ! dwpb_post_types_with_tax( $_GET['taxonomy'] ) );
@@ -426,12 +426,13 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * The admin redirect arguments checked to redirect the options-tools.php screen.
+	 * The admin redirect arguments checked to redirect the tools.php screen.
 	 *
 	 * @since 0.5.0
+	 * @since 0.5.7 named to match what redirect_admin_pages() calls.
 	 * @return bool
 	 */
-	public function redirect_admin_options_tools() {
+	public function redirect_admin_tools() {
 
 		/**
 		 * The isset( $_GET['page'] ) check is to confirm the page
@@ -604,16 +605,17 @@ class Disable_Blog_Admin {
 	 * @uses dwpb_post_types_with_feature()
 	 * @since 0.1.0
 	 * @since 0.4.1 dry out the code with a foreach loop
+	 * @since 0.5.7 covers only the widgets core registers as metaboxes. Recent
+	 *              Drafts renders inside Quick Press, and Incoming Links left
+	 *              core in WordPress 3.8.
 	 * @return void
 	 */
 	public function remove_dashboard_widgets() {
 
 		// Remove post-specific widgets only, others obscured/modified elsewhere as necessary.
 		$metabox = array(
-			'dashboard_quick_press'    => 'side', // Quick Press.
-			'dashboard_recent_drafts'  => 'side', // Recent Drafts.
-			'dashboard_incoming_links' => 'normal', // Incoming Links.
-			'dashboard_activity'       => 'normal', // Activity.
+			'dashboard_quick_press' => 'side', // Quick Press.
+			'dashboard_activity'    => 'normal', // Activity.
 		);
 
 		foreach ( $metabox as $metabox_id => $context ) {
@@ -731,7 +733,6 @@ class Disable_Blog_Admin {
 			'WP_Widget_Links', // Links.
 			'WP_Widget_Recent_Posts', // Recent Posts.
 			'WP_Widget_RSS', // RSS.
-			'WP_Widget_Tag_Cloud', // Tag Cloud.
 		);
 		foreach ( $widgets as $widget ) {
 
@@ -1211,10 +1212,20 @@ class Disable_Blog_Admin {
 		 * Disable the user post column.
 		 *
 		 * @since 0.5.0
+		 * @since 0.5.7 uses the plugin's `dwpb_` prefix.
 		 * @param bool $bool True to remove the column, defaults to true.
 		 * @return bool
 		 */
-		$disable_user_posts_column = apply_filters( 'dpwb_disable_user_post_column', true );
+		$disable_user_posts_column = apply_filters( 'dwpb_disable_user_post_column', true );
+
+		/**
+		 * Disable the user post column.
+		 *
+		 * @deprecated 0.5.7 Use `dwpb_disable_user_post_column` instead.
+		 * @param bool $bool True to remove the column, defaults to true.
+		 * @return bool
+		 */
+		$disable_user_posts_column = apply_filters_deprecated( 'dpwb_disable_user_post_column', array( $disable_user_posts_column ), '0.5.7', 'dwpb_disable_user_post_column' );
 
 		if ( isset( $columns['posts'] ) && true === (bool) $disable_user_posts_column ) {
 			unset( $columns['posts'] );
@@ -1230,10 +1241,22 @@ class Disable_Blog_Admin {
 			 * Create a new column for 'pages' similar to the original 'post' column.
 			 *
 			 * @since 0.5.0
+			 * @since 0.5.7 uses the plugin's `dwpb_` prefix.
 			 * @param bool $bool True to remove the column, defaults to true.
 			 * @return bool
 			 */
-			if ( apply_filters( "dpwb_create_user_{$post_type}_column", true )
+			$create_user_post_type_column = apply_filters( "dwpb_create_user_{$post_type}_column", true );
+
+			/**
+			 * Create a new column for 'pages' similar to the original 'post' column.
+			 *
+			 * @deprecated 0.5.7 Use `dwpb_create_user_{$post_type}_column` instead.
+			 * @param bool $bool True to remove the column, defaults to true.
+			 * @return bool
+			 */
+			$create_user_post_type_column = apply_filters_deprecated( "dpwb_create_user_{$post_type}_column", array( $create_user_post_type_column ), '0.5.7', "dwpb_create_user_{$post_type}_column" );
+
+			if ( $create_user_post_type_column
 				// Taken from core functions for users page, don't display the posts column on site-users-network core page.
 				// see wp-admin/includes/class-wp-users-list-table.php.
 				&& isset( $screen->id ) && 'site-users-network' !== $screen->id ) {

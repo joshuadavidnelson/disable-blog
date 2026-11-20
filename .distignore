@@ -21,7 +21,15 @@
 /package-lock.json
 /phpcs.xml
 /phpstan.neon.dist
+/playwright.config.ts
+/tsconfig.json
+/.wp-env.override.json
+
+# Test suites and e2e output
 /tests/
+/playwright/
+/artifacts/
+/playwright-report/
 
 # Repository documentation; readme.txt is the WordPress.org readme
 /README.md

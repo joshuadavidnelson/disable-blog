@@ -19,6 +19,8 @@
 /package-lock.json export-ignore
 /phpcs.xml export-ignore
 /phpstan.neon.dist export-ignore
+/playwright.config.ts export-ignore
+/tsconfig.json export-ignore
 /tests export-ignore
 
 # Repository documentation; readme.txt is the WordPress.org readme

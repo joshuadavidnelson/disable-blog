@@ -1,0 +1,84 @@
+/**
+ * The wp-admin Dashboard (`index.php`) console behaviour when
+ * `dwpb.commentsSupported` is `false` — unreachable via the plugin's normal
+ * default state, so exercised here via a `dwpb_post_types_supporting_comments`
+ * filter override.
+ *
+ * Regression guard: `document.querySelector( '.welcome-icon.welcome-comments'
+ * )` is `null` on WordPress 6.1+, so `disable-blog-admin.js`'s Dashboard case
+ * must not call `.parentNode` on it directly -- doing so throws an uncaught
+ * `TypeError` inside the `DOMContentLoaded` handler, killing every later
+ * `case` in that handler for the rest of the page load. An uncaught exception
+ * surfaces to Playwright as a `pageerror` event, not `console` — the
+ * assertion below binds to `pageerror` specifically; the `console` collector
+ * is kept only to enrich the failure message.
+ */
+
+/**
+ * WordPress dependencies
+ */
+import { test, expect } from '@wordpress/e2e-test-utils-playwright';
+
+/**
+ * Internal dependencies
+ */
+import { formTableRow } from '../../config/admin';
+import { setFilterOverrides, resetFilterOverrides } from '../../config/filter-overrides';
+
+test.describe( 'admin: dashboard console (commentsSupported === false)', () => {
+	test.beforeAll( async ( { requestUtils } ) => {
+		await setFilterOverrides( requestUtils, {
+			dwpb_post_types_supporting_comments: false,
+		} );
+	} );
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await resetFilterOverrides( requestUtils );
+	} );
+
+	test( 'regression guard (D6): the dashboard throws no TypeError when comments are unsupported', async ( {
+		page,
+		admin,
+	} ) => {
+		const consoleErrors: string[] = [];
+		const pageErrors: string[] = [];
+
+		page.on( 'console', ( message ) => {
+			if ( 'error' === message.type() ) {
+				consoleErrors.push( message.text() );
+			}
+		} );
+		page.on( 'pageerror', ( error ) => {
+			pageErrors.push( error.message );
+		} );
+
+		await admin.visitAdminPage( 'index.php' );
+
+		expect(
+			pageErrors,
+			'Uncaught page error(s) on the Dashboard with commentsSupported === false ' +
+				'(expected: assets/js/disable-blog-admin.js:14 throws ' +
+				"TypeError: Cannot read properties of null (reading 'parentNode') " +
+				"because document.querySelector( '.welcome-icon.welcome-comments' ) " +
+				'returns null on WP 6.1+):\n' +
+				pageErrors.join( '\n' ) +
+				( consoleErrors.length
+					? `\n\nconsole error(s) also seen:\n${ consoleErrors.join( '\n' ) }`
+					: '' )
+		).toEqual( [] );
+	} );
+
+	test( 'regression guard (D6) control: the writing screen still hides the post format row in this state', async ( {
+		page,
+		admin,
+	} ) => {
+		// Proves the script as a whole still runs with the toggle on, so the
+		// guard above is specific to the 'index' case, not a broken enqueue.
+		await admin.visitAdminPage( 'options-writing.php' );
+
+		await expect( formTableRow( page, 'default_post_format' ) ).toBeHidden();
+		await expect(
+			page.getByRole( 'heading', { name: 'Writing Settings' } )
+		).toBeVisible();
+	} );
+} );

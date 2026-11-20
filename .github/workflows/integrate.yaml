@@ -15,7 +15,7 @@ jobs:
         php-versions: ['7.4', '8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v6"
+      uses: "actions/checkout@v7"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
@@ -38,7 +38,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v6"
+      uses: "actions/checkout@v7"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
@@ -54,6 +54,7 @@ jobs:
     - name: "Install PHPCS"
       run: |
         composer install
+
     - name: "Run PHPCS"
       run: "composer phpcs"
 
@@ -62,7 +63,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v6"
+      uses: "actions/checkout@v7"
     - name: "Install PHP"
       uses: "shivammathur/setup-php@v2"
       with:
@@ -77,6 +78,7 @@ jobs:
           composer-
     - name: "Install PHPStan"
       run: "composer install"
+
     - name: "Run PHPStan"
       run: "composer phpstan"
 
@@ -85,9 +87,9 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v6"
+      uses: "actions/checkout@v7"
     - name: "Install Node"
-      uses: "actions/setup-node@v6"
+      uses: "actions/setup-node@v7"
       with:
         node-version: "24"
         check-latest: true
