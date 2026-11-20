@@ -22,6 +22,7 @@
 /phpcs.xml
 /phpstan.neon.dist
 /playwright.config.ts
+/tsconfig.json
 /.wp-env.override.json
 
 # Test suites and e2e output
