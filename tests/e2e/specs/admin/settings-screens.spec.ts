@@ -215,7 +215,9 @@ test.describe( 'admin: settings screens (default state)', () => {
 		// nothing once the "hidden" class lands, rather than finding it and
 		// reporting it hidden.
 		const optionalHeading = page.locator( 'h2.title', { hasText: 'Optional' } );
-		const optionalDescription = page.locator( 'p.permalink-structure-optional-description' );
+		// Positional rather than by class: core only names this paragraph
+		// `permalink-structure-optional-description` from WordPress 7.0.
+		const optionalDescription = page.locator( 'h2.title:has-text("Optional") + p' );
 
 		await expect( optionalHeading ).toHaveCount( 1 );
 		await expect( optionalDescription ).toHaveCount( 1 );
