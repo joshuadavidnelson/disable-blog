@@ -108,6 +108,9 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Return discussion comments (comments, pingbacks and trackbacks) only for post types that support comments. Other comment types, such as notes, stay available on every post type except posts.
 - **New filter:** `dwpb_filter_comment_queries` (default `true`). Return `false` to leave comment queries, the comments feed and single comment requests to WordPress. The plugin also leaves them alone while Disable Comments is active.
 - **Removed:** `Disable_Blog_Admin::comment_filter()` and its `pre_get_comments` hook, which only covered the admin Comments screen. `filter_comment_clauses()` on `comments_clauses` covers every comment query.
+- Leave comments on posts out of every comment count: At a Glance, the Activity widget, the Comments screen, the admin bar and menu, and XML-RPC `wp.getCommentCount`, which reports zero for a post. Counts match the comment lists, including comments on unpublished pages, and other comment types on pages when no post type supports comments.
+- The Comments screen status counts keep WordPress's own markup, so the Pending count updates when a comment is moderated.
+- Unregister the Latest Posts and Calendar blocks, which only ever list posts, and remove them from the block inserter. A page that already contains one renders without it. **New filter:** `dwpb_unregister_blocks` (default `true`, passed the block name) keeps a block.
 
 = 0.5.6 =
 - Tested up to WordPress 7.1.4

@@ -11,7 +11,9 @@
  * `filter_woocommerce_comment_count()` to `wp_count_comments`, which casts
  * the site-wide count back to an array on an old WooCommerce -- a type
  * WordPress core itself never returns, so `wp-count-comments-type`
- * (`config/integrations.ts`) is the only way to see it happen at all.
+ * (`config/integrations.ts`) is the only way to see it happen at all. On
+ * WordPress 6.0 and later the plugin leaves the site-wide count to core, so
+ * the cast receives core's empty array and core still returns its object.
  */
 
 /**
@@ -27,6 +29,7 @@ import { MENU_COMMENTS, MENU_PAGES, adminUrl } from '../../config/admin';
 import { expectRedirect, expectStatus } from '../../config/redirects';
 import { setFixtures, resetFixtures, FIXTURE_TOGGLES } from '../../config/fixtures';
 import { wpCountCommentsType } from '../../config/integrations';
+import { versionAtLeast, wpVersion } from '../../config/leak';
 
 test.describe( 'filters: Disable Comments integration (is_disable_comments_active)', () => {
 	let dashboardTarget: string;
@@ -78,8 +81,10 @@ test.describe( 'filters: WooCommerce integration (filter_woocommerce_comment_cou
 		await resetFixtures( requestUtils, [ FIXTURE_TOGGLES.integrationsWoocommerce ] );
 	} );
 
-	test( 'wp_count_comments( 0 ) is cast back into an array', async ( { requestUtils } ) => {
-		expect( await wpCountCommentsType( requestUtils ) ).toBe( 'array' );
+	test( 'wp_count_comments( 0 ) is cast back into an array where the plugin counts', async ( { requestUtils } ) => {
+		const coreCounts = versionAtLeast( await wpVersion(), '6.0' );
+
+		expect( await wpCountCommentsType( requestUtils ) ).toBe( coreCounts ? 'object' : 'array' );
 	} );
 
 	test( 'toggling the stub off returns the type WordPress core itself always produces', async ( {

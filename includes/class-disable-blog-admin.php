@@ -923,6 +923,88 @@ class Disable_Blog_Admin {
 	}
 
 	/**
+	 * Unregister the blocks that only ever list posts.
+	 *
+	 * A page that already contains one renders without it.
+	 *
+	 * @since 0.5.7
+	 * @return void
+	 */
+	public function unregister_blocks() {
+
+		$registry = WP_Block_Type_Registry::get_instance();
+
+		foreach ( $this->blocks_to_unregister() as $block ) {
+			if ( $registry->is_registered( $block ) ) {
+				unregister_block_type( $block );
+			}
+		}
+	}
+
+	/**
+	 * Keep the unregistered blocks out of the editor's inserter.
+	 *
+	 * The editor registers core blocks from its own scripts, whatever the
+	 * server has registered, so the inserter is told separately. The filter
+	 * is added before the editor registers its blocks, which it does once the
+	 * page has loaded.
+	 *
+	 * @since 0.5.7
+	 * @return void
+	 */
+	public function hide_blocks_from_inserter() {
+
+		$blocks = $this->blocks_to_unregister();
+
+		if ( empty( $blocks ) ) {
+			return;
+		}
+
+		$handle = $this->plugin_name . '-blocks';
+
+		wp_register_script( $handle, false, array( 'wp-blocks', 'wp-hooks' ), $this->version, false );
+		wp_enqueue_script( $handle );
+		wp_add_inline_script(
+			$handle,
+			sprintf(
+				'wp.hooks.addFilter( "blocks.registerBlockType", "disable-blog/hide-blocks", function ( settings, name ) {
+					return -1 === %s.indexOf( name ) ? settings : Object.assign( {}, settings, { supports: Object.assign( {}, settings.supports, { inserter: false } ) } );
+				} );',
+				wp_json_encode( $blocks )
+			)
+		);
+	}
+
+	/**
+	 * The blocks to unregister. Neither has a post type setting, and both
+	 * query only posts.
+	 *
+	 * @since 0.5.7
+	 * @return string[]
+	 */
+	private function blocks_to_unregister() {
+
+		$blocks = array();
+
+		foreach ( array( 'core/latest-posts', 'core/calendar' ) as $block ) {
+
+			/**
+			 * The ability to keep a block that lists posts.
+			 *
+			 * @since 0.5.7
+			 *
+			 * @param bool   $unregister True to unregister the block.
+			 * @param string $block      The block name.
+			 */
+			if ( apply_filters( 'dwpb_unregister_blocks', true, $block ) ) {
+				$blocks[] = $block;
+			}
+		}
+
+		return $blocks;
+	}
+
+	/**
 	 * Register the stylesheets for the admin area.
 	 *
 	 * @since  0.4.0
@@ -967,45 +1049,62 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Filter the comment counts to remove comments to 'post' post type.
+	 * Filter the comment counts to leave out comments on posts.
+	 *
+	 * WordPress 6.0 and later counts through `get_comments()`, which the
+	 * comment rule already narrows, so those counts are left to core. Earlier
+	 * versions count with SQL the rule does not reach, so the plugin counts
+	 * with the rule instead. A post's own counts are zero on every version,
+	 * since core keeps them cached per post and an entry from before the rule
+	 * applied would outlive it.
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Moved everything into the post id check and updated caching functions to match wp_get_comments.
+	 * @since 0.5.7 counts with the comment rule, and only on WordPress before
+	 *              6.0. Returns zero counts for a post. Leaves counts to core
+	 *              when should_filter_comments() is false.
 	 *
-	 * @see wp_get_comments()
-	 * @param object $comments the comment count object.
-	 * @param int    $post_id  the post id.
-	 * @return object
+	 * @see wp_count_comments()
+	 * @param array|object $comments The comment counts, or an empty array.
+	 * @param int          $post_id  The post id, or 0 for the whole site.
+	 * @return array|object
 	 */
 	public function filter_wp_count_comments( $comments, $post_id ) {
 
-		// if this is grabbing all the comments, filter out the 'post' comments.
-		if ( 0 === $post_id ) {
-
-			// Keep caching in place, note that on activation the plugin clears this cache.
-			// see class-disable-blog-activator.php.
-			$count = wp_cache_get( 'comments-0', 'counts' );
-			if ( false !== $count ) {
-				return $count;
-			}
-
-			$comments = $this->get_comment_counts();
-
-			$comments['moderated'] = $comments['awaiting_moderation'];
-			unset( $comments['awaiting_moderation'] );
-
-			$comments = (object) $comments;
-			wp_cache_set( 'comments-0', $comments, 'counts' );
-
+		if ( ! $this->should_filter_comments() ) {
+			return $comments;
 		}
 
-		return $comments;
+		$post_id = (int) $post_id;
+
+		if ( $post_id > 0 && 'post' === get_post_type( $post_id ) ) {
+			return $this->count_object( $this->empty_comment_counts() );
+		}
+
+		// A 6.0 prerelease counts here too, which is still correct.
+		if ( version_compare( get_bloginfo( 'version' ), '6.0', '>=' ) ) {
+			return $comments;
+		}
+
+		// Salted with the comment cache's last changed time, so anything that clears cached comment queries clears these too.
+		$cache_key = 'dwpb-comments-' . $post_id . '-' . wp_cache_get_last_changed( 'comment' );
+		$count     = wp_cache_get( $cache_key, 'counts' );
+		if ( false !== $count ) {
+			return $count;
+		}
+
+		$count = $this->count_object( $this->get_comment_counts( $post_id ) );
+		wp_cache_set( $cache_key, $count, 'counts' );
+
+		return $count;
 	}
 
 	/**
 	 * Alter the comment counts on the admin comment table to remove comments associated with posts.
 	 *
 	 * @since 0.4.0
+	 * @since 0.5.7 reads wp_count_comments() for the post the table is filtered
+	 *              to, and keeps core's markup around each number.
 	 * @param array $views all the views.
 	 * @return array
 	 */
@@ -1013,13 +1112,22 @@ class Disable_Blog_Admin {
 
 		global $current_screen;
 
-		if ( 'edit-comments' === $current_screen->id ) {
+		if ( ! isset( $current_screen->id ) || 'edit-comments' !== $current_screen->id ) {
+			return $views;
+		}
 
-			$updated_counts = $this->get_comment_counts();
-			foreach ( $views as $view => $text ) {
-				if ( isset( $updated_counts[ $view ] ) ) {
-					$views[ $view ] = preg_replace( '/\([^)]+\)/', '(<span class="' . $view . '-count">' . $updated_counts[ $view ] . '</span>)', $views[ $view ] );
-				}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read only, to count the same comments core's list table shows.
+		$post_id = isset( $_REQUEST['p'] ) ? absint( $_REQUEST['p'] ) : 0;
+		$counts  = (array) wp_count_comments( $post_id );
+
+		foreach ( $views as $view => $text ) {
+			if ( isset( $counts[ $view ] ) && is_string( $text ) ) {
+				$views[ $view ] = preg_replace(
+					'#(<span class="[\w-]+-count">)[^<]*(</span>)#',
+					'${1}' . number_format_i18n( (int) $counts[ $view ] ) . '${2}',
+					$text,
+					1
+				);
 			}
 		}
 
@@ -1027,58 +1135,37 @@ class Disable_Blog_Admin {
 	}
 
 	/**
-	 * Retrieve the comment counts without the 'post' comments.
+	 * Retrieve the comment counts without the comments the comment rule hides.
 	 *
 	 * @since 0.4.0
 	 * @since 0.4.3 Removed Unused "count" function.
+	 * @since 0.5.7 counts with the comment rule, on parents of any status, and
+	 *              takes an optional post id.
 	 * @see get_comment_count()
-	 * @see https://developer.wordpress.org/reference/functions/esc_sql/
+	 * @see Disable_Blog_Functions::comment_rule_sql()
+	 * @param int $post_id Post id to count the comments of, or 0 for the whole site.
 	 * @return array
 	 */
-	public function get_comment_counts() {
+	public function get_comment_counts( $post_id = 0 ) {
 
 		global $wpdb;
 
-		// Set up the counts, we'll be adding to this array.
-		$comment_count = array(
-			'moderated'           => 0,
-			'approved'            => 0,
-			'awaiting_moderation' => 0,
-			'spam'                => 0,
-			'trash'               => 0,
-			'post-trashed'        => 0,
-			'total_comments'      => 0,
-			'all'                 => 0,
-		);
+		$comment_count = $this->empty_comment_counts();
 
-		// Get the post types that support comments.
-		$supported_post_types = dwpb_post_types_with_feature( 'comments' );
-
-		// Return an array of empty counts if there are no post types that support comments.
-		if ( empty( $supported_post_types ) || ! is_array( $supported_post_types ) ) {
-			return $comment_count;
+		$where = $this->functions->comment_rule_sql();
+		if ( (int) $post_id > 0 ) {
+			$where = $wpdb->prepare( "{$wpdb->comments}.comment_post_ID = %d AND ", (int) $post_id ) . $where;
 		}
 
-		// Sanitizing the post type strings.
-		$sanitized_post_types = (array) array_map( 'esc_sql', $supported_post_types );
-
-		// Implode the post types into a string for the query.
-		$in_post_types = implode( "','", $sanitized_post_types );
-
-		// Grab the comments that are associated with supported post types only.
-		// @codingStandardsIgnoreStart -- The get_results function doesn't need a wpdb->prepare here because $in_post_types is sanitized above.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $where is prepared above; cached by filter_wp_count_comments().
 		$totals = (array) $wpdb->get_results(
 			"SELECT comment_approved, COUNT( * ) AS total
 			FROM {$wpdb->comments}
-			WHERE comment_post_ID in (
-					SELECT ID
-					FROM {$wpdb->posts}
-					WHERE post_type in ('{$in_post_types}')
-					AND post_status = 'publish')
+			WHERE {$where}
 			GROUP BY comment_approved",
 			ARRAY_A
 		);
-		// @codingStandardsIgnoreEnd
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 
 		foreach ( $totals as $row ) {
 			switch ( $row['comment_approved'] ) {
@@ -1109,6 +1196,41 @@ class Disable_Blog_Admin {
 		}
 
 		return array_map( 'intval', $comment_count );
+	}
+
+	/**
+	 * Comment counts of zero, in the shape get_comment_counts() returns.
+	 *
+	 * @since 0.5.7
+	 * @return array<string, int>
+	 */
+	private function empty_comment_counts() {
+
+		return array(
+			'moderated'           => 0,
+			'approved'            => 0,
+			'awaiting_moderation' => 0,
+			'spam'                => 0,
+			'trash'               => 0,
+			'post-trashed'        => 0,
+			'total_comments'      => 0,
+			'all'                 => 0,
+		);
+	}
+
+	/**
+	 * Comment counts in the shape wp_count_comments() returns.
+	 *
+	 * @since 0.5.7
+	 * @param array<string, int> $counts Counts from get_comment_counts().
+	 * @return object
+	 */
+	private function count_object( $counts ) {
+
+		$counts['moderated'] = $counts['awaiting_moderation'];
+		unset( $counts['awaiting_moderation'] );
+
+		return (object) $counts;
 	}
 
 	/**

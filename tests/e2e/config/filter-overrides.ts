@@ -112,6 +112,7 @@ export const KNOWN_HOOKS = [
 	'dwpb_disable_dashboard_quick_press', // "dwpb_disable_{$metabox_id}", metabox_id = 'dashboard_quick_press'
 	'dwpb_disable_dashboard_activity', // same loop, metabox_id = 'dashboard_activity'
 	'dwpb_unregister_widgets',
+	'dwpb_unregister_blocks',
 
 	// includes/class-disable-blog-functions.php
 	'dwpb_pass_query_string_on_redirect',

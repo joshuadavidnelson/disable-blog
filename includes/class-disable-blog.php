@@ -190,6 +190,8 @@ class Disable_Blog {
 	 * @since 0.5.7 hooks filter_comment_clauses() and rest_block_post_comment() whether or not comments are supported.
 	 * @since 0.5.7 hooks separate_exempt_comment_cache(), hide_post_comment_from_comment_screen(),
 	 *              include_post_comments_in_privacy_requests() and track_comment_cascade().
+	 * @since 0.5.7 hooks filter_wp_count_comments() and filter_admin_table_comment_count() whether or not
+	 *              comments are supported, and hooks unregister_blocks() and hide_blocks_from_inserter().
 	 * @access private
 	 */
 	private function define_admin_hooks() {
@@ -247,6 +249,10 @@ class Disable_Blog {
 		// Filter removal of widgets for some checks.
 		$this->loader->add_filter( 'dwpb_unregister_widgets', $plugin_admin, 'filter_widget_removal', 10, 2 );
 
+		// Remove the blocks that only list posts, after core registers them on init.
+		$this->loader->add_action( 'init', $plugin_admin, 'unregister_blocks', 99 );
+		$this->loader->add_action( 'enqueue_block_editor_assets', $plugin_admin, 'hide_blocks_from_inserter' );
+
 		// Custom Post State for the Blog Page redirect.
 		$this->loader->add_filter( 'display_post_states', $plugin_admin, 'page_post_states', 10, 2 );
 
@@ -289,17 +295,15 @@ class Disable_Blog {
 		$this->loader->add_action( 'trash_comment', $plugin_admin, 'track_comment_cascade', 10, 1 );
 		$this->loader->add_action( 'delete_comment', $plugin_admin, 'track_comment_cascade', 10, 1 );
 
+		// Leave comments on posts out of comment counts, including the admin bar and the Comments screen.
+		$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
+		$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1 );
+
 		// Only run comment related functions if comments are supported.
 		if ( dwpb_post_types_with_feature( 'comments' ) ) {
 
-			// Filter comment counts in admin table.
-			$this->loader->add_filter( 'views_edit-comments', $plugin_admin, 'filter_admin_table_comment_count', 20, 1 );
-
 			// Filter post open status for comments.
 			$this->loader->add_action( 'comments_open', $plugin_admin, 'filter_comment_status', 20, 2 );
-
-			// Filter wp_count_comments, which addresses comments in admin bar.
-			$this->loader->add_filter( 'wp_count_comments', $plugin_admin, 'filter_wp_count_comments', 10, 2 );
 
 			// Clear comments from 'post' post type.
 			$this->loader->add_filter( 'comments_array', $plugin_admin, 'filter_existing_comments', 20, 2 );

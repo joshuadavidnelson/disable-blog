@@ -9,6 +9,9 @@
  * Privacy exports and erasures, and the replies and reactions core trashes
  * or deletes with a note, still reach comments on posts.
  *
+ * Comment counts follow the same rule: on the dashboard, the Comments
+ * screen, the toolbar and over XML-RPC.
+ *
  * Disable Comments, or `dwpb_filter_comment_queries` returning `false`,
  * switches the rule off.
  */
@@ -17,13 +20,13 @@
  * External dependencies
  */
 import { request as playwrightRequest } from '@playwright/test';
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, Locator } from '@playwright/test';
 
 /**
  * WordPress dependencies
  */
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
-import type { RequestUtils } from '@wordpress/e2e-test-utils-playwright';
+import type { Admin, RequestUtils } from '@wordpress/e2e-test-utils-playwright';
 
 /**
  * Internal dependencies
@@ -32,6 +35,7 @@ import { createContentTracker } from '../../config/content-tracker';
 import { FIXTURE_TOGGLES, resetFixtures, setFixtures } from '../../config/fixtures';
 import { resetFilterOverrides, setFilterOverrides } from '../../config/filter-overrides';
 import { CUSTOM_COMMENT_TYPE, adminFetch, makeMarker, versionAtLeast, wpVersion } from '../../config/leak';
+import { DASHBOARD_RIGHT_NOW } from '../../config/admin';
 import type { SeededPost } from '../../config/seed';
 import { ADMIN_PASSWORD, ADMIN_USERNAME, callXmlRpc, expectXmlRpcFault } from '../../config/xmlrpc';
 import type { XmlRpcValue } from '../../config/xmlrpc';
@@ -48,6 +52,12 @@ interface CommentQuery {
 
 const XMLRPC_COMMENT_METHODS = [ 'wp.getComment', 'wp.editComment', 'wp.deleteComment' ];
 
+// The status counts each screen shows, by the class of the span that holds the number.
+const VIEW_COUNTS = [ 'all', 'pending', 'approved', 'spam', 'trash' ];
+
+// The counts `wp.getCommentCount` returns.
+const XMLRPC_COUNTS = [ 'approved', 'awaiting_moderation', 'spam', 'total_comments' ];
+
 test.describe.configure( { mode: 'serial' } );
 
 test.describe( 'compat: comment scope', () => {
@@ -63,6 +73,7 @@ test.describe( 'compat: comment scope', () => {
 	let pageMarker: string;
 	let orphanMarker: string;
 	let postCommentIds: number[];
+	let pageCommentIds: number[];
 
 	/**
 	 * Seed a marked discussion comment, a custom-type comment and, where core
@@ -182,6 +193,87 @@ test.describe( 'compat: comment scope', () => {
 		return JSON.parse( json ?? 'null' );
 	}
 
+	/**
+	 * The whole number in an element's text, or 0 when the element is not on
+	 * the page. At a Glance leaves out its comment lines while there are no
+	 * comments to count.
+	 *
+	 * @param locator Element holding the number.
+	 */
+	async function numberIn( locator: Locator ): Promise< number > {
+		if ( 0 === ( await locator.count() ) ) {
+			return 0;
+		}
+
+		return Number( ( ( await locator.first().textContent() ) ?? '' ).replace( /\D/g, '' ) || 0 );
+	}
+
+	/**
+	 * Every comment count the administrator sees: At a Glance, the Recent
+	 * Comments status links and the toolbar on the dashboard, the Comments
+	 * screen's status links, and `wp.getCommentCount` for the post and the
+	 * page. Recent Comments is part of the Activity widget until WordPress
+	 * 7.2, which gives it a widget of its own.
+	 *
+	 * @param adminUtils Admin utils, signed in.
+	 * @param request    Request context for XML-RPC.
+	 */
+	async function measureCounts( adminUtils: Admin, request: APIRequestContext ): Promise< Record< string, number > > {
+		const counts: Record< string, number > = {};
+		const screen = adminUtils.page;
+
+		await adminUtils.visitAdminPage( 'index.php' );
+		counts[ 'glance.approved' ] = await numberIn( screen.locator( `${ DASHBOARD_RIGHT_NOW } .comment-count` ) );
+		counts[ 'glance.moderated' ] = await numberIn( screen.locator( `${ DASHBOARD_RIGHT_NOW } .comment-mod-count` ) );
+		counts.toolbar = await numberIn( screen.locator( '#wp-admin-bar-comments .ab-label' ) );
+
+		for ( const view of VIEW_COUNTS ) {
+			counts[ `recent.${ view }` ] = await numberIn(
+				screen.locator( `:is( #dashboard_activity, #dashboard_recent_comments ) .subsubsub .${ view }-count` )
+			);
+		}
+
+		await adminUtils.visitAdminPage( 'edit-comments.php' );
+
+		for ( const view of VIEW_COUNTS ) {
+			counts[ `screen.${ view }` ] = await numberIn( screen.locator( `.subsubsub .${ view }-count` ) );
+		}
+
+		for ( const [ name, id ] of [
+			[ 'post', post.id ],
+			[ 'page', page.id ],
+		] as const ) {
+			const body = await callXmlRpc( request, 'wp.getCommentCount', [ 0, ADMIN_USERNAME, ADMIN_PASSWORD, id ] );
+
+			for ( const key of XMLRPC_COUNTS ) {
+				const found = body.match( new RegExp( `<name>${ key }</name>\\s*<value>\\s*(?:<\\w+>)?\\s*(\\d+)` ) );
+
+				expect( found, `${ name } ${ key }:\n${ body }` ).not.toBeNull();
+				counts[ `xmlrpc.${ name }.${ key }` ] = Number( found?.[ 1 ] );
+			}
+		}
+
+		return counts;
+	}
+
+	/**
+	 * Add one comment in each status (pending, approved, spam, trash) to a
+	 * post or page.
+	 *
+	 * @param parent Post or page ID.
+	 */
+	async function addCommentInEachStatus( parent: number ): Promise< number[] > {
+		const ids = ( await evalJson( [
+			'echo wp_json_encode( array_map( function ( $status ) {',
+			`	return (int) wp_insert_comment( array( 'comment_post_ID' => ${ parent }, 'comment_approved' => $status, 'comment_content' => 'count ' . $status ) );`,
+			"}, array( '0', '1', 'spam', 'trash' ) ) );",
+		] ) ) as number[];
+
+		expect( ids.every( ( id ) => id > 0 ), JSON.stringify( ids ) ).toBe( true );
+
+		return ids;
+	}
+
 	test.beforeAll( async ( { requestUtils } ) => {
 		admin = requestUtils;
 		anon = await playwrightRequest.newContext( { baseURL: requestUtils.baseURL } );
@@ -194,7 +286,7 @@ test.describe( 'compat: comment scope', () => {
 		post = await tracker.seedPost( requestUtils, { title: postMarker, commentStatus: 'open' } );
 		page = await tracker.seedPage( requestUtils, { title: pageMarker, commentStatus: 'open' } );
 		postCommentIds = await seedComments( requestUtils, post, postMarker );
-		await seedComments( requestUtils, page, pageMarker );
+		pageCommentIds = await seedComments( requestUtils, page, pageMarker );
 
 		for ( const type of [ 'comment', CUSTOM_COMMENT_TYPE ] ) {
 			await seedOrphan( 0, type, orphanMarker );
@@ -530,5 +622,105 @@ test.describe( 'compat: comment scope', () => {
 			[ true, true ],
 			[ false, false ],
 		] );
+	} );
+
+	test( 'a comment on a post moves no comment count, and one on a page moves each', async ( {
+		admin: adminUtils,
+		request,
+		requestUtils,
+	} ) => {
+		// Before WordPress 7.2 the Recent Comments status links are in the Activity widget.
+		await setFilterOverrides( requestUtils, { dwpb_disable_dashboard_activity: false } );
+
+		const added: number[] = [];
+
+		try {
+			const before = await measureCounts( adminUtils, request );
+
+			added.push( ...( await addCommentInEachStatus( post.id ) ) );
+
+			const afterPost = await measureCounts( adminUtils, request );
+
+			expect( afterPost ).toEqual( before );
+
+			for ( const key of XMLRPC_COUNTS ) {
+				expect( afterPost[ `xmlrpc.post.${ key }` ], key ).toBe( 0 );
+			}
+
+			// Control: the same comments on a page move every count.
+			added.push( ...( await addCommentInEachStatus( page.id ) ) );
+
+			const afterPage = await measureCounts( adminUtils, request );
+			const moved = Object.fromEntries(
+				Object.keys( before ).map( ( key ) => [ key, afterPage[ key ] - before[ key ] ] )
+			);
+			const views = { all: 2, pending: 1, approved: 1, spam: 1, trash: 1 };
+
+			expect( moved ).toEqual( {
+				'glance.approved': 1,
+				'glance.moderated': 1,
+				toolbar: 1,
+				...Object.fromEntries( Object.entries( views ).map( ( [ view, n ] ) => [ `recent.${ view }`, n ] ) ),
+				...Object.fromEntries( Object.entries( views ).map( ( [ view, n ] ) => [ `screen.${ view }`, n ] ) ),
+				...Object.fromEntries( XMLRPC_COUNTS.map( ( key ) => [ `xmlrpc.post.${ key }`, 0 ] ) ),
+				'xmlrpc.page.approved': 1,
+				'xmlrpc.page.awaiting_moderation': 1,
+				'xmlrpc.page.spam': 1,
+				'xmlrpc.page.total_comments': 3,
+			} );
+		} finally {
+			if ( added.length > 0 ) {
+				await wpCliOk( [ 'comment', 'delete', ...added.map( String ), '--force' ] );
+			}
+		}
+	} );
+
+	test( 'a count cached for a post before the rule applied is not served', async () => {
+		// Core caches a post's counts under its own key, which activation does not clear.
+		const result = await evalJson( [
+			`wp_cache_set( 'comments-${ post.id }', (object) array( 'approved' => 7, 'moderated' => 1, 'spam' => 0, 'trash' => 0, 'post-trashed' => 0, 'total_comments' => 8, 'all' => 8 ), 'counts' );`,
+			`$count = wp_count_comments( ${ post.id } );`,
+			'echo wp_json_encode( array( (int) $count->approved, (int) $count->moderated, (int) $count->total_comments ) );',
+		] );
+
+		expect( result ).toEqual( [ 0, 0, 0 ] );
+	} );
+
+	test( 'with no post type supporting comments, counts keep other comment types on a page and drop its discussion comments', async ( {
+		requestUtils,
+	} ) => {
+		await setFilterOverrides( requestUtils, { dwpb_post_types_supporting_comments: false } );
+
+		const result = await evalJson( [
+			'$approved = function () { return (int) wp_count_comments()->approved; };',
+			'$moved = function ( $id ) use ( $approved ) {',
+			'	$before = $approved();',
+			"	wp_set_comment_status( $id, 'hold' );",
+			'	$after = $approved();',
+			"	wp_set_comment_status( $id, 'approve' );",
+			'	return $before - $after;',
+			'};',
+			`echo wp_json_encode( array( 'custom' => $moved( ${ pageCommentIds[ 1 ] } ), 'discussion' => $moved( ${ pageCommentIds[ 0 ] } ) ) );`,
+		] );
+
+		expect( result ).toEqual( { custom: 1, discussion: 0 } );
+	} );
+
+	test( 'with Disable Comments active, comment counts are left to core', async ( { requestUtils } ) => {
+		await setFixtures( requestUtils, { [ FIXTURE_TOGGLES.integrationsDisableComments ]: true } );
+
+		const result = ( await evalJson( [
+			'$site = (array) wp_count_comments();',
+			'$core = get_comment_count();',
+			`$post = (array) wp_count_comments( ${ post.id } );`,
+			'echo wp_json_encode( array(',
+			"	'site' => array( $site['approved'], $site['moderated'], $site['total_comments'] ),",
+			"	'core' => array( $core['approved'], $core['awaiting_moderation'], $core['total_comments'] ),",
+			"	'post' => (int) $post['approved'],",
+			') );',
+		] ) ) as { site: number[]; core: number[]; post: number };
+
+		expect( result.site ).toEqual( result.core );
+		expect( result.post ).toBeGreaterThan( 0 );
 	} );
 } );

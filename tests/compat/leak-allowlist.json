@@ -1,17 +1,5 @@
 [
 	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "/wp/v2/block-renderer/core/latest-posts",
-		"reason": "Latest Posts block renders post titles in the editor preview"
-	},
-	{
-		"surface": "rest",
-		"actor": "admin",
-		"urlPattern": "/wp/v2/block-renderer/core/calendar",
-		"reason": "Calendar block preview links the month of a post"
-	},
-	{
 		"surface": "front",
 		"actor": "anon",
 		"urlPattern": "/?author=",
@@ -22,29 +10,5 @@
 		"actor": "admin",
 		"urlPattern": "/?author=",
 		"reason": "author archives list posts unless dwpb_author_archive_post_types names other post types"
-	},
-	{
-		"surface": "front",
-		"actor": "anon",
-		"urlPattern": "/post-leak-latest-posts-",
-		"reason": "Latest Posts block on a page lists posts"
-	},
-	{
-		"surface": "front",
-		"actor": "anon",
-		"urlPattern": "/post-leak-calendar-",
-		"reason": "Calendar block on a page links the month of a post"
-	},
-	{
-		"surface": "front",
-		"actor": "admin",
-		"urlPattern": "/post-leak-latest-posts-",
-		"reason": "Latest Posts block on a page lists posts"
-	},
-	{
-		"surface": "front",
-		"actor": "admin",
-		"urlPattern": "/post-leak-calendar-",
-		"reason": "Calendar block on a page links the month of a post"
 	}
 ]
