@@ -7,8 +7,12 @@
  * entirely. Forced false, the plugin leaves the request to core. Before
  * WordPress 7.1.1, core's renderer (`WP_Sitemaps::render_sitemaps()`) just
  * `return`s on a missing provider, so the request falls through to the normal
- * front-end template; from 7.1.1 core 404s it itself, and the override has no
- * visible effect there.
+ * front-end template.
+ *
+ * From 7.1.1 core 404s the request itself with the same calls the plugin
+ * makes (`set_404()`, `status_header( 404 )`, `nocache_headers()`), so the
+ * response is identical either way and the 7.1.1+ branch only checks core's
+ * behavior. The plugin path is covered by the WP 5.9 CI leg alone.
  *
  * `dwpb_disable_user_sitemap` overrides the computed "should the users
  * sitemap be hidden" value inside `wp_author_sitemaps()`, independent of the
