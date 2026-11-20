@@ -92,19 +92,10 @@ jobs:
 
     - name: "Check the debug log for PHP diagnostics"
       if: always()
-      run: |
-        test -s artifacts/debug.log || exit 0
-
-        if grep -qE "PHP (Warning|Deprecated|Notice)" artifacts/debug.log; then
-          echo "::warning title=PHP diagnostics::WP ${{ matrix.wp }} / PHP ${{ matrix.php }} logged PHP diagnostics; see the debug.log artifact."
-          grep -E "PHP (Warning|Deprecated|Notice)" artifacts/debug.log | sort -u | head -40
-        fi
-
-        if grep -q "PHP Fatal error" artifacts/debug.log; then
-          echo "::error title=PHP fatal::A PHP fatal error was logged during the run."
-          grep "PHP Fatal error" artifacts/debug.log | sort -u | head -20
-          exit 1
-        fi
+      env:
+        DWPB_WP_LABEL: "${{ matrix.wp }}"
+        DWPB_PHP_VERSION: "${{ matrix.php }}"
+      run: "node .github/scripts/check-debug-log.ts"
 
     - name: "Upload artifacts"
       if: always()

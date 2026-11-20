@@ -16,6 +16,7 @@ on:
     - ".github/workflows/core-compat.yml"
     - ".github/actions/e2e-env/**"
     - "tests/bin/set-core-version.js"
+    - ".github/scripts/**"
 
 permissions:
   contents: "read"
@@ -32,40 +33,19 @@ jobs:
     outputs:
       matrix: "${{ steps.resolve.outputs.matrix }}"
     steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v7"
+
+    - name: "Setup Node.js"
+      uses: "actions/setup-node@v7"
+      with:
+        node-version: "24"
+
     - name: "Resolve the WordPress targets"
       id: "resolve"
-      shell: "bash"
       env:
         DWPB_WP_INPUT: "${{ inputs.wp }}"
-      run: |
-        if [ -n "${DWPB_WP_INPUT}" ]; then
-          MATRIX="$(jq -nc --arg wp "${DWPB_WP_INPUT}" '{include: [{name: "custom", wp: $wp, php: "8.4"}]}')"
-        else
-          # The weekly latest leg tests the newest released core, not the zip
-          # pinned in .wp-env.json, so a new release surfaces as an issue.
-          # The fetches fail the step when the feed is unreachable.
-          STABLE_FEED="$(curl -fsSL "https://api.wordpress.org/core/version-check/1.7/")"
-          LATEST="$(jq -r '[.offers[] | select(.response == "upgrade")][0].download // empty' <<< "${STABLE_FEED}")"
-          if [ -z "${LATEST}" ]; then
-            echo "::error title=Targets::The version-check feed has no upgrade offer."
-            exit 1
-          fi
-
-          # The beta channel offers a "development" release only while a beta
-          # or RC is out. With a successful fetch, an empty result means no
-          # beta leg.
-          BETA_FEED="$(curl -fsSL "https://api.wordpress.org/core/version-check/1.7/?channel=beta")"
-          BETA="$(jq -r '[.offers[] | select(.response == "development")][0].download // empty' <<< "${BETA_FEED}")"
-
-          MATRIX="$(jq -nc --arg latest "${LATEST}" --arg beta "${BETA}" '
-            {include: (
-              [{name: "latest", wp: $latest, php: "8.3"}]
-              + (if $beta != "" then [{name: "beta", wp: $beta, php: "8.4"}] else [] end)
-              + [{name: "master", wp: "master", php: "8.4"}]
-            )}')"
-        fi
-        echo "${MATRIX}"
-        echo "matrix=${MATRIX}" >> "${GITHUB_OUTPUT}"
+      run: "node .github/scripts/core-compat-targets.ts"
 
   compat:
     name: "Core compat (${{ matrix.name }})"
@@ -112,19 +92,10 @@ jobs:
       id: "debuglog"
       if: "always()"
       continue-on-error: true
-      run: |
-        test -s artifacts/debug.log || exit 0
-
-        if grep -qE "PHP (Warning|Deprecated|Notice)" artifacts/debug.log; then
-          echo "::warning title=PHP diagnostics::WP ${{ matrix.name }} / PHP ${{ matrix.php }} logged PHP diagnostics; see the debug.log artifact."
-          grep -E "PHP (Warning|Deprecated|Notice)" artifacts/debug.log | sort -u | head -40
-        fi
-
-        if grep -q "PHP Fatal error" artifacts/debug.log; then
-          echo "::error title=PHP fatal::A PHP fatal error was logged during the run."
-          grep "PHP Fatal error" artifacts/debug.log | sort -u | head -20
-          exit 1
-        fi
+      env:
+        DWPB_WP_LABEL: "${{ matrix.name }}"
+        DWPB_PHP_VERSION: "${{ matrix.php }}"
+      run: "node .github/scripts/check-debug-log.ts"
 
     - name: "Write the job summary"
       if: "always()"
@@ -142,10 +113,16 @@ jobs:
         retention-days: 7
 
     # Pull requests never file issues: the check runs there to verify the
-    # workflow itself.
+    # workflow itself. Node is set up here too because the environment step
+    # can fail before it sets up Node.
+    - name: "Setup Node.js for the issue script"
+      if: "always() && github.event_name != 'pull_request' && (steps.env.conclusion == 'failure' || steps.snapshot.outcome == 'failure' || steps.suite.outcome == 'failure' || steps.debuglog.outcome == 'failure')"
+      uses: "actions/setup-node@v7"
+      with:
+        node-version: "24"
+
     - name: "File or update the issue"
       if: "always() && github.event_name != 'pull_request' && (steps.env.conclusion == 'failure' || steps.snapshot.outcome == 'failure' || steps.suite.outcome == 'failure' || steps.debuglog.outcome == 'failure')"
-      shell: "bash"
       env:
         GH_TOKEN: "${{ github.token }}"
         FULL_VERSION: "${{ steps.env.outputs.version }}"
@@ -155,66 +132,7 @@ jobs:
         SUITE: "${{ steps.suite.outcome }}"
         DEBUGLOG: "${{ steps.debuglog.outcome }}"
         RUN_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        LC_ALL: "C.UTF-8"
-      run: |
-        # The title drops the nightly build number (7.3-alpha-61234 becomes
-        # 7.3-alpha, 7.2-RC2-65716 becomes 7.2-RC2) so one issue tracks a
-        # target from week to week.
-        normalize() {
-          sed -E 's/^([0-9]+\.[0-9]+(\.[0-9]+)?-[A-Za-z]+[0-9]*)-[0-9]+$/\1/' <<< "$1"
-        }
-
-        if [ -n "${FULL_VERSION}" ]; then
-          TARGET="$(normalize "${FULL_VERSION}")"
-        else
-          # Without a running site, derive X.Y[-tag] from a zip URL file name.
-          NAME="$(basename "${MATRIX_WP}")"
-          NAME="${NAME#wordpress-}"
-          NAME="${NAME%.zip}"
-          TARGET="$(normalize "${NAME}")"
-          if [ "${MATRIX_WP}" = "master" ]; then
-            # A branch name has no version, so read it from trunk.
-            if TRUNK="$(curl -fsSL "https://raw.githubusercontent.com/WordPress/WordPress/master/wp-includes/version.php" \
-              | sed -nE "s/^\\\$wp_version = '([^']+)';.*/\\1/p")" && [ -n "${TRUNK}" ]; then
-              TARGET="$(normalize "${TRUNK}")"
-            fi
-          fi
-        fi
-        TITLE="Core compat: WordPress ${TARGET}"
-
-        {
-          echo "Environment: ${ENV_OUTCOME}. Snapshot check: ${SNAPSHOT}. Browser suite: ${SUITE}. PHP fatals: ${DEBUGLOG}."
-          echo
-          echo "WordPress: ${FULL_VERSION:-${MATRIX_WP}}"
-          echo
-          echo "Run: ${RUN_URL}"
-          echo
-        } > head.md
-
-        # GitHub caps an issue body at 65536 characters.
-        LIMIT=65000
-        HEAD_LEN="$(wc -m < head.md)"
-        ROOM=$(( LIMIT - HEAD_LEN - 100 ))
-        cp head.md body.md
-        if [ -s artifacts/surface-diff.md ]; then
-          REPORT="$(cat artifacts/surface-diff.md)"
-          if [ "${#REPORT}" -gt "${ROOM}" ]; then
-            printf '%s\n\n_Report truncated; see the run artifact for the full diff._\n' "${REPORT:0:${ROOM}}" >> body.md
-          else
-            printf '%s\n' "${REPORT}" >> body.md
-          fi
-        fi
-
-        gh label create core-compat --color "d93f0b" --description "A WordPress release changed something Disable Blog depends on" 2>/dev/null || true
-
-        EXISTING="$(gh issue list --label core-compat --state open --limit 100 --json number,title \
-          | jq -r --arg title "${TITLE}" 'map(select(.title == $title))[0].number // empty')"
-
-        if [ -n "${EXISTING}" ]; then
-          gh issue comment "${EXISTING}" --body-file body.md
-        else
-          gh issue create --title "${TITLE}" --label core-compat --body-file body.md
-        fi
+      run: "node .github/scripts/core-compat-issue.ts"
 
     - name: "Fail when a check failed"
       if: "always() && (steps.snapshot.outcome == 'failure' || steps.suite.outcome == 'failure' || steps.debuglog.outcome == 'failure')"

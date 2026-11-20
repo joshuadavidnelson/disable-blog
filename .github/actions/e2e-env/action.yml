@@ -77,12 +77,4 @@ runs:
   - name: "Report the environment under test"
     id: "report"
     shell: "bash"
-    run: |
-      VERSION="$(npx wp-env run tests-cli -- wp core version | tail -n 1 | tr -d '\r')"
-      if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+ ]]; then
-        echo "::error title=wp-env::Unexpected output from wp core version: ${VERSION}"
-        exit 1
-      fi
-      echo "WordPress ${VERSION}"
-      echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-      npx wp-env run tests-cli -- php -r 'echo PHP_VERSION, PHP_EOL;'
+    run: "node .github/scripts/wp-env-report.ts"

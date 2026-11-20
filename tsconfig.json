@@ -7,6 +7,8 @@
 		"types": [ "node" ],
 		"strict": true,
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"erasableSyntaxOnly": true,
 		"allowJs": true,
 		"checkJs": true,
 		"esModuleInterop": true,
@@ -18,6 +20,7 @@
 		"tests/e2e/**/*.ts",
 		"playwright.config.ts",
 		"tests/bin/**/*.js",
-		"tests/compat/**/*.js"
+		"tests/compat/**/*.js",
+		".github/scripts/**/*.ts"
 	]
 }
