@@ -9,6 +9,7 @@ parameters:
         - includes/
     paths:
         - includes/
+        - tests/
     ignoreErrors:
         # Method can return bool via filter.
         - '#^Method Disable_Blog_Public::get_disabled_xmlrpc_methods\(\) never returns bool so it can be removed from the return type\.#'
