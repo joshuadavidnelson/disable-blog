@@ -139,6 +139,7 @@ This repo includes a [Playwright](https://playwright.dev/) end-to-end suite that
 
 ```bash
 npm ci
+npx playwright install chromium
 npm run env:start
 npm run test:e2e
 ```

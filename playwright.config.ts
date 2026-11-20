@@ -3,7 +3,6 @@
  */
 import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
-import type { PlaywrightTestConfig } from '@playwright/test';
 
 /**
  * Internal dependencies
@@ -18,23 +17,28 @@ import { ADMIN_STORAGE_STATE } from './tests/e2e/config/roles';
  */
 const TESTS_PORT = 8889;
 
-// Must be set before `@wordpress/scripts`' shared config is required below —
-// it reads these env vars at require time.
+// `@wordpress/e2e-test-utils-playwright` reads both of these, the storage
+// state path for the `requestUtils` fixture's REST session.
 process.env.WP_ARTIFACTS_PATH ??= path.join( __dirname, 'artifacts' );
 process.env.STORAGE_STATE_PATH ??= ADMIN_STORAGE_STATE;
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires -- deliberately loaded after the env vars above.
-const baseConfig: PlaywrightTestConfig = require( '@wordpress/scripts/config/playwright.config.js' );
 
 /**
  * E2E configuration for the Disable Blog plugin.
  *
- * Starts from the WordPress core defaults shipped by `@wordpress/scripts` and
- * overrides only what this plugin needs: our own test tree, our own global
- * setup, and the wp-env tests instance as the web server.
+ * Follows the WordPress core Playwright defaults (the shared config in
+ * `@wordpress/scripts`), with this plugin's own test tree, global setup and
+ * the wp-env tests instance as the web server.
  */
 export default defineConfig( {
-	...baseConfig,
+	reporter: process.env.CI ? [ [ 'github' ] ] : [ [ 'list' ] ],
+	forbidOnly: !! process.env.CI,
+	retries: process.env.CI ? 2 : 0,
+	timeout: parseInt( process.env.TIMEOUT || '', 10 ) || 100_000,
+	// Serial runs make per-file slow-test reports noise.
+	reportSlowTests: null,
+	outputDir: path.join( process.env.WP_ARTIFACTS_PATH, 'test-results' ),
+	snapshotPathTemplate:
+		'{testDir}/{testFileDir}/__snapshots__/{arg}-{projectName}{ext}',
 
 	// Covers both `specs/` (UI specs) and `config/auth.setup.ts` (the `auth`
 	// project below).
@@ -44,14 +48,27 @@ export default defineConfig( {
 	globalSetup: './tests/e2e/config/global-setup.ts',
 	globalTeardown: './tests/e2e/config/global-teardown.ts',
 
-	// Pinned (not just inherited from `@wordpress/scripts`): the suite shares
-	// one wp-env site and assumes serial execution.
+	// The suite shares one wp-env site and assumes serial execution.
 	workers: 1,
 
 	use: {
-		...baseConfig.use,
+		baseURL: process.env.WP_BASE_URL || `http://localhost:${ TESTS_PORT }`,
+		headless: true,
+		viewport: {
+			width: 960,
+			height: 700,
+		},
+		ignoreHTTPSErrors: true,
+		locale: 'en-US',
+		contextOptions: {
+			reducedMotion: 'reduce',
+			strictSelectors: true,
+		},
 		storageState: ADMIN_STORAGE_STATE,
+		actionTimeout: 10_000,
 		trace: 'retain-on-failure',
+		screenshot: 'only-on-failure',
+		video: 'on-first-retry',
 	},
 
 	webServer: {
