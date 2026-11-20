@@ -475,7 +475,8 @@ function dwpb_test_api_create_post( WP_REST_Request $request ) {
 }
 
 /**
- * Create a comment via wp_insert_comment().
+ * Create a comment of any type via wp_insert_comment(). Core REST refuses
+ * comment types other than `comment`.
  *
  * @param WP_REST_Request $request Full request object.
  * @return array<string, mixed>|WP_Error
@@ -491,6 +492,8 @@ function dwpb_test_api_create_comment( WP_REST_Request $request ) {
 	$approved = $request->get_param( 'approved' );
 	$approved = ( null === $approved ) ? true : (bool) $approved;
 
+	$type = sanitize_key( (string) $request->get_param( 'type' ) );
+
 	$comment_id = wp_insert_comment(
 		array(
 			'comment_post_ID'      => $post_id,
@@ -498,7 +501,8 @@ function dwpb_test_api_create_comment( WP_REST_Request $request ) {
 			'comment_author'       => (string) $request->get_param( 'author_name' ),
 			'comment_author_email' => (string) $request->get_param( 'author_email' ),
 			'comment_approved'     => $approved ? 1 : 0,
-			'comment_type'         => 'comment',
+			'comment_type'         => '' === $type ? 'comment' : $type,
+			'comment_parent'       => (int) $request->get_param( 'parent' ),
 		)
 	);
 
@@ -837,6 +841,14 @@ function dwpb_test_api_register_routes() {
 				'author_email' => array(
 					'type'    => 'string',
 					'default' => '',
+				),
+				'type'         => array(
+					'type'    => 'string',
+					'default' => 'comment',
+				),
+				'parent'       => array(
+					'type'    => 'integer',
+					'default' => 0,
 				),
 			),
 			'callback'            => static function ( WP_REST_Request $request ) {

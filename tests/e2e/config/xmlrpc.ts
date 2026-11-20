@@ -27,26 +27,48 @@ export function escapeXml( value: string ): string {
 }
 
 /**
- * Render a single XML-RPC param, as `<string>` or `<int>` depending on type.
+ * An XML-RPC param value: a string, an int, or a struct of them.
+ */
+export type XmlRpcValue = string | number | { [ member: string ]: string | number };
+
+/**
+ * Render a single XML-RPC value, as `<string>`, `<int>` or `<struct>`
+ * depending on type.
  *
  * @param value Param value.
  */
-export function xmlRpcParam( value: string | number ): string {
+function xmlRpcValue( value: XmlRpcValue ): string {
 	if ( 'number' === typeof value ) {
-		return `<param><value><int>${ value }</int></value></param>`;
+		return `<value><int>${ value }</int></value>`;
 	}
 
-	return `<param><value><string>${ escapeXml( value ) }</string></value></param>`;
+	if ( 'string' === typeof value ) {
+		return `<value><string>${ escapeXml( value ) }</string></value>`;
+	}
+
+	const members = Object.entries( value )
+		.map( ( [ name, member ] ) => `<member><name>${ escapeXml( name ) }</name>${ xmlRpcValue( member ) }</member>` )
+		.join( '' );
+
+	return `<value><struct>${ members }</struct></value>`;
+}
+
+/**
+ * Render a single XML-RPC param.
+ *
+ * @param value Param value.
+ */
+export function xmlRpcParam( value: XmlRpcValue ): string {
+	return `<param>${ xmlRpcValue( value ) }</param>`;
 }
 
 /**
  * Build a minimal XML-RPC methodCall request body.
  *
  * @param methodName XML-RPC method name.
- * @param params     Ordered param values; string or int only — no caller in
- *                   this suite needs a richer type.
+ * @param params     Ordered param values.
  */
-export function methodCallXml( methodName: string, params: ( string | number )[] = [] ): string {
+export function methodCallXml( methodName: string, params: XmlRpcValue[] = [] ): string {
 	const paramsXml = params.map( xmlRpcParam ).join( '' );
 
 	return (
@@ -66,7 +88,7 @@ export function methodCallXml( methodName: string, params: ( string | number )[]
 export async function callXmlRpc(
 	request: APIRequestContext,
 	methodName: string,
-	params: ( string | number )[] = []
+	params: XmlRpcValue[] = []
 ): Promise< string > {
 	const response = await request.post( '/xmlrpc.php', {
 		headers: { 'Content-Type': 'text/xml' },

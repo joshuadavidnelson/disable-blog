@@ -343,10 +343,15 @@ export interface SeedCommentArgs {
 	approved?: boolean;
 	authorName?: string;
 	authorEmail?: string;
+	/** Comment type, run through `sanitize_key()`. Defaults (server-side) to `comment`. */
+	type?: string;
+	/** Parent comment id. */
+	parent?: number;
 }
 
 /**
- * Create a comment via `dwpb-test/v1/create-comment` (`wp_insert_comment()`).
+ * Create a comment of any type via `dwpb-test/v1/create-comment`
+ * (`wp_insert_comment()`).
  *
  * @param requestUtils Admin request utils.
  * @param args         Comment attributes.
@@ -368,6 +373,8 @@ export async function seedComment(
 			...( undefined !== args.authorEmail && {
 				author_email: args.authorEmail,
 			} ),
+			...( undefined !== args.type && { type: args.type } ),
+			...( undefined !== args.parent && { parent: args.parent } ),
 		},
 	} );
 }
