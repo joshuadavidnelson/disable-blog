@@ -17,6 +17,7 @@
 	"include": [
 		"tests/e2e/**/*.ts",
 		"playwright.config.ts",
-		"tests/bin/**/*.js"
+		"tests/bin/**/*.js",
+		"tests/compat/**/*.js"
 	]
 }
