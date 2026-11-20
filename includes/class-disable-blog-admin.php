@@ -92,6 +92,8 @@ class Disable_Blog_Admin {
 	 * @since 0.4.2
 	 * @since 0.4.9 removed rest api specific filter and updated function
 	 *              for disabling all public-facing aspects of the 'post' post type.
+	 * @since 0.5.7 Also turns off the embeddable, randomable and
+	 *              show_in_abilities arguments.
 	 * @return void
 	 */
 	public function modify_post_type_arguments() {
@@ -110,8 +112,12 @@ class Disable_Blog_Admin {
 				'show_in_nav_menus',
 				'show_in_menu',
 				'show_in_rest',
+				'embeddable',
+				'randomable',
+				'show_in_abilities',
 			);
 
+			// Arguments this WordPress version does not register are skipped.
 			foreach ( $arguments_to_remove as $arg ) {
 				if ( isset( $wp_post_types['post']->$arg ) ) {
 					// @codingStandardsIgnoreStart - phpcs doesn't like using variables like this.
@@ -1017,7 +1023,6 @@ class Disable_Blog_Admin {
 	/**
 	 * Removes the Site Health check for the post REST API.
 	 *
-	 * @uses dwpb_get_test_rest_availability()
 	 * @since 0.5.0
 	 * @param array $tests the tests, of course.
 	 * @return array
@@ -1036,111 +1041,43 @@ class Disable_Blog_Admin {
 	 *
 	 * Used by the site_status_tests filter in class-disable-blog-admin.php.
 	 *
-	 * Copied directly from https://developer.wordpress.org/reference/classes/wp_site_health/get_test_rest_availability/ but with the 'post' type updated to 'page' in the rest url.
+	 * Runs core's own test, with its probe of the 'post' type REST route
+	 * pointed at the 'page' type route instead.
 	 *
 	 * @see https://make.wordpress.org/core/2019/04/25/site-health-check-in-5-2/
+	 * @see Disable_Blog_Admin::filter_site_health_rest_url()
 	 * @since 0.5.0
+	 * @since 0.5.7 Runs core's own test.
 	 * @return array
 	 */
 	public function get_test_rest_availability() {
 
-		$result = array(
-			'label'       => __( 'The REST API is available' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			'status'      => 'good',
-			'badge'       => array(
-				'label' => __( 'Performance' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'color' => 'blue',
-			),
-			'description' => sprintf(
-				'<p>%s</p>',
-				__( 'The REST API is one way WordPress, and other applications, communicate with the server. One example is the block editor screen, which relies on this to display, and save, your posts and pages.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			),
-			'actions'     => '',
-			'test'        => 'rest_availability',
-		);
+		add_filter( 'rest_url', array( $this, 'filter_site_health_rest_url' ), 10, 2 );
 
-		$cookies = wp_unslash( $_COOKIE ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
-		$timeout = 10;
-		$headers = array(
-			'Cache-Control' => 'no-cache',
-			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
-		);
-
-		/** This filter is documented in wp-includes/class-wp-http-streams.php */
-		$sslverify = apply_filters( 'https_local_ssl_verify', false );
-
-		// Include Basic auth in loopback requests.
-		// @codingStandardsIgnoreStart
-		if ( isset( $_SERVER['PHP_AUTH_USER'] ) && isset( $_SERVER['PHP_AUTH_PW'] ) ) {
-			$headers['Authorization'] = 'Basic ' . base64_encode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) . ':' . wp_unslash( $_SERVER['PHP_AUTH_PW'] ) );
+		try {
+			return WP_Site_Health::get_instance()->get_test_rest_availability();
+		} finally {
+			remove_filter( 'rest_url', array( $this, 'filter_site_health_rest_url' ), 10 );
 		}
-		// @codingStandardsIgnoreEnd
+	}
 
-		// -- here's the money, change this from 'post' to  'page'.
-		$url = rest_url( 'wp/v2/types/page' );
+	/**
+	 * Point the Site Health REST probe at the 'page' type route.
+	 *
+	 * Attached to rest_url only while get_test_rest_availability() runs.
+	 *
+	 * @since 0.5.7
+	 * @param string $url  the REST URL.
+	 * @param string $path the REST route, with a leading slash.
+	 * @return string
+	 */
+	public function filter_site_health_rest_url( $url, $path ) {
 
-		// The context for this is editing with the new block editor.
-		$url = add_query_arg(
-			array(
-				'context' => 'edit',
-			),
-			$url
-		);
-
-		$r = wp_remote_get( $url, compact( 'cookies', 'headers', 'timeout', 'sslverify' ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
-
-		if ( is_wp_error( $r ) ) {
-			$result['status'] = 'critical';
-
-			$result['label'] = __( 'The REST API encountered an error' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-
-			$result['description'] .= sprintf(
-				'<p>%s</p>',
-				sprintf(
-					'%s<br>%s',
-					__( 'The REST API request failed due to an error.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					sprintf(
-						/* translators: 1: The WordPress error message. 2: The WordPress error code. */
-						__( 'Error: %1$s (%2$s)' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-						$r->get_error_message(),
-						$r->get_error_code()
-					)
-				)
-			);
-		} elseif ( 200 !== wp_remote_retrieve_response_code( $r ) ) {
-			$result['status'] = 'recommended';
-
-			$result['label'] = __( 'The REST API encountered an unexpected result' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-
-			$result['description'] .= sprintf(
-				'<p>%s</p>',
-				sprintf(
-					/* translators: 1: The HTTP error code. 2: The HTTP error message. */
-					__( 'The REST API call gave the following unexpected result: (%1$d) %2$s.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					wp_remote_retrieve_response_code( $r ),
-					esc_html( wp_remote_retrieve_body( $r ) )
-				)
-			);
-		} else {
-			$json = json_decode( wp_remote_retrieve_body( $r ), true );
-
-			if ( false !== $json && ! isset( $json['capabilities'] ) ) {
-				$result['status'] = 'recommended';
-
-				$result['label'] = __( 'The REST API did not behave correctly' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-
-				$result['description'] .= sprintf(
-					'<p>%s</p>',
-					sprintf(
-						/* translators: %s: The name of the query parameter being tested. */
-						__( 'The REST API did not process the %s query parameter correctly.' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-						'<code>context</code>'
-					)
-				);
-			}
+		if ( '/wp/v2/types/post' === $path ) {
+			return rest_url( 'wp/v2/types/page' );
 		}
 
-		return $result;
+		return $url;
 	}
 
 	/**

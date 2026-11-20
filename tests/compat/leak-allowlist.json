@@ -104,27 +104,6 @@
 		"minWp": "7.2"
 	},
 	{
-		"surface": "ability",
-		"actor": "admin",
-		"urlPattern": "/core/content-query/run?",
-		"reason": "content-query ability returns posts by ID and by slug",
-		"minWp": "7.2"
-	},
-	{
-		"surface": "front",
-		"actor": "anon",
-		"urlPattern": "/?random=1&author=",
-		"reason": "random content redirect from an author archive sends visitors to a post",
-		"minWp": "7.2"
-	},
-	{
-		"surface": "front",
-		"actor": "admin",
-		"urlPattern": "/?random=1&author=",
-		"reason": "random content redirect from an author archive sends visitors to a post",
-		"minWp": "7.2"
-	},
-	{
 		"surface": "front",
 		"actor": "anon",
 		"urlPattern": "/post-leak-latest-posts-",

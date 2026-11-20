@@ -2,11 +2,11 @@
  * Site Health's REST Availability check, and Press This, default plugin
  * state.
  *
- * `site_status_tests()` swaps core's `rest_availability` test for a copy
- * probing `wp/v2/types/page` instead of `wp/v2/types/post`, since the
- * 'post' route is unreachable under this plugin (see
- * `rest-xmlrpc/rest-api.spec.ts`) and would otherwise fail this check on
- * every install.
+ * `site_status_tests()` runs core's own `rest_availability` test with its
+ * `wp/v2/types/post` probe rewritten to `wp/v2/types/page`, since the 'post'
+ * route is unreachable under this plugin (see `rest-xmlrpc/rest-api.spec.ts`)
+ * and would otherwise fail this check on every install. The description
+ * assertion proves core's wording is shown rather than a copy of it.
  *
  * `rest_availability` is a 'direct' Site Health test, run server-side during
  * `site-health.php`'s own PHP render (via a loopback request) with no REST
@@ -24,6 +24,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
  */
 import { adminUrl } from '../../config/admin';
 import { pluginStrings } from '../../config/strings';
+import { coreVersionAtLeast } from '../../config/wp-cli';
 
 test.describe( 'admin: site health (default state)', () => {
 	test( 'the REST API check passes', async ( { admin, page } ) => {
@@ -56,6 +57,15 @@ test.describe( 'admin: site health (default state)', () => {
 				.locator( '#health-check-issues-recommended' )
 				.locator( restAvailabilitySelector )
 		).toHaveCount( 0 );
+
+		// Core's description took this wording in 6.1.
+		if ( await coreVersionAtLeast( '6.1' ) ) {
+			await page.locator( restAvailabilitySelector ).click();
+
+			await expect(
+				page.locator( '#health-check-accordion-block-rest_availability' )
+			).toContainText( 'For example, the block editor screen relies on the REST API' );
+		}
 	} );
 
 	test( 'Press This is disabled', async ( { request, requestUtils } ) => {

@@ -101,6 +101,8 @@ There are numerous filters available to change the way this plugin works. Refer 
 - Fix two misspelled filters on the Users list table (`dpwb_` instead of `dwpb_`): `dwpb_disable_user_post_column` and `dwpb_create_user_{$post_type}_column`.
 - Fix `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive` never firing on a category/tag archive request. The request instead matched the `blog_page` branch, using the wrong filter, even though the redirect itself still worked as expected.
 - Fix uninstalling via WP-CLI (`wp plugin uninstall disable-blog`) leaving the `dwpb_version` and `dwpb_previous_version` options in the database. The uninstall routine only recognized the admin Delete request and stopped silently in any other context.
+- Site Health's REST API check now runs WordPress's own test against the page type, so it shows core's current wording and error details.
+- Turn off the `embeddable`, `randomable` and `show_in_abilities` post type arguments for posts. On WordPress 7.2 this stops the random content redirect (`/?random=1`) from sending visitors to a post and keeps posts out of the `core/content-query` ability.
 
 = 0.5.6 =
 - Tested up to WordPress 7.1.4
