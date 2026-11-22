@@ -128,9 +128,8 @@ add_filter( 'dwpb_redirect_post', function( $url ) {
 {% endcode %}
 
 {% hint style="info" %}
-**Changed in 0.5.7.** `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive`
-now fire on category and tag archives. Before, those archives ran through
-`dwpb_redirect_blog_page` instead.
+**Changed in 0.5.7.** `dwpb_redirect_category_archive` now fires on category archives.
+Before, category archives ran through `dwpb_redirect_blog_page` instead.
 {% endhint %}
 
 #### **`dwpb_redirect_admin`**
@@ -170,7 +169,7 @@ URL redirects every admin screen, so check `$redirect_url` before replacing it.
 
 * `string|false $redirect_url` - The URL to redirect to, or `false` if no admin redirect matched this screen
 
-**Returns:** `string`
+**Returns:** `string|false`
 
 **Example:**
 
@@ -227,7 +226,7 @@ add_filter( 'dwpb_redirect_admin_tools', function( $url ) {
 fire. Before, `term.php` and `tools.php` never redirected. Every filter in this table now
 receives the dashboard URL as its default, except the three noted above.
 `dwpb_redirect_admin_tools` also fires the older `dwpb_redirect_admin_options_tools`
-name, for compatibility. See [Deprecated](#deprecated).
+name, which had no effect before 0.5.7. See [Deprecated](#deprecated).
 {% endhint %}
 
 #### **`dwpb_redirect_status_code`**
@@ -240,7 +239,7 @@ admin alike.
 **Parameters:**
 
 * `int $status_code` - The status code to send (default: `301`)
-* `string $current_url` - The URL being redirected from, including its query string
+* `string $current_url` - The URL being redirected from. On front-end requests this includes the query string
 * `string $redirect_url` - The URL being redirected to
 
 **Returns:** `int`. Must resolve to a whole number between 300 and 399; anything else falls back to 301.
@@ -440,8 +439,7 @@ add_filter( 'dwpb_disabled_xmlrpc_methods', '__return_false' );
 
 {% hint style="info" %}
 **Changed in 0.5.7.** `wp.deleteCategory` is now removed along with the other category
-methods. The `system.listMethods`, `system.multicall`, and `system.getCapabilities`
-entries are gone from the default list.
+methods.
 {% endhint %}
 
 {% hint style="info" %}
@@ -599,6 +597,8 @@ add_filter( 'dwpb_remove_options_writing', '__return_true' );
 
 Filters whether each blog related legacy widget gets unregistered. Runs once per widget:
 Recent Comments, Tag Cloud, Categories, Archives, Calendar, Links, Recent Posts, and RSS.
+Recent Comments stays when another post type supports comments, which pages do by
+default. Categories and Tag Cloud stay when another post type uses that taxonomy.
 
 **Since:** 0.4.0
 
@@ -710,7 +710,7 @@ add_filter( 'dwpb_admin_user_post_types', function( $post_types ) {
 
 Toggles the Posts column that the plugin removes from the Users screen.
 
-**Since:** 0.5.0
+**Since:** 0.5.7 (as `dpwb_disable_user_post_column` since 0.5.0)
 
 **Parameters:**
 
@@ -738,7 +738,7 @@ Toggles the column the plugin adds to the Users screen for each post type in
 [`dwpb_admin_user_post_types`](#dwpb_admin_user_post_types), for example `page` or a
 custom post type added to author archives.
 
-**Since:** 0.5.0
+**Since:** 0.5.7 (as `dpwb_create_user_{$post_type}_column` since 0.5.0)
 
 **Parameters:**
 

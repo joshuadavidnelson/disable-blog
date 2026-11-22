@@ -35,9 +35,7 @@ This returns `false`, not an empty array, when nothing matches. Check the result
 Results are cached per `$feature`, in the `post-types-by-feature` cache group, under
 the key `post-types-supporting-{$feature}`. The `$args` you pass are not part of the
 cache key, so two calls with the same `$feature` but different `$args` share whichever
-result was cached first. A feature that nothing supports is recomputed on every call
-rather than served from cache, since a cached `false` is indistinguishable from an
-empty cache.
+result was cached first.
 
 Before returning, the result passes through
 [`dwpb_post_types_supporting_{$feature}`](hooks-filters-and-actions.md), with
