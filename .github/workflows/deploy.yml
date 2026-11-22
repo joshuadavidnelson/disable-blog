@@ -2,7 +2,8 @@ name: "Deploy to WordPress.org"
 on:
   push:
     tags:
-    - "*"
+    - "[0-9]+.[0-9]+.[0-9]+"
+    - "[0-9]+.[0-9]+.[0-9]+.[0-9]+"
 jobs:
   tag:
     name: "New tag"
@@ -10,6 +11,10 @@ jobs:
     steps:
     - name: "Checkout"
       uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: "Require the tag to be on stable"
+      run: git merge-base --is-ancestor "$GITHUB_SHA" origin/stable
     - name: "WordPress Plugin Deploy"
       uses: 10up/action-wordpress-plugin-deploy@stable
       env:
