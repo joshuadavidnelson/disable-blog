@@ -34,6 +34,7 @@ jobs:
           /vendor
           /node_modules
           /tests
+          /docs
         exclude-files: |-
           /.gitattributes
           /.gitignore
@@ -50,3 +51,4 @@ jobs:
           /CHANGELOG.md
           /code-of-conduct.md
           /contributing.md
+          /.gitbook.yaml
