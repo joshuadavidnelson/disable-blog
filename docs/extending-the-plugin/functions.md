@@ -1,9 +1,10 @@
 # PHP Functions
 
-Disable Blog exposes two helper functions, both defined in `functions.php`. Each
-answers the same underlying question: which post types, other than `post`, support a
+Disable Blog exposes three helper functions, all defined in `functions.php`. The first
+two answer the same underlying question: which post types, other than `post`, support a
 given feature or taxonomy. The plugin uses them internally to decide what to redirect,
-hide, or leave alone, and you can call them from your own code for the same purpose.
+hide, or leave alone, and you can call them from your own code for the same purpose. The
+third clears cached comment data.
 
 {% hint style="warning" %}
 Always [check that a plugin function exists](https://www.php.net/manual/en/function.function-exists.php)
@@ -109,5 +110,35 @@ function my_dwpb_list_category_post_types() {
 }
 // Priority 20 so custom post types have already been registered.
 add_action( 'init', 'my_dwpb_list_category_post_types', 20 );
+```
+{% endcode %}
+
+### `dwpb_flush_comment_caches(): void`
+
+Clear cached comment queries and comment counts, including the per-status comment
+counts WooCommerce keeps. Takes no parameters and returns nothing. Added in 0.5.7.
+
+The plugin calls this itself on activation, on deactivation, after the plugin is
+updated, and when Disable Comments is activated or deactivated. Call it yourself after
+you change which comments the plugin hides, for example after adding or removing a
+`dwpb_filter_comment_queries` callback on a site with a persistent object cache.
+Without it, cached comment lists and counts keep their old values until the comment
+cache next changes.
+
+It only needs to run once after the change. With WP-CLI:
+
+{% code overflow="wrap" %}
+```bash
+wp eval 'dwpb_flush_comment_caches();'
+```
+{% endcode %}
+
+From PHP, check that the function exists first:
+
+{% code overflow="wrap" %}
+```php
+if ( function_exists( 'dwpb_flush_comment_caches' ) ) {
+    dwpb_flush_comment_caches();
+}
 ```
 {% endcode %}

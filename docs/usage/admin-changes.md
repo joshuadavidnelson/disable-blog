@@ -1,8 +1,8 @@
 # Admin Changes
 
 Disable Blog also changes what you see in wp-admin. This page is the full reference for
-what disappears: menus, redirects, comment handling, dashboard widgets, settings
-screens, and a handful of smaller changes.
+what disappears: menus, redirects, comment handling, dashboard widgets, blocks,
+settings screens, and a handful of smaller changes.
 
 ### Menus
 
@@ -42,6 +42,11 @@ redirects entirely, and `dwpb_admin_redirect_url` overrides the destination for 
 them. Each row also has its own filter, named for the screen it redirects, for example
 `dwpb_redirect_admin_tools` for the Tools screen.
 
+{% hint style="info" %}
+**Changed in 0.5.7.** The Tools screen (`tools.php`) and the single term edit screen
+(`term.php`) now redirect as listed. Before, both stayed reachable.
+{% endhint %}
+
 ### Comments
 
 Comments stay on. Pages support comments by default in WordPress, and so does the
@@ -56,10 +61,27 @@ adjusting comments itself and treats them as unsupported, which removes the Comm
 screen, Settings > Discussion, and the toolbar item. The same thing happens if anything
 else on your site removes comment support from every post type except `post`.
 
-When the Comments screen stays available, it only lists comments left on the post types
-that still support them; comments on ordinary posts are filtered out. Comment counts
-throughout the admin, including the Comments screen's status links and the toolbar
-bubble, are recalculated to match.
+Comments left on posts are hidden for every user, administrators included, everywhere
+in the admin:
+
+* The Comments screen lists only comments on pages and other post types that support
+  comments.
+* Opening a comment on a post directly, at `comment.php`, shows WordPress's own
+  "Invalid comment ID." message.
+* `wp comment list` in WP-CLI leaves them out.
+
+Comment counts leave out comments on posts everywhere too: the Activity widget, the
+Comments screen's status links, the toolbar bubble, and the Comments menu badge.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** Comments on posts used to be filtered from the Comments screen
+only. They are now hidden from every comment list, count, and comment screen, on the
+front end too. See [Front-End Changes](front-end-changes.md#comments).
+{% endhint %}
+
+Comments on posts are not deleted. Privacy exports and erasures under Tools still
+include a person's comments on posts. To show comments on posts again, return `false`
+from the `dwpb_filter_comment_queries` filter.
 
 ### Dashboard
 
@@ -67,7 +89,16 @@ Disable Blog removes two dashboard widgets: Quick Press and Activity. Each has i
 filter if you'd rather keep one, named `dwpb_disable_{$metabox_id}`, for example
 `dwpb_disable_dashboard_quick_press`.
 
+If you keep the Activity widget, its Recently Published and Publishing Soon lists leave
+out posts. On WordPress 7.2, so does Published On This Day.
+
 On the At a Glance widget, the post count and comment count are hidden.
+
+### Blocks
+
+The Latest Posts and Calendar blocks no longer appear in the block inserter. Both only
+list posts. Keep either one with the `dwpb_unregister_blocks` filter. See
+[Front-End Changes](front-end-changes.md#blocks).
 
 ### Settings screens
 
@@ -108,14 +139,19 @@ other post type's column, with `dwpb_create_user_{$post_type}_column`.
 
 On the Tags and Categories screens, when they stay available because another post type
 uses that taxonomy, the post count shown next to each term reflects only that post
-type. It no longer counts ordinary posts, which aren't viewable anyway.
+type. It no longer counts ordinary posts, which aren't viewable anyway. The count is
+exact, however many items use the term.
 
-Site Health's REST API availability check is replaced with an equivalent check against
-the `page` type instead of `post`, so it doesn't report a false problem after `post` is
-removed from the REST API.
+{% hint style="info" %}
+**Changed in 0.5.7.** Term counts used to stop at 100. They now show the true number.
+{% endhint %}
+
+Site Health's REST API availability check runs WordPress's own test against the `page`
+type instead of `post`, so it doesn't report a false problem after `post` is removed
+from the REST API. It shows WordPress's current wording and error details.
 
 ***
 
-Every behavior on this page is controlled by a filter. See
+Most behaviors on this page are controlled by a filter. See
 [Hooks, Filters, and Actions](../extending-the-plugin/hooks-filters-and-actions.md) for
 the full reference, including default values and examples.

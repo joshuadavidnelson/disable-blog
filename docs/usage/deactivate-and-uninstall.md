@@ -2,7 +2,7 @@
 
 ### Deactivate the plugin
 
-Deactivating Disable Blog is safe. All blog functionality returns immediately: posts and comments become visible again, and the plugin's redirects stop. Nothing is lost.
+Deactivating Disable Blog is safe. All blog functionality returns immediately: posts and comments on posts become visible again, the Latest Posts and Calendar blocks come back, and the plugin's redirects stop. Nothing is lost.
 
 #### From the Plugins screen
 
@@ -39,6 +39,12 @@ wp plugin uninstall disable-blog
 ```
 {% endcode %}
 
+This runs the same cleanup as deleting the plugin from the Plugins screen.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** Uninstalling with WP-CLI now removes the plugin's options. Before, it left `dwpb_version` and `dwpb_previous_version` in the database.
+{% endhint %}
+
 #### Remove via Composer
 
 Run this command:
@@ -51,7 +57,7 @@ composer remove wpackagist-plugin/disable-blog
 
 ### What uninstall deletes
 
-Uninstalling removes the database options Disable Blog uses to track its own version, and nothing else.
+Uninstalling removes the database options Disable Blog uses to track its own version, `dwpb_version` and `dwpb_previous_version`, and nothing else.
 
 Your posts, comments, categories, and tags are untouched. They stay in the database exactly as they were. See [Your Content & Data](your-content-and-data.md) for the fuller explanation.
 

@@ -7,26 +7,21 @@ automatic. There is nothing to configure.
 ### Disable Comments
 
 If [Disable Comments](https://wordpress.org/plugins/disable-comments/) is active,
-Disable Blog forces its own `dwpb_post_types_supporting_comments` filter to always
-return `false`, as if no post type supported comments at all.
+Disable Blog steps back from comments in two ways.
 
-That has two separate effects, because Disable Blog checks comment support two
-different ways:
+* It stops hiding comments on posts. Comment queries, counts, the comments feed, and
+  single comment requests over the REST API and XML-RPC are left to WordPress and
+  Disable Comments, the same as returning `false` from
+  [`dwpb_filter_comment_queries`](hooks-filters-and-actions.md#dwpb_filter_comment_queries).
+* It forces its own `dwpb_post_types_supporting_comments` filter to return `false`, as
+  if no post type supported comments at all. The Comments menu item and Settings >
+  Discussion are removed, and visiting either page directly redirects to the dashboard,
+  the same as on a site where nothing but `post` supports comments.
 
-* The hooks that adjust comment behavior (admin comment counts, `wp_count_comments`,
-  filtering comments out of the Comments list, and similar) only register when
-  [`dwpb_post_types_with_feature( 'comments' )`](functions.md) returns something. With
-  the filter forced to `false`, none of them register, so Disable Blog stops adjusting
-  comment behavior and leaves that to Disable Comments.
-* The screen-removal checks test the opposite condition,
-  `! dwpb_post_types_with_feature( 'comments' )`, so forcing the filter to `false`
-  makes that condition true instead. The Comments menu item and Settings > Discussion
-  are both removed, and visiting either page directly redirects to the dashboard, the
-  same as on a site where nothing but `post` supports comments.
-
-In short, with Disable Comments active, Disable Blog stops adjusting comment behavior
-itself, and its own Comments admin screens still disappear, exactly as they would with
-no comment-supporting post types at all.
+Disable Blog checks for Disable Comments on every request, so this holds whichever
+plugin loads first. When Disable Comments is activated or deactivated, Disable Blog
+clears its cached comment queries and counts with
+[`dwpb_flush_comment_caches()`](functions.md), so lists and counts match right away.
 
 ### WooCommerce
 
@@ -54,8 +49,8 @@ outside `wp-admin`. `is_disable_comments_active()` and `is_woocommerce_active()`
 build on that one method, each checking a known plugin path and, as a fallback, a class
 or function the other plugin defines.
 
-Everything is wired together in `plugin_integrations()` on the main plugin class, which
-runs once when Disable Blog boots. There is no formal registration API for third-party
+The Disable Comments setup lives in `plugin_integrations()` on the main plugin class,
+which runs once when Disable Blog boots, plus a check inside each comment callback. There is no formal registration API for third-party
 integrations. The supported way to make Disable Blog aware of another plugin is the
 same filters covered in
 [Hooks, Filters, and Actions](hooks-filters-and-actions.md), combined with your own
@@ -74,6 +69,7 @@ function my_dwpb_defer_to_comments_plugin() {
     }
 
     if ( is_plugin_active( 'some-other-comments-plugin/plugin.php' ) ) {
+        add_filter( 'dwpb_filter_comment_queries', '__return_false' );
         add_filter( 'dwpb_post_types_supporting_comments', '__return_false' );
     }
 }

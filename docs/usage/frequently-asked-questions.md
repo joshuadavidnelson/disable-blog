@@ -10,6 +10,43 @@ Disable Blog leaves comments turned on, because pages and other post types can u
 
 <details>
 
+<summary>Why don't comments on my old posts show up anymore?</summary>
+
+Disable Blog hides comments left on posts, for every user, everywhere: the Comments screen, comment counts, the comments feed, the REST API, XML-RPC, and WP-CLI. Comments on pages and other post types are not affected. The comments are still in the database, and deactivating the plugin brings them back.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** Before, comments on posts were only hidden from the admin Comments screen.
+{% endhint %}
+
+To show comments on posts again while the plugin is active, add this to your theme's `functions.php` file or as an [MU plugin](https://wordpress.org/documentation/article/must-use-plugins/):
+
+```php
+add_filter( 'dwpb_filter_comment_queries', '__return_false' );
+```
+
+</details>
+
+<details>
+
+<summary>How do I keep the Latest Posts block?</summary>
+
+Disable Blog removes the Latest Posts and Calendar blocks, because both only list posts. To keep one, add this to your theme's `functions.php` file or as an [MU plugin](https://wordpress.org/documentation/article/must-use-plugins/):
+
+```php
+add_filter( 'dwpb_unregister_blocks', function( $unregister, $block ) {
+	if ( 'core/latest-posts' === $block ) {
+		return false;
+	}
+	return $unregister;
+}, 10, 2 );
+```
+
+Use `core/calendar` to keep the Calendar block instead. To list pages or other content, use the Query Loop block.
+
+</details>
+
+<details>
+
 <summary>I want to delete my posts and comments.</summary>
 
 Deleting a post also deletes its comments, but you need to do this in a specific order since the plugin redirects the screens you would normally use to delete them. See [Your Content & Data](your-content-and-data.md) for the full steps.

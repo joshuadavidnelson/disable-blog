@@ -1,8 +1,8 @@
 # Front-End Changes
 
 Disable Blog changes what visitors can reach on the front end of your site. This page is
-the full reference for what changes: redirects, feeds, archives, sitemaps, and the REST
-API and XML-RPC.
+the full reference for what changes: redirects, feeds, archives, sitemaps, comments,
+blocks, and the REST API and XML-RPC.
 
 {% hint style="info" %}
 The redirects on this page only run once your site has a static homepage set. See
@@ -35,12 +35,23 @@ destination URL for all of them with `dwpb_front_end_redirect_url`. Each row in 
 above also has its own filter, named for the page it redirects, for example
 `dwpb_redirect_post` for single posts.
 
+{% hint style="info" %}
+**Changed in 0.5.7.** A redirect now runs even when the page and its destination differ
+only by a query string, for example a request to your homepage with extra query
+variables.
+{% endhint %}
+
 ### Feeds
 
 Disable Blog turns off the site's main post feed, in every format WordPress serves: RSS,
 RSS2, RDF, and Atom. This includes requests made with a query string, like
 `/?feed=rss2`, not just pretty-permalink URLs like `/feed/`. Feeds for other post types
 are not affected.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** Feeds requested with a query string, like `/?feed=rss2`, are now
+disabled too. Before, they still showed your posts.
+{% endhint %}
 
 Visiting the feed redirects to your homepage by default, using the same redirect
 settings as the rest of the site. Show a plain message instead of redirecting with the
@@ -50,7 +61,8 @@ redirect destination is filterable on its own with `dwpb_redirect_feeds`.
 Comment feeds keep working as long as some post type other than `post` supports
 comments, which is true by default since Pages support comments too. If `post` is the
 only post type that supports comments, its comment feed is disabled the same way as the
-main feed. Turn feed disabling off entirely with `dwpb_disable_feed`.
+main feed. Turn feed disabling off entirely with `dwpb_disable_feed`. Comments left on
+posts never appear in the comments feed. See Comments, below.
 
 Feed-related links are also removed from your site's `<head>`: the general feed links,
 the extra feed links WordPress adds on archives and single entries, the RSD link, and
@@ -80,16 +92,65 @@ Disable Blog updates WordPress's built-in XML sitemaps to match the rest of the 
   types to author archives with the `dwpb_author_archive_post_types` filter. Override
   this directly with `dwpb_disable_user_sitemap`.
 
-Since 0.5.7, requesting a sitemap the plugin has removed, such as
-`/wp-sitemap-users-1.xml`, returns a 404 instead of a live page. WordPress 7.1.1 and
-later do this on their own. On earlier versions, turn it off with
-`dwpb_disable_removed_sitemaps`.
+Requesting a sitemap the plugin has removed, such as `/wp-sitemap-users-1.xml`, returns
+a 404. WordPress 7.1.1 and later do this on their own. On earlier versions, turn it off
+with `dwpb_disable_removed_sitemaps`.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** A removed sitemap now returns a 404. Before, it could show a live
+page instead.
+{% endhint %}
+
+### Comments
+
+Comments left on posts are hidden everywhere, for every visitor and every user,
+administrators included. They don't appear in comment lists, the Latest Comments block,
+the comments feed, the REST API, or XML-RPC. This covers
+every comment type, including pingbacks and trackbacks.
+
+Comments on pages, and on any other post type that supports comments, are not affected.
+They show and work exactly as before.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** Comments on posts used to be hidden only on the admin Comments
+screen. They are now hidden across the whole site.
+{% endhint %}
+
+The comments stay in the database. Deactivate the plugin and they come back. To show
+comments on posts again while the plugin is active, return `false` from the
+`dwpb_filter_comment_queries` filter. While the Disable Comments plugin is active,
+Disable Blog leaves comments alone entirely.
+
+### Blocks
+
+The Latest Posts and Calendar blocks are removed. Both only list posts, and neither has
+a setting to show anything else. They no longer appear in the block inserter, and a page
+that already contains one renders without it. Keep either block with the
+`dwpb_unregister_blocks` filter.
+
+{% hint style="info" %}
+**Changed in 0.5.7.** The Latest Posts and Calendar blocks are new to this list. If a
+page used one, that spot is now empty.
+{% endhint %}
+
+The Query Loop block still works. Its default post type changes from `post` to `page`.
+
+### WordPress 7.2 features
+
+Posts are left out of features WordPress 7.2 adds for content:
+
+* The random content link, `/?random=1`, never sends a visitor to a post.
+* Posts are not embeddable.
+* Posts are left out of the `core/content-query` ability.
 
 ### REST API and XML-RPC
 
 The `post` type is always removed from the REST API. Its `category` and `post_tag`
 taxonomies are removed too, but only when no other post type uses them, so a custom post
 type sharing either taxonomy keeps full REST support for it.
+
+A request for a single comment on a post, at `/wp/v2/comments/<id>`, gets WordPress's
+own "Invalid comment ID." error, as if the comment did not exist.
 
 XML-RPC loses its posting methods: the ones used to create, edit, delete, and retrieve
 posts, plus the equivalent methods from the older Blogger and MovableType/MetaWeblog
@@ -98,11 +159,15 @@ for managing those are removed too. Adjust the list with the
 `dwpb_disabled_xmlrpc_methods` filter, or return `false` from it to leave every method in
 place.
 
-The `X-Pingback` HTTP header WordPress normally sends is also removed. Turn this off
-with `dwpb_remove_pingback_header`.
+XML-RPC also treats comments on posts as missing. `wp.getComment`, `wp.editComment`, and
+`wp.deleteComment` return "Invalid comment ID." for them, and `wp.getCommentCount`
+reports zero for a post.
+
+The `X-Pingback` HTTP header WordPress normally sends is also removed, on every
+supported WordPress version. Turn this off with `dwpb_remove_pingback_header`.
 
 ***
 
-Every behavior on this page is controlled by a filter. See
+Most behaviors on this page are controlled by a filter. See
 [Hooks, Filters, and Actions](../extending-the-plugin/hooks-filters-and-actions.md) for
 the full reference, including default values and examples.

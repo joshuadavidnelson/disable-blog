@@ -1,7 +1,7 @@
 # Hooks, Filters, and Actions
 
 Disable Blog has no settings page. Every behavior it controls, from redirects to
-dashboard widgets, is adjustable through a filter or action instead. This page is the
+dashboard widgets to comments, is adjustable through a filter or action instead. This page is the
 complete reference: every filter and action the plugin fires, with its parameters,
 defaults, and a working example.
 
@@ -21,7 +21,11 @@ Add any of the examples below to your theme's `functions.php` file or as an [MU 
 
 **Admin**
 
-[`dwpb_menu_pages_to_remove`](#dwpb_menu_pages_to_remove), [`dwpb_menu_subpages_to_remove`](#dwpb_menu_subpages_to_remove), [`dwpb_remove_options_writing`](#dwpb_remove_options_writing), [`dwpb_unregister_widgets`](#dwpb_unregister_widgets), [`dwpb_disable_{$metabox_id}`](#dwpb_disable_metabox_id), [`dwpb_admin_user_post_types`](#dwpb_admin_user_post_types), [`dwpb_disable_user_post_column`](#dwpb_disable_user_post_column), [`dwpb_create_user_{$post_type}_column`](#dwpb_create_user_post_type_column).
+[`dwpb_menu_pages_to_remove`](#dwpb_menu_pages_to_remove), [`dwpb_menu_subpages_to_remove`](#dwpb_menu_subpages_to_remove), [`dwpb_remove_options_writing`](#dwpb_remove_options_writing), [`dwpb_unregister_widgets`](#dwpb_unregister_widgets), [`dwpb_unregister_blocks`](#dwpb_unregister_blocks), [`dwpb_disable_{$metabox_id}`](#dwpb_disable_metabox_id), [`dwpb_admin_user_post_types`](#dwpb_admin_user_post_types), [`dwpb_disable_user_post_column`](#dwpb_disable_user_post_column), [`dwpb_create_user_{$post_type}_column`](#dwpb_create_user_post_type_column).
+
+**Comments**
+
+[`dwpb_filter_comment_queries`](#dwpb_filter_comment_queries).
 
 **Post Types & Taxonomies**
 
@@ -123,6 +127,12 @@ add_filter( 'dwpb_redirect_post', function( $url ) {
 ```
 {% endcode %}
 
+{% hint style="info" %}
+**Changed in 0.5.7.** `dwpb_redirect_category_archive` and `dwpb_redirect_post_tag_archive`
+now fire on category and tag archives. Before, those archives ran through
+`dwpb_redirect_blog_page` instead.
+{% endhint %}
+
 #### **`dwpb_redirect_admin`**
 
 Toggles all admin redirects at once. Return `false` to stop the plugin from redirecting
@@ -213,7 +223,10 @@ add_filter( 'dwpb_redirect_admin_tools', function( $url ) {
 {% endcode %}
 
 {% hint style="info" %}
-**Changed in 0.5.7:** `dwpb_redirect_admin_tools` also fires the older `dwpb_redirect_admin_options_tools`
+**Changed in 0.5.7.** `dwpb_redirect_admin_term` and `dwpb_redirect_admin_tools` now
+fire. Before, `term.php` and `tools.php` never redirected. Every filter in this table now
+receives the dashboard URL as its default, except the three noted above.
+`dwpb_redirect_admin_tools` also fires the older `dwpb_redirect_admin_options_tools`
 name, for compatibility. See [Deprecated](#deprecated).
 {% endhint %}
 
@@ -227,7 +240,7 @@ admin alike.
 **Parameters:**
 
 * `int $status_code` - The status code to send (default: `301`)
-* `string $current_url` - The URL being redirected from
+* `string $current_url` - The URL being redirected from, including its query string
 * `string $redirect_url` - The URL being redirected to
 
 **Returns:** `int`. Must resolve to a whole number between 300 and 399; anything else falls back to 301.
@@ -326,7 +339,8 @@ add_filter( 'dwpb_disable_feed', '__return_false' );
 
 #### **`dwpb_redirect_feeds`**
 
-Filters the URL a disabled feed request redirects to.
+Filters the URL a disabled feed request redirects to. This includes feeds requested with
+a query string, like `/?feed=rss2`.
 
 **Since:** 0.4.0
 
@@ -400,6 +414,13 @@ Filters the list of XML-RPC methods the plugin removes: the core, Blogger, and
 MovableType/MetaWeblog posting methods, pingback support, and the category and tag
 management methods, the last two only when no other post type uses that taxonomy.
 
+The `system.*` methods are not on the list, because WordPress registers them again after
+this filter runs. Removing them here has no effect.
+
+Separately from this list, `wp.getComment`, `wp.editComment`, and `wp.deleteComment`
+answer "Invalid comment ID." for a comment on a post, unless
+[`dwpb_filter_comment_queries`](#dwpb_filter_comment_queries) returns `false`.
+
 **Since:** 0.5.0
 
 **Parameters:**
@@ -418,13 +439,20 @@ add_filter( 'dwpb_disabled_xmlrpc_methods', '__return_false' );
 {% endcode %}
 
 {% hint style="info" %}
+**Changed in 0.5.7.** `wp.deleteCategory` is now removed along with the other category
+methods. The `system.listMethods`, `system.multicall`, and `system.getCapabilities`
+entries are gone from the default list.
+{% endhint %}
+
+{% hint style="info" %}
 On WordPress 7.1 and later, core removes `pingback.ping` itself outside of a production
 environment. That method stays gone there no matter what this filter returns.
 {% endhint %}
 
 #### **`dwpb_remove_pingback_header`**
 
-Toggles the `X-Pingback` HTTP header WordPress normally sends.
+Toggles the `X-Pingback` HTTP header WordPress normally sends. Applies on every
+supported WordPress version.
 
 **Since:** 0.4.0
 
@@ -442,6 +470,10 @@ Toggles the `X-Pingback` HTTP header WordPress normally sends.
 add_filter( 'dwpb_remove_pingback_header', '__return_false' );
 ```
 {% endcode %}
+
+{% hint style="info" %}
+**Changed in 0.5.7.** The header is now also removed on WordPress versions before 6.2.
+{% endhint %}
 
 #### **`dwpb_disable_user_sitemap`**
 
@@ -590,10 +622,43 @@ add_filter( 'dwpb_unregister_widgets', function( $bool, $widget ) {
 ```
 {% endcode %}
 
+#### **`dwpb_unregister_blocks`**
+
+Filters whether each block that only lists posts gets unregistered. Runs once per block:
+Latest Posts (`core/latest-posts`) and Calendar (`core/calendar`). An unregistered block
+is hidden from the inserter, and a page that already contains it renders without it.
+
+**Since:** 0.5.7
+
+**Parameters:**
+
+* `bool $unregister` - True to unregister the block (default: `true`)
+* `string $block` - The block name currently being processed, for example `core/latest-posts`
+
+**Returns:** `bool`
+
+**Example:**
+
+{% code overflow="wrap" %}
+```php
+// Keep the Calendar block.
+add_filter( 'dwpb_unregister_blocks', function( $unregister, $block ) {
+    if ( 'core/calendar' === $block ) {
+        return false;
+    }
+    return $unregister;
+}, 10, 2 );
+```
+{% endcode %}
+
 #### **`dwpb_disable_{$metabox_id}`**
 
 Toggles a single dashboard widget. `{$metabox_id}` is either `dashboard_quick_press` or
-`dashboard_activity`, the two dashboard widgets the plugin removes.
+`dashboard_activity`, the two dashboard widgets the plugin removes. That makes two
+filters: `dwpb_disable_dashboard_quick_press` and `dwpb_disable_dashboard_activity`.
+
+If you keep the Activity widget, its Recently Published, Publishing Soon, and, on
+WordPress 7.2, Published On This Day lists still leave out posts.
 
 **Since:** 0.4.1
 
@@ -611,6 +676,12 @@ Toggles a single dashboard widget. `{$metabox_id}` is either `dashboard_quick_pr
 add_filter( 'dwpb_disable_dashboard_quick_press', '__return_false' );
 ```
 {% endcode %}
+
+{% hint style="info" %}
+**Changed in 0.5.7.** `dwpb_disable_dashboard_recent_drafts` and
+`dwpb_disable_dashboard_incoming_links` no longer fire. WordPress does not register
+either widget on its own, so there is nothing for them to remove.
+{% endhint %}
 
 #### **`dwpb_admin_user_post_types`**
 
@@ -657,7 +728,7 @@ add_filter( 'dwpb_disable_user_post_column', '__return_false' );
 {% endcode %}
 
 {% hint style="info" %}
-**Changed in 0.5.7:** the correct filter name is `dwpb_disable_user_post_column`. The
+**Changed in 0.5.7.** The correct filter name is `dwpb_disable_user_post_column`. The
 misspelled `dpwb_disable_user_post_column` still works. See [Deprecated](#deprecated).
 {% endhint %}
 
@@ -685,9 +756,47 @@ add_filter( 'dwpb_create_user_event_column', '__return_false' );
 {% endcode %}
 
 {% hint style="info" %}
-**Changed in 0.5.7:** the correct filter name is `dwpb_create_user_{$post_type}_column`.
+**Changed in 0.5.7.** The correct filter name is `dwpb_create_user_{$post_type}_column`.
 The misspelled `dpwb_create_user_{$post_type}_column` still works. See
 [Deprecated](#deprecated).
+{% endhint %}
+
+### Comments
+
+This filter controls how the plugin hides comments left on posts.
+
+#### **`dwpb_filter_comment_queries`**
+
+Toggles hiding comments on posts. When `true`, no comment of any type on a post is
+returned by a comment query, the comments feed, the REST API, XML-RPC, the admin comment
+screens, or `wp comment list`, and comment counts leave them out. Comments, pingbacks,
+and trackbacks are only returned for post types that support comments. Return `false`
+to leave comments to WordPress.
+
+The plugin also skips this while the Disable Comments plugin is active, whatever this
+filter returns. Privacy exports and erasures always include comments on posts.
+
+**Since:** 0.5.7
+
+**Parameters:**
+
+* `bool $filter` - True to hide comments on posts, false to leave comments alone (default: `true`)
+
+**Returns:** `bool`
+
+**Example:**
+
+{% code overflow="wrap" %}
+```php
+// Show comments on posts again.
+add_filter( 'dwpb_filter_comment_queries', '__return_false' );
+```
+{% endcode %}
+
+{% hint style="info" %}
+Comment queries are cached by their arguments. With a persistent object cache, a change
+made only through this filter takes effect the next time the comment cache changes, for
+example when a comment is added or edited.
 {% endhint %}
 
 ### Post Types & Taxonomies
@@ -701,6 +810,10 @@ throughout the plugin.
 Filters the list of post types, other than `post`, that support a given `$feature`. The
 plugin uses this internally, for example `dwpb_post_types_supporting_comments`, to decide
 whether related admin screens, menus, and widgets stay active.
+
+`dwpb_post_types_supporting_comments` also decides which post types have their comments,
+pingbacks, and trackbacks returned by comment queries while
+[`dwpb_filter_comment_queries`](#dwpb_filter_comment_queries) is on.
 
 **Since:** 0.4.0
 

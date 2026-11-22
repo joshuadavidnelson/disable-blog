@@ -198,3 +198,38 @@ add_filter( 'dwpb_disable_dashboard_quick_press', '__return_false' );
 {% endcode %}
 
 Use `dwpb_disable_dashboard_activity` for the Activity widget the same way.
+
+If you keep the Activity widget, it still leaves posts out of its lists.
+
+### Keep the Latest Posts or Calendar block
+
+The plugin removes both blocks by default, because they only list posts. Keep one by returning false for its block name.
+
+{% code overflow="wrap" %}
+```php
+function my_dwpb_keep_latest_posts_block( $unregister, $block ) {
+    if ( 'core/latest-posts' === $block ) {
+        return false;
+    }
+
+    return $unregister;
+}
+add_filter( 'dwpb_unregister_blocks', 'my_dwpb_keep_latest_posts_block', 10, 2 );
+```
+{% endcode %}
+
+Use `core/calendar` for the Calendar block.
+
+### Show comments on posts again
+
+Comments left on posts are hidden everywhere by default. Turn that off to let WordPress handle them as usual.
+
+{% code overflow="wrap" %}
+```php
+add_filter( 'dwpb_filter_comment_queries', '__return_false' );
+```
+{% endcode %}
+
+{% hint style="info" %}
+On a site with a persistent object cache, run [`dwpb_flush_comment_caches()`](functions.md) once after adding or removing this filter, so cached comment lists and counts update right away.
+{% endhint %}
