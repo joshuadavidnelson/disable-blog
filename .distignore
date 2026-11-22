@@ -28,3 +28,7 @@
 /CHANGELOG.md
 /code-of-conduct.md
 /contributing.md
+
+# Documentation site, published separately to docs.disable.blog
+/docs/
+/.gitbook.yaml
